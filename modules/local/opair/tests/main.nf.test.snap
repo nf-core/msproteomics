@@ -1,0 +1,65 @@
+{
+    "opair - integration with test data": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "opair_test"
+                    },
+                    [
+                        "filelist_opair.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "opair.log:md5,c2ab34e034e473bcdc488482dc8c92ae"
+                    ]
+                ]
+            ],
+            [
+                
+            ],
+            [
+                
+            ]
+        ],
+        "timestamp": "2026-03-25T17:06:09.80767299",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "opair - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_opair"
+                    },
+                    [
+                        "opair.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_opair_glycoforms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_opair_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_opair"
+                    },
+                    "sample_opair_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_opair"
+                    },
+                    "sample_opair_glycoforms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-25T03:50:18.298776816",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

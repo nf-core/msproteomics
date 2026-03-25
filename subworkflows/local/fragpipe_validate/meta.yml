@@ -1,0 +1,85 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "fragpipe_validate"
+description: PSM validation and scoring refinement with Percolator machine learning rescoring, optional PeptideProphet statistical validation, and optional PTMProphet site localization
+keywords:
+  - proteomics
+  - validation
+  - fdr
+  - percolator
+  - peptideprophet
+  - ptmprophet
+  - psm
+components:
+  - percolator
+  - peptideprophet
+  - ptmprophet
+input:
+  - ch_pin:
+      type: channel
+      description: |
+        Percolator input (PIN) files from MSFragger or MSBooster.
+        Structure: [ val(meta), path(pin) ]
+  - ch_pepxml:
+      type: channel
+      description: |
+        Search result pepXML files from MSFragger.
+        Structure: [ val(meta), path(pepxml) ]
+  - ch_mzml:
+      type: channel
+      description: |
+        Spectra files in mzML format.
+        Structure: [ val(meta), path(mzml) ]
+  - ch_fasta:
+      type: channel
+      description: |
+        Protein database FASTA as a value channel for broadcasting.
+        Structure: path(fasta)
+  - ch_tool_configs:
+      type: channel
+      description: |
+        Parsed JSON tool configuration map controlling which validation tools to run.
+        Structure: val(tool_configs_map)
+  - ch_peptideprophet_config:
+      type: channel
+      description: |
+        PeptideProphet configuration file. Pass [] when not used.
+        Structure: path(config_file)
+  - data_type:
+      type: value
+      description: |
+        Data acquisition type, either 'DDA' or 'DIA'. Passed to Percolator for mode selection.
+output:
+  - pepxml:
+      type: channel
+      description: |
+        Validated pepXML files. Uses PTMProphet output when available, otherwise Percolator/PeptideProphet output, or passthrough if neither is enabled.
+        Structure: [ val(meta), path(pepxml) ]
+  - target_psms:
+      type: channel
+      description: |
+        Percolator target PSM results.
+        Structure: [ val(meta), path(target_psms.tsv) ]
+  - decoy_psms:
+      type: channel
+      description: |
+        Percolator decoy PSM results.
+        Structure: [ val(meta), path(decoy_psms.tsv) ]
+  - mod_pepxml:
+      type: channel
+      description: |
+        PTMProphet-localized pepXML files with PTM site probabilities.
+        Structure: [ val(meta), path(mod.pep.xml) ]
+  - results_dir:
+      type: channel
+      description: |
+        Percolator results directory.
+        Structure: [ val(meta), path(results_dir) ]
+  - versions:
+      type: file
+      description: |
+        File containing software versions.
+        Structure: [ path(versions.yml) ]
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

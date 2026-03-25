@@ -1,0 +1,128 @@
+name: "ionquant"
+description: Label-free and isobaric quantification with match-between-runs
+keywords:
+  - proteomics
+  - mass spectrometry
+  - quantification
+  - label-free
+  - MBR
+  - match-between-runs
+tools:
+  - ionquant:
+      description: |
+        IonQuant is a fast and comprehensive tool for MS1 quantification of
+        label-free and isobaric labeled proteomics data. It provides accurate
+        feature detection, match-between-runs (MBR), and MaxLFQ normalization.
+      homepage: "https://ionquant.nesvilab.org/"
+      documentation: "https://github.com/Nesvilab/IonQuant/wiki"
+      tool_dev_url: "https://github.com/Nesvilab/IonQuant"
+      doi: "10.1074/mcp.TIR120.002048"
+      licence: ["Commercial"]
+      note: "License pre-installed in container"
+
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample information
+    - psm_dirs:
+        type: directory
+        description: |
+          PHILOSOPHER_FILTER output directories, each named by sample
+          and containing psm.tsv
+    - spec_files:
+        type: file
+        description: Spectral files (mzML or RAW) staged in spectra/ subdirectory
+        pattern: "*.{mzML,raw}"
+  - - annotation_file:
+        type: file
+        description: |
+          TMT annotation file. Either 2-column (channel sample) for single-plex
+          or 6-column TSV (plex/channel/sample/sample_name/condition/replicate)
+          for multi-plex. Pass empty list [] if not applicable.
+        pattern: "*.{txt,tsv}"
+  - - config_cli:
+        type: string
+        description: |
+          IonQuant parameters as CLI string
+          (e.g., "--mbr 1 --maxlfq 1 --perform-isoquant 0 --perform-ms1quant 1")
+  - - modmasses:
+        type: string
+        description: |
+          Comma-separated modification masses for --modlist
+          (empty string = skip). Used for MBR modification mass tracking.
+
+output:
+  results_dir:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}":
+          type: directory
+          description: Directory containing all IonQuant output files
+          pattern: "${prefix}"
+  ions:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/ion.tsv":
+          type: file
+          description: Ion-level quantification
+          pattern: "ion.tsv"
+  combined_ions:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/combined_ion.tsv":
+          type: file
+          description: Combined ion-level quantification across samples
+          pattern: "combined_ion.tsv"
+  combined_protein:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/combined_protein.tsv":
+          type: file
+          description: Combined protein-level quantification across samples
+          pattern: "combined_protein.tsv"
+  combined_peptide:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/combined_peptide.tsv":
+          type: file
+          description: Combined peptide-level quantification across samples
+          pattern: "combined_peptide.tsv"
+  combined_modified_peptide:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/combined_modified_peptide.tsv":
+          type: file
+          description: Combined modified-peptide-level quantification across samples
+          pattern: "combined_modified_peptide.tsv"
+  combined_site:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/combined_site_*.tsv":
+          type: file
+          description: Combined site-level quantification across samples
+          pattern: "combined_site_*.tsv"
+  all_tsv:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/*.tsv":
+          type: file
+          description: All TSV output files
+          pattern: "*.tsv"
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

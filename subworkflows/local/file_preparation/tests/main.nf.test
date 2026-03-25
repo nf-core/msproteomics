@@ -1,0 +1,57 @@
+nextflow_workflow {
+
+    name "Test Subworkflow FILE_PREPARATION"
+    script "../main.nf"
+    workflow "FILE_PREPARATION"
+    config "./test.config"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "file_preparation"
+
+    test("file_preparation - stub with mzML input") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            workflow {
+                """
+                def mzml = file("\${workDir}/sample.mzML")
+                mzml.text = "mock"
+
+                input[0] = channel.of([ [ id:'sample1', mzml_id:'sample1' ], mzml ])
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out.results).match() }
+            )
+        }
+    }
+
+    test("file_preparation - stub with RAW input") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            workflow {
+                """
+                def raw = file("\${workDir}/sample.raw")
+                raw.text = "mock"
+
+                input[0] = channel.of([ [ id:'sample1', mzml_id:'sample1' ], raw ])
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out.results).match() }
+            )
+        }
+    }
+}

@@ -1,0 +1,6 @@
+name: mzml_statistics
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bioconda::quantms-utils=0.0.24

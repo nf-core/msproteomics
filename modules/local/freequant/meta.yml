@@ -1,0 +1,61 @@
+name: "freequant"
+description: Label-free quantification using Philosopher labelfree command
+keywords:
+  - proteomics
+  - mass spectrometry
+  - quantification
+  - label-free
+  - ion intensity
+tools:
+  - philosopher:
+      description: |
+        FreeQuant performs label-free quantification using the Philosopher labelfree
+        command. It extracts ion intensity information from mass spectrometry data
+        files to quantify peptide and protein abundances. FreeQuant generates ion.tsv
+        files containing ion-level quantification data for downstream analysis.
+      homepage: "https://philosopher.nesvilab.org/"
+      documentation: "https://github.com/Nesvilab/philosopher/wiki"
+      tool_dev_url: "https://github.com/Nesvilab/philosopher"
+      licence: ["GPL-3.0"]
+
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample information
+    - results_dir:
+        type: directory
+        description: Directory containing psm.tsv from PHILOSOPHER_FILTER
+    - mzml_dir:
+        type: directory
+        description: Directory containing mass spectrometry files (mzML or RAW)
+    - config_cli:
+        type: string
+        description: FreeQuant parameters as CLI string (e.g., --ptw 0.4 --tol 10)
+
+output:
+  results_dir:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}":
+          type: directory
+          description: Directory containing FreeQuant results and log
+          pattern: "${prefix}"
+  ions:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/ion.tsv":
+          type: file
+          description: Ion-level quantification results
+          pattern: "ion.tsv"
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

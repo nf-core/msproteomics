@@ -1,0 +1,192 @@
+nextflow_process {
+
+    name "Test Process MERGE_SPLIT_SEARCH"
+    script "../main.nf"
+    process "MERGE_SPLIT_SEARCH"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "merge_split_search"
+
+    test("merge_split_search - stub") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                // Create mock chunk files
+                def pepxml_0 = file("\${workDir}/chunk_0_test_sample.pepXML")
+                def pepxml_1 = file("\${workDir}/chunk_1_test_sample.pepXML")
+                def pin_0    = file("\${workDir}/chunk_0_test_sample.pin")
+                def pin_1    = file("\${workDir}/chunk_1_test_sample.pin")
+                def histo_0  = file("\${workDir}/chunk_0_test_sample_scores_histogram.tsv")
+                def histo_1  = file("\${workDir}/chunk_1_test_sample_scores_histogram.tsv")
+                def msf_params = file("\${workDir}/msfragger.params")
+
+                pepxml_0.text = "mock pepxml chunk 0"
+                pepxml_1.text = "mock pepxml chunk 1"
+                pin_0.text    = "mock pin chunk 0"
+                pin_1.text    = "mock pin chunk 1"
+                histo_0.text  = "mock histo chunk 0"
+                histo_1.text  = "mock histo chunk 1"
+                msf_params.text = "output_report_topN = 1"
+
+                // tuple val(meta), path(chunk_pepxmls), path(chunk_pins), path(chunk_histograms)
+                input[0] = channel.of([
+                    [ id: 'test_sample' ],
+                    [ pepxml_0, pepxml_1 ],
+                    [ pin_0, pin_1 ],
+                    [ histo_0, histo_1 ]
+                ])
+                // val num_chunks
+                input[1] = 2
+                // path params_file
+                input[2] = msf_params
+                input[3] = []  // msfragger_dir (use auto-discovery)
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(
+                    process.out.pepxml,
+                    process.out.pin,
+                    process.out.license_agreement
+                ).match() }
+            )
+        }
+    }
+
+    test("merge_split_search - integration with mock data") {
+        tag "integration"
+        config "./nextflow.config"
+
+        when {
+            process {
+                """
+                // ------------------------------------------------------------------
+                // Build minimal but structurally valid pepXML, PIN, and histogram
+                // files for 2 chunks, 1 sample with 2 spectra.
+                // Requires a FragPipe container with MSFragger for --generate_expect_functions.
+                // ------------------------------------------------------------------
+
+                def sampleName = "test_sample"
+
+                // ---- pepXML chunk 0 (spectrum 1 only) ----
+                def pepxml0_content = \
+'''<?xml version="1.0" encoding="UTF-8"?>
+<msms_pipeline_analysis date="2025-01-01T00:00:00" summary_xml="/tmp/test_sample.pepXML">
+<msms_run_summary>
+<search_summary search_engine="MSFragger">
+</search_summary>
+<spectrum_query spectrum="test_sample.00001.00001.2" start_scan="1" end_scan="1" precursor_neutral_mass="1000.50" assumed_charge="2" spectrum="test_sample.00001.00001.2" index="1" >
+<search_result>
+<search_hit hit_rank="1" protein="sp|P00001|PROT1" protein_descr="Test protein 1" peptide="TESTPEPTIDE" peptide_prev_aa="K" peptide_next_aa="R" num_tol_term="2" num_tot_proteins="1" massdiff="0.005" calc_neutral_pep_mass="1000.495">
+<search_score name="hyperscore" value="25.0"/>
+<search_score name="nextscore" value="10.0"/>
+<search_score name="expect" value="1.5e-03"/>
+</search_hit>
+</search_result>
+</spectrum_query>
+</msms_run_summary>
+</msms_pipeline_analysis>
+'''
+
+                // ---- pepXML chunk 1 (spectrum 1 and 2) ----
+                def pepxml1_content = \
+'''<?xml version="1.0" encoding="UTF-8"?>
+<msms_pipeline_analysis date="2025-01-01T00:00:00" summary_xml="/tmp/test_sample.pepXML">
+<msms_run_summary>
+<search_summary search_engine="MSFragger">
+</search_summary>
+<spectrum_query spectrum="test_sample.00001.00001.2" start_scan="1" end_scan="1" precursor_neutral_mass="1000.50" assumed_charge="2" spectrum="test_sample.00001.00001.2" index="1" >
+<search_result>
+<search_hit hit_rank="1" protein="sp|P00002|PROT2" protein_descr="Test protein 2" peptide="TESTPEPTIDE" peptide_prev_aa="R" peptide_next_aa="K" num_tol_term="2" num_tot_proteins="1" massdiff="-0.002" calc_neutral_pep_mass="1000.502">
+<search_score name="hyperscore" value="20.0"/>
+<search_score name="nextscore" value="8.0"/>
+<search_score name="expect" value="5.0e-03"/>
+</search_hit>
+</search_result>
+</spectrum_query>
+<spectrum_query spectrum="test_sample.00002.00002.3" start_scan="2" end_scan="2" precursor_neutral_mass="1500.75" assumed_charge="3" spectrum="test_sample.00002.00002.3" index="2" >
+<search_result>
+<search_hit hit_rank="1" protein="sp|P00003|PROT3" protein_descr="Test protein 3" peptide="ANOTHERPEP" peptide_prev_aa="K" peptide_next_aa="A" num_tol_term="2" num_tot_proteins="1" massdiff="0.001" calc_neutral_pep_mass="1500.749">
+<search_score name="hyperscore" value="30.0"/>
+<search_score name="nextscore" value="12.0"/>
+<search_score name="expect" value="2.0e-04"/>
+</search_hit>
+</search_result>
+</spectrum_query>
+</msms_run_summary>
+</msms_pipeline_analysis>
+'''
+
+                // ---- PIN files (TSV) ----
+                def pin_header = "SpecId\\tLabel\\tScanNr\\trank\\thyperscore\\tdelta_hyperscore\\tlog10_evalue\\tabs_ppm\\tPeptide\\tProteins"
+
+                def pin0_content = pin_header + "\\n" +
+                    "test_sample.00001.00001.2_1\\t1\\t1\\t1\\t25.0\\t15.0\\t-2.82\\t1.5\\tK.TESTPEPTIDE2.R\\tsp|P00001|PROT1"
+
+                def pin1_content = pin_header + "\\n" +
+                    "test_sample.00001.00001.2_1\\t1\\t1\\t1\\t20.0\\t12.0\\t-2.30\\t2.0\\tK.TESTPEPTIDE2.R\\tsp|P00002|PROT2" + "\\n" +
+                    "test_sample.00002.00002.3_1\\t1\\t2\\t1\\t30.0\\t18.0\\t-3.70\\t0.8\\tK.ANOTHERPEP3.A\\tsp|P00003|PROT3"
+
+                // ---- Score histograms (101 rows x 8 columns, integer counts) ----
+                // MSFragger --generate_expect_functions expects this format
+                def histoRows = []
+                for (int i = 0; i < 101; i++) {
+                    def cols = []
+                    for (int j = 0; j < 8; j++) {
+                        cols.add(String.valueOf(Math.max(0, (int)(1000 * Math.exp(-0.05 * i) * Math.exp(-0.5 * j)))))
+                    }
+                    histoRows.add(cols.join("\\t"))
+                }
+                def histo_content = histoRows.join("\\n")
+
+                // ---- Write files with chunk_ prefix as MSFRAGGER outputs them ----
+                def pepxml_0 = file("\${workDir}/chunk_0_test_sample.pepXML")
+                def pepxml_1 = file("\${workDir}/chunk_1_test_sample.pepXML")
+                def pin_0    = file("\${workDir}/chunk_0_test_sample.pin")
+                def pin_1    = file("\${workDir}/chunk_1_test_sample.pin")
+                def histo_0  = file("\${workDir}/chunk_0_test_sample_scores_histogram.tsv")
+                def histo_1  = file("\${workDir}/chunk_1_test_sample_scores_histogram.tsv")
+                def msf_params = file("\${workDir}/msfragger.params")
+
+                pepxml_0.text = pepxml0_content
+                pepxml_1.text = pepxml1_content
+                pin_0.text    = pin0_content
+                pin_1.text    = pin1_content
+                histo_0.text  = histo_content
+                histo_1.text  = histo_content
+                msf_params.text = "output_report_topN = 1\\noutput_max_expect = 50.0"
+
+                // tuple val(meta), path(chunk_pepxmls), path(chunk_pins), path(chunk_histograms)
+                input[0] = channel.of([
+                    [ id: 'test_sample' ],
+                    [ pepxml_0, pepxml_1 ],
+                    [ pin_0, pin_1 ],
+                    [ histo_0, histo_1 ]
+                ])
+                // val num_chunks
+                input[1] = 2
+                // path params_file
+                input[2] = msf_params
+                input[3] = []  // msfragger_dir (use auto-discovery)
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(
+                    process.out.pepxml.collect { meta, f -> file(f).name },
+                    process.out.pin.collect { meta, f -> file(f).name }
+                ).match() }
+            )
+        }
+    }
+}

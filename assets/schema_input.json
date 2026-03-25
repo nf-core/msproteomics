@@ -1,0 +1,39 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/nf-core/msproteomics/master/assets/schema_input.json",
+    "title": "nf-core/msproteomics pipeline - params.input schema",
+    "description": "Schema for the input samplesheet CSV file",
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "sample": {
+                "type": "string",
+                "pattern": "^\\S+$",
+                "errorMessage": "Sample name must be provided and cannot contain spaces",
+                "meta": ["id"]
+            },
+            "spectra": {
+                "type": "string",
+                "format": "file-path",
+                "exists": true,
+                "pattern": "^\\S+\\.(raw|RAW|mzML|mzml|d|dia)$",
+                "errorMessage": "Mass spectrometry data file must be provided (.raw, .mzML, .d, or .dia)"
+            },
+            "condition": {
+                "type": "string",
+                "errorMessage": "Experimental condition/group must be provided"
+            },
+            "label": {
+                "type": "string",
+                "errorMessage": "TMT label channel (e.g., TMT126, TMT127N)"
+            },
+            "fraction": {
+                "type": "integer",
+                "minimum": 1,
+                "errorMessage": "Fraction identifier must be a positive integer"
+            }
+        },
+        "required": ["sample", "spectra"]
+    }
+}

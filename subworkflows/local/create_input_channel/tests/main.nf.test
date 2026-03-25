@@ -1,0 +1,48 @@
+nextflow_workflow {
+
+    name "Test Subworkflow CREATE_INPUT_CHANNEL"
+    script "../main.nf"
+    workflow "CREATE_INPUT_CHANNEL"
+    config "./test.config"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "create_input_channel"
+
+    // Note: CREATE_INPUT_CHANNEL validates file existence in the create_meta_channel
+    // function (runs in Nextflow's dataflow, not in a process stub). A stub test
+    // requires actual spectra files to exist at the paths specified in the SDRF.
+    // This subworkflow is tested indirectly through workflow-level integration tests
+    // (DIA, TMT, DDA LFQ). A dedicated stub test is provided below with a minimal
+    // SDRF that references a file created in workDir.
+
+    test("create_input_channel - stub") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            workflow {
+                """
+                // Create a minimal SDRF file
+                def sdrf_file = file("\${workDir}/test.sdrf.tsv")
+                sdrf_file.text = "source name\\tcharacteristics[organism]\\tcomment[data file]\\ntest\\tHomo sapiens\\ttest.raw"
+
+                input[0] = sdrf_file
+                input[1] = true  // is_sdrf
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.out.ch_meta_config_iso,
+                    workflow.out.ch_meta_config_lfq,
+                    workflow.out.ch_meta_config_dia,
+                    workflow.out.ch_expdesign
+                ).match() }
+            )
+        }
+    }
+}

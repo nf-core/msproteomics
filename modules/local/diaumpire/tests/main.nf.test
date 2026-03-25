@@ -1,0 +1,87 @@
+nextflow_process {
+
+    name "Test Process DIAUMPIRE"
+    script "../main.nf"
+    process "DIAUMPIRE"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "diaumpire"
+
+    test("diaumpire - stub") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def mzml_file = file("\${workDir}/test.mzML")
+                mzml_file.text = "mock"
+                def config_file = file("\${workDir}/diaumpire_se.params")
+                config_file.text = "Thread = 4\\nRPmax = 25\\nRFmax = 300\\nCorrThreshold = 0.2\\nDeltaApex = 0.6\\nRTOverlap = 0.3\\nAdjustFragIntensity = true\\nBoostComplementaryIon = true\\nMS1PPM = 25\\nMS2PPM = 25"
+
+                input[0] = channel.of([[ id: 'test_diaumpire' ], mzml_file, config_file])
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(
+                    process.out.results_dir,
+                    process.out.q1_spectra,
+                    process.out.q2_spectra,
+                    process.out.q3_spectra,
+                    process.out.mgf_spectra
+                ).match() }
+            )
+        }
+    }
+
+    test("diaumpire - integration with test data") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                // mzML is a large binary file — keep remote
+                def mzml_file = file("\${params.pipelines_testdata_base_path}/spectra/dia_cptac_subset.mzML", checkIfExists: true)
+                // Create DIA-Umpire params inline
+                def config_file = file("\${workDir}/diaumpire_se.params")
+                config_file.text = "Thread = 4\\n" +
+                    "RPmax = 25\\n" +
+                    "RFmax = 300\\n" +
+                    "CorrThreshold = 0.2\\n" +
+                    "DeltaApex = 0.6\\n" +
+                    "RTOverlap = 0.3\\n" +
+                    "AdjustFragIntensity = true\\n" +
+                    "BoostComplementaryIon = true\\n" +
+                    "MS1PPM = 25\\n" +
+                    "MS2PPM = 25\\n" +
+                    "SN = 1.5\\n" +
+                    "MS2SN = 1.5\\n" +
+                    "MinMSIntensity = 10\\n" +
+                    "MinMSMSIntensity = 5\\n" +
+                    "MaxCurveRTRange = 1.5\\n" +
+                    "Resolution = 17500\\n" +
+                    "EstimateBG = false"
+
+                input[0] = channel.of([[ id: 'diaumpire_test' ], mzml_file, config_file])
+                """
+            }
+        }
+
+        then {
+            def outDir = new File(process.out.results_dir[0][1].toString())
+            def outFiles = outDir.listFiles().sort { it.name }
+            assertAll (
+                { assert process.success },
+                { assert outFiles.size() > 0 },
+                { assert outFiles.every { it.size() > 0 } },
+                { assert snapshot(outFiles.collect { it.name }).match("file_names") },
+                { assert process.out.versions_diaumpire.size() == 1 }
+            )
+        }
+    }
+}

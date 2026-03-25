@@ -1,0 +1,24 @@
+{
+    "philosopher_labelquant - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    [
+                        "labelquant.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-25T03:50:53.326756068",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

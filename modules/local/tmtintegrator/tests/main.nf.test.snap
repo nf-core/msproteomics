@@ -1,0 +1,123 @@
+{
+    "file_names": {
+        "content": [
+            [
+                "abundance_gene_None.tsv",
+                "protein.tsv",
+                "psm.tsv",
+                "ratio_gene_None.tsv",
+                "tmt-integrator-conf.yml",
+                "tmt-integrator.log"
+            ]
+        ],
+        "timestamp": "2026-03-24T20:10:11.150489312",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "tmtintegrator - stub TMT10": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    [
+                        "abundance_gene_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "abundance_protein_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "ratio_gene_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "ratio_protein_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "tmt-integrator-conf.yml:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "tmt-integrator.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    [
+                        "abundance_gene_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "abundance_protein_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    [
+                        "ratio_gene_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "ratio_protein_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                
+            ],
+            [
+                
+            ]
+        ],
+        "timestamp": "2026-03-25T03:52:37.726304894",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "tmtintegrator - stub TMT16": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    [
+                        "abundance_gene_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "abundance_protein_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "ratio_gene_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "ratio_protein_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "tmt-integrator-conf.yml:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "tmt-integrator.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    [
+                        "abundance_gene_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "abundance_protein_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    [
+                        "ratio_gene_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "ratio_protein_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                
+            ],
+            [
+                
+            ]
+        ],
+        "timestamp": "2026-03-25T03:52:31.653541939",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

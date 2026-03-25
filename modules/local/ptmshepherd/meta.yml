@@ -1,0 +1,100 @@
+name: "ptmshepherd"
+description: Open search analysis and PTM characterization with PTM-Shepherd
+keywords:
+  - proteomics
+  - mass spectrometry
+  - post-translational modifications
+  - open search
+  - mass shift analysis
+tools:
+  - ptmshepherd:
+      description: |
+        PTM-Shepherd is a bioinformatics tool for characterization of post-translational
+        and chemical modifications from open search results. It performs mass shift
+        annotation, localization, and generates modification summaries and profiles
+        across samples. Supports glycoproteomics analysis and diagnostic ion mining.
+      homepage: "https://github.com/Nesvilab/PTM-Shepherd"
+      documentation: "https://github.com/Nesvilab/PTM-Shepherd/wiki"
+      tool_dev_url: "https://github.com/Nesvilab/PTM-Shepherd"
+      doi: "10.1021/acs.jproteome.0c00688"
+      licence: ["GPL-3.0"]
+
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample information
+    - psm_dirs:
+        type: directory
+        description: Directories containing psm.tsv files from Philosopher filter
+    - protxml:
+        type: file
+        description: Combined protein inference file from ProteinProphet
+        pattern: "*.prot.xml"
+    - mzml_files:
+        type: file
+        description: Mass spectrometry files for intensity extraction
+        pattern: "*.{mzML,mzXML}"
+    - config_file:
+        type: file
+        description: PTM-Shepherd configuration file (shepherd.config)
+        pattern: "*.config"
+
+output:
+  results_dir:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}":
+          type: directory
+          description: Directory containing PTM-Shepherd results and log files
+          pattern: "${prefix}"
+  global_profile:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/global.profile.tsv":
+          type: file
+          description: Global mass shift profile across all samples
+          pattern: "global.profile.tsv"
+  global_modsummary:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/global.modsummary.tsv":
+          type: file
+          description: Global modification summary with annotations
+          pattern: "global.modsummary.tsv"
+  diagmine:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/*diagmine.tsv":
+          type: file
+          description: Diagnostic ion mining results
+          pattern: "*diagmine.tsv"
+  localization:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/*localization.tsv":
+          type: file
+          description: PTM site localization results
+          pattern: "*localization.tsv"
+  glycoprofile:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/*glycoprofile.tsv":
+          type: file
+          description: Glycoproteomics profile results
+          pattern: "*glycoprofile.tsv"
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

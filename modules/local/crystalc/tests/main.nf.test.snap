@@ -1,0 +1,54 @@
+{
+    "crystalc - integration with test data": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "crystalc_test"
+                    },
+                    "crystalc_test_c.pepXML:md5,db30795bd31a7214f8117ab62aa21dc3"
+                ]
+            ],
+            [
+                [
+                    "CRYSTALC",
+                    "crystalc",
+                    "1.5.10."
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-24T19:54:14.788242331",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "crystalc - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_crystalc"
+                    },
+                    [
+                        "crystalc.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test.pep_c.pepXML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_crystalc"
+                    },
+                    "test.pep_c.pepXML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-25T03:47:57.140307003",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

@@ -1,0 +1,23 @@
+{
+    "create_input_channel - stub": {
+        "content": [
+            [
+                
+            ],
+            [
+                
+            ],
+            [
+                
+            ],
+            [
+                "test.sdrf_openms_design.tsv:md5,3fe6e1e68543d47cdb120cb575985815"
+            ]
+        ],
+        "timestamp": "2026-03-25T03:52:55.348112144",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

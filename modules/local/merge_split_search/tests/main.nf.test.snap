@@ -1,0 +1,45 @@
+{
+    "merge_split_search - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_sample"
+                    },
+                    "test_sample.pepXML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_sample"
+                    },
+                    "test_sample.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                "I_AGREE_FRAGPIPE_LICENSE_AGREEMENT:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ]
+        ],
+        "timestamp": "2026-03-25T03:49:26.146133036",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "merge_split_search - integration with mock data": {
+        "content": [
+            [
+                
+            ],
+            [
+                
+            ]
+        ],
+        "timestamp": "2026-03-25T17:04:22.173940284",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

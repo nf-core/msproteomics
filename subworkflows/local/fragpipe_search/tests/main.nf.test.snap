@@ -1,0 +1,290 @@
+{
+    "fragpipe_search - stub with split database search (num_slices=2)": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "sample_A"
+                    },
+                    "sample_A.pepXML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                [
+                    {
+                        "id": "sample_B"
+                    },
+                    "sample_B.pepXML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "sample_A"
+                    },
+                    "sample_A.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                [
+                    {
+                        "id": "sample_B"
+                    },
+                    "sample_B.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "sample_A"
+                    },
+                    "sample_A.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                [
+                    {
+                        "id": "sample_B"
+                    },
+                    "sample_B.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                
+            ],
+            [
+                
+            ],
+            [
+                
+            ]
+        ],
+        "timestamp": "2026-03-25T03:56:34.735472328",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "fragpipe_search - stub with msfragger only": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_search"
+                    },
+                    "test.pepXML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_search"
+                    },
+                    "test.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_search"
+                    },
+                    "test.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_search"
+                    },
+                    "test_scores_histogram.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_search"
+                    },
+                    [
+                        "msfragger.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test.pepXML:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test.pin:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test_scores_histogram.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                
+            ]
+        ],
+        "timestamp": "2026-03-25T03:55:59.613539076",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "fragpipe_search - stub with crystalc": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_search_cc"
+                    },
+                    "test_c.pepXML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_search_cc"
+                    },
+                    "test.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_search_cc"
+                    },
+                    "test.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_search_cc"
+                    },
+                    "test_scores_histogram.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_search_cc"
+                    },
+                    [
+                        "msfragger.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test.pepXML:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test.pin:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test_scores_histogram.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                
+            ]
+        ],
+        "timestamp": "2026-03-25T03:56:16.852350641",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "fragpipe_search - stub with all tools": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_search_all"
+                    },
+                    "test_c.pepXML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_search_all"
+                    },
+                    "test.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_search_all"
+                    },
+                    "test.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_search_all"
+                    },
+                    "test_scores_histogram.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_search_all"
+                    },
+                    [
+                        "msfragger.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test.pepXML:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test.pin:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test_scores_histogram.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                
+            ]
+        ],
+        "timestamp": "2026-03-25T03:56:25.369263512",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "fragpipe_search - stub with msbooster": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_search_boost"
+                    },
+                    "test.pepXML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_search_boost"
+                    },
+                    "test.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_search_boost"
+                    },
+                    "test.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_search_boost"
+                    },
+                    "test_scores_histogram.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_search_boost"
+                    },
+                    [
+                        "msfragger.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test.pepXML:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test.pin:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test_scores_histogram.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                
+            ]
+        ],
+        "timestamp": "2026-03-25T03:56:08.132272016",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

@@ -1,0 +1,124 @@
+nextflow_process {
+
+    name "Test Process PTMSHEPHERD"
+    script "../main.nf"
+    process "PTMSHEPHERD"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "ptmshepherd"
+
+    test("ptmshepherd - stub") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def psm_dir = file("\${workDir}/sample1")
+                psm_dir.mkdirs()
+                def psm_file = file("\${workDir}/sample1/psm.tsv")
+                psm_file.text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
+                def protxml_file = file("\${workDir}/combined.prot.xml")
+                protxml_file.text = "<?xml version='1.0'?><protein_summary></protein_summary>"
+                def mzml_file = file("\${workDir}/test.mzML")
+                mzml_file.text = "mock"
+                def config_file = file("\${workDir}/ptms_input.config")
+                config_file.text = "histo_bindivs = 5000\\nhisto_smoothbins = 2\\nprecursor_tol = 0.01\\nspectra_ppmtol = 20\\nlocalization_background = 4\\noutput_extended = false"
+
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">sp|P00000|TEST_HUMAN Test protein\\nMKWVTFISLLLFSSAYSRGVFRRDTHKSEIAHR"
+
+                input[0] = channel.of([
+                    [ id: 'test_shepherd' ],
+                    [ psm_dir ],
+                    protxml_file,
+                    [ mzml_file ],
+                    config_file
+                ])
+                input[1] = channel.value(fasta_file)
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(
+                    process.out.results_dir,
+                    process.out.global_profile,
+                    process.out.global_modsummary,
+                    process.out.diagmine,
+                    process.out.localization,
+                    process.out.glycoprofile
+                ).match() }
+            )
+        }
+    }
+
+    test("ptmshepherd - integration with test data") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                // Use real PSM data from test-datasets directly (PSMs already reference
+                // tmt_erwinia_subset as the spectrum file basename)
+                def psm_dir = file("\${workDir}/sample1")
+                psm_dir.mkdirs()
+                def remote_psm = file("\${params.pipelines_testdata_base_path}/module_inputs/psm.tsv", checkIfExists: true)
+                def psm_file = file("\${workDir}/sample1/psm.tsv")
+                psm_file.text = remote_psm.text
+                def protxml_file = file("\${workDir}/combined.prot.xml")
+                protxml_file.text = "<?xml version='1.0'?><protein_summary></protein_summary>"
+                // mzML and FASTA are large files — keep remote
+                def mzml_file = file("\${params.pipelines_testdata_base_path}/spectra/tmt_erwinia_subset.mzML", checkIfExists: true)
+                // Create PTM-Shepherd config inline (named ptms_input.config to avoid
+                // collision with the output shepherd.config that the module creates)
+                def config_file = file("\${workDir}/ptms_input.config")
+                config_file.text = "histo_bindivs = 5000\\n" +
+                    "histo_smoothbins = 2\\n" +
+                    "precursor_tol = 0.01\\n" +
+                    "spectra_ppmtol = 20\\n" +
+                    "localization_background = 4\\n" +
+                    "output_extended = false\\n" +
+                    "mass_offsets = 0\\n" +
+                    "isotope_error = 0\\n" +
+                    "precursor_mass_units = 0\\n" +
+                    "run_glyco_mode = false\\n" +
+                    "cap_y_ions = 0\\n" +
+                    "oxonium_filtering = false\\n" +
+                    "msfragger_massdiff_to_varmod = 0\\n" +
+                    "annotation_tol = 0.01\\n" +
+                    "peakpicking_promRatio = 100.0\\n" +
+                    "peakpicking_width = 0.001"
+
+                def fasta_file = file("\${params.pipelines_testdata_base_path}/databases/erwinia_carotovora.fasta", checkIfExists: true)
+
+                input[0] = channel.of([
+                    [ id: 'ptmshepherd_test' ],
+                    [ psm_dir ],
+                    protxml_file,
+                    [ mzml_file ],
+                    config_file
+                ])
+                input[1] = channel.value(fasta_file)
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(
+                    process.out.results_dir,
+                    process.out.global_profile,
+                    process.out.global_modsummary,
+                    process.out.diagmine,
+                    process.out.localization,
+                    process.out.glycoprofile
+                ).match() }
+            )
+        }
+    }
+}

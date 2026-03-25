@@ -1,0 +1,59 @@
+nextflow_workflow {
+
+    name "Test Subworkflow FRAGPIPE_DATABASE"
+    script "../main.nf"
+    workflow "FRAGPIPE_DATABASE"
+    config "./test.config"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "fragpipe_database"
+
+    test("fragpipe_database - stub") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            workflow {
+                """
+                def fasta = file("\${workDir}/test.fasta")
+                fasta.text = ">PROT1\\nMKFLVLPEPTIDEK"
+
+                ch_fasta = channel.of([ [ id:'database' ], fasta ])
+
+                input[0] = ch_fasta
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out.fasta, workflow.out.fasta_path).match() }
+            )
+        }
+    }
+
+    test("fragpipe_database - integration") {
+        tag "integration"
+
+        when {
+            workflow {
+                """
+                def fasta = file("\${params.pipelines_testdata_base_path}/databases/erwinia_carotovora.fasta", checkIfExists: true)
+
+                ch_fasta = channel.of([ [ id:'erwinia_db' ], fasta ])
+
+                input[0] = ch_fasta
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out.fasta, workflow.out.fasta_path).match() }
+            )
+        }
+    }
+}

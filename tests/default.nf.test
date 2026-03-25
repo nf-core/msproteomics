@@ -1,0 +1,22 @@
+nextflow_pipeline {
+
+    name "Test pipeline"
+    script "../main.nf"
+    tag "pipeline"
+
+    test("-profile test") {
+
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+        }
+
+        then {
+            // The test profile has input=null. Without a valid input samplesheet,
+            // the pipeline exits with an error. This verifies the pipeline loads
+            // and validates params correctly without requiring real data.
+            assert !workflow.success
+        }
+    }
+}

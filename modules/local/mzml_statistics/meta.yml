@@ -1,0 +1,42 @@
+name: mzml_statistics
+description: A module for mzML statistics
+keywords:
+  - mzML
+  - statistics
+tools:
+  - custom:
+      description: |
+        A custom module for mzML statistics.
+      homepage: https://github.com/bigbio/quantms
+      documentation: https://github.com/bigbio/quantms/tree/readthedocs
+input:
+  - meta:
+      type: map
+      description: Groovy Map containing sample information
+  - ms_file:
+      type: file
+      description: Spectra file in mzML format
+      pattern: "*.mzML"
+output:
+  - ms_statistics:
+      type: file
+      description: MS statistics file
+      pattern: "*_ms_info.parquet"
+  - ms2_statistics:
+      type: tuple
+      description: Tuple of meta map and MS2 statistics file (optional)
+      pattern: "*_ms2_info.parquet"
+  - feature_statistics:
+      type: file
+      description: Feature detection statistics file (optional)
+      pattern: "*_feature_info.parquet"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+  - log:
+      type: file
+      description: Log file from mzML statistics computation
+      pattern: "*.log"
+authors:
+  - "@wanghong"

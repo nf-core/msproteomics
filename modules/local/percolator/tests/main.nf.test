@@ -1,0 +1,88 @@
+nextflow_process {
+
+    name "Test Process PERCOLATOR"
+    script "../main.nf"
+    process "PERCOLATOR"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "percolator"
+
+    test("percolator - stub") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def pin_file = file("\${workDir}/test.pin")
+                def pepxml_file = file("\${workDir}/test.pepXML")
+                def mzml_file = file("\${workDir}/test.mzML")
+                pin_file.text = "mock"
+                pepxml_file.text = "mock"
+                mzml_file.text = "mock"
+                // percolator_cli: Full CLI flags for Percolator
+                // --only-psms: Only report PSM-level results
+                // --no-terminate: Run all iterations
+                // --post-processing-tdc: Use target-decoy competition for FDR
+                def percolator_cli = "--only-psms --no-terminate --post-processing-tdc"
+
+                // Single tuple input: [meta, pin, pepxml, mzml, percolator_cli]
+                input[0] = channel.of([
+                    [ id: 'test_sample', data_type: 'DDA' ],
+                    pin_file, pepxml_file, mzml_file, percolator_cli
+                ])
+                input[1] = 'DDA'
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(
+                    process.out.results_dir,
+                    process.out.pepxml,
+                    process.out.target_psms,
+                    process.out.decoy_psms
+                ).match() }
+            )
+        }
+    }
+
+    test("percolator - from pre-computed data") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                // Use pre-computed files from test-datasets (real MSFragger output)
+                def pin_file = file("\${params.pipelines_testdata_base_path}/module_inputs/tmt_erwinia_subset.pin", checkIfExists: true)
+                def pepxml_file = file("\${params.pipelines_testdata_base_path}/module_inputs/tmt_erwinia_subset_msfragger.pepXML", checkIfExists: true)
+                def mzml_file = file("\${params.pipelines_testdata_base_path}/spectra/tmt_erwinia_subset.mzML", checkIfExists: true)
+                // percolator_cli: Full CLI flags for Percolator (matching FragPipe expert workflow)
+                // --trainFDR 0.5 --testFDR 0.5: relaxed for small test data (default 0.01 fails with few PSMs)
+                def percolator_cli = "--only-psms --no-terminate --post-processing-tdc --trainFDR 0.5 --testFDR 0.5"
+                // Single tuple input: [meta, pin, pepxml, mzml, percolator_cli]
+                input[0] = channel.of([
+                    [ id: 'tmt_erwinia_subset', data_type: 'DDA' ],
+                    pin_file, pepxml_file, mzml_file, percolator_cli
+                ])
+                input[1] = 'DDA'
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(
+                    process.out.results_dir,
+                    process.out.pepxml,
+                    process.out.target_psms,
+                    process.out.decoy_psms
+                ).match() }
+            )
+        }
+    }
+}

@@ -1,0 +1,35 @@
+{
+    "msfragger_index - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_index"
+                    },
+                    "test.fasta:md5,46d8768981a438ed5d7b8f0937b811f6",
+                    "test.fasta.pepindex:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                "I_AGREE_FRAGPIPE_LICENSE_AGREEMENT:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ]
+        ],
+        "timestamp": "2026-03-25T03:49:55.745336138",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "msfragger_index - integration builds pepindex from FASTA": {
+        "content": [
+            [
+                
+            ]
+        ],
+        "timestamp": "2026-03-25T17:05:55.631057564",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

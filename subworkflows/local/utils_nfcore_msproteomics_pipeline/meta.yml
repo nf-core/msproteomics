@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "pipeline_initialisation"
+description: Pipeline-specific utility subworkflow for nf-core/msproteomics
+keywords:
+  - utility
+  - pipeline
+  - nf-core
+components:
+  - utils_nfschema_plugin
+  - utils_nfcore_pipeline
+  - utils_nextflow_pipeline
+  - paramssummarymap
+  - samplesheettolist
+  - completionemail
+  - completionsummary
+  - imnotification
+authors:
+  - "@nf-core"
+input:
+  - ch_versions:
+      type: channel
+      description: Channel of software versions
+output:
+  - versions:
+      type: channel
+      description: Collected software versions

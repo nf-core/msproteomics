@@ -1,0 +1,42 @@
+{
+    "split_fasta - integration with real FASTA": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_split_integration"
+                    },
+                    [
+                        "erwinia_carotovora.fasta:md5,7ad67c87f42f91b24a6f4d9535186a0d",
+                        "erwinia_carotovora.fasta:md5,6b85c163042a93ccc9df7ae69258bba9"
+                    ]
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-25T17:10:28.989139516",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "split_fasta - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_split"
+                    },
+                    [
+                        "test.fasta:md5,b4d80b85eb9fd17330830cc8d82140e8",
+                        "test.fasta:md5,d3946bf763aa3b30c11f8e4a6a9c14a8"
+                    ]
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-25T03:52:14.331704105",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

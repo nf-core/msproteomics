@@ -1,0 +1,59 @@
+nextflow_process {
+    name "Test Process FPOP"
+    script "../main.nf"
+    process "FPOP"
+    tag "modules"
+    tag "fpop"
+
+    test("fpop - stub") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def input_file = file("\${workDir}/combined_modified_peptide.tsv")
+                input_file.text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
+                def secondary_file = file("\${workDir}/NO_FILE")
+                secondary_file.text = ""
+                def config_cli = "REGION_SIZE='50'; CONTROL_LABEL='control'; FPOP_LABEL='fpop'; SUBTRACT_CONTROL='true'; IS_TMT='false'"
+                input[0] = channel.of([[ id: 'test_fpop' ], input_file, secondary_file, config_cli])
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert process.out.results_dir.size() == 1 },
+                { assert path(process.out.results_dir.get(0).get(1)).exists() }
+            )
+        }
+    }
+
+    test("fpop - stub with TMT mode") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def input_file = file("\${workDir}/abundance_multi-site_None.tsv")
+                input_file.text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
+                def secondary_file = file("\${workDir}/abundance_gene_None.tsv")
+                secondary_file.text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
+                def config_cli = "REGION_SIZE='50'; CONTROL_LABEL='control'; FPOP_LABEL='fpop'; SUBTRACT_CONTROL='true'; IS_TMT='true'"
+                input[0] = channel.of([[ id: 'test_fpop_tmt' ], input_file, secondary_file, config_cli])
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert process.out.results_dir.size() == 1 },
+                { assert path(process.out.results_dir.get(0).get(1)).exists() }
+            )
+        }
+    }
+}

@@ -1,0 +1,64 @@
+nextflow_process {
+
+    name "Test Process SPLIT_FASTA"
+    script "../main.nf"
+    process "SPLIT_FASTA"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "split_fasta"
+
+    test("split_fasta - stub") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">PROT1\\nPEPTIDEK"
+
+                input[0] = channel.of([
+                    [ id: 'test_split' ],
+                    fasta_file
+                ])
+                input[1] = 2
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(process.out.fasta_chunks).match() }
+            )
+        }
+    }
+
+    test("split_fasta - integration with real FASTA") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                def fasta_file = file("\${params.pipelines_testdata_base_path}/databases/erwinia_carotovora.fasta", checkIfExists: true)
+
+                input[0] = channel.of([
+                    [ id: 'test_split_integration' ],
+                    fasta_file
+                ])
+                input[1] = 2
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert process.out.fasta_chunks.size() == 1 },
+                { assert process.out.fasta_chunks.get(0)[1].size() == 2 },
+                { assert snapshot(process.out.fasta_chunks).match() }
+            )
+        }
+    }
+}

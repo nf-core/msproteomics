@@ -1,0 +1,82 @@
+{
+    "fragpipe_speclib - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "speclib"
+                    },
+                    "library.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "speclib"
+                    },
+                    "library.speclib:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                
+            ],
+            [
+                [
+                    {
+                        "id": "speclib"
+                    },
+                    [
+                        "library.speclib:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "library.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "speclibgen.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-25T03:56:41.131386973",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "fragpipe_speclib - stub single sample": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "single_speclib"
+                    },
+                    "library.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "single_speclib"
+                    },
+                    "library.speclib:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                
+            ],
+            [
+                [
+                    {
+                        "id": "single_speclib"
+                    },
+                    [
+                        "library.speclib:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "library.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "speclibgen.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-25T03:56:47.222331487",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

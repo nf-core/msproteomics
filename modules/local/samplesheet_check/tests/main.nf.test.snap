@@ -1,0 +1,17 @@
+{
+    "samplesheet_check - stub": {
+        "content": [
+            [
+                "input_check.log:md5,1ad239c94b4b8739c6acd1bb40b24990"
+            ],
+            [
+                "test_sdrf.tsv:md5,7f4670d97b6647a4c13e13d263da6d45"
+            ]
+        ],
+        "timestamp": "2026-03-25T03:51:51.424850047",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

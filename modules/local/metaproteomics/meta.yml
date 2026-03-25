@@ -1,0 +1,90 @@
+name: "metaproteomics"
+description: Metaproteomics database optimization and taxonomy analysis
+keywords:
+  - proteomics
+  - mass spectrometry
+  - metaproteomics
+  - taxonomy
+  - database optimization
+  - microbiome
+tools:
+  - metaproteomics:
+      description: |
+        The Metaproteomics module performs database optimization for metaproteomics
+        workflows using the DbOptimizer tool. It analyzes FragPipe search results
+        to identify taxonomic composition and generates an optimized FASTA database
+        by filtering proteins based on taxonomic assignments. This enables iterative
+        refinement of the search database for improved metaproteomics analysis.
+      homepage: "https://fragpipe.nesvilab.org/"
+      documentation: "https://fragpipe.nesvilab.org/docs/tutorial_metaproteomics.html"
+      tool_dev_url: "https://github.com/Nesvilab/FragPipe"
+      licence: ["Academic"]
+
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample information
+    - project_dir:
+        type: directory
+        description: Directory containing FragPipe results for taxonomy analysis
+    - config_cli:
+        type: string
+        description: |
+          Metaproteomics parameters as CLI string
+          (e.g., --decoyTag rev_ --qvalue 0.01 --iterations 2)
+  - - fasta:
+        type: file
+        description: Protein sequence database in FASTA format
+        pattern: "*.{fasta,fas,fa}"
+  - - taxon_name_file:
+        type: file
+        description: NCBI taxonomy names.dmp file
+        pattern: "names.dmp"
+  - - taxon_node_file:
+        type: file
+        description: NCBI taxonomy nodes.dmp file
+        pattern: "nodes.dmp"
+
+output:
+  results_dir:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}":
+          type: directory
+          description: Directory containing metaproteomics results and log
+          pattern: "${prefix}"
+  optimized_fasta:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/*_optimized.fasta":
+          type: file
+          description: Optimized FASTA database filtered by taxonomic analysis
+          pattern: "*_optimized.fasta"
+  taxonomy_results:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/*_taxonomy*.tsv":
+          type: file
+          description: Taxonomy analysis results
+          pattern: "*_taxonomy*.tsv"
+  results:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/*_metaproteomics*.tsv":
+          type: file
+          description: Metaproteomics analysis results
+          pattern: "*_metaproteomics*.tsv"
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

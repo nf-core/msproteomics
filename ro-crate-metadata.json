@@ -1,0 +1,311 @@
+{
+    "@context": [
+        "https://w3id.org/ro/crate/1.1/context",
+        {
+            "GithubService": "https://w3id.org/ro/terms/test#GithubService",
+            "JenkinsService": "https://w3id.org/ro/terms/test#JenkinsService",
+            "PlanemoEngine": "https://w3id.org/ro/terms/test#PlanemoEngine",
+            "TestDefinition": "https://w3id.org/ro/terms/test#TestDefinition",
+            "TestInstance": "https://w3id.org/ro/terms/test#TestInstance",
+            "TestService": "https://w3id.org/ro/terms/test#TestService",
+            "TestSuite": "https://w3id.org/ro/terms/test#TestSuite",
+            "TravisService": "https://w3id.org/ro/terms/test#TravisService",
+            "definition": "https://w3id.org/ro/terms/test#definition",
+            "engineVersion": "https://w3id.org/ro/terms/test#engineVersion",
+            "instance": "https://w3id.org/ro/terms/test#instance",
+            "resource": "https://w3id.org/ro/terms/test#resource",
+            "runsOn": "https://w3id.org/ro/terms/test#runsOn"
+        }
+    ],
+    "@graph": [
+        {
+            "@id": "./",
+            "@type": "Dataset",
+            "creativeWorkStatus": "InProgress",
+            "datePublished": "2026-03-22T02:20:14+00:00",
+            "description": "<h1>\n  <picture>\n    <source media=\"(prefers-color-scheme: dark)\" srcset=\"docs/images/nf-core-msproteomics_logo_dark.png\">\n    <img alt=\"nf-core/msproteomics\" src=\"docs/images/nf-core-msproteomics_logo_light.png\">\n  </picture>\n</h1>\n\n[![Open in GitHub Codespaces](https://img.shields.io/badge/Open_In_GitHub_Codespaces-black?labelColor=grey&logo=github)](https://github.com/codespaces/new/nf-core/msproteomics)\n[![GitHub Actions CI Status](https://github.com/nf-core/msproteomics/actions/workflows/nf-test.yml/badge.svg)](https://github.com/nf-core/msproteomics/actions/workflows/nf-test.yml)\n[![GitHub Actions Linting Status](https://github.com/nf-core/msproteomics/actions/workflows/linting.yml/badge.svg)](https://github.com/nf-core/msproteomics/actions/workflows/linting.yml)[![AWS CI](https://img.shields.io/badge/CI%20tests-full%20size-FF9900?labelColor=000000&logo=Amazon%20AWS)](https://nf-co.re/msproteomics/results)\n[![nf-test](https://img.shields.io/badge/unit_tests-nf--test-337ab7.svg)](https://www.nf-test.com)\n\n[![Nextflow](https://img.shields.io/badge/version-%E2%89%A525.04.0-green?style=flat&logo=nextflow&logoColor=white&color=%230DC09D&link=https%3A%2F%2Fnextflow.io)](https://www.nextflow.io/)\n[![nf-core template version](https://img.shields.io/badge/nf--core_template-3.5.2-green?style=flat&logo=nfcore&logoColor=white&color=%2324B064&link=https%3A%2F%2Fnf-co.re)](https://github.com/nf-core/tools/releases/tag/3.5.2)\n[![run with conda](http://img.shields.io/badge/run%20with-conda-3EB049?labelColor=000000&logo=anaconda)](https://docs.conda.io/en/latest/)\n[![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/)\n[![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/)\n[![Launch on Seqera Platform](https://img.shields.io/badge/Launch%20%F0%9F%9A%80-Seqera%20Platform-%234256e7)](https://cloud.seqera.io/launch?pipeline=https://github.com/nf-core/msproteomics)\n\n[![Get help on Slack](http://img.shields.io/badge/slack-nf--core%20%23msproteomics-4A154B?labelColor=000000&logo=slack)](https://nfcore.slack.com/channels/msproteomics)[![Follow on Bluesky](https://img.shields.io/badge/bluesky-%40nf__core-1185fe?labelColor=000000&logo=bluesky)](https://bsky.app/profile/nf-co.re)[![Follow on Mastodon](https://img.shields.io/badge/mastodon-nf__core-6364ff?labelColor=FFFFFF&logo=mastodon)](https://mstdn.science/@nf_core)[![Watch on YouTube](http://img.shields.io/badge/youtube-nf--core-FF0000?labelColor=000000&logo=youtube)](https://www.youtube.com/c/nf-core)\n\n## Introduction\n\n**nf-core/msproteomics** is a bioinformatics pipeline for mass spectrometry-based proteomics preprocessing.\nIt accepts raw instrument data with a CSV samplesheet and produces quantified protein/peptide/ion matrices ready for downstream statistical analysis.\nThe pipeline supports multiple acquisition strategies through dedicated workflow types:\n\n- **DIA** (Data-Independent Acquisition) -- analyzed with [DIA-NN](https://github.com/vdemichev/DiaNN), with optional MSstats and MaxLFQ quantification\n- **DDA LFQ** (Data-Dependent Acquisition, Label-Free Quantification) -- analyzed with the [FragPipe](https://fragpipe.nesvilab.org/) computational platform (MSFragger, MSBooster, Percolator, IonQuant)\n- **TMT Label Check** -- TMT labeling efficiency QC using FragPipe search followed by label incorporation analysis\n- **Generic FragPipe** -- fully configurable FragPipe workflows driven by `.workflow` files\n\nInstrument-specific settings are applied via optional config files (`-c conf/instruments/*.config`).\n\n## Analysis Modes\n\nThe `--mode` parameter selects the analysis engine.\nFragPipe sub-modes are controlled with `--tmt_mode` for TMT workflows.\n\n| Mode | Sub-mode | Description | Engine |\n| --- | --- | --- | --- |\n| `diann` | -- | DIA quantitative proteomics (standard, phospho) | [DIA-NN](https://github.com/vdemichev/DiaNN) |\n| `fragpipe` | *(none)* | Generic FragPipe workflows, configured by [workflow files](https://github.com/Nesvilab/FragPipe/tree/develop/workflows) | [FragPipe](https://fragpipe.nesvilab.org/) |\n| `fragpipe` | `--tmt_mode labelcheck` | TMT labeling efficiency QC | [FragPipe](https://fragpipe.nesvilab.org/) |\n| `fragpipe` | `--tmt_mode quant` | TMT isobaric quantification | [FragPipe](https://fragpipe.nesvilab.org/) |\n\nDIA method variants (phospho) and instrument-specific settings are applied via `-c` config files.\nSee [docs/usage.md](docs/usage.md) for full details.\n\n## Usage\n\n> [!NOTE]\n> If you are new to Nextflow and nf-core, please refer to [this page](https://nf-co.re/docs/usage/installation) on how to set-up Nextflow.\n> Make sure to [test your setup](https://nf-co.re/docs/usage/introduction#how-to-run-a-pipeline) with `-profile test` before running the workflow on actual data.\n\nFirst, prepare a CSV samplesheet describing your samples:\n\n```csv\nsample,spectra\nSample1,/path/to/sample1.raw\nSample2,/path/to/sample2.raw\nSample3,/path/to/sample3.raw\n```\n\nOptional columns: `condition` (experimental group), `label` (TMT channel, e.g. TMT126), `fraction` (fraction number). If present, these are parsed automatically.\n\nThen run the pipeline:\n\n```bash\n# DIA analysis\nnextflow run nf-core/msproteomics \\\n  --mode diann \\\n  --input samplesheet.csv \\\n  --database /path/to/database.fasta \\\n  --outdir results \\\n  -profile docker\n\n# FragPipe DDA LFQ analysis\nnextflow run nf-core/msproteomics \\\n  --mode fragpipe \\\n  --fragpipe_workflow LFQ-MBR.workflow \\\n  --input samplesheet.csv \\\n  --database /path/to/uniprot_human.fasta \\\n  --outdir results \\\n  -profile docker\n\n# TMT label check (TMT18 example — choose tmtlbl6/10/11/16/18/pro)\nnextflow run nf-core/msproteomics \\\n  --mode fragpipe \\\n  --tmt_mode labelcheck \\\n  --input samplesheet.csv \\\n  --database /path/to/uniprot_human.fasta \\\n  --outdir results \\\n  -c conf/tmt/tmt18.config \\\n  -profile docker\n\n# TMT quantification (TMT18 example)\nnextflow run nf-core/msproteomics \\\n  --mode fragpipe \\\n  --tmt_mode quant \\\n  --input samplesheet.csv \\\n  --database /path/to/uniprot_human.fasta \\\n  --outdir results \\\n  -c conf/tmt/tmt18.config \\\n  -profile docker\n```\n\n> [!WARNING]\n> Please provide pipeline parameters via the CLI or Nextflow `-params-file` option.\n> Custom config files including those provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_; see [docs](https://nf-co.re/docs/usage/getting_started/configuration#custom-configuration-files).\n\nFor more details and further functionality, please refer to the [usage documentation](docs/usage.md) and the [parameter documentation](https://nf-co.re/msproteomics/parameters).\n\n## Pipeline Output\n\nTo see the results of an example test run with a full size dataset refer to the [results](https://nf-co.re/msproteomics/results) tab on the nf-core website pipeline page.\nFor more details about the output files and reports, please refer to the [output documentation](docs/output.md).\n\n## FragPipe License\n\nFragPipe-based workflows (DDA LFQ, TMT Label Check, generic FragPipe) require a [FragPipe](https://fragpipe.nesvilab.org/) installation with a valid license.\nFragPipe is free for academic use; commercial users must obtain a license from the University of Michigan.\nYou must build or provide a Docker/Singularity container that includes FragPipe, MSFragger, IonQuant, and Philosopher under your own license terms.\n\n## Documentation\n\n- [Usage guide](docs/usage.md) -- full parameter reference and workflow examples\n- [Output documentation](docs/output.md) -- description of pipeline output files and reports\n- [Module documentation](docs/modules/README.md) -- per-module reference for all local modules\n- [Docker build instructions](docs/fragpipe-docker/README.md) -- building the FragPipe container image\n\n## Credits\n\nnf-core/msproteomics was originally written by Dongze He ([@dongzehe](https://github.com/dongzehe)).\n\nWe thank the following people for their extensive assistance in the development of this pipeline:\n\n- The [quantms](https://github.com/bigbio/quantms) team for the quantms-utils tools and DIA proteomics analysis subworkflow\n- The [Nesvizhskii Lab](https://nesvilab.org/) for the FragPipe computational platform\n- The [DIA-NN](https://github.com/vdemichev/DiaNN) developers\n- The [nf-core](https://nf-co.re) community\n\n## Contributions and Support\n\nIf you would like to contribute to this pipeline, please see the [contributing guidelines](.github/CONTRIBUTING.md).\n\nFor further information or help, don't hesitate to get in touch on the [Slack `#msproteomics` channel](https://nfcore.slack.com/channels/msproteomics) (you can join with [this invite](https://nf-co.re/join/slack)).\n\n## Citations\n\nIf you use nf-core/msproteomics for your analysis, please cite it using the nf-core publication.\n\nAn extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.\n\nYou can cite the `nf-core` publication as follows:\n\n> **The nf-core framework for community-curated bioinformatics pipelines.**\n>\n> Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.\n>\n> _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).\n",
+            "hasPart": [
+                {
+                    "@id": "main.nf"
+                },
+                {
+                    "@id": "assets/"
+                },
+                {
+                    "@id": "conf/"
+                },
+                {
+                    "@id": "docs/"
+                },
+                {
+                    "@id": "docs/images/"
+                },
+                {
+                    "@id": "modules/"
+                },
+                {
+                    "@id": "modules/nf-core/"
+                },
+                {
+                    "@id": "workflows/"
+                },
+                {
+                    "@id": "subworkflows/"
+                },
+                {
+                    "@id": "nextflow.config"
+                },
+                {
+                    "@id": "README.md"
+                },
+                {
+                    "@id": "nextflow_schema.json"
+                },
+                {
+                    "@id": "CHANGELOG.md"
+                },
+                {
+                    "@id": "LICENSE"
+                },
+                {
+                    "@id": "CODE_OF_CONDUCT.md"
+                },
+                {
+                    "@id": "CITATIONS.md"
+                },
+                {
+                    "@id": "modules.json"
+                },
+                {
+                    "@id": "docs/usage.md"
+                },
+                {
+                    "@id": "docs/output.md"
+                },
+                {
+                    "@id": ".nf-core.yml"
+                },
+                {
+                    "@id": ".pre-commit-config.yaml"
+                },
+                {
+                    "@id": ".prettierignore"
+                }
+            ],
+            "isBasedOn": "https://github.com/nf-core/msproteomics",
+            "license": "MIT",
+            "mainEntity": {
+                "@id": "main.nf"
+            },
+            "mentions": [
+                {
+                    "@id": "#480fb92b-db09-4bc8-b9d8-6dbc3a4277bc"
+                }
+            ],
+            "name": "nf-core/msproteomics"
+        },
+        {
+            "@id": "ro-crate-metadata.json",
+            "@type": "CreativeWork",
+            "about": {
+                "@id": "./"
+            },
+            "conformsTo": [
+                {
+                    "@id": "https://w3id.org/ro/crate/1.1"
+                },
+                {
+                    "@id": "https://w3id.org/workflowhub/workflow-ro-crate/1.0"
+                }
+            ]
+        },
+        {
+            "@id": "main.nf",
+            "@type": [
+                "File",
+                "SoftwareSourceCode",
+                "ComputationalWorkflow"
+            ],
+            "dateCreated": "",
+            "dateModified": "2026-03-22T02:20:14Z",
+            "dct:conformsTo": "https://bioschemas.org/profiles/ComputationalWorkflow/1.0-RELEASE/",
+            "keywords": [
+                "nf-core",
+                "nextflow"
+            ],
+            "license": [
+                "MIT"
+            ],
+            "name": [
+                "nf-core/msproteomics"
+            ],
+            "programmingLanguage": {
+                "@id": "https://w3id.org/workflowhub/workflow-ro-crate#nextflow"
+            },
+            "sdPublisher": {
+                "@id": "https://nf-co.re/"
+            },
+            "url": [
+                "https://github.com/nf-core/msproteomics",
+                "https://nf-co.re/msproteomics/dev/"
+            ],
+            "version": [
+                "1.0.0dev"
+            ]
+        },
+        {
+            "@id": "https://w3id.org/workflowhub/workflow-ro-crate#nextflow",
+            "@type": "ComputerLanguage",
+            "identifier": {
+                "@id": "https://www.nextflow.io/"
+            },
+            "name": "Nextflow",
+            "url": {
+                "@id": "https://www.nextflow.io/"
+            },
+            "version": "!>=25.04.0"
+        },
+        {
+            "@id": "#480fb92b-db09-4bc8-b9d8-6dbc3a4277bc",
+            "@type": "TestSuite",
+            "instance": [
+                {
+                    "@id": "#5bf44623-48fb-45c7-966b-856463b42fe9"
+                }
+            ],
+            "mainEntity": {
+                "@id": "main.nf"
+            },
+            "name": "Test suite for nf-core/msproteomics"
+        },
+        {
+            "@id": "#5bf44623-48fb-45c7-966b-856463b42fe9",
+            "@type": "TestInstance",
+            "name": "GitHub Actions workflow for testing nf-core/msproteomics",
+            "resource": "repos/nf-core/msproteomics/actions/workflows/nf-test.yml",
+            "runsOn": {
+                "@id": "https://w3id.org/ro/terms/test#GithubService"
+            },
+            "url": "https://api.github.com"
+        },
+        {
+            "@id": "https://w3id.org/ro/terms/test#GithubService",
+            "@type": "TestService",
+            "name": "Github Actions",
+            "url": {
+                "@id": "https://github.com"
+            }
+        },
+        {
+            "@id": "assets/",
+            "@type": "Dataset",
+            "description": "Additional files"
+        },
+        {
+            "@id": "conf/",
+            "@type": "Dataset",
+            "description": "Configuration files"
+        },
+        {
+            "@id": "docs/",
+            "@type": "Dataset",
+            "description": "Markdown files for documenting the pipeline"
+        },
+        {
+            "@id": "docs/images/",
+            "@type": "Dataset",
+            "description": "Images for the documentation files"
+        },
+        {
+            "@id": "modules/",
+            "@type": "Dataset",
+            "description": "Modules used by the pipeline"
+        },
+        {
+            "@id": "modules/nf-core/",
+            "@type": "Dataset",
+            "description": "nf-core modules"
+        },
+        {
+            "@id": "workflows/",
+            "@type": "Dataset",
+            "description": "Main pipeline workflows to be executed in main.nf"
+        },
+        {
+            "@id": "subworkflows/",
+            "@type": "Dataset",
+            "description": "Smaller subworkflows"
+        },
+        {
+            "@id": "nextflow.config",
+            "@type": "File",
+            "description": "Main Nextflow configuration file"
+        },
+        {
+            "@id": "README.md",
+            "@type": "File",
+            "description": "Basic pipeline usage information"
+        },
+        {
+            "@id": "nextflow_schema.json",
+            "@type": "File",
+            "description": "JSON schema for pipeline parameter specification"
+        },
+        {
+            "@id": "CHANGELOG.md",
+            "@type": "File",
+            "description": "Information on changes made to the pipeline"
+        },
+        {
+            "@id": "LICENSE",
+            "@type": "File",
+            "description": "The license - should be MIT"
+        },
+        {
+            "@id": "CODE_OF_CONDUCT.md",
+            "@type": "File",
+            "description": "The nf-core code of conduct"
+        },
+        {
+            "@id": "CITATIONS.md",
+            "@type": "File",
+            "description": "Citations needed when using the pipeline"
+        },
+        {
+            "@id": "modules.json",
+            "@type": "File",
+            "description": "Version information for modules from nf-core/modules"
+        },
+        {
+            "@id": "docs/usage.md",
+            "@type": "File",
+            "description": "Usage documentation"
+        },
+        {
+            "@id": "docs/output.md",
+            "@type": "File",
+            "description": "Output documentation"
+        },
+        {
+            "@id": ".nf-core.yml",
+            "@type": "File",
+            "description": "nf-core configuration file, configuring template features and linting rules"
+        },
+        {
+            "@id": ".pre-commit-config.yaml",
+            "@type": "File",
+            "description": "Configuration file for pre-commit hooks"
+        },
+        {
+            "@id": ".prettierignore",
+            "@type": "File",
+            "description": "Ignore file for prettier"
+        },
+        {
+            "@id": "https://nf-co.re/",
+            "@type": "Organization",
+            "name": "nf-core",
+            "url": "https://nf-co.re/"
+        }
+    ]
+}

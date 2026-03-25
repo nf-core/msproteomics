@@ -1,0 +1,85 @@
+{
+    "fpop - stub with TMT mode": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_fpop_tmt"
+                    },
+                    [
+                        "fpop.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_fpop_results.csv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_fpop_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_fpop_tmt"
+                    },
+                    "sample_fpop_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_fpop_tmt"
+                    },
+                    "sample_fpop_results.csv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-25T03:48:32.353054593",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "fpop_integration_versions": [
+        [
+            "execution_report_2026-03-24_10-31-07.html:md5,96297fc7ca93e63d348a5df2f78309e1",
+            "execution_timeline_2026-03-24_10-31-07.html:md5,47cd6201f7a8afda40291e3401d8fffd",
+            "execution_trace_2026-03-24_10-31-07.txt:md5,8ad4a81ac400f067841cbfb3f18e6889",
+            "execution_trace_2026-03-25_02-45-38.txt:md5,8ad4a81ac400f067841cbfb3f18e6889",
+            "pipeline_dag_2026-03-24_10-31-07.html:md5,2d3fd3acaa68ec0f9799c44ebb9ea2f9"
+        ]
+    ],
+    "fpop - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_fpop"
+                    },
+                    [
+                        "fpop.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_fpop_results.csv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_fpop_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_fpop"
+                    },
+                    "sample_fpop_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_fpop"
+                    },
+                    "sample_fpop_results.csv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-25T03:48:26.274466647",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

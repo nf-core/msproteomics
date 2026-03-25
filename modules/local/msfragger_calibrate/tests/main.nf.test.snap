@@ -1,0 +1,23 @@
+{
+    "msfragger_calibrate - stub": {
+        "content": [
+            [
+                [
+                    "sample1.mzBIN_calibrated:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "sample2.mzBIN_calibrated:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                "calibrated_fragger.params:md5,3d168693c365837984022bb7580d90ca"
+            ],
+            [
+                "I_AGREE_FRAGPIPE_LICENSE_AGREEMENT:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ]
+        ],
+        "timestamp": "2026-03-25T03:49:50.025393708",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

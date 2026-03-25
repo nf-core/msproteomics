@@ -1,0 +1,43 @@
+nextflow_process {
+
+    name "Test Process PMULTIQC"
+    script "../main.nf"
+    process "PMULTIQC"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "pmultiqc"
+
+    test("pmultiqc - stub") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            process {
+                """
+                def results_dir = file("\${workDir}/results")
+                results_dir.mkdirs()
+                def config_file = file("\${workDir}/results/multiqc_config.yml")
+                config_file.text = "mock"
+
+                def quantms_log = file("\${workDir}/quantms.log")
+                quantms_log.text = "mock"
+
+                input[0] = config_file
+                input[1] = quantms_log
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(
+                    process.out.ch_pmultiqc_report,
+                    process.out.ch_pmultiqc_db,
+                    process.out.data
+                ).match() }
+            )
+        }
+    }
+}

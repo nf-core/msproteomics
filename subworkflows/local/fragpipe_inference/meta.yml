@@ -1,0 +1,78 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "fragpipe_inference"
+description: Protein inference with ProteinProphet and per-sample FDR filtering with Philosopher Filter
+keywords:
+  - proteomics
+  - protein-inference
+  - fdr
+  - proteinprophet
+  - philosopher
+  - filtering
+components:
+  - proteinprophet
+  - philosopher/filter
+input:
+  - ch_pepxml:
+      type: channel
+      description: |
+        Validated pepXML files from all samples.
+        Structure: [ val(meta), path(pepxml) ]
+  - ch_fasta:
+      type: channel
+      description: |
+        Protein database FASTA as a value channel for broadcasting.
+        Structure: path(fasta)
+  - ch_tool_configs:
+      type: channel
+      description: |
+        Parsed JSON tool configuration map controlling ProteinProphet and Philosopher Filter.
+        Structure: val(tool_configs_map)
+  - aggregate_meta:
+      type: value
+      description: |
+        Metadata map for aggregate outputs (e.g., [id: 'fragpipe']).
+output:
+  - protxml:
+      type: channel
+      description: |
+        ProteinProphet combined protein inference XML file.
+        Structure: [ val(meta), path(combined.prot.xml) ]
+  - results_dir:
+      type: channel
+      description: |
+        Per-sample results directories from Philosopher Filter containing PSM, peptide, and protein tables.
+        Structure: [ val(meta), path(results_dir) ]
+  - psms:
+      type: channel
+      description: |
+        Per-sample PSM tables.
+        Structure: [ val(meta), path(psm.tsv) ]
+  - peptides:
+      type: channel
+      description: |
+        Per-sample peptide tables.
+        Structure: [ val(meta), path(peptide.tsv) ]
+  - proteins:
+      type: channel
+      description: |
+        Per-sample protein tables.
+        Structure: [ val(meta), path(protein.tsv) ]
+  - ions:
+      type: channel
+      description: |
+        Per-sample ion tables (optional).
+        Structure: [ val(meta), path(ion.tsv) ]
+  - pepxml:
+      type: channel
+      description: |
+        Passthrough pepXML files (ProteinProphet does not modify pepXML).
+        Structure: [ val(meta), path(pepxml) ]
+  - versions:
+      type: file
+      description: |
+        File containing software versions.
+        Structure: [ path(versions.yml) ]
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

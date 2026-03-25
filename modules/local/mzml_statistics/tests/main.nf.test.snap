@@ -1,0 +1,29 @@
+{
+    "mzml_statistics - stub": {
+        "content": [
+            [
+                "test_sample_ms_info.parquet:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ],
+            [
+                [
+                    {
+                        "id": "test",
+                        "mzml_id": "test_sample"
+                    },
+                    "test_sample_ms2_info.parquet:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                "test_sample_feature_info.parquet:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ],
+            [
+                "test_sample_mzml_statistics.log:md5,1ad239c94b4b8739c6acd1bb40b24990"
+            ]
+        ],
+        "timestamp": "2026-03-25T03:50:12.608257974",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

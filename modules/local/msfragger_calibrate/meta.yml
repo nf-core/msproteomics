@@ -1,0 +1,71 @@
+name: "msfragger_calibrate"
+description: Mass calibration and parameter optimization for split-database search using MSFragger
+keywords:
+  - proteomics
+  - mass spectrometry
+  - calibration
+  - msfragger
+  - split database
+tools:
+  - msfragger:
+      description: |
+        MSFragger calibration mode (--split1) performs mass calibration on all samples
+        against the full FASTA database, then optimizes search parameters
+        (fragment_mass_tolerance, etc.) for downstream split-database search.
+        Replicates calibrate() from FragPipe's msfragger_pep_split.py.
+      homepage: "https://msfragger.nesvilab.org/"
+      documentation: "https://github.com/Nesvilab/MSFragger/wiki"
+      tool_dev_url: "https://github.com/Nesvilab/MSFragger"
+      doi: "10.1038/nmeth.4256"
+      licence: ["Commercial"]
+      note: "License pre-installed in container"
+
+input:
+  - - fasta:
+        type: file
+        description: Protein sequence database
+        pattern: "*.{fasta,fas,fa}"
+  - - mzml_files:
+        type: file
+        description: ALL mass spectrometry data files collected (mzML format)
+        pattern: "*.{mzML}"
+  - - params_file:
+        type: file
+        description: |
+          MSFragger params file (native fragger.params format).
+          Used as the base configuration for calibration.
+        pattern: "*.params"
+  - - msfragger_dir:
+        type: directory
+        description: |
+          Unzipped MSFragger tool directory (optional). Pass [] when not using.
+          When provided, the MSFragger JAR and native libraries are discovered from this directory.
+
+output:
+  calibrated_spectra:
+    - "calibrated_spectra/*":
+        type: file
+        description: Calibrated spectra files (.mzBIN_calibrated) or original copies if calibration was not performed
+        pattern: "calibrated_spectra/*"
+  params:
+    - "calibrated_fragger.params":
+        type: file
+        description: |
+          Updated fragger.params with optimized tolerances, check_spectral_files=0,
+          and calibrate_mass=0 (calibration already performed).
+        pattern: "calibrated_fragger.params"
+  license_agreement:
+    - "I_AGREE_FRAGPIPE_LICENSE_AGREEMENT":
+        type: file
+        description: License agreement acknowledgment file
+        pattern: "I_AGREE_FRAGPIPE_LICENSE_AGREEMENT"
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions (msfragger, fragpipe)
+        pattern: "versions.yml"
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

@@ -1,0 +1,34 @@
+# Dockerfile.commercial — FragPipe container with commercial-licensed tools
+# Base: fcyucn/fragpipe:24.0 (open-source tools pre-installed)
+# Overlays FragPipePlus distribution (commercial MSFragger, IonQuant, DiaTracer, DIA-NN)
+#
+# Tools live at the base image's native path. Modules use inline discovery (find).
+# No wrappers, no symlinks.
+#
+# Build:
+#   export FRAGPIPEPLUS_ZIP=/path/to/FragPipePlus-24.0-linux.zip
+#   ./build_nfcore.sh commercial
+
+FROM fcyucn/fragpipe:24.0
+
+LABEL maintainer="nf-fragpipe"
+LABEL description="FragPipe 24.0 for Nextflow (commercial license, FragPipePlus)"
+
+ENV FP_BASE=/fragpipe_bin/fragpipe-24.0/fragpipe-24.0
+
+# Overlay FragPipePlus tools and libs over the base distribution
+COPY fragpipe/fragpipe-*/ /tmp/fp-plus/
+RUN cp -r /tmp/fp-plus/tools/* ${FP_BASE}/tools/ && \
+    cp -r /tmp/fp-plus/lib/* ${FP_BASE}/lib/ && \
+    rm -rf /tmp/fp-plus
+
+# Install commercial license to all locations where tools look for it
+COPY license.dat ${FP_BASE}/license.dat
+RUN cp ${FP_BASE}/license.dat ${FP_BASE}/tools/license.dat && \
+    MSFRAGGER_DIR=$(find ${FP_BASE}/tools -maxdepth 1 -type d -name 'MSFragger*' | head -1) && \
+    if [ -n "$MSFRAGGER_DIR" ]; then \
+        cp ${FP_BASE}/license.dat "$MSFRAGGER_DIR/license.dat"; \
+    fi && \
+    echo "Commercial license installed"
+
+WORKDIR /data

@@ -1,0 +1,68 @@
+name: "peptideprophet"
+description: Statistical validation of peptide assignments using PeptideProphet
+keywords:
+  - proteomics
+  - mass spectrometry
+  - FDR
+  - peptide validation
+  - probability
+tools:
+  - peptideprophet:
+      description: |
+        PeptideProphet is a statistical model for peptide assignment validation.
+        It computes probabilities for peptide-spectrum matches based on search
+        engine scores and assigns confidence levels to identifications.
+      homepage: "https://peptideprophet.sourceforge.net/"
+      documentation: "http://tools.proteomecenter.org/wiki/index.php?title=Software:PeptideProphet"
+      doi: "10.1021/ac025747h"
+      licence: ["GPL-2.0"]
+
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample information
+    - pepxml:
+        type: file
+        description: PepXML file from search engine
+        pattern: "*.pepXML"
+    - mzml:
+        type: file
+        description: mzML spectral file
+        pattern: "*.mzML"
+    - config_file:
+        type: file
+        description: |
+          PeptideProphet config file from PARSE_FRAGPIPE_WORKFLOW.
+          Format: peptideprophet=--flags (parsed in bash to extract flags).
+        pattern: "*.config"
+  - - fasta:
+        type: file
+        description: Protein sequence database
+        pattern: "*.{fasta,fas,fa}"
+
+output:
+  results_dir:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}":
+          type: directory
+          description: Directory containing PeptideProphet results and logs
+  pepxml:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/interact-*.pep.xml":
+          type: file
+          description: PepXML with probabilities
+          pattern: "interact-*.pep.xml"
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

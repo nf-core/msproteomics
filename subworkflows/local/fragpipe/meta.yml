@@ -1,0 +1,170 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "fragpipe_wf"
+description: General FragPipe orchestration subworkflow that composes all focused subworkflows into a complete proteomics analysis pipeline
+keywords:
+  - proteomics
+  - fragpipe
+  - mass-spectrometry
+  - database-search
+  - quantification
+  - pipeline
+components:
+  - parse/fragpipe/workflow
+  - shouldruntool
+  - fragpipe_database
+  - fragpipe_convert
+  - fragpipe_search
+  - fragpipe_validate
+  - fragpipe_inference
+  - fragpipe_ptm
+  - fragpipe_quant
+  - fragpipe_speclib
+  - fragpipe_glyco
+  - fragpipe_export
+input:
+  - ch_file:
+      type: channel
+      description: |
+        Sample files for analysis.
+        Structure: [ val(sample_meta), path(mzml/raw/d) ]
+  - ch_database:
+      type: channel
+      description: |
+        Protein database FASTA file (empty channel if prebuilt philosopher database provided).
+        Structure: [ val(meta), path(fasta) ]
+  - ch_workflow_file:
+      type: channel
+      description: |
+        FragPipe workflow file containing all tool parameters.
+        Structure: [ val(meta), path(workflow_file) ]
+  - ch_decoy_db:
+      type: channel
+      description: |
+        Prebuilt philosopher database with decoys (empty channel if not provided,
+        in which case FRAGPIPE_DATABASE will be run on ch_database).
+        Structure: [ val(meta), path(fasta) ]
+  - ch_annotation:
+      type: channel
+      description: |
+        Annotation file for TMT/IsoQuant quantification. Pass [] when not used.
+        Structure: path(annotation_file)
+  - ch_manifest:
+      type: channel
+      description: |
+        FragPipe manifest file for glycoproteomics workflows. Pass [] when not used.
+        Structure: path(manifest.fp-manifest)
+output:
+  - mzml:
+      type: channel
+      description: |
+        Converted spectra files (mzML or .d).
+        Structure: [ val(meta), path(mzml) ]
+  - pepxml:
+      type: channel
+      description: |
+        Search result pepXML files from FRAGPIPE_SEARCH.
+        Structure: [ val(meta), path(pepxml) ]
+  - pin:
+      type: channel
+      description: |
+        Percolator input (PIN) files from FRAGPIPE_SEARCH.
+        Structure: [ val(meta), path(pin) ]
+  - validated_pepxml:
+      type: channel
+      description: |
+        Validated pepXML files from FRAGPIPE_VALIDATE.
+        Structure: [ val(meta), path(pepxml) ]
+  - protxml:
+      type: channel
+      description: |
+        ProteinProphet combined protein inference XML.
+        Structure: [ val(meta), path(combined.prot.xml) ]
+  - psms:
+      type: channel
+      description: |
+        Per-sample PSM tables from Philosopher Filter.
+        Structure: [ val(meta), path(psm.tsv) ]
+  - peptides:
+      type: channel
+      description: |
+        Per-sample peptide tables from Philosopher Filter.
+        Structure: [ val(meta), path(peptide.tsv) ]
+  - proteins:
+      type: channel
+      description: |
+        Per-sample protein tables from Philosopher Filter.
+        Structure: [ val(meta), path(protein.tsv) ]
+  - results_dir:
+      type: channel
+      description: |
+        Per-sample results directories from Philosopher Filter.
+        Structure: [ val(meta), path(results_dir) ]
+  - combined_protein:
+      type: channel
+      description: |
+        Combined protein quantification table from IonQuant.
+        Structure: [ val(meta), path(combined_protein.tsv) ]
+  - combined_peptide:
+      type: channel
+      description: |
+        Combined peptide quantification table from IonQuant.
+        Structure: [ val(meta), path(combined_peptide.tsv) ]
+  - combined_ion:
+      type: channel
+      description: |
+        Combined ion quantification table from IonQuant.
+        Structure: [ val(meta), path(combined_ion.tsv) ]
+  - ionquant_dir:
+      type: channel
+      description: |
+        IonQuant results directory.
+        Structure: [ val(meta), path(results_dir) ]
+  - tmt_abundance:
+      type: channel
+      description: |
+        TMT abundance tables from TMTIntegrator.
+        Structure: [ val(meta), path(abundance_*.tsv) ]
+  - tmt_dir:
+      type: channel
+      description: |
+        TMTIntegrator results directory.
+        Structure: [ val(meta), path(tmt-report) ]
+  - ptm_results:
+      type: channel
+      description: |
+        PTMShepherd results directory.
+        Structure: [ val(meta), path(results_dir) ]
+  - speclib:
+      type: channel
+      description: |
+        Generated spectral library from SPECLIBGEN.
+        Structure: [ val(meta), path(library.speclib) ]
+  - mbg_results:
+      type: channel
+      description: |
+        Mass-based glycoproteomics results from MBG.
+        Structure: [ val(meta), path(*_mbg*.tsv) ]
+  - opair_results:
+      type: channel
+      description: |
+        O-glycoproteomics results from OPair.
+        Structure: [ val(meta), path(*_opair_results.tsv) ]
+  - skyline_doc:
+      type: channel
+      description: |
+        Skyline document for visualization.
+        Structure: [ val(meta), path(fragpipe.sky) ]
+  - taxonomy_results:
+      type: channel
+      description: |
+        Metaproteomics taxonomy assignment results.
+        Structure: [ val(meta), path(results_dir) ]
+  - versions:
+      type: file
+      description: |
+        File containing software versions.
+        Structure: [ path(versions.yml) ]
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

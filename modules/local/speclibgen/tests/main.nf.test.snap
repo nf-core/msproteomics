@@ -1,0 +1,73 @@
+{
+    "speclibgen - integration with test data": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "speclibgen_test"
+                    },
+                    [
+                        "easypqp_rt_alignment_tmt_erwinia_subset.alignment_pkl:md5,8eca0a0358ebb795e566f0286332fca9",
+                        "easypqp_rt_alignment_tmt_erwinia_subset.pdf:md5,f2eb510c6106340263ce092568caa3c1",
+                        "easypqp_rt_reference_run.tsv:md5,c4465c2b3f63a73a766e77a3aa1e4382",
+                        "irt.tsv:md5,c9378f314ee8f0fc402c6a52d64fc43f"
+                    ]
+                ]
+            ],
+            [
+                
+            ],
+            [
+                
+            ],
+            [
+                
+            ]
+        ],
+        "timestamp": "2026-03-25T17:10:20.449282559",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "speclibgen - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_speclibgen"
+                    },
+                    [
+                        "library.speclib:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "library.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "speclibgen.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_speclibgen"
+                    },
+                    "library.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_speclibgen"
+                    },
+                    "library.speclib:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                
+            ]
+        ],
+        "timestamp": "2026-03-25T03:52:08.57876899",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

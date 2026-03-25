@@ -1,0 +1,64 @@
+{
+    "msbooster - from pre-computed pin": {
+        "content": [
+            [
+                "tmt_erwinia_subset.pin"
+            ],
+            [
+                [
+                    "MSBOOSTER",
+                    "msbooster",
+                    "1.4.14"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-24T21:22:55.800891584",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "msbooster - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    [
+                        "test.pin:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test_msbooster.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "test.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-25T03:49:38.085557158",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "msbooster - from MSFRAGGER": {
+        "content": [
+            [
+                
+            ],
+            [
+                
+            ]
+        ],
+        "timestamp": "2026-02-15T21:37:33.081875127",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.2"
+        }
+    }
+}

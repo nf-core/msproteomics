@@ -1,0 +1,17 @@
+{
+    "preprocess_expdesign - stub": {
+        "content": [
+            [
+                "experimental_design_openms_design.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ],
+            [
+                "experimental_design_config.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ]
+        ],
+        "timestamp": "2026-03-25T03:51:28.347303836",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

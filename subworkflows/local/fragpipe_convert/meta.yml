@@ -1,0 +1,46 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "fragpipe_convert"
+description: Converts raw mass spectrometry files to mzML format and optionally preprocesses DIA data with DIA-Umpire or diaTracer
+keywords:
+  - proteomics
+  - file-conversion
+  - mzml
+  - dia
+  - thermorawfileparser
+  - diaumpire
+  - diatracer
+components:
+  - thermorawfileparser
+  - diaumpire
+  - diatracer
+input:
+  - ch_file:
+      type: channel
+      description: |
+        Sample files in RAW, mzML, or Bruker .d format.
+        Structure: [ val(meta), path(raw/mzml/d_file) ]
+  - ch_tool_configs:
+      type: channel
+      description: |
+        Parsed JSON tool configuration map controlling which conversion and DIA preprocessing tools to run.
+        Structure: val(tool_configs_map)
+output:
+  - mzml:
+      type: channel
+      description: |
+        Converted spectra files (mzML or passthrough .d files for DDA workflows).
+        Structure: [ val(meta), path(spectra) ]
+  - pseudo_spectra:
+      type: channel
+      description: |
+        DIA-Umpire pseudo-spectra output (Q1, Q2, Q3 mzML files). Only produced when DIA-Umpire is enabled.
+        Structure: [ val(meta), path(q*_mzml) ]
+  - versions:
+      type: file
+      description: |
+        File containing software versions.
+        Structure: [ path(versions.yml) ]
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

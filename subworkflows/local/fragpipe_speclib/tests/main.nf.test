@@ -1,0 +1,122 @@
+nextflow_workflow {
+
+    name "Test Subworkflow FRAGPIPE_SPECLIB"
+    script "../main.nf"
+    workflow "FRAGPIPE_SPECLIB"
+    config "./test.config"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "fragpipe_speclib"
+
+    test("fragpipe_speclib - stub") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                // Create per-sample PSM and peptide files
+                def psm_file1 = file("\${workDir}/sample1_psm.tsv")
+                psm_file1.text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
+                def psm_file2 = file("\${workDir}/sample2_psm.tsv")
+                psm_file2.text = "peptide\\tprotein\\nPEPTIDER\\tPROT2"
+
+                def pep_file1 = file("\${workDir}/sample1_peptide.tsv")
+                pep_file1.text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
+                def pep_file2 = file("\${workDir}/sample2_peptide.tsv")
+                pep_file2.text = "peptide\\tprotein\\nPEPTIDER\\tPROT2"
+
+                def mzml_file1 = file("\${workDir}/sample1.mzML")
+                mzml_file1.text = "<?xml version='1.0'?><mzML></mzML>"
+                def mzml_file2 = file("\${workDir}/sample2.mzML")
+                mzml_file2.text = "<?xml version='1.0'?><mzML></mzML>"
+
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">PROT1\\nPEPTIDEK\\n>PROT2\\nPEPTIDER"
+
+                // Tool configs: speclibgen enabled with bash_source config
+                def speclibgen_args = "CONVERT_ARGS='--max_delta_unimod 0.02 --max_delta_ppm 15'; FRAGMENT_TYPES='[\\\"b\\\",\\\"y\\\"]'; LIBRARY_ARGS='--rt_lowess_fraction 0'; RT_CAL='noiRT'; IM_CAL='noIM'; KEEP_INTERMEDIATE='false'"
+                def tool_configs = [
+                    speclibgen: [run: true, args: speclibgen_args, config_type: 'bash_source']
+                ]
+
+                input[0] = channel.of(
+                    [[ id: 'sample1' ], psm_file1],
+                    [[ id: 'sample2' ], psm_file2]
+                )
+                input[1] = channel.of(
+                    [[ id: 'sample1' ], pep_file1],
+                    [[ id: 'sample2' ], pep_file2]
+                )
+                input[2] = channel.of(
+                    [[ id: 'sample1' ], mzml_file1],
+                    [[ id: 'sample2' ], mzml_file2]
+                )
+                input[3] = fasta_file
+                input[4] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[5] = [ id: 'speclib' ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.out.library_tsv,
+                    workflow.out.library_speclib,
+                    workflow.out.library_parquet,
+                    workflow.out.results_dir
+                ).match() }
+            )
+        }
+    }
+
+    test("fragpipe_speclib - stub single sample") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                def psm_file = file("\${workDir}/single_psm.tsv")
+                psm_file.text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
+
+                def pep_file = file("\${workDir}/single_peptide.tsv")
+                pep_file.text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
+
+                def mzml_file = file("\${workDir}/single.mzML")
+                mzml_file.text = "<?xml version='1.0'?><mzML></mzML>"
+
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">PROT1\\nPEPTIDEK"
+
+                def speclibgen_args = "CONVERT_ARGS='--max_delta_unimod 0.02 --max_delta_ppm 15'; FRAGMENT_TYPES='[\\\"b\\\",\\\"y\\\"]'; LIBRARY_ARGS='--rt_lowess_fraction 0'; RT_CAL='noiRT'; IM_CAL='noIM'; KEEP_INTERMEDIATE='false'"
+                def tool_configs = [
+                    speclibgen: [run: true, args: speclibgen_args, config_type: 'bash_source']
+                ]
+
+                input[0] = channel.of([[ id: 'single' ], psm_file])
+                input[1] = channel.of([[ id: 'single' ], pep_file])
+                input[2] = channel.of([[ id: 'single' ], mzml_file])
+                input[3] = fasta_file
+                input[4] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[5] = [ id: 'single_speclib' ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.out.library_tsv,
+                    workflow.out.library_speclib,
+                    workflow.out.library_parquet,
+                    workflow.out.results_dir
+                ).match() }
+            )
+        }
+    }
+}

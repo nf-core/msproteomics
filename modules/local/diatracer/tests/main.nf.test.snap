@@ -1,0 +1,33 @@
+{
+    "diatracer - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_diatracer"
+                    },
+                    [
+                        "diatracer.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test_diatracer.mzML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_diatracer"
+                    },
+                    "test_diatracer.mzML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                "I_AGREE_FRAGPIPE_LICENSE_AGREEMENT:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ]
+        ],
+        "timestamp": "2026-03-25T03:48:14.324332269",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

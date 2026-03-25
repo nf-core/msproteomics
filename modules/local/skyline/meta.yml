@@ -1,0 +1,78 @@
+name: "skyline"
+description: Create Skyline documents from FragPipe results for targeted quantification
+keywords:
+  - proteomics
+  - mass spectrometry
+  - targeted quantification
+  - Skyline
+  - spectral library
+tools:
+  - skyline:
+      description: |
+        Skyline is an open-source application for building targeted mass spectrometry
+        methods and analyzing the resulting data. This module creates Skyline documents
+        from FragPipe search results via the FragPipe Java wrapper, importing spectral
+        libraries and mass spectrometry data for downstream quantitative analysis.
+      homepage: "https://skyline.ms/"
+      documentation: "https://skyline.ms/wiki/home/software/Skyline/page.view?name=tutorials"
+      tool_dev_url: "https://github.com/ProteoWizard/pwiz"
+      doi: "10.1093/bioinformatics/btq054"
+      licence: ["Apache-2.0"]
+
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample information
+    - results_dir:
+        type: directory
+        description: FragPipe output directory containing psm.tsv and library files
+    - mzml_files:
+        type: file
+        description: Mass spectrometry files for import into Skyline
+        pattern: "*.{mzML,mzXML}"
+    - speclib:
+        type: file
+        description: Spectral library file for Skyline import
+        pattern: "*.{speclib,sptxt,blib}"
+    - config_cli:
+        type: string
+        description: Skyline parameters as CLI string
+  - - skyline_path:
+        type: string
+        description: Path to the Skyline executable (shared resource)
+
+output:
+  results_dir:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}":
+          type: directory
+          description: Directory containing Skyline output files and log
+          pattern: "${prefix}"
+  skyline_document:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/skyline_files/fragpipe.sky":
+          type: file
+          description: Skyline document file
+          pattern: "fragpipe.sky"
+  reports:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/*.csv":
+          type: file
+          description: Skyline quantification report files
+          pattern: "*.csv"
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

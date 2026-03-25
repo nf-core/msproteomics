@@ -1,0 +1,114 @@
+name: "msfragger"
+description: Ultrafast peptide identification using MSFragger search engine
+keywords:
+  - proteomics
+  - mass spectrometry
+  - peptide identification
+  - database search
+  - msfragger
+tools:
+  - msfragger:
+      description: |
+        MSFragger is an ultrafast database search tool for peptide identification
+        in mass spectrometry-based proteomics. It uses a fragment-ion indexing method
+        to achieve speeds 10-100x faster than conventional search engines.
+      homepage: "https://msfragger.nesvilab.org/"
+      documentation: "https://github.com/Nesvilab/MSFragger/wiki"
+      tool_dev_url: "https://github.com/Nesvilab/MSFragger"
+      doi: "10.1038/nmeth.4256"
+      licence: ["Commercial"]
+      note: "License pre-installed in container"
+
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample information
+    - mzml_files:
+        type: file
+        description: Mass spectrometry data file(s) in mzML format (supports single or multiple)
+        pattern: "*.{mzML}"
+  - - fasta:
+        type: file
+        description: Protein sequence database
+        pattern: "*.{fasta,fas,fa}"
+  - - params_file:
+        type: file
+        description: |
+          MSFragger params file (native fragger.params format). Pass [] for CLI mode.
+          In params-file mode, runtime params (database_name, num_threads) are injected.
+          In CLI mode, ext.args provides all parameters.
+        pattern: "*.params"
+  - - pepindex:
+        type: file
+        description: |
+          Prebuilt peptide index files for MSFragger. Pass [] when not using.
+          When provided, files are staged alongside the FASTA so MSFragger auto-detects
+          and reuses them instead of rebuilding the index. Created by MSFRAGGER_INDEX.
+        pattern: "*.pepindex"
+
+output:
+  pepxml:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/*.pepXML":
+          type: file
+          description: Peptide identifications in pepXML format
+          pattern: "*.pepXML"
+  pin:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/*.pin":
+          type: file
+          description: Percolator input file
+          pattern: "*.pin"
+  tsv:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/*.tsv":
+          type: file
+          description: TSV output from MSFragger (e.g., mass calibration results)
+          pattern: "*.tsv"
+  calibrated_mzml:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "*_calibrated.mzML":
+          type: file
+          description: Calibrated mzML file (when write_calibrated_mzml=true)
+          pattern: "*_calibrated.mzML"
+  uncalibrated_mzml:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "*_uncalibrated.mzML":
+          type: file
+          description: Uncalibrated mzML file (produced when processing .d or .raw files)
+          pattern: "*_uncalibrated.mzML"
+  results_dir:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}":
+          type: directory
+          description: Directory containing all MSFragger output files and logs
+  log:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/*.log":
+          type: file
+          description: MSFragger log file
+          pattern: "*.log"
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

@@ -1,0 +1,212 @@
+{
+    "tmtlabelcheck - PSM mode with real data": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "labeling_summary.tsv:md5,3ef8cffb9a74618ddbce287cb65e01b2"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "per_sample_efficiency.csv:md5,914f91e16925e6dba161dd19564bd46e"
+                ]
+            ],
+            [
+                [
+                    "TMT_LABELCHECK_ANALYZE",
+                    "python",
+                    "3.14.2"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-24T18:43:16.768656632",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "tmtlabelcheck - stub psm mode": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "report.html:md5,5870ce26bee812ced6c26fe54ac3861c"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "report.md:md5,e232ba33dde02c30e8c9dbdabc525d7d"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "labeling_summary.tsv:md5,e51ebb87d0eaa9012a2478a6c8d34bb5"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "per_sample_efficiency.csv:md5,194771a70f5749c555e858384e3c3aeb"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-25T03:52:43.543087276",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "tmtlabelcheck - IonQuant mode with real data": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "labeling_summary.tsv:md5,a04002b9c00968ceef4a1f3ca36dc14f"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "per_sample_efficiency.csv:md5,7dcb6fb5cbde76912cee7f504d2b0057"
+                ]
+            ],
+            [
+                [
+                    "TMT_LABELCHECK_ANALYZE",
+                    "python",
+                    "3.14.2"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-24T18:43:49.634328753",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "tmtlabelcheck - stub ionquant mode": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "report.html:md5,5870ce26bee812ced6c26fe54ac3861c"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "report.md:md5,e232ba33dde02c30e8c9dbdabc525d7d"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "labeling_summary.tsv:md5,e51ebb87d0eaa9012a2478a6c8d34bb5"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "per_sample_efficiency.csv:md5,194771a70f5749c555e858384e3c3aeb"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-25T03:52:49.324113131",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "tmtlabelcheck - PSM mode multiple files": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "combined"
+                    },
+                    "labeling_summary.tsv:md5,54a0fab30e22be4b2fedfbdb5a527c61"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "combined"
+                    },
+                    "per_sample_efficiency.csv:md5,8b6f52027bb410dc5ab41efe42a5134d"
+                ]
+            ],
+            [
+                [
+                    "TMT_LABELCHECK_ANALYZE",
+                    "python",
+                    "3.14.2"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-24T19:20:34.240789107",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "tmtlabelcheck - TMT18 ionquant mode with real data": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_tmt18"
+                    },
+                    "labeling_summary.tsv:md5,a04002b9c00968ceef4a1f3ca36dc14f"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_tmt18"
+                    },
+                    "per_sample_efficiency.csv:md5,7dcb6fb5cbde76912cee7f504d2b0057"
+                ]
+            ],
+            [
+                [
+                    "TMT_LABELCHECK_ANALYZE",
+                    "python",
+                    "3.14.2"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-24T18:44:03.527745664",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

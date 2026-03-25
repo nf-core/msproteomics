@@ -1,0 +1,90 @@
+nextflow_process {
+
+    name "Test Process SAINTEXPRESS"
+    script "../main.nf"
+    process "SAINTEXPRESS"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "saintexpress"
+
+    test("saintexpress - stub") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def interact_file = file("\${workDir}/interact.txt")
+                interact_file.text = "IP1\\tBait1\\tPrey1\\t10\\nIP2\\tBait2\\tPrey1\\t5"
+                def bait_file = file("\${workDir}/bait.txt")
+                bait_file.text = "IP1\\tBait1\\tT\\nIP2\\tBait2\\tC"
+                def prey_file = file("\${workDir}/prey.txt")
+                prey_file.text = "Prey1\\t100"
+                // SAINTexpress mode and CLI config
+                def mode = "spc"
+                def config_cli = "-L 4"
+
+                input[0] = channel.of([
+                    [ id: 'test_saint' ],
+                    interact_file,
+                    bait_file,
+                    prey_file,
+                    mode,
+                    config_cli
+                ])
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(process.out.results_dir, process.out.results_list).match() }
+            )
+        }
+    }
+
+    test("saintexpress - integration with test data") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                // Create SAINTexpress test files inline
+                def interact_file = file("\${workDir}/saint_interact.txt")
+                interact_file.text = "IP1\\tBait1\\tPrey1\\t15\\n" +
+                    "IP1\\tBait1\\tPrey2\\t8\\n" +
+                    "IP1\\tBait1\\tPrey3\\t12\\n" +
+                    "IP2\\tBait1\\tPrey1\\t18\\n" +
+                    "IP2\\tBait1\\tPrey2\\t6\\n" +
+                    "IP3\\tControl\\tPrey1\\t2\\n" +
+                    "IP3\\tControl\\tPrey2\\t1\\n" +
+                    "IP4\\tControl\\tPrey1\\t3"
+                def bait_file = file("\${workDir}/saint_bait.txt")
+                bait_file.text = "IP1\\tBait1\\tT\\nIP2\\tBait1\\tT\\nIP3\\tControl\\tC\\nIP4\\tControl\\tC"
+                def prey_file = file("\${workDir}/saint_prey.txt")
+                prey_file.text = "Prey1\\t450\\nPrey2\\t320\\nPrey3\\t580"
+                def mode = "spc"
+                def config_cli = "-L 4"
+
+                input[0] = channel.of([
+                    [ id: 'saint_test' ],
+                    interact_file,
+                    bait_file,
+                    prey_file,
+                    mode,
+                    config_cli
+                ])
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(process.out.results_dir, process.out.results_list).match() }
+            )
+        }
+    }
+}

@@ -1,0 +1,77 @@
+name: "merge_split_search"
+description: Merge MSFragger split-database search results per sample
+keywords:
+  - proteomics
+  - mass spectrometry
+  - msfragger
+  - split database
+  - merge
+  - pepxml
+  - pin
+tools:
+  - merge_split_search:
+      description: |
+        Merges MSFragger split-database search results for a single sample.
+        For each spectrum, collects search hits from all database chunks, sorts
+        by (expectscore, 1/hyperscore, abs(massdiff)), keeps topN, and re-ranks.
+        Also merges PIN files with hyperscore-based sorting and protein list
+        reconciliation. Ported from FragPipe's msfragger_pep_split.py.
+      homepage: "https://github.com/Nesvilab/FragPipe"
+      documentation: "https://fragpipe.nesvilab.org/"
+      licence: ["Apache-2.0"]
+
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information.
+          e.g. `[ id:'sample1' ]`
+    - chunk_pepxmls:
+        type: file
+        description: pepXML files from all database chunks for this sample
+        pattern: "*.pepXML"
+    - chunk_pins:
+        type: file
+        description: PIN (Percolator input) files from all database chunks for this sample
+        pattern: "*.pin"
+    - chunk_histograms:
+        type: file
+        description: Score histogram TSV files from all database chunks for this sample
+        pattern: "*_scores_histogram.tsv"
+  - - num_chunks:
+        type: integer
+        description: Number of database chunks used in the split search
+  - - params_file:
+        type: file
+        description: |
+          MSFragger params file used for the search. Used to determine
+          output_report_topN and output_max_expect settings.
+        pattern: "*.params"
+
+output:
+  pepxml:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "merged/*.pepXML":
+          type: file
+          description: Merged pepXML file with re-ranked search hits across all chunks
+          pattern: "*.pepXML"
+  pin:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "merged/*.pin":
+          type: file
+          description: Merged PIN file with re-ranked and reconciled protein lists
+          pattern: "*.pin"
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

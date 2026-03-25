@@ -1,0 +1,206 @@
+nextflow_process {
+
+    name "Test Process TMT_LABELCHECK_ANALYZE"
+    script "../main.nf"
+    process "TMT_LABELCHECK_ANALYZE"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "tmtlabelcheck"
+
+    test("tmtlabelcheck - stub psm mode") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                input[0] = [[ id:'test' ], [file("test_psms.tsv")]]
+                input[1] = "TMT10"
+                input[2] = "psm"
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(
+                    process.out.html_report,
+                    process.out.md_report,
+                    process.out.summary,
+                    process.out.per_sample
+                ).match() }
+            )
+        }
+    }
+
+    test("tmtlabelcheck - stub ionquant mode") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                input[0] = [[ id:'test' ], file("combined_modified_peptide.tsv")]
+                input[1] = "TMT16"
+                input[2] = "ionquant"
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(
+                    process.out.html_report,
+                    process.out.md_report,
+                    process.out.summary,
+                    process.out.per_sample
+                ).match() }
+            )
+        }
+    }
+
+    test("tmtlabelcheck - PSM mode with real data") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                // Create PSM file inline
+                def psm_file = file("\${workDir}/psm.tsv")
+                psm_file.text = "Spectrum\\tSpectrum File\\tPeptide\\tModified Peptide\\tExtended Peptide\\tPrev AA\\tNext AA\\tPeptide Length\\tCharge\\tRetention\\tObserved Mass\\tCalibrated Observed Mass\\tObserved M/Z\\tCalibrated Observed M/Z\\tCalculated Peptide Mass\\tCalculated M/Z\\tDelta Mass\\tExpectation\\tHyperscore\\tNextscore\\tPeptideProphet Probability\\tNumber of Enzymatic Termini\\tNumber of Missed Cleavages\\tProtein Start\\tProtein End\\tIntensity\\tAssigned Modifications\\tObserved Modifications\\tPurity\\tIs Unique\\tProtein\\tProtein ID\\tEntry Name\\tGene\\tProtein Description\\tMapped Genes\\tMapped Proteins\\n" +
+                    "test_sample.00001.00001.2\\ttest_sample.mzML\\tPEPTIDEKTEST\\tPEPTIDEKM[147]TEST\\tR.PEPTIDEKTEST.A\\tR\\tA\\t12\\t2\\t30.01\\t1234.5678\\t1234.5679\\t618.2912\\t618.2912\\t1234.5678\\t618.2912\\t0.0001\\t0.0001\\t25.5\\t12.3\\t0.999\\t2\\t0\\t100\\t112\\t1500000\\t8M(15.9949)\\t8M(15.9949)\\t0.95\\tTRUE\\tsp|P12345|TEST_ECOLI\\tP12345\\tTEST_ECOLI\\tTEST\\tTest protein OS=Erwinia carotovora GN=test PE=1 SV=1\\tTEST\\tsp|P12345|TEST_ECOLI\\n" +
+                    "test_sample.00002.00002.3\\ttest_sample.mzML\\tANOTHERPEPTIDER\\tANOTHERPEPTIDER\\tK.ANOTHERPEPTIDER.L\\tK\\tL\\t15\\t3\\t35.01\\t1567.8901\\t1567.8902\\t523.6374\\t523.6374\\t1567.8901\\t523.6374\\t0.0001\\t0.00005\\t30.2\\t15.1\\t0.9995\\t2\\t0\\t200\\t215\\t2500000\\t\\t\\t0.98\\tTRUE\\tsp|P23456|PROT2_ECOLI\\tP23456\\tPROT2_ECOLI\\tPROT2\\tAnother test protein OS=Erwinia carotovora GN=prot2 PE=1 SV=1\\tPROT2\\tsp|P23456|PROT2_ECOLI\\n" +
+                    "test_sample.00003.00003.2\\ttest_sample.mzML\\tTESTPEPTIDE\\tTESTPEPTIDE\\tK.TESTPEPTIDE.R\\tK\\tR\\t11\\t2\\t40.01\\t1189.5432\\t1189.5433\\t595.7789\\t595.7789\\t1189.5432\\t595.7789\\t0.0001\\t0.0002\\t22.1\\t10.5\\t0.995\\t2\\t0\\t50\\t61\\t1200000\\t\\t\\t0.92\\tTRUE\\tsp|P34567|PROT3_ECOLI\\tP34567\\tPROT3_ECOLI\\tPROT3\\tThird test protein OS=Erwinia carotovora GN=prot3 PE=1 SV=1\\tPROT3\\tsp|P34567|PROT3_ECOLI"
+
+                input[0] = [[ id:'test' ], [psm_file]]
+                input[1] = "TMT10"
+                input[2] = "psm"
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.html_report.size() == 1 },
+                { assert process.out.md_report.size() == 1 },
+                { assert snapshot(
+                    process.out.summary,
+                    process.out.per_sample,
+                    process.out.versions_python
+                ).match() }
+            )
+        }
+    }
+
+    test("tmtlabelcheck - PSM mode multiple files") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                // Create PSM data inline
+                def psm_content = "Spectrum\\tSpectrum File\\tPeptide\\tModified Peptide\\tExtended Peptide\\tPrev AA\\tNext AA\\tPeptide Length\\tCharge\\tRetention\\tObserved Mass\\tCalibrated Observed Mass\\tObserved M/Z\\tCalibrated Observed M/Z\\tCalculated Peptide Mass\\tCalculated M/Z\\tDelta Mass\\tExpectation\\tHyperscore\\tNextscore\\tPeptideProphet Probability\\tNumber of Enzymatic Termini\\tNumber of Missed Cleavages\\tProtein Start\\tProtein End\\tIntensity\\tAssigned Modifications\\tObserved Modifications\\tPurity\\tIs Unique\\tProtein\\tProtein ID\\tEntry Name\\tGene\\tProtein Description\\tMapped Genes\\tMapped Proteins\\n" +
+                    "test_sample.00001.00001.2\\ttest_sample.mzML\\tPEPTIDEKTEST\\tPEPTIDEKM[147]TEST\\tR.PEPTIDEKTEST.A\\tR\\tA\\t12\\t2\\t30.01\\t1234.5678\\t1234.5679\\t618.2912\\t618.2912\\t1234.5678\\t618.2912\\t0.0001\\t0.0001\\t25.5\\t12.3\\t0.999\\t2\\t0\\t100\\t112\\t1500000\\t8M(15.9949)\\t8M(15.9949)\\t0.95\\tTRUE\\tsp|P12345|TEST_ECOLI\\tP12345\\tTEST_ECOLI\\tTEST\\tTest protein OS=Erwinia carotovora GN=test PE=1 SV=1\\tTEST\\tsp|P12345|TEST_ECOLI\\n" +
+                    "test_sample.00002.00002.3\\ttest_sample.mzML\\tANOTHERPEPTIDER\\tANOTHERPEPTIDER\\tK.ANOTHERPEPTIDER.L\\tK\\tL\\t15\\t3\\t35.01\\t1567.8901\\t1567.8902\\t523.6374\\t523.6374\\t1567.8901\\t523.6374\\t0.0001\\t0.00005\\t30.2\\t15.1\\t0.9995\\t2\\t0\\t200\\t215\\t2500000\\t\\t\\t0.98\\tTRUE\\tsp|P23456|PROT2_ECOLI\\tP23456\\tPROT2_ECOLI\\tPROT2\\tAnother test protein OS=Erwinia carotovora GN=prot2 PE=1 SV=1\\tPROT2\\tsp|P23456|PROT2_ECOLI\\n" +
+                    "test_sample.00003.00003.2\\ttest_sample.mzML\\tTESTPEPTIDE\\tTESTPEPTIDE\\tK.TESTPEPTIDE.R\\tK\\tR\\t11\\t2\\t40.01\\t1189.5432\\t1189.5433\\t595.7789\\t595.7789\\t1189.5432\\t595.7789\\t0.0001\\t0.0002\\t22.1\\t10.5\\t0.995\\t2\\t0\\t50\\t61\\t1200000\\t\\t\\t0.92\\tTRUE\\tsp|P34567|PROT3_ECOLI\\tP34567\\tPROT3_ECOLI\\tPROT3\\tThird test protein OS=Erwinia carotovora GN=prot3 PE=1 SV=1\\tPROT3\\tsp|P34567|PROT3_ECOLI"
+                // PSM mode expects directories containing psm.tsv (not direct files)
+                def sample1_dir = file("\${workDir}/sample1")
+                sample1_dir.mkdirs()
+                file("\${sample1_dir}/psm.tsv").text = psm_content
+                def sample2_dir = file("\${workDir}/sample2")
+                sample2_dir.mkdirs()
+                file("\${sample2_dir}/psm.tsv").text = psm_content
+
+                input[0] = [[ id:'combined' ], [sample1_dir, sample2_dir]]
+                input[1] = "TMT10"
+                input[2] = "psm"
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.html_report.size() == 1 },
+                { assert process.out.md_report.size() == 1 },
+                { assert snapshot(
+                    process.out.summary,
+                    process.out.per_sample,
+                    process.out.versions_python
+                ).match() }
+            )
+        }
+    }
+
+    test("tmtlabelcheck - IonQuant mode with real data") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                // Create combined_modified_peptide.tsv inline
+                def cmp_file = file("\${workDir}/combined_modified_peptide.tsv")
+                cmp_file.text = "Peptide\\tModified Peptide\\tPrev AA\\tNext AA\\tProtein\\tProtein ID\\tGene\\tProtein Description\\tMapped Proteins\\tsample1 Spectral Count\\tsample1 Intensity\\tsample2 Spectral Count\\tsample2 Intensity\\tcontrol1 Spectral Count\\tcontrol1 Intensity\\tcontrol2 Spectral Count\\tcontrol2 Intensity\\n" +
+                    "PEPTIDEK\\tPEPTIDEK\\tR\\tA\\tsp|P12345|TEST_HUMAN\\tP12345\\tTEST\\tTest protein OS=Homo sapiens GN=TEST\\tsp|P12345|TEST_HUMAN\\t10\\t1500000\\t12\\t1600000\\t9\\t1400000\\t11\\t1450000\\n" +
+                    "ANOTHERPEPTIDER\\tANOTHERPEPTIDER\\tK\\tL\\tsp|P23456|PROT2_HUMAN\\tP23456\\tPROT2\\tAnother protein OS=Homo sapiens GN=PROT2\\tsp|P23456|PROT2_HUMAN\\t8\\t2500000\\t7\\t2400000\\t9\\t2600000\\t8\\t2550000\\n" +
+                    "MODIFIEDPEPTIDEK\\tM[147]ODIFIEDPEPTIDEK\\tR\\tS\\tsp|P12345|TEST_HUMAN\\tP12345\\tTEST\\tTest protein OS=Homo sapiens GN=TEST\\tsp|P12345|TEST_HUMAN\\t5\\t800000\\t6\\t750000\\t4\\t850000\\t5\\t900000"
+
+                input[0] = [[ id:'test' ], cmp_file]
+                input[1] = "TMT16"
+                input[2] = "ionquant"
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.html_report.size() == 1 },
+                { assert process.out.md_report.size() == 1 },
+                { assert snapshot(
+                    process.out.summary,
+                    process.out.per_sample,
+                    process.out.versions_python
+                ).match() }
+            )
+        }
+    }
+
+    test("tmtlabelcheck - TMT18 ionquant mode with real data") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                // Create combined_modified_peptide.tsv inline
+                def cmp_file = file("\${workDir}/combined_modified_peptide.tsv")
+                cmp_file.text = "Peptide\\tModified Peptide\\tPrev AA\\tNext AA\\tProtein\\tProtein ID\\tGene\\tProtein Description\\tMapped Proteins\\tsample1 Spectral Count\\tsample1 Intensity\\tsample2 Spectral Count\\tsample2 Intensity\\tcontrol1 Spectral Count\\tcontrol1 Intensity\\tcontrol2 Spectral Count\\tcontrol2 Intensity\\n" +
+                    "PEPTIDEK\\tPEPTIDEK\\tR\\tA\\tsp|P12345|TEST_HUMAN\\tP12345\\tTEST\\tTest protein OS=Homo sapiens GN=TEST\\tsp|P12345|TEST_HUMAN\\t10\\t1500000\\t12\\t1600000\\t9\\t1400000\\t11\\t1450000\\n" +
+                    "ANOTHERPEPTIDER\\tANOTHERPEPTIDER\\tK\\tL\\tsp|P23456|PROT2_HUMAN\\tP23456\\tPROT2\\tAnother protein OS=Homo sapiens GN=PROT2\\tsp|P23456|PROT2_HUMAN\\t8\\t2500000\\t7\\t2400000\\t9\\t2600000\\t8\\t2550000\\n" +
+                    "MODIFIEDPEPTIDEK\\tM[147]ODIFIEDPEPTIDEK\\tR\\tS\\tsp|P12345|TEST_HUMAN\\tP12345\\tTEST\\tTest protein OS=Homo sapiens GN=TEST\\tsp|P12345|TEST_HUMAN\\t5\\t800000\\t6\\t750000\\t4\\t850000\\t5\\t900000"
+
+                input[0] = [[ id:'test_tmt18' ], cmp_file]
+                input[1] = "TMT18"
+                input[2] = "ionquant"
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.html_report.size() == 1 },
+                { assert process.out.md_report.size() == 1 },
+                { assert snapshot(
+                    process.out.summary,
+                    process.out.per_sample,
+                    process.out.versions_python
+                ).match() }
+            )
+        }
+    }
+}

@@ -1,0 +1,39 @@
+name: tdf2mzml
+description: Convert raw Bruker files to mzML files
+keywords:
+  - raw
+  - mzML
+  - .d
+tools:
+  - tdf2mzml:
+      description: |
+        It takes a Bruker .d raw file as input and outputs indexed mzML
+      homepage: https://github.com/mafreitas/tdf2mzml
+      documentation: https://github.com/mafreitas/tdf2mzml
+input:
+  - meta:
+      type: map
+      description: Groovy Map containing sample information
+  - rawfile:
+      type: file
+      description: Bruker raw file archived using tar
+      pattern: "*.d.tar"
+output:
+  - mzmls_converted:
+      type: tuple
+      description: Tuple of meta map and converted mzML file
+      pattern: "*.mzML"
+  - dotd_files:
+      type: tuple
+      description: Tuple of meta map and renamed .d directory
+      pattern: "*.d"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+  - log:
+      type: file
+      description: Log file from conversion
+      pattern: "*.log"
+authors:
+  - "@jspaezp"

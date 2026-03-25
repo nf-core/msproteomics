@@ -1,0 +1,22 @@
+{
+    "pmultiqc - stub": {
+        "content": [
+            [
+                "multiqc_report.html:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ],
+            [
+                
+            ],
+            [
+                [
+                    
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-25T03:51:22.833404026",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

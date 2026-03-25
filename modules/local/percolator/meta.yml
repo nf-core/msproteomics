@@ -1,0 +1,92 @@
+name: "percolator"
+description: Semi-supervised learning for peptide identification using Percolator
+keywords:
+  - proteomics
+  - mass spectrometry
+  - FDR
+  - false discovery rate
+  - machine learning
+  - PSM rescoring
+tools:
+  - percolator:
+      description: |
+        Percolator is a semi-supervised machine learning tool for peptide
+        identification in shotgun proteomics. It uses a support vector machine
+        to discriminate between correct and incorrect peptide-spectrum matches,
+        enabling accurate FDR estimation.
+      homepage: "http://percolator.ms/"
+      documentation: "https://github.com/percolator/percolator/wiki"
+      tool_dev_url: "https://github.com/percolator/percolator"
+      doi: "10.1038/nmeth1113"
+      licence: ["Apache-2.0"]
+      identifier: biotools:percolator
+
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample information
+    - pin_file:
+        type: file
+        description: Percolator input file from MSFragger/MSBooster
+        pattern: "*.pin"
+    - pepxml_files:
+        type: file
+        description: Original pepXML file(s) from MSFragger (used by perc2pepxml converter)
+        pattern: "*.pepXML"
+    - mzml_file:
+        type: file
+        description: Original mzML file (used by perc2pepxml for base_name in output pepXML)
+        pattern: "*.mzML"
+    - percolator_cli:
+        type: string
+        description: |
+          CLI flags for Percolator (e.g., "--only-psms --no-terminate --post-processing-tdc
+          --trainFDR 0.01 --testFDR 0.01"). Passed from PARSE_FRAGPIPE_WORKFLOW.
+  - - data_type:
+        type: string
+        description: |
+          Data type identifier ('DDA' or 'DIA'). Affects perc2pepxml output format.
+          Auto-overridden to 'DIA' when ranked pepXMLs are detected (DDA+ ion mobility).
+
+output:
+  results_dir:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}":
+          type: directory
+          description: Directory containing all Percolator output files and logs
+  pepxml:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/interact-*.pep.xml":
+          type: file
+          description: Rescored pepXML with probabilities from perc2pepxml conversion
+          pattern: "interact-*.pep.xml"
+  target_psms:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/*_target_psms.tsv":
+          type: file
+          description: Target PSMs from Percolator
+          pattern: "*_target_psms.tsv"
+  decoy_psms:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/*_decoy_psms.tsv":
+          type: file
+          description: Decoy PSMs from Percolator
+          pattern: "*_decoy_psms.tsv"
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

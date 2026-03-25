@@ -1,0 +1,26 @@
+# Dockerfile.academic — FragPipe container with academic-licensed tools
+# Base: fcyucn/fragpipe:24.0 (open-source tools pre-installed)
+# Adds: MSFragger, IonQuant, DiaTracer (academic license from nesvilab.org)
+#
+# Tools live at the base image's native path. Modules use inline discovery (find).
+# No wrappers, no symlinks.
+#
+# Build:
+#   export MSFRAGGER_ZIP=~/Downloads/MSFragger-4.4.1.zip
+#   export IONQUANT_ZIP=~/Downloads/IonQuant-1.11.20.zip
+#   export DIATRACER_ZIP=~/Downloads/diatracer-2.2.1.zip
+#   ./build_nfcore.sh academic
+
+FROM fcyucn/fragpipe:24.0
+
+LABEL maintainer="nf-fragpipe"
+LABEL description="FragPipe 24.0 for Nextflow (academic license)"
+
+ENV FP_BASE=/fragpipe_bin/fragpipe-24.0/fragpipe-24.0
+
+# Licensed tools — real files into the base image's tools directory
+COPY fragpipe/MSFragger-*/ ${FP_BASE}/tools/MSFragger/
+COPY fragpipe/IonQuant-*/IonQuant-*.jar ${FP_BASE}/tools/
+COPY fragpipe/diatracer-*/diaTracer-*.jar ${FP_BASE}/tools/
+
+WORKDIR /data

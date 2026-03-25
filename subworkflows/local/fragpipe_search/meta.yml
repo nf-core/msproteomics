@@ -1,0 +1,84 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "fragpipe_search"
+description: Single-stage database search with MSFragger, optional AI-based rescoring with MSBooster, and optional chimeric artifact removal with Crystal-C
+keywords:
+  - proteomics
+  - database-search
+  - msfragger
+  - msbooster
+  - crystalc
+  - rescoring
+components:
+  - msfragger
+  - msfragger/calibrate
+  - msfragger/index
+  - split/fasta
+  - merge/split/search
+  - msbooster
+  - crystalc
+input:
+  - ch_mzml:
+      type: channel
+      description: |
+        Spectra files in mzML or Bruker .d format.
+        Structure: [ val(meta), path(mzml/d) ]
+  - ch_fasta:
+      type: channel
+      description: |
+        Protein database FASTA as a value channel for broadcasting.
+        Structure: path(fasta)
+  - ch_tool_configs:
+      type: channel
+      description: |
+        Parsed JSON tool configuration map controlling MSFragger, MSBooster, and CrystalC execution.
+        Structure: val(tool_configs_map)
+  - ch_fragger_params:
+      type: channel
+      description: |
+        MSFragger parameters file (fragger.params). Pass [] for CLI mode.
+        Structure: path(fragger.params)
+  - ch_msbooster_params:
+      type: channel
+      description: |
+        MSBooster parameters file (msbooster.config). Pass [] for CLI mode.
+        Structure: path(msbooster.config)
+output:
+  - pepxml:
+      type: channel
+      description: |
+        Search result pepXML files. Uses CrystalC-filtered pepXML when CrystalC is enabled, otherwise raw MSFragger output.
+        Structure: [ val(meta), path(pepxml) ]
+  - pin:
+      type: channel
+      description: |
+        Raw Percolator input (PIN) files from MSFragger.
+        Structure: [ val(meta), path(pin) ]
+  - pin_rescored:
+      type: channel
+      description: |
+        Rescored PIN files. Uses MSBooster-edited PIN when MSBooster is enabled, otherwise raw MSFragger PIN.
+        Structure: [ val(meta), path(pin) ]
+  - tsv:
+      type: channel
+      description: |
+        MSFragger TSV output files.
+        Structure: [ val(meta), path(tsv) ]
+  - results_dir:
+      type: channel
+      description: |
+        Per-sample MSFragger results directory.
+        Structure: [ val(meta), path(results_dir) ]
+  - uncalibrated_mzml:
+      type: channel
+      description: |
+        Uncalibrated mzML files produced by MSFragger for .d or .raw inputs. Used by MSBooster for Bruker data.
+        Structure: [ val(meta), path(*_uncalibrated.mzML) ]
+  - versions:
+      type: file
+      description: |
+        File containing software versions.
+        Structure: [ path(versions.yml) ]
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

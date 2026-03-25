@@ -1,0 +1,58 @@
+name: diannr
+description: R-based post-processing of DIA-NN report for contaminant removal, MaxLFQ quantification, and peptide/protein summarisation.
+keywords:
+  - DIA-NN
+  - MaxLFQ
+  - R
+  - quantification
+tools:
+  - diann-rpackage:
+      description: |
+        R package for DIA-NN report post-processing including contaminant filtering,
+        MaxLFQ protein quantification, and peptide/precursor summarisation.
+      homepage: https://github.com/vdemichev/diann-rpackage
+input:
+  - report_path:
+      type: file
+      description: DIA-NN main report TSV file
+      pattern: "report.tsv"
+  - q:
+      type: value
+      description: Precursor-level FDR threshold (q-value cutoff)
+  - pgq:
+      type: value
+      description: Protein group-level FDR threshold (q-value cutoff)
+  - contaminant_pattern:
+      type: value
+      description: Regex pattern to identify contaminant proteins (e.g. "Cont_")
+output:
+  - contaminants_removed_report:
+      type: file
+      description: DIA-NN report with contaminant entries removed
+      pattern: "contaminants_removed_*.tsv"
+  - precursors:
+      type: file
+      description: Precursor-level quantification matrix
+      pattern: "precursors.tsv"
+  - peptides:
+      type: file
+      description: Peptide-level quantification matrix
+      pattern: "peptides.tsv"
+  - peptides_maxlfq:
+      type: file
+      description: Peptide-level MaxLFQ quantification matrix
+      pattern: "peptides_maxlfq.tsv"
+  - unique_genes:
+      type: file
+      description: Gene-level unique peptide quantification matrix
+      pattern: "unique_genes.tsv"
+  - protein_groups_maxlfq:
+      type: file
+      description: Protein group-level MaxLFQ quantification matrix
+      pattern: "protein_groups_maxlfq.tsv"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@dongzehe"

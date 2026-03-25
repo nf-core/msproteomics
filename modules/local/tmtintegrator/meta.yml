@@ -1,0 +1,98 @@
+name: tmtintegrator
+description: TMT-Integrator for isobaric labeling quantification
+keywords:
+  - proteomics
+  - quantification
+  - TMT
+  - isobaric
+  - mass-spectrometry
+tools:
+  - tmtintegrator:
+      description: |
+        TMT-Integrator extracts and combines channel abundances from multiple
+        TMT-labeled samples, producing comprehensive quantification reports
+        at gene, protein, peptide, and PTM site levels.
+      homepage: https://github.com/Nesvilab/TMT-Integrator
+      documentation: https://fragpipe.nesvilab.org/docs/tutorial_tmt.html
+      licence: ["Academic/Commercial"]
+      note: |
+        Commercial license pre-installed in container.
+        Contact Nesvilab for academic or commercial licenses.
+
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. [ id:'experiment1' ]
+    - psm_dirs:
+        type: directory
+        description: |
+          Per-sample directories containing psm.tsv and protein.tsv from
+          PHILOSOPHER_FILTER. Staged under input_results/ via stageAs.
+        pattern: "*"
+  - - annotation_files:
+        type: file
+        description: |
+          TMT annotation file. Either 2-column IonQuant format (channel sample)
+          for single-plex, or 6-column TSV (plex/channel/sample/sample_name/
+          condition/replicate) for multi-plex. Pass empty list [] if not applicable.
+        pattern: "*.{txt,tsv}"
+  - - config_file:
+        type: file
+        description: |
+          TMT-Integrator YAML configuration file containing parameters like
+          ref_tag, min_pep_prob, prot_norm, groupby, etc.
+        pattern: "*.yml"
+
+output:
+  results_dir:
+    - - meta:
+          type: map
+          description: Sample metadata
+      - "tmt-report":
+          type: directory
+          description: TMT-Integrator output directory
+          pattern: "tmt-report"
+  abundance:
+    - - meta:
+          type: map
+          description: Sample metadata
+      - "tmt-report/abundance_*.tsv":
+          type: file
+          description: Abundance tables at various levels (gene, protein, peptide)
+          pattern: "tmt-report/abundance_*.tsv"
+  ratio:
+    - - meta:
+          type: map
+          description: Sample metadata
+      - "tmt-report/ratio_*.tsv":
+          type: file
+          description: Ratio tables (log2 fold changes)
+          pattern: "tmt-report/ratio_*.tsv"
+  proteins_txt:
+    - - meta:
+          type: map
+          description: Sample metadata
+      - "tmt-report/*_Proteins.txt":
+          type: file
+          description: Protein-level summary
+          pattern: "tmt-report/*_Proteins.txt"
+  peptides_txt:
+    - - meta:
+          type: map
+          description: Sample metadata
+      - "tmt-report/*_Peptides.txt":
+          type: file
+          description: Peptide-level summary
+          pattern: "tmt-report/*_Peptides.txt"
+  versions:
+    - versions.yml:
+        type: file
+        description: Software versions
+        pattern: "versions.yml"
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

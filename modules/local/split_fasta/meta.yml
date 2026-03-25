@@ -1,0 +1,50 @@
+name: "split_fasta"
+description: Split a FASTA database into M chunks at protein boundaries for parallel MSFragger search
+keywords:
+  - proteomics
+  - FASTA
+  - split
+  - database
+  - msfragger
+tools:
+  - split_fasta:
+      description: |
+        Python script that splits a FASTA file into M chunks at protein boundaries
+        using memory-mapped I/O. Replicates get_fasta_offsets() and set_up_directories()
+        from FragPipe's msfragger_pep_split.py for split-database search.
+      homepage: "https://fragpipe.nesvilab.org/"
+      documentation: "https://fragpipe.nesvilab.org/docs/tutorial_split_db.html"
+      tool_dev_url: "https://github.com/Nesvilab/FragPipe"
+      licence: ["Academic"]
+
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample/experiment information
+    - fasta:
+        type: file
+        description: Protein sequence database in FASTA format
+        pattern: "*.{fasta,fas,fa}"
+  - - num_chunks:
+        type: integer
+        description: Number of chunks to split the FASTA into (>= 1)
+
+output:
+  fasta_chunks:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample/experiment information
+      - "split_db/*/*.fasta":
+          type: file
+          description: Split FASTA chunks in numbered subdirectories
+          pattern: "split_db/{0,1,...}/*.fasta"
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

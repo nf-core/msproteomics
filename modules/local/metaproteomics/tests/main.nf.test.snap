@@ -1,0 +1,80 @@
+{
+    "metaproteomics - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_meta"
+                    },
+                    [
+                        "metaproteomics.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_metaproteomics_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_optimized.fasta:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_taxonomy_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_meta"
+                    },
+                    "sample_optimized.fasta:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_meta"
+                    },
+                    "sample_taxonomy_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_meta"
+                    },
+                    "sample_metaproteomics_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-25T03:49:32.106885023",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "metaproteomics - integration with test data": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "meta_test"
+                    },
+                    [
+                        "DbOptimizerConfig.yaml:md5,d3f1246e028ab2550814dd0adef99723",
+                        "inferred_most_abundant_1_species_proteomes.fasta:md5,333f2554ba2930cef0a3c70539ca390d",
+                        "metaproteomics.log:md5,12766818d47f3742a140e276ec7ec91b",
+                        "species_score_matrix_final.tsv:md5,f1bf0097488a340517caaee1623ae005",
+                        "taxon_lineage.tsv:md5,3acd52108159051110e1adc107021328"
+                    ]
+                ]
+            ],
+            [
+                
+            ],
+            [
+                
+            ],
+            [
+                
+            ]
+        ],
+        "timestamp": "2026-03-25T17:04:44.235077588",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

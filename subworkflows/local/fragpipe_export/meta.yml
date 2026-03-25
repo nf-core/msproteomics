@@ -1,0 +1,91 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "fragpipe_export"
+description: Export and specialized analysis modules including Skyline document creation, SAINT AP-MS scoring, FPOP analysis, and metaproteomics taxonomic assignment
+keywords:
+  - proteomics
+  - export
+  - skyline
+  - saint
+  - fpop
+  - metaproteomics
+  - taxonomy
+components:
+  - skyline
+  - saintexpress
+  - fpop
+  - metaproteomics
+input:
+  - ch_results_dir:
+      type: channel
+      description: |
+        Per-sample results directories from PHILOSOPHER_FILTER.
+        Structure: [ val(meta), path(results_dir) ]
+  - ch_mzml:
+      type: channel
+      description: |
+        Spectra files in mzML format.
+        Structure: [ val(meta), path(mzml) ]
+  - ch_speclib:
+      type: channel
+      description: |
+        Spectral library file from SPECLIBGEN (optional, may be empty).
+        Structure: [ val(meta), path(speclib) ]
+  - ch_fasta:
+      type: channel
+      description: |
+        Protein database FASTA as a value channel for broadcasting.
+        Structure: path(fasta)
+  - ch_taxon_files:
+      type: channel
+      description: |
+        NCBI taxonomy files for metaproteomics. Pass Channel.empty() when not used.
+        Structure: tuple path(names.dmp), path(nodes.dmp)
+  - ch_saint_files:
+      type: channel
+      description: |
+        SAINT input files for AP-MS scoring. Pass Channel.empty() when not used.
+        Structure: tuple path(inter), path(bait), path(prey)
+  - ch_tool_configs:
+      type: channel
+      description: |
+        Parsed JSON tool configuration map controlling which export tools to run.
+        Structure: val(tool_configs_map)
+  - aggregate_meta:
+      type: value
+      description: |
+        Metadata map for aggregate outputs (e.g., [id: 'fragpipe']).
+output:
+  - skyline_doc:
+      type: channel
+      description: |
+        Skyline document file for visualization.
+        Structure: [ val(meta), path(fragpipe.sky) ]
+  - skyline_reports:
+      type: channel
+      description: |
+        Skyline exported report CSV files.
+        Structure: [ val(meta), path(*.csv) ]
+  - saint_results:
+      type: channel
+      description: |
+        SAINTexpress interaction scoring results.
+        Structure: [ val(meta), path(list.txt) ]
+  - fpop_results:
+      type: channel
+      description: |
+        FPOP analysis results directory.
+        Structure: [ val(meta), path(results_dir) ]
+  - taxonomy_results:
+      type: channel
+      description: |
+        Metaproteomics taxonomic assignment results directory.
+        Structure: [ val(meta), path(results_dir) ]
+  - versions:
+      type: file
+      description: |
+        File containing software versions.
+        Structure: [ path(versions.yml) ]
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

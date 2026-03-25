@@ -1,0 +1,42 @@
+{
+    "fragpipe_database - integration": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "erwinia_db"
+                    },
+                    "erwinia_db_philosopher.fasta:md5,f7879e9a69103917e3a0fc5daa0b58d0"
+                ]
+            ],
+            [
+                "erwinia_db_philosopher.fasta:md5,f7879e9a69103917e3a0fc5daa0b58d0"
+            ]
+        ],
+        "timestamp": "2026-03-25T17:13:18.954455933",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "fragpipe_database - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "database"
+                    },
+                    "database_philosopher.fasta:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                "database_philosopher.fasta:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ]
+        ],
+        "timestamp": "2026-03-25T03:54:13.955620214",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

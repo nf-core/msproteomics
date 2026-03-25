@@ -1,0 +1,96 @@
+name: "fragpipe"
+description: Run complete FragPipe proteomics workflow for DDA/DIA/TMT analysis
+keywords:
+  - proteomics
+  - mass spectrometry
+  - peptide identification
+  - protein quantification
+  - DDA
+  - DIA
+  - TMT
+  - label-free
+tools:
+  - fragpipe:
+      description: |
+        FragPipe is a Java Graphical User Interface (GUI) and CLI for a suite of
+        computational tools enabling comprehensive analysis of shotgun proteomics data.
+        It includes MSFragger for ultrafast peptide identification, IonQuant for
+        quantification, Philosopher for FDR control and reporting, and many other tools.
+      homepage: "https://fragpipe.nesvilab.org/"
+      documentation: "https://fragpipe.nesvilab.org/docs/tutorial_fragpipe.html"
+      tool_dev_url: "https://github.com/Nesvilab/FragPipe"
+      doi: "10.1038/s41592-020-0967-5"
+      licence: ["Commercial"]
+      note: "License pre-installed in container"
+
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. `[ id:'experiment1' ]`
+    - mzml_files:
+        type: file
+        description: Mass spectrometry data files in mzML format
+        pattern: "*.{mzML}"
+  - - fasta:
+        type: file
+        description: Protein sequence database in FASTA format
+        pattern: "*.{fasta,fas,fa}"
+  - - workflow_file:
+        type: file
+        description: FragPipe workflow configuration file
+        pattern: "*.workflow"
+  - - workflow_type:
+        type: string
+        description: Workflow type (DDA, DDA-TMT, DIA, LFQ-MBR, etc.)
+
+output:
+  proteins:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "results/*/protein.tsv":
+          type: file
+          description: Protein-level quantification results
+          pattern: "*/protein.tsv"
+  peptides:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "results/*/peptide.tsv":
+          type: file
+          description: Peptide-level quantification results
+          pattern: "*/peptide.tsv"
+  psms:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "results/*/psm.tsv":
+          type: file
+          description: Peptide-spectrum match results
+          pattern: "*/psm.tsv"
+  results:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "results":
+          type: directory
+          description: Complete FragPipe results directory
+  log:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "fragpipe.log":
+          type: file
+          description: FragPipe execution log
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

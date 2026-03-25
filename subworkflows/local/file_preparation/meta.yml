@@ -1,0 +1,28 @@
+name: file_preparation
+description: Convert raw mass spectrometry files to mzML format, decompress archives, and optionally perform peak picking.
+keywords:
+  - file conversion
+  - mzML
+  - raw files
+  - Bruker
+  - Thermo
+components:
+  - thermorawfileparser
+  - tdf2mzml
+  - decompress
+  - mzml/indexing
+  - openms/peak/picker
+input:
+  - ch_rawfiles:
+      type: channel
+      description: "Channel of [val(meta), path(raw/mzml/d.tar)] tuples with raw spectra files"
+output:
+  - results:
+      type: channel
+      description: "Channel of [val(meta), path(mzML|.d)] tuples with converted/indexed spectra files"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@daichengxin"

@@ -1,0 +1,158 @@
+{
+    "fragpipe_validate - stub with peptideprophet": {
+        "content": [
+            [
+                
+            ],
+            [
+                
+            ],
+            [
+                
+            ],
+            [
+                
+            ],
+            [
+                
+            ]
+        ],
+        "timestamp": "2026-03-25T03:57:00.114143073",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "fragpipe_validate - stub with percolator and ptmprophet": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_validate_ptm"
+                    },
+                    "interact-test.mod.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_validate_ptm"
+                    },
+                    "test_percolator_target_psms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_validate_ptm"
+                    },
+                    "test_percolator_decoy_psms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_validate_ptm"
+                    },
+                    "interact-test.mod.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_validate_ptm"
+                    },
+                    [
+                        "interact-test.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "percolator.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test_percolator_decoy_psms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test_percolator_target_psms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-25T03:57:07.384837471",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "fragpipe_validate - stub passthrough": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_passthrough"
+                    },
+                    "test.pepXML:md5,dd1aab2497ba8d2a8be1e78e0bc016de"
+                ]
+            ],
+            [
+                
+            ],
+            [
+                
+            ],
+            [
+                
+            ],
+            [
+                
+            ]
+        ],
+        "timestamp": "2026-03-25T03:57:13.522131209",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "fragpipe_validate - stub with percolator": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_validate"
+                    },
+                    "interact-test.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_validate"
+                    },
+                    "test_percolator_target_psms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_validate"
+                    },
+                    "test_percolator_decoy_psms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                
+            ],
+            [
+                [
+                    {
+                        "id": "test_validate"
+                    },
+                    [
+                        "interact-test.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "percolator.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test_percolator_decoy_psms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test_percolator_target_psms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-25T03:56:53.833096317",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

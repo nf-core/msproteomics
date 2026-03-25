@@ -1,0 +1,40 @@
+nextflow_process {
+
+    name "Test Process TDF2MZML"
+    script "../main.nf"
+    process "TDF2MZML"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "tdf2mzml"
+
+    test("tdf2mzml - stub") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            process {
+                """
+                def raw_file = file("\${workDir}/sample.d.tar.gz")
+                raw_file.text = "mock"
+
+                input[0] = channel.of([
+                    [ id: 'test', mzml_id: 'test_sample' ],
+                    raw_file
+                ])
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(
+                    process.out.mzmls_converted,
+                    process.out.dotd_files,
+                    process.out.log
+                ).match() }
+            )
+        }
+    }
+}

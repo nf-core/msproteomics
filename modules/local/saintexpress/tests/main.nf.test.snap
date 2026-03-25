@@ -1,0 +1,61 @@
+{
+    "saintexpress - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_saint"
+                    },
+                    [
+                        "list.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "saintexpress.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_saint"
+                    },
+                    "list.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-25T03:51:45.899219161",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "saintexpress - integration with test data": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "saint_test"
+                    },
+                    [
+                        "bait.dat:md5,85bd3950e242226a752c9fc2aec95dbe",
+                        "inter.dat:md5,7d8c85955e3cb5171f164d9784f30255",
+                        "list.txt:md5,7f615498f2b4cfb486460c990104d2a8",
+                        "prey.dat:md5,650d7833a635caf3825f8b6c04d5455c",
+                        "saintexpress.log:md5,ddcf687984c340b0616dc38e3fb07901"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "saint_test"
+                    },
+                    "list.txt:md5,7f615498f2b4cfb486460c990104d2a8"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-25T17:09:51.932789872",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

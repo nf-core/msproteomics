@@ -1,0 +1,145 @@
+nextflow_workflow {
+
+    name "Test Subworkflow FRAGPIPE_INFERENCE"
+    script "../main.nf"
+    workflow "FRAGPIPE_INFERENCE"
+    config "./test.config"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "fragpipe_inference"
+
+    test("fragpipe_inference - stub with proteinprophet and filter") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                def pepxml_file1 = file("\${workDir}/sample1.pep.xml")
+                pepxml_file1.text = "<?xml version='1.0'?><msms_pipeline_analysis></msms_pipeline_analysis>"
+                def pepxml_file2 = file("\${workDir}/sample2.pep.xml")
+                pepxml_file2.text = "<?xml version='1.0'?><msms_pipeline_analysis></msms_pipeline_analysis>"
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">PROT1\\nPEPTIDEK"
+
+                // Tool configs: both enabled
+                def tool_configs = [
+                    proteinprophet:     [run: true, args: '--maxppmdiff 2000000'],
+                    filter: [run: true, args: '--sequential --razor --prot 0.01'],
+                    report: [run: true, args: '--msstats']
+                ]
+
+                input[0] = channel.of(
+                    [[ id: 'sample1', group: 'sample1' ], pepxml_file1],
+                    [[ id: 'sample2', group: 'sample2' ], pepxml_file2]
+                )
+                input[1] = fasta_file
+                input[2] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[3] = [ id: 'combined' ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.out.protxml,
+                    workflow.out.results_dir,
+                    workflow.out.psms,
+                    workflow.out.peptides,
+                    workflow.out.proteins,
+                    workflow.out.ions,
+                    workflow.out.pepxml
+                ).match() }
+            )
+        }
+    }
+
+    test("fragpipe_inference - stub single sample") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                def pepxml_file = file("\${workDir}/single.pep.xml")
+                pepxml_file.text = "<?xml version='1.0'?><msms_pipeline_analysis></msms_pipeline_analysis>"
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">PROT1\\nPEPTIDEK"
+
+                // Tool configs
+                def tool_configs = [
+                    proteinprophet:     [run: true, args: '--maxppmdiff 2000000'],
+                    filter: [run: true, args: '--sequential --picked --prot 0.01'],
+                    report: [run: true, args: '']
+                ]
+
+                input[0] = channel.of([[ id: 'single', group: 'single' ], pepxml_file])
+                input[1] = fasta_file
+                input[2] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[3] = [ id: 'fragpipe' ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.out.protxml,
+                    workflow.out.results_dir,
+                    workflow.out.psms,
+                    workflow.out.peptides,
+                    workflow.out.proteins,
+                    workflow.out.ions,
+                    workflow.out.pepxml
+                ).match() }
+            )
+        }
+    }
+
+    test("fragpipe_inference - stub proteinprophet only") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                def pepxml_file = file("\${workDir}/test.pep.xml")
+                pepxml_file.text = "<?xml version='1.0'?><msms_pipeline_analysis></msms_pipeline_analysis>"
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">PROT1\\nPEPTIDEK"
+
+                // Tool configs: only proteinprophet
+                def tool_configs = [
+                    proteinprophet:     [run: true, args: '--maxppmdiff 2000000'],
+                    filter: [run: false, args: ''],
+                    report: [run: false, args: '']
+                ]
+
+                input[0] = channel.of([[ id: 'test_pp_only', group: 'test_pp_only' ], pepxml_file])
+                input[1] = fasta_file
+                input[2] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[3] = [ id: 'aggregate' ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.out.protxml,
+                    workflow.out.results_dir,
+                    workflow.out.psms,
+                    workflow.out.peptides,
+                    workflow.out.proteins,
+                    workflow.out.ions,
+                    workflow.out.pepxml
+                ).match() }
+            )
+        }
+    }
+}

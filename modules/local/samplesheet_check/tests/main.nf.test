@@ -1,0 +1,35 @@
+nextflow_process {
+
+    name "Test Process SAMPLESHEET_CHECK"
+    script "../main.nf"
+    process "SAMPLESHEET_CHECK"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "samplesheet_check"
+
+    test("samplesheet_check - stub") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            process {
+                """
+                def input_file = file("\${workDir}/test_sdrf.tsv")
+                input_file.text = "source name\\tcomment[data file]\\ntest\\ttest.raw"
+
+                input[0] = input_file
+                input[1] = true   // is_sdrf
+                input[2] = false  // validate_ontologies
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(process.out.log, process.out.checked_file).match() }
+            )
+        }
+    }
+}

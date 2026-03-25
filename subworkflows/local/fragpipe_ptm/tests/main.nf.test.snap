@@ -1,0 +1,94 @@
+{
+    "fragpipe_ptm - stub multi-sample": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "ptm_multi"
+                    },
+                    [
+                        "global.modsummary.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "global.profile.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "ptmshepherd.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "ptm_multi"
+                    },
+                    "global.profile.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "ptm_multi"
+                    },
+                    "global.modsummary.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                
+            ],
+            [
+                
+            ],
+            [
+                
+            ]
+        ],
+        "timestamp": "2026-03-25T03:55:27.704871721",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "fragpipe_ptm - stub with ptmshepherd": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "ptm_analysis"
+                    },
+                    [
+                        "global.modsummary.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "global.profile.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "ptmshepherd.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "ptm_analysis"
+                    },
+                    "global.profile.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "ptm_analysis"
+                    },
+                    "global.modsummary.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                
+            ],
+            [
+                
+            ],
+            [
+                
+            ]
+        ],
+        "timestamp": "2026-03-25T03:55:21.279222226",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

@@ -1,0 +1,143 @@
+{
+    "percolator - from pre-computed data": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "tmt_erwinia_subset",
+                        "data_type": "DDA"
+                    },
+                    [
+                        "interact-tmt_erwinia_subset.pep.xml:md5,32bb48d54d50b8cf5b4f41a0dcc1e7de",
+                        "percolator.log:md5,3e5e6f74b18f3645da9e372c3d851fc5",
+                        "tmt_erwinia_subset_percolator_decoy_psms.tsv:md5,b13a86a2fc4156c343e034cc4e4692fd",
+                        "tmt_erwinia_subset_percolator_target_psms.tsv:md5,ae356599ab6e69da0d36fa043e7c43d1"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "tmt_erwinia_subset",
+                        "data_type": "DDA"
+                    },
+                    "interact-tmt_erwinia_subset.pep.xml:md5,32bb48d54d50b8cf5b4f41a0dcc1e7de"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "tmt_erwinia_subset",
+                        "data_type": "DDA"
+                    },
+                    "tmt_erwinia_subset_percolator_target_psms.tsv:md5,ae356599ab6e69da0d36fa043e7c43d1"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "tmt_erwinia_subset",
+                        "data_type": "DDA"
+                    },
+                    "tmt_erwinia_subset_percolator_decoy_psms.tsv:md5,b13a86a2fc4156c343e034cc4e4692fd"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-25T17:06:35.927429642",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "percolator - from MSFRAGGER": {
+        "content": [
+            {
+                "0": [
+                    
+                ],
+                "1": [
+                    
+                ],
+                "2": [
+                    
+                ],
+                "3": [
+                    
+                ],
+                "4": [
+                    
+                ],
+                "decoy_psms": [
+                    
+                ],
+                "pepxml": [
+                    
+                ],
+                "results_dir": [
+                    
+                ],
+                "target_psms": [
+                    
+                ],
+                "versions": [
+                    
+                ]
+            }
+        ],
+        "timestamp": "2026-02-18T20:59:39.071837274",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.2"
+        }
+    },
+    "percolator - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_sample",
+                        "data_type": "DDA"
+                    },
+                    [
+                        "interact-test.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "percolator.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test_percolator_decoy_psms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test_percolator_target_psms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_sample",
+                        "data_type": "DDA"
+                    },
+                    "interact-test.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_sample",
+                        "data_type": "DDA"
+                    },
+                    "test_percolator_target_psms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_sample",
+                        "data_type": "DDA"
+                    },
+                    "test_percolator_decoy_psms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-25T03:50:35.853083595",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

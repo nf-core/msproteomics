@@ -1,0 +1,78 @@
+name: "mbg"
+description: Mass-based glycoproteomics matching for glycan identification
+keywords:
+  - proteomics
+  - mass spectrometry
+  - glycoproteomics
+  - glycan
+  - mass-based matching
+tools:
+  - mbg:
+      description: |
+        MBG (Mass-Based Glycoproteomics) performs glycan identification and matching
+        by analyzing PSM data against glycan databases. It matches observed mass
+        shifts to known glycan compositions, supporting both standard and TMT-based
+        glycoproteomics workflows. MBG is part of the FragPipe glycoproteomics
+        analysis suite.
+      homepage: "https://fragpipe.nesvilab.org/"
+      documentation: "https://fragpipe.nesvilab.org/docs/tutorial_glyco.html"
+      tool_dev_url: "https://github.com/Nesvilab/FragPipe"
+      licence: ["Academic"]
+
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample information
+    - psm_file:
+        type: file
+        description: PSM file from PHILOSOPHER_FILTER
+        pattern: "psm.tsv"
+    - manifest_file:
+        type: file
+        description: FragPipe manifest file listing input files
+        pattern: "*.fp-manifest"
+    - config_cli:
+        type: string
+        description: MBG parameters as CLI string (e.g., --maxq 0.01 --mztol 10)
+  - - residue_db:
+        type: file
+        description: Glycan residues database file
+  - - glycan_mod_db:
+        type: file
+        description: Glycan modifications database file
+
+output:
+  results_dir:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}":
+          type: directory
+          description: Directory containing MBG results and log
+          pattern: "${prefix}"
+  results:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/*_mbg*.tsv":
+          type: file
+          description: MBG matching results
+          pattern: "*_mbg*.tsv"
+  glycan_results:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/*_glycan*.tsv":
+          type: file
+          description: Glycan-level results
+          pattern: "*_glycan*.tsv"
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

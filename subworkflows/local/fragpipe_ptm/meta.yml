@@ -1,0 +1,82 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "fragpipe_ptm"
+description: Post-translational modification analysis with PTMShepherd for mass shift characterization, localization, and profiling
+keywords:
+  - proteomics
+  - ptm
+  - post-translational-modification
+  - ptmshepherd
+  - mass-shift
+  - localization
+components:
+  - ptmshepherd
+input:
+  - ch_results_dir:
+      type: channel
+      description: |
+        Per-sample results directories from PHILOSOPHER_FILTER.
+        Structure: [ val(meta), path(results_dir) ]
+  - ch_protxml:
+      type: channel
+      description: |
+        ProteinProphet output XML from FRAGPIPE_INFERENCE.
+        Structure: [ val(meta), path(protxml) ]
+  - ch_mzml:
+      type: channel
+      description: |
+        Spectra files in mzML format for mass shift analysis.
+        Structure: [ val(meta), path(mzml) ]
+  - ch_tool_configs:
+      type: channel
+      description: |
+        Parsed JSON tool configuration map controlling PTMShepherd execution.
+        Structure: val(tool_configs_map)
+  - aggregate_meta:
+      type: value
+      description: |
+        Metadata map for aggregate outputs (e.g., [id: 'fragpipe']).
+  - ch_fasta:
+      type: channel
+      description: |
+        Protein database FASTA for PTMShepherd analysis.
+        Structure: path(fasta)
+output:
+  - results_dir:
+      type: channel
+      description: |
+        PTMShepherd results directory containing all PTM analysis output files.
+        Structure: [ val(meta), path(results_dir) ]
+  - global_profile:
+      type: channel
+      description: |
+        Global PTM profile summary table.
+        Structure: [ val(meta), path(global.profile.tsv) ]
+  - global_modsummary:
+      type: channel
+      description: |
+        Global modification summary table.
+        Structure: [ val(meta), path(global.modsummary.tsv) ]
+  - diagmine:
+      type: channel
+      description: |
+        Diagnostic ion mining results.
+        Structure: [ val(meta), path(*diagmine.tsv) ]
+  - localization:
+      type: channel
+      description: |
+        PTM site localization results.
+        Structure: [ val(meta), path(*localization.tsv) ]
+  - glycoprofile:
+      type: channel
+      description: |
+        Glycoprofile analysis results.
+        Structure: [ val(meta), path(*glycoprofile.tsv) ]
+  - versions:
+      type: file
+      description: |
+        File containing software versions.
+        Structure: [ path(versions.yml) ]
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

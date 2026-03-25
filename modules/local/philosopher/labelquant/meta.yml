@@ -1,0 +1,60 @@
+name: "philosopher_labelquant"
+description: Extract TMT/isobaric reporter ion intensities from mzML spectra using Philosopher labelquant
+keywords:
+  - proteomics
+  - TMT
+  - isobaric
+  - labeling
+  - quantification
+  - reporter ion
+tools:
+  - philosopher:
+      description: |
+        Philosopher labelquant extracts TMT/isobaric reporter ion intensities from
+        mzML spectra and writes them into the Philosopher .meta/ workspace. This is
+        the Philosopher-based alternative to IonQuant's isobaric extraction mode
+        (intensity_extraction_tool=1 in FragPipe).
+      homepage: "https://philosopher.nesvilab.org/"
+      documentation: "https://github.com/Nesvilab/philosopher/wiki"
+      tool_dev_url: "https://github.com/Nesvilab/philosopher"
+      doi: "10.1038/s41592-020-0912-y"
+      licence: ["GPL-3.0"]
+
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample information
+    - results_dir:
+        type: directory
+        description: Directory containing psm.tsv and .meta/ workspace from PHILOSOPHER_FILTER or FREEQUANT
+    - mzml_dir:
+        type: directory
+        description: Directory containing mzML files for the experiment/group
+    - annot:
+        type: file
+        description: TMT annotation file mapping channels to samples
+        pattern: "*.txt"
+    - config_cli:
+        type: string
+        description: |
+          CLI flags for philosopher labelquant command.
+          Includes --tol, --level, --minprob, --purity, --removelow, --plex, --brand.
+
+output:
+  results_dir:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}":
+          type: directory
+          description: Directory containing results with TMT intensities in .meta/ workspace
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

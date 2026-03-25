@@ -1,0 +1,159 @@
+{
+    "fragpipe_glyco - stub with opair": {
+        "content": [
+            [
+                
+            ],
+            [
+                
+            ],
+            [
+                [
+                    {
+                        "id": "sample_op"
+                    },
+                    "sample_opair_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "sample_op"
+                    },
+                    "sample_opair_glycoforms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                
+            ],
+            [
+                [
+                    {
+                        "id": "sample_op"
+                    },
+                    [
+                        "opair.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_opair_glycoforms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_opair_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-25T03:54:47.713079722",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "fragpipe_glyco - stub with mbg": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "sample"
+                    },
+                    "sample_mbg_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "sample"
+                    },
+                    "sample_glycan_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                
+            ],
+            [
+                
+            ],
+            [
+                [
+                    {
+                        "id": "sample"
+                    },
+                    [
+                        "mbg.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_glycan_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_mbg_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                
+            ]
+        ],
+        "timestamp": "2026-03-25T03:54:41.26510059",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "fragpipe_glyco - stub with both": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "sample_both"
+                    },
+                    "sample_mbg_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "sample_both"
+                    },
+                    "sample_glycan_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "sample_both"
+                    },
+                    "sample_opair_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "sample_both"
+                    },
+                    "sample_opair_glycoforms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "sample_both"
+                    },
+                    [
+                        "mbg.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_glycan_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_mbg_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "sample_both"
+                    },
+                    [
+                        "opair.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_opair_glycoforms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_opair_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-25T03:54:54.055472644",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

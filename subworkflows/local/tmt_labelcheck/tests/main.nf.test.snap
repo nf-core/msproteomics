@@ -1,0 +1,133 @@
+{
+    "TMT16 lbl - Stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "sample1"
+                    },
+                    "sample1.mzML:md5,17404a596cbd0d1e6c7d23fcd845ab82"
+                ],
+                [
+                    {
+                        "id": "sample2"
+                    },
+                    "sample2.mzML:md5,17404a596cbd0d1e6c7d23fcd845ab82"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "sample1"
+                    },
+                    "interact-sample1.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                [
+                    {
+                        "id": "sample2"
+                    },
+                    "interact-sample2.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "sample1"
+                    },
+                    "sample1.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                [
+                    {
+                        "id": "sample2"
+                    },
+                    "sample2.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "tmt_labelcheck"
+                    },
+                    "combined.prot.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "sample1",
+                        "group": "sample1"
+                    },
+                    "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                [
+                    {
+                        "id": "sample2",
+                        "group": "sample2"
+                    },
+                    "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "tmt_labelcheck_combined"
+                    },
+                    "combined_modified_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "tmt_labelcheck"
+                    },
+                    "report.html:md5,5870ce26bee812ced6c26fe54ac3861c"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "tmt_labelcheck"
+                    },
+                    "report.md:md5,e232ba33dde02c30e8c9dbdabc525d7d"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "tmt_labelcheck"
+                    },
+                    "labeling_summary.tsv:md5,e51ebb87d0eaa9012a2478a6c8d34bb5"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "tmt_labelcheck"
+                    },
+                    "per_sample_efficiency.csv:md5,194771a70f5749c555e858384e3c3aeb"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "tmt_labelcheck_combined"
+                    },
+                    "report.html:md5,5870ce26bee812ced6c26fe54ac3861c"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "tmt_labelcheck_combined"
+                    },
+                    "labeling_summary.tsv:md5,e51ebb87d0eaa9012a2478a6c8d34bb5"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-25T03:57:31.76807862",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

@@ -1,0 +1,71 @@
+nextflow_process {
+
+    name "Test Process MSBOOSTER"
+    script "../main.nf"
+    process "MSBOOSTER"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "msbooster"
+
+    test("msbooster - stub") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def pin_file = file("\${workDir}/test.pin")
+                def mzml_file = file("\${workDir}/test.mzML")
+                pin_file.text = "SpecId\\tLabel\\nmock\\t1"
+                mzml_file.text = "mock"
+
+                // Four inputs: tuple [meta, pin_files, mzml_files], path params_file, path fragger_params, val has_ion_mobility
+                input[0] = channel.of([[ id: 'test' ], pin_file, mzml_file])
+                input[1] = []  // params_file (CLI mode, uses ext.args)
+                input[2] = []  // fragger_params (not provided)
+                input[3] = false  // has_ion_mobility (no timsTOF data)
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(process.out.results_dir, process.out.pin_edited).match() }
+            )
+        }
+    }
+
+    test("msbooster - from pre-computed pin") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                // Use pre-computed PIN from test-datasets (real MSFragger output)
+                // The PIN SpecId prefix must match the mzML filename for MSBooster
+                // to correlate PIN entries with mzML spectra by basename.
+                def pin_file = file("\${params.pipelines_testdata_base_path}/module_inputs/tmt_erwinia_subset.pin", checkIfExists: true)
+                def mzml_file = file("\${params.pipelines_testdata_base_path}/spectra/tmt_erwinia_subset.mzML", checkIfExists: true)
+
+                // Four inputs: tuple [meta, pin_files, mzml_files], path params_file, path fragger_params, val has_ion_mobility
+                input[0] = channel.of([ [ id: 'msbooster_test' ], pin_file, mzml_file ])
+                input[1] = []  // params_file (CLI mode, uses ext.args)
+                input[2] = []  // fragger_params (not provided)
+                input[3] = false  // has_ion_mobility (no timsTOF data)
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(
+                    process.out.pin_edited.collect { meta, f -> file(f).name },
+                    process.out.versions_msbooster
+                ).match() }
+            )
+        }
+    }
+}

@@ -1,0 +1,10 @@
+name: iq
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - conda-forge::r-base=4.4.1
+  - conda-forge::r-essentials
+  - conda-forge::r-devtools
+  - conda-forge::r-argparse
+  - conda-forge::r-iq

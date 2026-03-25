@@ -1,0 +1,43 @@
+{
+    "file_names": {
+        "content": [
+            [
+                "interact-tmt_erwinia_subset_msfragger.pep.xml",
+                "peptideprophet.log"
+            ]
+        ],
+        "timestamp": "2026-03-24T21:27:51.041581726",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "peptideprophet - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_sample"
+                    },
+                    [
+                        "interact-test.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "peptideprophet.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_sample"
+                    },
+                    "interact-test.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-25T03:50:59.23830172",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

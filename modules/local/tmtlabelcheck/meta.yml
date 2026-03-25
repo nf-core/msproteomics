@@ -1,0 +1,121 @@
+name: "tmt_labelcheck_analyze"
+description: |
+  Analyze TMT labeling efficiency from PSM results using per-peptide site-level calculation.
+  Calculates labeling efficiency based on (Labeled Sites / Total Labelable Sites) where
+  labelable sites = lysine residues + N-terminus per peptide. Properly handles N-terminal
+  acetylation as biological blocking (not labeling failure). Optionally calculates channel
+  mixing ratios for TMT normalization.
+keywords:
+  - proteomics
+  - TMT
+  - isobaric labeling
+  - quality control
+  - labeling efficiency
+  - mixing ratios
+tools:
+  - tmt_qc:
+      description: |
+        TMT QC Analysis Tool - Python CLI for calculating per-peptide TMT labeling
+        efficiency and channel mixing ratios. Supports Philosopher psm.tsv and
+        Percolator target_psms.tsv formats.
+
+        Labeling Efficiency Formula:
+          Total_Sites = peptide.count('K') + 1  (lysines + N-terminus)
+          Labeled_Sites = count(TMT modifications in Assigned Modifications)
+          Efficiency = sum(Labeled_Sites) / sum(Total_Sites) * 100
+
+        N-terminal acetylation (42.0106 Da) is excluded from failure counts as it
+        represents biological blocking, not labeling failure.
+      homepage: "https://github.com/nf-fragpipe"
+      licence: ["MIT"]
+  - pandas:
+      description: Python data analysis library
+      homepage: "https://pandas.pydata.org/"
+      documentation: "https://pandas.pydata.org/docs/"
+      licence: ["BSD-3-Clause"]
+
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. [ id:'test', single_end:false ]
+    - psm_files:
+        type: file
+        description: |
+          PSM file(s) - supports both Philosopher psm.tsv (with Probability column)
+          and Percolator target PSM TSV files. Multiple files will be combined.
+        pattern: "*.tsv"
+  - - abundance_file:
+        type: file
+        description: |
+          Optional peptide abundance file for mixing ratio calculation.
+          Should contain intensity columns for each TMT channel.
+          Use 'NO_FILE' placeholder if not available.
+        pattern: "*.tsv"
+  - - tmt_type:
+        type: string
+        description: |
+          TMT reagent type. Determines TMT mass and expected channels.
+          Valid values: TMT0, TMT2, TMT6, TMT10, TMT11, TMT16, TMT18, TMT35, TMTPRO
+
+output:
+  results:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}":
+          type: directory
+          description: Directory containing all labelcheck results
+  html_report:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/report.html":
+          type: file
+          description: |
+            Rich HTML report with embedded CSS styling, including:
+            - Large efficiency percentage with color-coded status
+            - Summary statistics in formatted tables
+            - Channel mixing ratios (if abundance file provided)
+          pattern: "*/report.html"
+  md_report:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/report.md":
+          type: file
+          description: |
+            Markdown report suitable for documentation and GitHub rendering
+          pattern: "*/report.md"
+  summary:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/labeling_summary.tsv":
+          type: file
+          description: |
+            Machine-readable labeling summary in TSV format with columns:
+            metric, value, percentage
+          pattern: "*/labeling_summary.tsv"
+  mixing_ratios:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/mixing_table.csv":
+          type: file
+          description: |
+            Channel mixing ratios CSV with columns:
+            channel, total_intensity, correction_factor, percent_of_mean
+            Only generated when abundance_file is provided.
+          pattern: "*/mixing_table.csv"
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

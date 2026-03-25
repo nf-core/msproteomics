@@ -1,0 +1,55 @@
+nextflow_process {
+
+    name "Test Process PHILOSOPHER_DATABASE"
+    script "../main.nf"
+    process "PHILOSOPHER_DATABASE"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "philosopher"
+    tag "philosopher/database"
+
+    test("philosopher_database - stub") {
+        tag "stub"
+        tag "integration"
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [[ id:'test' ], file("test.fasta")]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.fasta, process.out.log).match() }
+            )
+        }
+    }
+
+    test("philosopher_database - local FASTA") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                input[0] = [[ id:'erwinia_test' ], file("\${params.pipelines_testdata_base_path}/databases/erwinia_carotovora.fasta", checkIfExists: true)]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                // Exclude log channel (contains timestamps that change between runs)
+                { assert snapshot(
+                    process.out.fasta,
+                    process.out.versions_philosopher
+                ).match() }
+            )
+        }
+    }
+}
