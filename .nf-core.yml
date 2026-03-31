@@ -1,0 +1,15 @@
+repository_type: pipeline
+
+nf_core_version: 3.5.2
+
+lint: {}
+
+template:
+  org: nf-core
+  name: msproteomics
+  description: Mass spectrometry proteomics preprocessing (DIA, DDA LFQ, TMT)
+  author: Dongze He
+  version: 1.0.0dev
+  force: true
+  outdir: msproteomics
+  is_nfcore: true
