@@ -146,7 +146,7 @@ jobs:
           NFT_WORKDIR: ${{ env.NFT_WORKDIR }}
         run: |
           nf-test test tests/default.nf.test \
-            --profile=+docker \
+            --profile=+docker,test \
             --tag dia_integration \
             --ci \
             --verbose

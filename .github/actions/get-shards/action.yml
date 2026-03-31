@@ -36,7 +36,7 @@ runs:
           CHANGED_SINCE_ARG=""
         fi
         nftest_output=$(nf-test test \
-          --profile +docker \
+          --profile +docker,test \
           $(if [ -n "${{ inputs.tags }}" ]; then echo "--tag ${{ inputs.tags }}"; fi) \
           --dry-run \
           --ci \

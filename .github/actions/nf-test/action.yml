@@ -66,7 +66,7 @@ runs:
           CHANGED_SINCE_ARG=""
         fi
         nf-test test \
-          --profile=+${{ inputs.profile }} \
+          --profile=+${{ inputs.profile }},test \
           $(if [ -n "${{ inputs.tags }}" ]; then echo "--tag ${{ inputs.tags }}"; fi) \
           --ci \
           $CHANGED_SINCE_ARG \
