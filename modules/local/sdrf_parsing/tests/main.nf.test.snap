@@ -1,0 +1,20 @@
+{
+    "sdrf_parsing - stub": {
+        "content": [
+            [
+                "test.sdrf_openms_design.tsv:md5,3fe6e1e68543d47cdb120cb575985815"
+            ],
+            [
+                "test.sdrf_config.tsv:md5,1434ea648aa4675315b7107145172bb3"
+            ],
+            [
+                "test.sdrf_parsing.log:md5,1ad239c94b4b8739c6acd1bb40b24990"
+            ]
+        ],
+        "timestamp": "2026-03-25T03:51:56.987062294",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

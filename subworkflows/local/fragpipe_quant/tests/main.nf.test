@@ -1,0 +1,226 @@
+nextflow_workflow {
+
+    name "Test Subworkflow FRAGPIPE_QUANT"
+    script "../main.nf"
+    workflow "FRAGPIPE_QUANT"
+    config "./test.config"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "fragpipe_quant"
+
+    test("fragpipe_quant - stub with ionquant") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                // Create sample directories with psm.tsv
+                def sample1_dir = file("\${workDir}/sample1")
+                sample1_dir.mkdirs()
+                file("\${sample1_dir}/psm.tsv").text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
+                def sample2_dir = file("\${workDir}/sample2")
+                sample2_dir.mkdirs()
+                file("\${sample2_dir}/psm.tsv").text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
+
+                def mzml_file1 = file("\${workDir}/sample1.mzML")
+                mzml_file1.text = "<?xml version='1.0'?><mzML></mzML>"
+                def mzml_file2 = file("\${workDir}/sample2.mzML")
+                mzml_file2.text = "<?xml version='1.0'?><mzML></mzML>"
+
+                def annotation_file = file("\${workDir}/annotation.txt")
+                annotation_file.text = ""
+
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">PROT1\\nMPEPTIDEK"
+
+                // Tool configs: only ionquant enabled
+                def tool_configs = [
+                    ionquant:       [run: true, args: '--mbr 0 --maxlfq 1'],
+                    tmtintegrator:  [run: false, args: ''],
+                    freequant:      [run: false, args: '']
+                ]
+
+                input[0] = channel.of(
+                    [[ id: 'sample1' ], sample1_dir],
+                    [[ id: 'sample2' ], sample2_dir]
+                )
+                input[1] = channel.of(
+                    [[ id: 'sample1' ], mzml_file1],
+                    [[ id: 'sample2' ], mzml_file2]
+                )
+                input[2] = channel.of(annotation_file)
+                input[3] = channel.value(fasta_file)
+                input[4] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[5] = []                  // ch_tmtintegrator_config (not used)
+                input[6] = [ id: 'combined' ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.out.combined_protein,
+                    workflow.out.combined_peptide,
+                    workflow.out.combined_ion,
+                    workflow.out.combined_modified_peptide,
+                    workflow.out.tmt_abundance,
+                    workflow.out.tmt_ratio,
+                    workflow.out.ionquant_dir,
+                    workflow.out.tmt_dir,
+                    workflow.out.freequant_ions,
+                    workflow.out.labelquant_results_dir,
+                    workflow.out.report_results_dir,
+                    workflow.out.report_psms,
+                    workflow.out.report_peptides,
+                    workflow.out.report_proteins
+                ).match() }
+            )
+        }
+    }
+
+    test("fragpipe_quant - stub with tmtintegrator") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                // Create sample directories with psm.tsv and protein.tsv
+                def sample1_dir = file("\${workDir}/sample1")
+                sample1_dir.mkdirs()
+                file("\${sample1_dir}/psm.tsv").text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
+                file("\${sample1_dir}/protein.tsv").text = "protein\\nPROT1"
+
+                def mzml_file = file("\${workDir}/sample1.mzML")
+                mzml_file.text = "<?xml version='1.0'?><mzML></mzML>"
+
+                def annotation_file = file("\${workDir}/annotation.txt")
+                annotation_file.text = "sample\\tplex"
+
+                def tmt_config = file("\${workDir}/tmtintegrator.yml")
+                tmt_config.text = '''tmtintegrator:
+  channel_num: 16
+  ref_tag: Bridge
+  ref_d_tag: Pool
+  min_pep_prob: 0.9
+  min_purity: 0.5
+  min_percent: 0.05
+  prot_norm: 1
+  groupby: -1
+  add_Ref: 1
+'''
+
+                // Tool configs: TMT two-pass IonQuant + TMTIntegrator enabled
+                // (Matches parser output when tmtintegrator.run-tmtintegrator=true)
+                def tool_configs = [
+                    ionquant:           [run: false, args: ''],
+                    ionquant_ms1:       [run: true, args: '--perform-ms1quant 1 --perform-isoquant 0 --mbr 0 --maxlfq 0'],
+                    ionquant_isobaric:  [run: true, args: '--perform-ms1quant 0 --perform-isoquant 1 --isotype TMT-16 --isolevel 3 --isotol 20 --mbr 0 --maxlfq 0'],
+                    tmtintegrator:      [run: true, args: 'plex: TMT16'],
+                    freequant:          [run: false, args: '']
+                ]
+
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">PROT1\\nMPEPTIDEK"
+
+                input[0] = channel.of([[ id: 'sample1' ], sample1_dir])
+                input[1] = channel.of([[ id: 'sample1' ], mzml_file])
+                input[2] = channel.of(annotation_file)
+                input[3] = channel.value(fasta_file)
+                input[4] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[5] = channel.of(tmt_config)
+                input[6] = [ id: 'tmt_combined' ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.out.combined_protein,
+                    workflow.out.combined_peptide,
+                    workflow.out.combined_ion,
+                    workflow.out.combined_modified_peptide,
+                    workflow.out.tmt_abundance,
+                    workflow.out.tmt_ratio,
+                    workflow.out.ionquant_dir,
+                    workflow.out.tmt_dir,
+                    workflow.out.freequant_ions,
+                    workflow.out.labelquant_results_dir,
+                    workflow.out.report_results_dir,
+                    workflow.out.report_psms,
+                    workflow.out.report_peptides,
+                    workflow.out.report_proteins
+                ).match() }
+            )
+        }
+    }
+
+    test("fragpipe_quant - stub with freequant") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                // Create sample directory
+                def sample_dir = file("\${workDir}/sample_fq")
+                sample_dir.mkdirs()
+                file("\${sample_dir}/psm.tsv").text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
+
+                def mzml_file = file("\${workDir}/sample_fq.mzML")
+                mzml_file.text = "<?xml version='1.0'?><mzML></mzML>"
+
+                def annotation_file = file("\${workDir}/annotation.txt")
+                annotation_file.text = ""
+
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">PROT1\\nMPEPTIDEK"
+
+                // Tool configs: freequant enabled
+                def tool_configs = [
+                    ionquant:       [run: false, args: ''],
+                    tmtintegrator:  [run: false, args: ''],
+                    freequant:      [run: true, args: '--ptw 0.4 --tol 10'],
+                    filter:         [run: true, args: '', report_args: '']
+                ]
+
+                input[0] = channel.of([[ id: 'sample_fq' ], sample_dir])
+                input[1] = channel.of([[ id: 'sample_fq' ], mzml_file])
+                input[2] = channel.of(annotation_file)
+                input[3] = channel.value(fasta_file)
+                input[4] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[5] = []                  // ch_tmtintegrator_config (not used)
+                input[6] = [ id: 'freequant_out' ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.out.combined_protein,
+                    workflow.out.combined_peptide,
+                    workflow.out.combined_ion,
+                    workflow.out.combined_modified_peptide,
+                    workflow.out.tmt_abundance,
+                    workflow.out.tmt_ratio,
+                    workflow.out.ionquant_dir,
+                    workflow.out.tmt_dir,
+                    workflow.out.freequant_ions,
+                    workflow.out.labelquant_results_dir,
+                    workflow.out.report_results_dir,
+                    workflow.out.report_psms,
+                    workflow.out.report_peptides,
+                    workflow.out.report_proteins
+                ).match() }
+            )
+        }
+    }
+}

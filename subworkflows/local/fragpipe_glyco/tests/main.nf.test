@@ -1,0 +1,170 @@
+nextflow_workflow {
+
+    name "Test Subworkflow FRAGPIPE_GLYCO"
+    script "../main.nf"
+    workflow "FRAGPIPE_GLYCO"
+    config "./test.config"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "fragpipe_glyco"
+
+    test("fragpipe_glyco - stub with mbg") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                def psm_file = file("\${workDir}/sample_psm.tsv")
+                psm_file.text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
+
+                def mzml_file = file("\${workDir}/sample.mzML")
+                mzml_file.text = "<?xml version='1.0'?><mzML></mzML>"
+
+                def manifest_file = file("\${workDir}/manifest.fp-manifest")
+                manifest_file.text = "/path/to/sample.mzML\\tsample1\\texperiment\\tDDA"
+
+                def residue_db = file("\${workDir}/glycan_residues.txt")
+                residue_db.text = "HexNAc\\t203.0794\\tN"
+                def glycan_mod_db = file("\${workDir}/glycan_mods.txt")
+                glycan_mod_db.text = "Hex\\t162.0528"
+                def oglycan_db = file("\${workDir}/oglycan.txt")
+                oglycan_db.text = "HexNAc(1)\\t203.0794"
+
+                // Tool configs: mbg enabled
+                def tool_configs = [
+                    mbg:   [run: true, args: '--maxq 0.01 --minpsms 2'],
+                    opair: [run: false, args: '']
+                ]
+
+                input[0] = channel.of([[ id: 'sample' ], psm_file])
+                input[1] = channel.of([[ id: 'sample' ], mzml_file])
+                input[2] = channel.of(manifest_file)
+                input[3] = channel.of([residue_db, glycan_mod_db, oglycan_db])
+                input[4] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.out.mbg_results,
+                    workflow.out.mbg_glycan,
+                    workflow.out.opair_results,
+                    workflow.out.opair_glycoforms,
+                    workflow.out.mbg_dir,
+                    workflow.out.opair_dir
+                ).match() }
+            )
+        }
+    }
+
+    test("fragpipe_glyco - stub with opair") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                def psm_file = file("\${workDir}/sample_psm.tsv")
+                psm_file.text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
+
+                def mzml_file = file("\${workDir}/sample.mzML")
+                mzml_file.text = "<?xml version='1.0'?><mzML></mzML>"
+
+                def manifest_file = file("\${workDir}/manifest.fp-manifest")
+                manifest_file.text = "/path/to/sample.mzML\\tsample1\\texperiment\\tDDA"
+
+                def residue_db = file("\${workDir}/glycan_residues.txt")
+                residue_db.text = "HexNAc\\t203.0794\\tN"
+                def glycan_mod_db = file("\${workDir}/glycan_mods.txt")
+                glycan_mod_db.text = "Hex\\t162.0528"
+                def oglycan_db = file("\${workDir}/oglycan.txt")
+                oglycan_db.text = "HexNAc(1)\\t203.0794"
+
+                // Tool configs: opair enabled
+                def tool_configs = [
+                    mbg:   [run: false, args: ''],
+                    opair: [run: true, args: '-b 20 -c 10']
+                ]
+
+                input[0] = channel.of([[ id: 'sample_op' ], psm_file])
+                input[1] = channel.of([[ id: 'sample_op' ], mzml_file])
+                input[2] = channel.of(manifest_file)
+                input[3] = channel.of([residue_db, glycan_mod_db, oglycan_db])
+                input[4] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.out.mbg_results,
+                    workflow.out.mbg_glycan,
+                    workflow.out.opair_results,
+                    workflow.out.opair_glycoforms,
+                    workflow.out.mbg_dir,
+                    workflow.out.opair_dir
+                ).match() }
+            )
+        }
+    }
+
+    test("fragpipe_glyco - stub with both") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                def psm_file = file("\${workDir}/sample_psm.tsv")
+                psm_file.text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
+
+                def mzml_file = file("\${workDir}/sample.mzML")
+                mzml_file.text = "<?xml version='1.0'?><mzML></mzML>"
+
+                def manifest_file = file("\${workDir}/manifest.fp-manifest")
+                manifest_file.text = "/path/to/sample.mzML\\tsample1\\texperiment\\tDDA"
+
+                def residue_db = file("\${workDir}/glycan_residues.txt")
+                residue_db.text = "HexNAc\\t203.0794\\tN"
+                def glycan_mod_db = file("\${workDir}/glycan_mods.txt")
+                glycan_mod_db.text = "Hex\\t162.0528"
+                def oglycan_db = file("\${workDir}/oglycan.txt")
+                oglycan_db.text = "HexNAc(1)\\t203.0794"
+
+                // Tool configs: both enabled
+                def tool_configs = [
+                    mbg:   [run: true, args: '--maxq 0.01'],
+                    opair: [run: true, args: '-b 20']
+                ]
+
+                input[0] = channel.of([[ id: 'sample_both' ], psm_file])
+                input[1] = channel.of([[ id: 'sample_both' ], mzml_file])
+                input[2] = channel.of(manifest_file)
+                input[3] = channel.of([residue_db, glycan_mod_db, oglycan_db])
+                input[4] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.out.mbg_results,
+                    workflow.out.mbg_glycan,
+                    workflow.out.opair_results,
+                    workflow.out.opair_glycoforms,
+                    workflow.out.mbg_dir,
+                    workflow.out.opair_dir
+                ).match() }
+            )
+        }
+    }
+}

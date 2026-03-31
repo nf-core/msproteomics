@@ -1,0 +1,29 @@
+{
+    "diannr - stub": {
+        "content": [
+            [
+                "contaminants_removed_report.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ],
+            [
+                "precursors.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ],
+            [
+                "peptides.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ],
+            [
+                "peptides_maxlfq.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ],
+            [
+                "unique_genes.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ],
+            [
+                "protein_groups_maxlfq.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ]
+        ],
+        "timestamp": "2026-03-25T03:48:08.484524001",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

@@ -1,0 +1,83 @@
+name: "philosopher"
+description: Proteomics data analysis toolkit for FDR control, filtering, and reporting
+keywords:
+  - proteomics
+  - mass spectrometry
+  - FDR
+  - protein inference
+  - reporting
+  - msstats
+tools:
+  - philosopher:
+      description: |
+        Philosopher is a fast, easy-to-use, scalable, and versatile data analysis
+        toolkit for shotgun proteomics. It provides database annotation, FDR filtering,
+        protein inference, and comprehensive reporting including MSstats-compatible output.
+      homepage: "https://philosopher.nesvilab.org/"
+      documentation: "https://github.com/Nesvilab/philosopher/wiki"
+      tool_dev_url: "https://github.com/Nesvilab/philosopher"
+      doi: "10.1038/s41592-020-0912-y"
+      licence: ["GPL-3.0"]
+
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample information
+    - pepxml_files:
+        type: file
+        description: PepXML files from Percolator
+        pattern: "*.pep.xml"
+    - protxml:
+        type: file
+        description: ProtXML file from ProteinProphet
+        pattern: "*.prot.xml"
+    - mzml_files:
+        type: file
+        description: mzML spectral files
+        pattern: "*.mzML"
+  - - fasta:
+        type: file
+        description: Protein sequence database
+        pattern: "*.{fasta,fas,fa}"
+  - - decoy_tag:
+        type: string
+        description: Decoy protein prefix
+  - - filter_opts:
+        type: string
+        description: Philosopher filter options
+
+output:
+  proteins:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "results/protein.tsv":
+          type: file
+          description: Protein-level results
+          pattern: "*/protein.tsv"
+  peptides:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "results/peptide.tsv":
+          type: file
+          description: Peptide-level results
+          pattern: "*/peptide.tsv"
+  psms:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "results/psm.tsv":
+          type: file
+          description: PSM-level results
+          pattern: "*/psm.tsv"
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

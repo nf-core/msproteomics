@@ -1,10 +1,33 @@
 # nf-core/msproteomics: Documentation
 
-The nf-core/msproteomics documentation is split into the following pages:
+nf-core/msproteomics is a Nextflow pipeline for mass spectrometry proteomics supporting DIA (DIA-NN), DDA label-free quantification, TMT isobaric labeling, and generic FragPipe workflows.
 
-- [Usage](usage.md)
-  - An overview of how the pipeline works, how to run it and a description of all of the different command-line flags.
-- [Output](output.md)
-  - An overview of the different results produced by the pipeline and how to interpret them.
+## Getting Started
 
-You can find a lot more documentation about installing, configuring and running nf-core pipelines on the website: [https://nf-co.re](https://nf-co.re)
+- [Quick Start](quickstart.md) -- Get running in minutes with copy-paste commands
+- [Usage Guide](usage.md) -- Complete parameter reference and configuration options
+- [Output Documentation](output.md) -- Description and interpretation of pipeline outputs
+
+## Guides
+
+- [Database Preparation](database_guide.md) -- Choosing and preparing FASTA protein databases
+- [Workflow Architecture](architecture.md) -- Pipeline design, workflow routing, and subworkflow composition
+- [Troubleshooting](troubleshooting.md) -- Common errors and solutions
+
+## Reference
+
+- [Module Documentation](modules/README.md) -- Detailed documentation for all 49+ analysis modules
+- [FragPipe Docker Build](fragpipe-docker/README.md) -- Building custom FragPipe containers with licensed tools
+- [Citations](../CITATIONS.md) -- References for all tools and methods used
+
+## Example Samplesheets
+
+- [DIA / DDA LFQ samplesheet](../assets/samplesheet.csv) -- Basic samplesheet for DIA or label-free experiments
+- [TMT samplesheet](../assets/samplesheet_tmt.csv) -- TMT experiment with labeled channels and fractions
+
+## Additional Resources
+
+- [nf-core website](https://nf-co.re) -- General nf-core documentation, installation, and configuration guides
+- [Nextflow documentation](https://www.nextflow.io/docs/latest/) -- Nextflow language and runtime reference
+- [FragPipe documentation](https://fragpipe.nesvilab.org/) -- FragPipe tools and workflow configuration
+- [DIA-NN documentation](https://github.com/vdemichev/DiaNN) -- DIA-NN analysis engine

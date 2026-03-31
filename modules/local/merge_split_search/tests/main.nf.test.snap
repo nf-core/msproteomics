@@ -1,0 +1,66 @@
+{
+    "merge_split_search - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_sample"
+                    },
+                    "test_sample.pepXML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_sample"
+                    },
+                    "test_sample.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                "I_AGREE_FRAGPIPE_LICENSE_AGREEMENT:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ],
+            [
+                [
+                    "MERGE_SPLIT_SEARCH",
+                    "msfragger",
+                    "24.0"
+                ]
+            ],
+            [
+                [
+                    "MERGE_SPLIT_SEARCH",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ],
+            [
+                [
+                    "MERGE_SPLIT_SEARCH",
+                    "python",
+                    "3.14.3"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-31T19:40:18.291806691",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "merge_split_search - integration with mock data": {
+        "content": [
+            [
+                "test_sample.pepXML"
+            ],
+            [
+                "test_sample.pin"
+            ]
+        ],
+        "timestamp": "2026-03-28T02:00:27.846057288",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

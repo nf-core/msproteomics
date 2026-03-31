@@ -1,0 +1,74 @@
+nextflow_process {
+
+    name "Test Process PHILOSOPHER_LABELQUANT"
+    script "../main.nf"
+    process "PHILOSOPHER_LABELQUANT"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "philosopher"
+    tag "philosopher/labelquant"
+
+    test("philosopher_labelquant - stub") {
+        options "-stub"
+        tag "stub"
+        tag "integration"
+
+        when {
+            process {
+                """
+                // Create mock results directory (as if from PHILOSOPHER_FILTER or FREEQUANT)
+                def results_dir = file("\${workDir}/test_results")
+                results_dir.mkdirs()
+                file("\${results_dir}/psm.tsv").text = "mock"
+                file("\${results_dir}/peptide.tsv").text = "mock"
+                file("\${results_dir}/protein.tsv").text = "mock"
+
+                // Create mock mzML directory
+                def mzml_dir = file("\${workDir}/mzml_dir")
+                mzml_dir.mkdirs()
+                file("\${mzml_dir}/sample1.mzML").text = "mock"
+
+                // Create mock annotation file
+                def annot_file = file("\${workDir}/annotation.txt")
+                annot_file.text = "126C\\tBridge\\n127N\\tSample1"
+
+                // Labelquant CLI flags
+                def config_cli = "--tol 20 --level 2 --minprob 0.700 --purity 0.500 --removelow 0.050 --plex 16 --brand tmt"
+
+                // Single tuple input: [meta, results_dir, mzml_dir, annot, config_cli]
+                input[0] = channel.of([[ id: 'test' ], results_dir, mzml_dir, annot_file, config_cli])
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(
+                    process.out.results_dir,
+                    process.out.versions_philosopher,
+                    process.out.versions_fragpipe
+                ).match() }
+            )
+        }
+    }
+
+    // ---------------------------------------------------------------------------
+    // Integration test notes
+    // ---------------------------------------------------------------------------
+    // Integration tests for PHILOSOPHER_LABELQUANT require the FragPipe container
+    // (fcyucn/fragpipe:24.0) which includes the Philosopher binary.
+    // Philosopher is not available in any public container.
+    //
+    // Required mock data for proper integration testing:
+    //   - results_dir: directory with .meta/ workspace binaries from
+    //     PHILOSOPHER_FILTER (skip_report=true) containing filtered PSMs
+    //   - mzml_dir: directory with mzML files containing TMT reporter ion spectra
+    //   - annot: TMT annotation file mapping channels to sample names
+    //     (e.g., "126C\tBridge\n127N\tSample1")
+    //
+    // Full integration is validated via the TMT workflow with
+    // intensity_extraction_tool=1 (labelquant mode).
+    // ---------------------------------------------------------------------------
+}

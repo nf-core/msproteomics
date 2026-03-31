@@ -1,0 +1,42 @@
+name: iq
+description: Protein quantification using the iq R package with MaxLFQ algorithm applied to DIA-NN report output.
+keywords:
+  - MaxLFQ
+  - quantification
+  - R
+  - iq
+tools:
+  - iq:
+      description: |
+        R package implementing the MaxLFQ algorithm for protein quantification
+        from label-free proteomics data.
+      homepage: https://github.com/tvpham/iq
+input:
+  - report_path:
+      type: file
+      description: DIA-NN main report TSV file
+      pattern: "report.tsv"
+  - q:
+      type: value
+      description: Precursor-level FDR threshold (q-value cutoff)
+  - pgq:
+      type: value
+      description: Protein group-level FDR threshold (q-value cutoff)
+  - contaminant_pattern:
+      type: value
+      description: Regex pattern to identify contaminant proteins (e.g. "Cont_")
+output:
+  - contaminants_removed_report:
+      type: file
+      description: DIA-NN report with contaminant entries removed
+      pattern: "contaminants_removed_*.tsv"
+  - maxlfq:
+      type: file
+      description: MaxLFQ protein quantification matrix
+      pattern: "maxlfq.tsv"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@dongzehe"

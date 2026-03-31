@@ -1,0 +1,68 @@
+nextflow_process {
+
+    name "Test Process IONQUANT"
+    script "../main.nf"
+    process "IONQUANT"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "ionquant"
+
+    test("ionquant - stub with config file") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def psm_file = file("\${workDir}/psm.tsv")
+                def mzml_file = file("\${workDir}/test.mzML")
+                def annotation_file = file("\${workDir}/annotation.txt")
+                def config_file = file("\${workDir}/ionquant.config")
+                psm_file.text = "peptide\\tprotein\\nmock\\tmock"
+                mzml_file.text = "mock"
+                annotation_file.text = "sample\\tcondition\\nsample1\\tControl"
+                config_file.text = "--mbr 1 --maxlfq 1 --requantify 1 --mztol 10"
+
+                input[0] = channel.of([
+                    [ id: 'test_quant' ],
+                    [ psm_file ],
+                    [ mzml_file ]
+                ])
+                input[1] = annotation_file
+                input[2] = config_file
+                input[3] = ""  // modmasses (empty = no --modlist)
+                input[4] = []  // ionquant_dir (use auto-discovery)
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(
+                    process.out.results_dir,
+                    process.out.ions,
+                    process.out.combined_ions,
+                    process.out.combined_protein,
+                    process.out.combined_peptide,
+                    process.out.combined_modified_peptide,
+                    process.out.combined_site,
+                    process.out.all_tsv,
+                    process.out.license_agreement,
+                    process.out.versions_ionquant,
+                    process.out.versions_fragpipe
+                ).match() }
+            )
+        }
+    }
+
+    // Integration test note:
+    // IonQuant cannot be integration-tested at the module level because it requires:
+    //   1. A FragPipe container with the licensed IonQuant JAR
+    //   2. Real Philosopher PSM output directories with properly formatted psm.tsv files
+    //   3. Real mzML files with MS1 scans for quantification / match-between-runs
+    // Mock data causes IonQuant to crash with NullPointerException or malformed input errors.
+    // Full integration coverage is provided by the FRAGPIPE_DDA subworkflow integration tests,
+    // which exercise IonQuant end-to-end with real pipeline output from upstream modules.
+}

@@ -1,0 +1,34 @@
+{
+    "tdf2mzml - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test",
+                        "mzml_id": "test_sample"
+                    },
+                    "test_sample.mzML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test",
+                        "mzml_id": "test_sample"
+                    },
+                    [
+                        
+                    ]
+                ]
+            ],
+            [
+                "sample.d.tar_conversion.log:md5,1ad239c94b4b8739c6acd1bb40b24990"
+            ]
+        ],
+        "timestamp": "2026-03-25T03:52:19.917964662",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

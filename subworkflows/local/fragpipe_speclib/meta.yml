@@ -1,0 +1,66 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "fragpipe_speclib"
+description: Spectral library generation for DIA analysis using EasyPQP/FragPipe-SpecLib
+keywords:
+  - proteomics
+  - spectral-library
+  - dia
+  - speclibgen
+  - easypqp
+components:
+  - speclibgen
+input:
+  - ch_psm_files:
+      type: channel
+      description: |
+        PSM tables from PHILOSOPHER_FILTER for spectral library generation.
+        Structure: [ val(meta), path(psm.tsv) ]
+  - ch_mzml:
+      type: channel
+      description: |
+        Spectra files in mzML format.
+        Structure: [ val(meta), path(mzml) ]
+  - ch_fasta:
+      type: channel
+      description: |
+        Protein database FASTA as a value channel for broadcasting.
+        Structure: path(fasta)
+  - ch_tool_configs:
+      type: channel
+      description: |
+        Parsed JSON tool configuration map controlling SPECLIBGEN execution.
+        Structure: val(tool_configs_map)
+  - aggregate_meta:
+      type: value
+      description: |
+        Metadata map for aggregate outputs (e.g., [id: 'fragpipe']).
+output:
+  - library_tsv:
+      type: channel
+      description: |
+        Spectral library in TSV format.
+        Structure: [ val(meta), path(library.tsv) ]
+  - library_speclib:
+      type: channel
+      description: |
+        Spectral library in speclib format for DIA-NN.
+        Structure: [ val(meta), path(library.speclib) ]
+  - library_parquet:
+      type: channel
+      description: |
+        Spectral library in Parquet format.
+        Structure: [ val(meta), path(library.parquet) ]
+  - results_dir:
+      type: channel
+      description: |
+        SPECLIBGEN results directory.
+        Structure: [ val(meta), path(results_dir) ]
+  - versions:
+      type: file
+      description: |
+        File containing software versions.
+        Structure: [ path(versions.yml) ]
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

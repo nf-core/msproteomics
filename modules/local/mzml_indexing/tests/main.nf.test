@@ -1,0 +1,36 @@
+nextflow_process {
+
+    name "Test Process MZML_INDEXING"
+    script "../main.nf"
+    process "MZML_INDEXING"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "mzml_indexing"
+
+    test("mzml_indexing - stub") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            process {
+                """
+                def mzml_file = file("\${workDir}/sample.mzML")
+                mzml_file.text = "mock"
+
+                input[0] = channel.of([
+                    [ id: 'test', mzml_id: 'test_sample' ],
+                    mzml_file
+                ])
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(process.out.mzmls_indexed, process.out.log).match() }
+            )
+        }
+    }
+}

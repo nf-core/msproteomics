@@ -1,0 +1,100 @@
+{
+    "ionquant - stub with config file": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_quant"
+                    },
+                    [
+                        "combined_ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "combined_modified_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "combined_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "combined_protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test_quant_ionquant.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_quant"
+                    },
+                    "ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_quant"
+                    },
+                    "combined_ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_quant"
+                    },
+                    "combined_protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_quant"
+                    },
+                    "combined_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_quant"
+                    },
+                    "combined_modified_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                
+            ],
+            [
+                [
+                    {
+                        "id": "test_quant"
+                    },
+                    [
+                        "combined_ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "combined_modified_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "combined_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "combined_protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                "I_AGREE_FRAGPIPE_LICENSE_AGREEMENT:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ],
+            [
+                [
+                    "IONQUANT",
+                    "ionquant",
+                    "24.0"
+                ]
+            ],
+            [
+                [
+                    "IONQUANT",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-31T19:39:47.043584067",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

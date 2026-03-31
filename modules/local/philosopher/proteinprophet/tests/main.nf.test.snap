@@ -1,0 +1,52 @@
+{
+    "proteinprophet - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    [
+                        "combined.prot.xml:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "proteinprophet.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "combined.prot.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "interact-test.pep.xml:md5,17404a596cbd0d1e6c7d23fcd845ab82"
+                ]
+            ],
+            [
+                [
+                    "PROTEINPROPHET",
+                    "philosopher",
+                    ""
+                ]
+            ],
+            [
+                [
+                    "PROTEINPROPHET",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-31T19:43:29.876409427",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

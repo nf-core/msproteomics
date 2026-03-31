@@ -1,0 +1,64 @@
+nextflow_workflow {
+
+    name "Test Subworkflow FRAGPIPE_CONVERT"
+    script "../main.nf"
+    workflow "FRAGPIPE_CONVERT"
+    config "./test.config"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "fragpipe_convert"
+
+    test("fragpipe_convert - stub with mzML input") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            workflow {
+                """
+                def mzml = file("\${workDir}/sample.mzML")
+                mzml.text = "mock"
+
+                // Empty tool configs - no DIA preprocessing
+                def tool_configs = [:]
+
+                input[0] = channel.of([ [ id:'sample1' ], mzml ])
+                input[1] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out.mzml, workflow.out.pseudo_spectra).match() }
+            )
+        }
+    }
+
+    test("fragpipe_convert - stub with RAW input") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            workflow {
+                """
+                def raw = file("\${workDir}/sample.raw")
+                raw.text = "mock"
+
+                def tool_configs = [:]
+
+                input[0] = channel.of([ [ id:'sample1' ], raw ])
+                input[1] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out.mzml, workflow.out.pseudo_spectra).match() }
+            )
+        }
+    }
+}

@@ -1,0 +1,98 @@
+{
+    "msfragger - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_sample"
+                    },
+                    "sample.pepXML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_sample"
+                    },
+                    "sample.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_sample"
+                    },
+                    "sample_scores_histogram.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                
+            ],
+            [
+                
+            ],
+            [
+                [
+                    {
+                        "id": "test_sample"
+                    },
+                    [
+                        "msfragger.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample.pepXML:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample.pin:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_scores_histogram.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_sample"
+                    },
+                    "msfragger.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                "I_AGREE_FRAGPIPE_LICENSE_AGREEMENT:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ],
+            [
+                [
+                    "MSFRAGGER",
+                    "msfragger",
+                    "24.0"
+                ]
+            ],
+            [
+                [
+                    "MSFRAGGER",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-31T19:40:49.798682785",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "msfragger - local TMT subset": {
+        "content": [
+            [
+                "tmt_erwinia_subset.pepXML"
+            ],
+            [
+                [
+                    "MSFRAGGER",
+                    "msfragger",
+                    "4.4.1"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-28T02:00:57.560740625",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

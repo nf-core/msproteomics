@@ -1,0 +1,44 @@
+{
+    "ptmprophet - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_sample"
+                    },
+                    [
+                        "ptmprophet.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test.mod.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_sample"
+                    },
+                    "test.mod.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    "PTMPROPHET",
+                    "ptmprophet",
+                    "24.0"
+                ]
+            ],
+            [
+                [
+                    "PTMPROPHET",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-31T19:44:23.175720536",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

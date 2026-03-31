@@ -1,0 +1,33 @@
+nextflow_process {
+
+    name "Test Process PREPROCESS_EXPDESIGN"
+    script "../main.nf"
+    process "PREPROCESS_EXPDESIGN"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "preprocess_expdesign"
+
+    test("preprocess_expdesign - stub") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            process {
+                """
+                def design_file = file("\${workDir}/experimental_design.tsv")
+                design_file.text = "Fraction_Group\\tFraction\\tSpectra_Filepath\\tLabel\\ntest.raw\\t1\\ttest.raw\\t1"
+
+                input[0] = design_file
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(process.out.ch_expdesign, process.out.ch_config).match() }
+            )
+        }
+    }
+}

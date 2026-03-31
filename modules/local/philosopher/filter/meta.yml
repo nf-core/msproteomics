@@ -1,0 +1,94 @@
+name: "philosopher_filter"
+description: Filter and report proteomics results using Philosopher
+keywords:
+  - proteomics
+  - FDR
+  - filter
+  - report
+  - PSM
+  - peptide
+  - protein
+tools:
+  - philosopher:
+      description: |
+        Philosopher filter and report commands perform FDR filtering and
+        generate result reports (PSM, peptide, protein) from pepXML/protXML files.
+      homepage: "https://philosopher.nesvilab.org/"
+      documentation: "https://github.com/Nesvilab/philosopher/wiki"
+      tool_dev_url: "https://github.com/Nesvilab/philosopher"
+      doi: "10.1038/s41592-020-0912-y"
+      licence: ["GPL-3.0"]
+
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample information
+    - pepxml_files:
+        type: file
+        description: PepXML files from Percolator or search engine
+        pattern: "*.pep.xml"
+    - protxml:
+        type: file
+        description: ProtXML file from ProteinProphet
+        pattern: "*.prot.xml"
+    - filter_flags:
+        type: string
+        description: CLI flags for philosopher filter (e.g., "--sequential --razor --prot 0.01 --picked")
+    - report_flags:
+        type: string
+        description: CLI flags for philosopher report (e.g., "--msstats")
+  - - fasta:
+        type: file
+        description: FASTA database with decoys/contaminants from PHILOSOPHER_DATABASE
+        pattern: "*.fasta"
+
+output:
+  results_dir:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}":
+          type: directory
+          description: Directory containing all output files
+  psms:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/psm.tsv":
+          type: file
+          description: PSM-level results
+          pattern: "psm.tsv"
+  peptides:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/peptide.tsv":
+          type: file
+          description: Peptide-level results
+          pattern: "peptide.tsv"
+  proteins:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/protein.tsv":
+          type: file
+          description: Protein-level results
+          pattern: "protein.tsv"
+  ions:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/ion.tsv":
+          type: file
+          description: Ion-level results (optional)
+          pattern: "ion.tsv"
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

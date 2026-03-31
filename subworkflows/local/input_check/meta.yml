@@ -1,0 +1,25 @@
+name: input_check
+description: Validate input SDRF samplesheet using quantms-utils and determine whether input is SDRF format.
+keywords:
+  - SDRF
+  - validation
+  - samplesheet
+components:
+  - samplesheet/check
+input:
+  - input_file:
+      type: file
+      description: Input SDRF or samplesheet file to validate
+output:
+  - ch_input_file:
+      type: file
+      description: Validated input file
+  - is_sdrf:
+      type: value
+      description: Boolean flag indicating whether input is SDRF format
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@daichengxin"

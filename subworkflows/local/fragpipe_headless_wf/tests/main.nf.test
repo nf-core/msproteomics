@@ -1,0 +1,89 @@
+nextflow_workflow {
+
+    name "Test Subworkflow FRAGPIPE_HEADLESS_WF"
+    script "../main.nf"
+    workflow "FRAGPIPE_HEADLESS_WF"
+    config "./test.config"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "fragpipe_headless_wf"
+
+    test("fragpipe_headless_wf - stub with RAW input") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            workflow {
+                """
+                def raw_file = file("\${workDir}/sample.raw")
+                raw_file.text = "mock"
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">sp|P00001|TEST\\nMKTEST"
+                def workflow_file = file("\${workDir}/test.workflow")
+                workflow_file.text = "mock"
+
+                input[0] = channel.of([ [ id: 'test', mzml_id: 'test' ], raw_file ])
+                input[1] = channel.value(fasta_file)
+                input[2] = channel.value(workflow_file)
+                input[3] = channel.value("sample.mzML\\texperiment1\\t1\\tDDA")
+                input[4] = channel.value("")  // No TMT annotation (LFQ mode)
+                input[5] = channel.value("")  // No file-experiment map (LFQ mode)
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.out.all_results,
+                    workflow.out.combined_protein,
+                    workflow.out.combined_peptide,
+                    workflow.out.combined_ion
+                ).match() }
+            )
+        }
+    }
+
+    test("fragpipe_headless_wf - integration - Erwinia LFQ test data") {
+        tag "integration"
+        tag "fragpipe_headless_wf"
+
+        when {
+            workflow {
+                """
+                def workflow_file = file("\${projectDir}/assets/LFQ-MBR.workflow")
+
+                def mzml1 = file("\${params.pipelines_testdata_base_path}/spectra/tmt_erwinia_subset.mzML", checkIfExists: true)
+                def mzml2 = file("\${params.pipelines_testdata_base_path}/spectra/tmt_erwinia_subset_2.mzML", checkIfExists: true)
+                def fasta = file("\${params.pipelines_testdata_base_path}/databases/erwinia_carotovora.fasta", checkIfExists: true)
+
+                // manifest_content: filename<TAB>experiment<TAB>bioreplicate<TAB>data_type
+                def manifest = [
+                    "tmt_erwinia_subset.mzML\\texperiment1\\t1\\tDDA",
+                    "tmt_erwinia_subset_2.mzML\\texperiment1\\t2\\tDDA"
+                ].join("\\n")
+
+                input[0] = channel.of(
+                    [[ id: 'sample1' ], mzml1],
+                    [[ id: 'sample2' ], mzml2]
+                )
+                input[1] = channel.value(fasta)
+                input[2] = channel.value(workflow_file)
+                input[3] = channel.value(manifest)
+                input[4] = channel.value("")  // No TMT annotation (LFQ mode)
+                input[5] = channel.value("")  // No file-experiment map (LFQ mode)
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert workflow.out.all_results.size() > 0 },
+                { assert workflow.out.combined_protein.size() > 0 }
+            )
+        }
+    }
+}

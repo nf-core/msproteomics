@@ -1,0 +1,86 @@
+name: "diaumpire"
+description: Generate pseudo-spectra from DIA mass spectrometry data
+keywords:
+  - proteomics
+  - mass spectrometry
+  - DIA
+  - pseudo-spectra
+  - signal extraction
+tools:
+  - diaumpire:
+      description: |
+        DIA-Umpire is a computational tool for DIA (Data Independent Acquisition)
+        proteomics data analysis. Its Signal Extraction (SE) module deconvolves
+        multiplexed DIA spectra to generate pseudo-MS/MS spectra that can be
+        searched with conventional database search engines. It produces three
+        quality tiers of pseudo-spectra (Q1, Q2, Q3).
+      homepage: "https://diaumpire.nesvilab.org/"
+      documentation: "https://github.com/Nesvilab/DIA-Umpire/wiki"
+      tool_dev_url: "https://github.com/Nesvilab/DIA-Umpire"
+      doi: "10.1038/nmeth.3255"
+      licence: ["Apache-2.0"]
+
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample information
+    - dia_file:
+        type: file
+        description: DIA mass spectrometry data file
+        pattern: "*.{mzML,mzXML,raw}"
+    - config_file:
+        type: file
+        description: DIA-Umpire parameters file
+        pattern: "*.params"
+
+output:
+  results_dir:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}":
+          type: directory
+          description: Directory containing DIA-Umpire results and log
+          pattern: "${prefix}"
+  q1_spectra:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/*_Q1.mzML":
+          type: file
+          description: Highest quality tier pseudo-spectra in mzML format
+          pattern: "*_Q1.mzML"
+  q2_spectra:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/*_Q2.mzML":
+          type: file
+          description: Medium quality tier pseudo-spectra in mzML format
+          pattern: "*_Q2.mzML"
+  q3_spectra:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/*_Q3.mzML":
+          type: file
+          description: Lowest quality tier pseudo-spectra in mzML format
+          pattern: "*_Q3.mzML"
+  mgf_spectra:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/*_Q*.mgf":
+          type: file
+          description: Pseudo-spectra in MGF format
+          pattern: "*_Q*.mgf"
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

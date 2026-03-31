@@ -1,0 +1,123 @@
+nextflow_workflow {
+
+    name "Test Subworkflow FRAGPIPE_PTM"
+    script "../main.nf"
+    workflow "FRAGPIPE_PTM"
+    config "./test.config"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "fragpipe_ptm"
+
+    test("fragpipe_ptm - stub with ptmshepherd") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                // Create sample directories with psm.tsv
+                def sample1_dir = file("\${workDir}/sample1")
+                sample1_dir.mkdirs()
+                file("\${sample1_dir}/psm.tsv").text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
+
+                def protxml_file = file("\${workDir}/combined.prot.xml")
+                protxml_file.text = "<?xml version='1.0'?><protein_summary></protein_summary>"
+
+                def mzml_file = file("\${workDir}/sample1.mzML")
+                mzml_file.text = "<?xml version='1.0'?><mzML></mzML>"
+
+                // Tool configs: ptmshepherd enabled
+                def tool_configs = [
+                    ptmshepherd: [run: true, args: 'histo_bindwidth = 0.001']
+                ]
+
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">sp|P00000|TEST_HUMAN Test protein\\nMKWVTFISLLLFSSAYSRGVFRRDTHKSEIAHR"
+
+                input[0] = channel.of([[ id: 'sample1' ], sample1_dir])
+                input[1] = channel.of([[ id: 'combined' ], protxml_file])
+                input[2] = channel.of([[ id: 'sample1' ], mzml_file])
+                input[3] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[4] = [ id: 'ptm_analysis' ]
+                input[5] = channel.value(fasta_file)
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.out.results_dir,
+                    workflow.out.global_profile,
+                    workflow.out.global_modsummary,
+                    workflow.out.diagmine,
+                    workflow.out.localization,
+                    workflow.out.glycoprofile
+                ).match() }
+            )
+        }
+    }
+
+    test("fragpipe_ptm - stub multi-sample") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                // Create multiple sample directories
+                def sample1_dir = file("\${workDir}/s1")
+                sample1_dir.mkdirs()
+                file("\${sample1_dir}/psm.tsv").text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
+                def sample2_dir = file("\${workDir}/s2")
+                sample2_dir.mkdirs()
+                file("\${sample2_dir}/psm.tsv").text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
+
+                def protxml_file = file("\${workDir}/combined.prot.xml")
+                protxml_file.text = "<?xml version='1.0'?><protein_summary></protein_summary>"
+
+                def mzml_file1 = file("\${workDir}/s1.mzML")
+                mzml_file1.text = "<?xml version='1.0'?><mzML></mzML>"
+                def mzml_file2 = file("\${workDir}/s2.mzML")
+                mzml_file2.text = "<?xml version='1.0'?><mzML></mzML>"
+
+                def tool_configs = [
+                    ptmshepherd: [run: true, args: '# config']
+                ]
+
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">sp|P00000|TEST_HUMAN Test protein\\nMKWVTFISLLLFSSAYSRGVFRRDTHKSEIAHR"
+
+                input[0] = channel.of(
+                    [[ id: 's1' ], sample1_dir],
+                    [[ id: 's2' ], sample2_dir]
+                )
+                input[1] = channel.of([[ id: 'combined' ], protxml_file])
+                input[2] = channel.of(
+                    [[ id: 's1' ], mzml_file1],
+                    [[ id: 's2' ], mzml_file2]
+                )
+                input[3] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[4] = [ id: 'ptm_multi' ]
+                input[5] = channel.value(fasta_file)
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.out.results_dir,
+                    workflow.out.global_profile,
+                    workflow.out.global_modsummary,
+                    workflow.out.diagmine,
+                    workflow.out.localization,
+                    workflow.out.glycoprofile
+                ).match() }
+            )
+        }
+    }
+}

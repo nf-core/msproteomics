@@ -1,103 +1,263 @@
 # nf-core/msproteomics: Usage
 
-## :warning: Please read this documentation on the nf-core website: [https://nf-co.re/msproteomics/usage](https://nf-co.re/msproteomics/usage)
-
-> _Documentation of pipeline parameters is generated automatically from the pipeline schema and can no longer be found in markdown files._
-
 ## Introduction
 
-<!-- TODO nf-core: Add documentation about anything specific to running your pipeline. For general topics, please point to (and add to) the main nf-core website. -->
+nf-core/msproteomics is a mass spectrometry proteomics preprocessing pipeline supporting DIA, DDA LFQ, TMT label check, and generic FragPipe workflows.
+This document describes how to prepare input data, configure the pipeline, and run each workflow type.
 
-## Samplesheet input
+> **New to the pipeline?** Start with the [Quick Start Guide](quickstart.md) for a 5-minute introduction.
+> For database preparation, see the [Database Preparation Guide](database_guide.md).
+> For pipeline design details, see the [Workflow Architecture](architecture.md).
 
-You will need to create a samplesheet with information about the samples you would like to analyse before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row as shown in the examples below.
+## Input Format
 
-```bash
---input '[path to samplesheet file]'
-```
+### CSV Samplesheet
 
-### Multiple runs of the same sample
-
-The `sample` identifiers have to be the same when you have re-sequenced the same sample more than once e.g. to increase sequencing depth. The pipeline will concatenate the raw reads before performing any downstream analysis. Below is an example for the same sample sequenced across 3 lanes:
-
-```csv title="samplesheet.csv"
-sample,fastq_1,fastq_2
-CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz
-CONTROL_REP1,AEG588A1_S1_L003_R1_001.fastq.gz,AEG588A1_S1_L003_R2_001.fastq.gz
-CONTROL_REP1,AEG588A1_S1_L004_R1_001.fastq.gz,AEG588A1_S1_L004_R2_001.fastq.gz
-```
-
-### Full samplesheet
-
-The pipeline will auto-detect whether a sample is single- or paired-end using the information provided in the samplesheet. The samplesheet can have as many columns as you desire, however, there is a strict requirement for the first 3 columns to match those defined in the table below.
-
-A final samplesheet file consisting of both single- and paired-end data may look something like the one below. This is for 6 samples, where `TREATMENT_REP3` has been sequenced twice.
-
-```csv title="samplesheet.csv"
-sample,fastq_1,fastq_2
-CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz
-CONTROL_REP2,AEG588A2_S2_L002_R1_001.fastq.gz,AEG588A2_S2_L002_R2_001.fastq.gz
-CONTROL_REP3,AEG588A3_S3_L002_R1_001.fastq.gz,AEG588A3_S3_L002_R2_001.fastq.gz
-TREATMENT_REP1,AEG588A4_S4_L003_R1_001.fastq.gz,
-TREATMENT_REP2,AEG588A5_S5_L003_R1_001.fastq.gz,
-TREATMENT_REP3,AEG588A6_S6_L003_R1_001.fastq.gz,
-TREATMENT_REP3,AEG588A6_S6_L004_R1_001.fastq.gz,
-```
-
-| Column    | Description                                                                                                                                                                            |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sample`  | Custom sample name. This entry will be identical for multiple sequencing libraries/runs from the same sample. Spaces in sample names are automatically converted to underscores (`_`). |
-| `fastq_1` | Full path to FastQ file for Illumina short reads 1. File has to be gzipped and have the extension ".fastq.gz" or ".fq.gz".                                                             |
-| `fastq_2` | Full path to FastQ file for Illumina short reads 2. File has to be gzipped and have the extension ".fastq.gz" or ".fq.gz".                                                             |
-
-An [example samplesheet](../assets/samplesheet.csv) has been provided with the pipeline.
-
-## Running the pipeline
-
-The typical command for running the pipeline is as follows:
+The pipeline accepts a CSV samplesheet describing your samples and their raw data file locations.
 
 ```bash
-nextflow run nf-core/msproteomics --input ./samplesheet.csv --outdir ./results --genome GRCh37 -profile docker
+--input samplesheet.csv
 ```
 
-This will launch the pipeline with the `docker` configuration profile. See below for more information about profiles.
+The samplesheet must contain the following columns:
 
-Note that the pipeline will create the following files in your working directory:
+| Column      | Description                                                                               | Required |
+| ----------- | ----------------------------------------------------------------------------------------- | -------- |
+| `sample`    | Unique sample identifier                                                                  | Yes      |
+| `spectra`   | Path or URI to the raw/mzML data file                                                     | Yes      |
+| `condition` | Experimental condition or group (used for downstream statistics; defaults to sample name) | No       |
+| `label`     | Isobaric label channel (e.g., TMT126, TMT127N); leave empty for LFQ/DIA                   | No       |
+| `fraction`  | Fraction number for fractionated experiments; leave empty for single-shot                 | No       |
+
+Example samplesheet (DIA or DDA LFQ):
+
+```csv
+sample,spectra,condition,label,fraction
+Sample_A1,/data/raw/A1.raw,control,,
+Sample_A2,/data/raw/A2.raw,control,,
+Sample_B1,/data/raw/B1.raw,treated,,
+Sample_B2,/data/raw/B2.raw,treated,,
+```
+
+Example samplesheet (TMT):
+
+```csv
+sample,spectra,condition,label,fraction
+Sample_1,/data/raw/pool1.raw,control,TMT126,
+Sample_1,/data/raw/pool1.raw,control,TMT127N,
+Sample_1,/data/raw/pool1.raw,treated,TMT128C,
+```
+
+The pipeline internally generates an SDRF file from the samplesheet via the `GENERATE_SDRF_FROM_SAMPLESHEET` module.
+This SDRF is used for bookkeeping and compatibility with downstream tools that expect SDRF-formatted metadata.
+
+## Analysis Modes
+
+The `--mode` parameter selects the analysis engine:
+
+| Mode       | Description                                 | Engine                                       |
+| ---------- | ------------------------------------------- | -------------------------------------------- |
+| `diann`    | DIA quantitative proteomics                 | [DIA-NN](https://github.com/vdemichev/DiaNN) |
+| `fragpipe` | DDA LFQ, TMT, or generic FragPipe workflows | [FragPipe](https://fragpipe.nesvilab.org/)   |
+
+### DIA Mode (`--mode diann`)
+
+DIA workflows use DIA-NN for library-free or library-based DIA analysis.
+DIA-specific variants (e.g., phospho) are applied via `-c conf/variants/*.config` files (see [DIA Method Variants](#dia-method-variants)).
 
 ```bash
-work                # Directory containing the nextflow working files
-<OUTDIR>            # Finished results in specified location (defined with --outdir)
-.nextflow_log       # Log file from Nextflow
-# Other nextflow hidden files, eg. history of pipeline runs and old logs.
+nextflow run nf-core/msproteomics \
+  --mode diann \
+  --input samplesheet.csv \
+  --database /path/to/database.fasta \
+  --outdir results \
+  -profile docker
 ```
 
-If you wish to repeatedly use the same parameters for multiple runs, rather than specifying each flag in the command, you can specify these in a params file.
+Reference proteomes can be automatically fetched from UniProt for supported organisms when configured via `conf/reference_proteomes.config`.
+To use a custom database, provide `--database /path/to/database.fasta`.
 
-Pipeline settings can be provided in a `yaml` or `json` file via `-params-file <file>`.
+### FragPipe Mode (`--mode fragpipe`)
 
-> [!WARNING]
-> Do not use `-c <file>` to specify parameters as this will result in errors. Custom config files specified with `-c` must only be used for [tuning process resource specifications](https://nf-co.re/docs/usage/configuration#tuning-workflow-resources), other infrastructural tweaks (such as output directories), or module arguments (args).
+FragPipe mode supports DDA LFQ, TMT label check, TMT quantification, and generic FragPipe workflows.
+The specific workflow is controlled by the `--fragpipe_workflow` and `--tmt_mode` parameters.
 
-The above pipeline run specified with a params file in yaml format:
+**DDA LFQ** -- uses MSFragger, MSBooster, Percolator, ProteinProphet, Philosopher, and IonQuant:
+
+```bash
+nextflow run nf-core/msproteomics \
+  --mode fragpipe \
+  --fragpipe_container your-registry/fragpipe:24.0 \
+  --fragpipe_workflow LFQ-MBR.workflow \
+  --input samplesheet.csv \
+  --database /path/to/uniprot_human.fasta \
+  --outdir results \
+  -profile docker
+```
+
+**TMT Label Check** -- assess TMT labeling efficiency:
+
+```bash
+nextflow run nf-core/msproteomics \
+  --mode fragpipe \
+  --fragpipe_container your-registry/fragpipe:24.0 \
+  --tmt_mode labelcheck \
+  --input samplesheet.csv \
+  --database /path/to/uniprot_human.fasta \
+  --outdir results \
+  -profile docker
+```
+
+**TMT Quantification** -- full TMT isobaric quantification:
+
+```bash
+nextflow run nf-core/msproteomics \
+  --mode fragpipe \
+  --fragpipe_container your-registry/fragpipe:24.0 \
+  --tmt_mode quant \
+  --input samplesheet.csv \
+  --database /path/to/uniprot_human.fasta \
+  --outdir results \
+  -profile docker
+```
+
+**Generic FragPipe** -- run any FragPipe workflow by providing a `.workflow` configuration file:
+
+```bash
+nextflow run nf-core/msproteomics \
+  --mode fragpipe \
+  --fragpipe_container your-registry/fragpipe:24.0 \
+  --fragpipe_workflow /path/to/custom.workflow \
+  --input samplesheet.csv \
+  --database /path/to/uniprot_human.fasta \
+  --outdir results \
+  -profile docker
+```
+
+### Understanding .workflow Files
+
+FragPipe `.workflow` files are key=value configuration files that control which tools run and their parameters.
+The pipeline ships three built-in workflow files in `assets/`:
+
+| File                          | Use Case                                              | Key Tools                                                  |
+| ----------------------------- | ----------------------------------------------------- | ---------------------------------------------------------- |
+| `LFQ-MBR.workflow`            | DDA label-free quantification with match-between-runs | MSFragger, MSBooster, Percolator, ProteinProphet, IonQuant |
+| `TMT-labelcheck-229.workflow` | TMT label check for TMT6/10/11 (mass 229 Da)          | MSFragger, Percolator, ProteinProphet                      |
+| `TMT-labelcheck-304.workflow` | TMT label check for TMTpro/16/18 (mass 304 Da)        | MSFragger, Percolator, ProteinProphet                      |
+
+To create a custom `.workflow` file:
+
+1. Open the [FragPipe GUI](https://fragpipe.nesvilab.org/) and configure your analysis
+2. Save the workflow configuration (File > Export Workflow)
+3. Provide the exported file to the pipeline with `--fragpipe_workflow /path/to/custom.workflow`
+
+Key parameters users commonly tune in `.workflow` files:
+
+- **Enzyme**: trypsin, lysc, chymotrypsin, etc.
+- **Missed cleavages**: typically 1-2
+- **Variable modifications**: oxidation (M), acetylation (protein N-term)
+- **Mass tolerances**: precursor and fragment mass tolerances
+- **Calibrate mass**: 0 (disabled), 1 (single pass), 2 (two pass, recommended)
+
+> [!NOTE]
+> TMT label check workflows use TMT as a **variable** modification (not fixed) to detect unlabeled peptides.
+> This is intentional and differs from standard TMT quantification workflows.
+
+The `--fragpipe_mode` parameter controls execution mode:
+
+- `pipeline` (default): Modular Nextflow subworkflow execution
+- `headless`: Single-process FragPipe headless execution
+
+## Key Parameters
+
+| Parameter             | Description                                                | Default                                                |
+| --------------------- | ---------------------------------------------------------- | ------------------------------------------------------ |
+| `--input`             | Path to CSV samplesheet                                    | Required                                               |
+| `--mode`              | Analysis mode: `diann` or `fragpipe`                       | Required                                               |
+| `--outdir`            | Output directory                                           | Required                                               |
+| `--database`          | FASTA protein database                                     | Auto-selected for DIA; required for FragPipe workflows |
+| `--fragpipe_workflow` | FragPipe `.workflow` file or workflow name (FragPipe mode) | None                                                   |
+| `--tmt_mode`          | TMT analysis mode: `labelcheck` or `quant` (FragPipe mode) | None                                                   |
+| `--fragpipe_mode`     | FragPipe execution mode: `pipeline` or `headless`          | `pipeline`                                             |
+
+## Container Requirements
+
+### DIA Workflows
+
+DIA workflows use publicly available containers for DIA-NN and associated tools.
+No special licensing is required.
+
+### FragPipe-Based Workflows (DDA LFQ, TMT, Generic)
+
+The pipeline defaults to the public base image `docker.io/fcyucn/fragpipe:24.0`, which includes open-source FragPipe tools (Philosopher, Percolator, MSBooster, PTMShepherd, etc.).
+
+However, commercial/licensed tools (MSFragger, IonQuant, DiaTracer) are not included in the public image.
+You must build your own container image with these tools under your own license terms.
+See [Docker build instructions](fragpipe-docker/README.md) for academic and commercial container builds.
+
+**FragPipe is free for academic use.**
+Commercial users must obtain a license from Fragmatics.
+
+## Profiles
+
+Use `-profile` to select a software packaging method:
+
+| Profile        | Description                                    |
+| -------------- | ---------------------------------------------- |
+| `docker`       | Run with Docker containers (recommended)       |
+| `singularity`  | Run with Singularity containers                |
+| `apptainer`    | Run with Apptainer containers                  |
+| `podman`       | Run with Podman containers                     |
+| `conda`        | Run with Conda environments (last resort)      |
+| `test`         | Minimal stub test for CI validation (DIA mode) |
+| `test_dia`     | DIA workflow test with small DIA dataset       |
+| `test_dda_lfq` | DDA LFQ workflow test with small DDA dataset   |
+| `test_tmt`     | TMT label check workflow test                  |
+| `test_tmtq`    | TMT quantification workflow test               |
+
+Multiple profiles can be combined: `-profile test_dia,docker`
+
+## Running the Pipeline
+
+### Basic Execution
+
+```bash
+nextflow run nf-core/msproteomics \
+  --mode diann \
+  --input samplesheet.csv \
+  --database /path/to/database.fasta \
+  --outdir results \
+  -profile docker
+```
+
+### Using a Parameters File
 
 ```bash
 nextflow run nf-core/msproteomics -profile docker -params-file params.yaml
 ```
 
-with:
-
-```yaml title="params.yaml"
-input: './samplesheet.csv'
-outdir: './results/'
-genome: 'GRCh37'
-<...>
+```yaml
+input: "samplesheet.csv"
+mode: "fragpipe"
+fragpipe_container: "your-registry/fragpipe:24.0"
+fragpipe_workflow: "LFQ-MBR.workflow"
+database: "/path/to/uniprot_human.fasta"
+outdir: "results"
 ```
 
-You can also generate such `YAML`/`JSON` files via [nf-core/launch](https://nf-co.re/launch).
+### Resuming a Failed Run
 
-### Updating the pipeline
+```bash
+nextflow run nf-core/msproteomics \
+  --mode diann \
+  --input samplesheet.csv \
+  --database /path/to/database.fasta \
+  --outdir results \
+  -profile docker \
+  -resume
+```
 
-When you run the above command, Nextflow automatically pulls the pipeline code from GitHub and stores it as a cached version. When running the pipeline after this, it will always use the cached version if available - even if the pipeline has been updated since. To make sure that you're running the latest version of the pipeline, make sure that you regularly update the cached version of the pipeline:
+### Updating the Pipeline
 
 ```bash
 nextflow pull nf-core/msproteomics
@@ -105,110 +265,156 @@ nextflow pull nf-core/msproteomics
 
 ### Reproducibility
 
-It is a good idea to specify the pipeline version when running the pipeline on your data. This ensures that a specific version of the pipeline code and software are used when you run your pipeline. If you keep using the same tag, you'll be running the same version of the pipeline, even if there have been changes to the code since.
+Specify a pipeline version with `-r` to ensure reproducible results:
 
-First, go to the [nf-core/msproteomics releases page](https://github.com/nf-core/msproteomics/releases) and find the latest pipeline version - numeric only (eg. `1.3.1`). Then specify this when running the pipeline with `-r` (one hyphen) - eg. `-r 1.3.1`. Of course, you can switch to another version by changing the number after the `-r` flag.
+```bash
+nextflow run nf-core/msproteomics -r 1.0.0 \
+  --mode diann \
+  --input samplesheet.csv \
+  --database /path/to/database.fasta \
+  --outdir results \
+  -profile docker
+```
 
-This version number will be logged in reports when you run the pipeline, so that you'll know what you used when you look back in the future. For example, at the bottom of the MultiQC reports.
+## Configuration Hierarchy
 
-To further assist in reproducibility, you can use share and reuse [parameter files](#running-the-pipeline) to repeat pipeline runs with the same settings without having to write out a command with every single parameter.
+The pipeline loads configuration files automatically based on the `--mode` parameter:
 
-> [!TIP]
-> If you wish to share such profile (such as upload as supplementary material for academic publications), make sure to NOT include cluster specific paths to files, nor institutional specific profiles.
+**DIA workflows** (`--mode diann`):
 
-## Core Nextflow arguments
+1. `nextflow.config` -- root config, always loaded
+2. `conf/base_configs/diann.config` -- DIA-NN computed params and helper functions
+3. `conf/variants/*.config` -- variant-specific overrides (e.g., diaphos) applied via `-c`
+4. `conf/instruments/*.config` -- instrument-specific overrides applied via `-c`
 
-> [!NOTE]
-> These options are part of Nextflow and use a _single_ hyphen (pipeline parameters use a double-hyphen)
+**FragPipe workflows** (`--mode fragpipe`):
 
-### `-profile`
+1. `nextflow.config` -- root config, always loaded (all params defined here)
+2. `--tmt_type` selects the TMT plex (TMT6, TMT10, TMT11, TMT16, TMT18, TMTPRO); the correct labelcheck workflow file is auto-selected
+3. `conf/instruments/*.config` -- instrument-specific overrides applied via `-c`
 
-Use this parameter to choose a configuration profile. Profiles can give configuration presets for different compute environments.
+## Custom Configuration
 
-Several generic profiles are bundled with the pipeline which instruct the pipeline to use software packaged using different methods (Docker, Singularity, Podman, Shifter, Charliecloud, Apptainer, Conda) - see below.
+### Resource Requests
 
-> [!IMPORTANT]
-> We highly recommend the use of Docker or Singularity containers for full pipeline reproducibility, however when this is not possible, Conda is also supported.
-
-The pipeline also dynamically loads configurations from [https://github.com/nf-core/configs](https://github.com/nf-core/configs) when it runs, making multiple config profiles for various institutional clusters available at run time. For more information and to check if your system is supported, please see the [nf-core/configs documentation](https://github.com/nf-core/configs#documentation).
-
-Note that multiple profiles can be loaded, for example: `-profile test,docker` - the order of arguments is important!
-They are loaded in sequence, so later profiles can overwrite earlier profiles.
-
-If `-profile` is not specified, the pipeline will run locally and expect all software to be installed and available on the `PATH`. This is _not_ recommended, since it can lead to different results on different machines dependent on the computer environment.
-
-- `test`
-  - A profile with a complete configuration for automated testing
-  - Includes links to test data so needs no other parameters
-- `docker`
-  - A generic configuration profile to be used with [Docker](https://docker.com/)
-- `singularity`
-  - A generic configuration profile to be used with [Singularity](https://sylabs.io/docs/)
-- `podman`
-  - A generic configuration profile to be used with [Podman](https://podman.io/)
-- `shifter`
-  - A generic configuration profile to be used with [Shifter](https://nersc.gitlab.io/development/shifter/how-to-use/)
-- `charliecloud`
-  - A generic configuration profile to be used with [Charliecloud](https://charliecloud.io/)
-- `apptainer`
-  - A generic configuration profile to be used with [Apptainer](https://apptainer.org/)
-- `wave`
-  - A generic configuration profile to enable [Wave](https://seqera.io/wave/) containers. Use together with one of the above (requires Nextflow ` 24.03.0-edge` or later).
-- `conda`
-  - A generic configuration profile to be used with [Conda](https://conda.io/docs/). Please only use Conda as a last resort i.e. when it's not possible to run the pipeline with Docker, Singularity, Podman, Shifter, Charliecloud, or Apptainer.
-
-### `-resume`
-
-Specify this when restarting a pipeline. Nextflow will use cached results from any pipeline steps where the inputs are the same, continuing from where it got to previously. For input to be considered the same, not only the names must be identical but the files' contents as well. For more info about this parameter, see [this blog post](https://www.nextflow.io/blog/2019/demystifying-nextflow-resume.html).
-
-You can also supply a run name to resume a specific run: `-resume [run-name]`. Use the `nextflow log` command to show previous run names.
-
-### `-c`
-
-Specify the path to a specific config file (this is a core Nextflow command). See the [nf-core website documentation](https://nf-co.re/usage/configuration) for more information.
-
-## Custom configuration
-
-### Resource requests
-
-Whilst the default requirements set within the pipeline will hopefully work for most people and with most input data, you may find that you want to customise the compute resources that the pipeline requests. Each step in the pipeline has a default set of requirements for number of CPUs, memory and time. For most of the pipeline steps, if the job exits with any of the error codes specified [here](https://github.com/nf-core/rnaseq/blob/4c27ef5610c87db00c3c5a3eed10b1d161abf575/conf/base.config#L18) it will automatically be resubmitted with higher resources request (2 x original, then 3 x original). If it still fails after the third attempt then the pipeline execution is stopped.
-
-To change the resource requests, please see the [max resources](https://nf-co.re/docs/usage/configuration#max-resources) and [tuning workflow resources](https://nf-co.re/docs/usage/configuration#tuning-workflow-resources) section of the nf-core website.
-
-### Custom Containers
-
-In some cases, you may wish to change the container or conda environment used by a pipeline steps for a particular tool. By default, nf-core pipelines use containers and software from the [biocontainers](https://biocontainers.pro/) or [bioconda](https://bioconda.github.io/) projects. However, in some cases the pipeline specified version maybe out of date.
-
-To use a different container from the default container or conda environment specified in a pipeline, please see the [updating tool versions](https://nf-co.re/docs/usage/configuration#updating-tool-versions) section of the nf-core website.
+To change compute resources for specific processes, see the [nf-core resource tuning documentation](https://nf-co.re/docs/usage/configuration#tuning-workflow-resources).
 
 ### Custom Tool Arguments
 
-A pipeline might not always support every possible argument or option of a particular tool used in pipeline. Fortunately, nf-core pipelines provide some freedom to users to insert additional parameters that the pipeline does not include by default.
+To pass additional arguments to specific tools, use the `ext.args` directive in a custom config file.
+See the [nf-core tool arguments documentation](https://nf-co.re/docs/usage/configuration#customising-tool-arguments).
 
-To learn how to provide additional arguments to a particular tool of the pipeline, please see the [customising tool arguments](https://nf-co.re/docs/usage/configuration#customising-tool-arguments) section of the nf-core website.
+### Resource Recommendations
 
-### nf-core/configs
+Resource requirements depend on dataset size and analysis type:
 
-In most cases, you will only need to create a custom config as a one-off but if you and others within your organisation are likely to be running nf-core pipelines regularly and need to use the same settings regularly it may be a good idea to request that your custom config file is uploaded to the `nf-core/configs` git repository. Before you do this please can you test that the config file works with your pipeline of choice using the `-c` parameter. You can then create a pull request to the `nf-core/configs` repository with the addition of your config file, associated documentation file (see examples in [`nf-core/configs/docs`](https://github.com/nf-core/configs/tree/master/docs)), and amending [`nfcore_custom.config`](https://github.com/nf-core/configs/blob/master/nfcore_custom.config) to include your custom profile.
+| Dataset Size | Files  | Recommended Memory | Notes                                  |
+| ------------ | ------ | ------------------ | -------------------------------------- |
+| Small        | < 20   | 16 GB              | Default resources sufficient           |
+| Medium       | 20-100 | 32 GB              | Increase MSFragger and IonQuant memory |
+| Large        | 100+   | 64 GB              | Consider splitting into batches        |
 
-See the main [Nextflow documentation](https://www.nextflow.io/docs/latest/config.html) for more information about creating your own configuration files.
+- **DIA-NN library generation** is the most memory-intensive step; allocate 32-64 GB for large proteomes or phosphoproteomics
+- **MSFragger** memory scales with database size; large databases (>100,000 sequences) may need 32+ GB
+- **FragPipe headless mode** runs all tools in a single process and requires memory sufficient for the largest tool
+- **FragPipe pipeline mode** distributes work across processes, allowing smaller per-process memory allocation
 
-If you have any questions or issues please send us a message on [Slack](https://nf-co.re/join/slack) on the [`#configs` channel](https://nfcore.slack.com/channels/configs).
+For cloud environments, memory-optimized instances are recommended (e.g., AWS r6i family, GCP n2-highmem).
 
-## Running in the background
+> [!WARNING]
+> Do not use `-c <file>` to specify pipeline parameters.
+> Custom config files specified with `-c` must only be used for resource tuning, output directories, or module arguments (`ext.args`).
 
-Nextflow handles job submissions and supervises the running jobs. The Nextflow process must run until the pipeline is finished.
+### Institutional Configs
 
-The Nextflow `-bg` flag launches Nextflow in the background, detached from your terminal so that the workflow does not stop if you log out of your session. The logs are saved to a file.
+The pipeline dynamically loads configurations from [nf-core/configs](https://github.com/nf-core/configs).
+Check if your institution has a pre-configured profile available.
 
-Alternatively, you can use `screen` / `tmux` or similar tool to create a detached session which you can log back into at a later time.
-Some HPC setups also allow you to run nextflow within a cluster job submitted your job scheduler (from where it submits more jobs).
+## Running on Seqera Platform (Tower)
 
-## Nextflow memory requirements
+### Nextflow Version
 
-In some cases, the Nextflow Java virtual machines can start to request a large amount of memory.
-We recommend adding the following line to your environment to limit this (typically in `~/.bashrc` or `~./bash_profile`):
+Set the Nextflow version in your launch pre-run script:
+
+```bash
+export NXF_VER=25.10.2
+```
+
+### Compute Environments
+
+FragPipe processes require compute environments with sufficient memory.
+Recommended instance families: `r6i` (memory-optimized).
+
+## Instrument-Specific Settings
+
+DIA-NN in-silico library generation uses different m/z ranges and mass accuracy settings depending on the mass spectrometer.
+The pipeline ships per-instrument config files in `conf/instruments/` that override the defaults when included with `-c`.
+
+| Abbreviation | Instrument          | Config File                                       | diann_min_pr_mz | diann_max_pr_mz | diann_min_fr_mz | diann_max_fr_mz | diann_library_mass_acc | diann_library_ms1_acc |
+| ------------ | ------------------- | ------------------------------------------------- | --------------- | --------------- | --------------- | --------------- | ---------------------- | --------------------- |
+| ASC          | Thermo Ascend       | `conf/instruments/thermo_ascend.config` (default) | 350             | 1050            | 200             | 1800            | 18                     | 5                     |
+| FLX          | Bruker timsTOF Flex | `conf/instruments/bruker_flex.config`             | 100             | 1700            | 100             | 1700            | 15                     | 15                    |
+
+Usage example:
+
+```bash
+nextflow run nf-core/msproteomics \
+  --mode diann \
+  --input samplesheet.csv \
+  --database /path/to/database.fasta \
+  --outdir results \
+  -c conf/instruments/bruker_flex.config \
+  -profile docker
+```
+
+Thermo Ascend users can omit the `-c` flag since the defaults are already optimized for Ascend instruments.
+
+## DIA Method Variants
+
+Specialized DIA analysis modes are available as variant config files in `conf/variants/`.
+These configs adjust DIA-NN parameters (e.g., variable modifications, phosphosite monitoring) for specific experimental designs.
+
+| Variant               | Config File                    | Description                                        |
+| --------------------- | ------------------------------ | -------------------------------------------------- |
+| DIA Phosphoproteomics | `conf/variants/diaphos.config` | Phosphosite localization with UniMod:21 monitoring |
+
+Usage example:
+
+```bash
+nextflow run nf-core/msproteomics \
+  --mode diann \
+  --input samplesheet.csv \
+  --database /path/to/database.fasta \
+  --outdir results \
+  -c conf/variants/diaphos.config \
+  -profile docker
+```
+
+Variant configs can be combined with instrument configs by specifying multiple `-c` flags:
+
+```bash
+nextflow run nf-core/msproteomics \
+  --mode diann \
+  --input samplesheet.csv \
+  --database /path/to/database.fasta \
+  --outdir results \
+  -c conf/instruments/bruker_flex.config \
+  -c conf/variants/diaphos.config \
+  -profile docker
+```
+
+## Nextflow Memory Requirements
+
+To limit Nextflow's JVM memory usage, add the following to your environment:
 
 ```bash
 NXF_OPTS='-Xms1g -Xmx4g'
 ```
+
+## Further Reading
+
+- [Quick Start Guide](quickstart.md) -- Get running in 5 minutes
+- [Output Documentation](output.md) -- Interpreting pipeline results
+- [Database Preparation](database_guide.md) -- Choosing and preparing FASTA databases
+- [Workflow Architecture](architecture.md) -- Pipeline design and workflow routing
+- [Troubleshooting](troubleshooting.md) -- Common errors and solutions

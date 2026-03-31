@@ -1,0 +1,55 @@
+{
+    "msfragger_index - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_index"
+                    },
+                    "test.fasta:md5,46d8768981a438ed5d7b8f0937b811f6",
+                    "test.fasta.pepindex:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                "I_AGREE_FRAGPIPE_LICENSE_AGREEMENT:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ],
+            [
+                [
+                    "MSFRAGGER_INDEX",
+                    "msfragger",
+                    "24.0"
+                ]
+            ],
+            [
+                [
+                    "MSFRAGGER_INDEX",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-31T19:41:01.523006038",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "msfragger_index - integration builds pepindex from FASTA": {
+        "content": [
+            [
+                {
+                    "meta": {
+                        "id": "erwinia_index"
+                    },
+                    "fasta_name": "erwinia_carotovora.fasta",
+                    "pepindex_name": "erwinia_carotovora.fasta.1.pepindex"
+                }
+            ]
+        ],
+        "timestamp": "2026-03-28T02:01:17.308142482",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

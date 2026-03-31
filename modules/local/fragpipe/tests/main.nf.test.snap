@@ -1,0 +1,142 @@
+{
+    "fragpipe - stub LFQ": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_lfq"
+                    },
+                    [
+                        "fragpipe.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        [
+                            "ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_lfq"
+                    },
+                    "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_lfq"
+                    },
+                    "peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_lfq"
+                    },
+                    "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_lfq"
+                    },
+                    "ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                
+            ],
+            [
+                
+            ],
+            [
+                [
+                    "FRAGPIPE",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-31T19:39:09.194054473",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "fragpipe - stub TMT": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_tmt"
+                    },
+                    [
+                        "fragpipe.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        [
+                            "ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_tmt"
+                    },
+                    "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_tmt"
+                    },
+                    "peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_tmt"
+                    },
+                    "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_tmt"
+                    },
+                    "ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                
+            ],
+            [
+                
+            ],
+            [
+                [
+                    "FRAGPIPE",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-31T19:39:15.030648699",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

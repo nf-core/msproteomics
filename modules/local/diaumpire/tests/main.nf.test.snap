@@ -1,0 +1,83 @@
+{
+    "diaumpire - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_diaumpire"
+                    },
+                    [
+                        "diaumpire.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test_Q1.mzML:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test_Q2.mzML:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test_Q3.mzML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_diaumpire"
+                    },
+                    "test_Q1.mzML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_diaumpire"
+                    },
+                    "test_Q2.mzML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_diaumpire"
+                    },
+                    "test_Q3.mzML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                
+            ],
+            [
+                [
+                    "DIAUMPIRE",
+                    "diaumpire",
+                    "24.0"
+                ]
+            ],
+            [
+                [
+                    "DIAUMPIRE",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-31T19:38:38.596505419",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "file_names": {
+        "content": [
+            [
+                "dia_cptac_subset_Q1.mgf",
+                "dia_cptac_subset_Q1.mzML",
+                "dia_cptac_subset_Q2.mgf",
+                "dia_cptac_subset_Q2.mzML",
+                "dia_cptac_subset_Q3.mgf",
+                "dia_cptac_subset_Q3.mzML",
+                "diaumpire.log"
+            ]
+        ],
+        "timestamp": "2026-02-19T01:13:02.590655541",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.2"
+        }
+    }
+}

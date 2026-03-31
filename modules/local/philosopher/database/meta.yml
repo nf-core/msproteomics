@@ -1,0 +1,55 @@
+name: "philosopher_database"
+description: Add decoy sequences and common contaminants to a FASTA database
+keywords:
+  - proteomics
+  - database
+  - decoy
+  - contaminant
+  - FASTA
+tools:
+  - philosopher:
+      description: |
+        Philosopher database command adds reversed decoy sequences and common
+        contaminant proteins to a FASTA database for proteomics analysis.
+      homepage: "https://philosopher.nesvilab.org/"
+      documentation: "https://github.com/Nesvilab/philosopher/wiki"
+      tool_dev_url: "https://github.com/Nesvilab/philosopher"
+      doi: "10.1038/s41592-020-0912-y"
+      licence: ["GPL-3.0"]
+
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample information
+    - fasta:
+        type: file
+        description: Protein sequence database in FASTA format
+        pattern: "*.{fasta,fas,fa}"
+
+output:
+  fasta:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "*_philosopher.fasta":
+          type: file
+          description: FASTA database with decoys added
+          pattern: "*_philosopher.fasta"
+  log:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "philosopher_database.log":
+          type: file
+          description: Log file from philosopher database command
+          pattern: "philosopher_database.log"
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

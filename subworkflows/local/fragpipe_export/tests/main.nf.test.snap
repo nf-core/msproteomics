@@ -1,0 +1,98 @@
+{
+    "fragpipe_export - stub with fpop": {
+        "content": [
+            [
+                
+            ],
+            [
+                
+            ],
+            [
+                
+            ],
+            [
+                [
+                    {
+                        "id": "fpop_export"
+                    },
+                    [
+                        "fpop.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_fpop_results.csv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_fpop_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                
+            ]
+        ],
+        "timestamp": "2026-03-25T03:54:27.667593723",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "fragpipe_export - stub with metaproteomics": {
+        "content": [
+            [
+                
+            ],
+            [
+                
+            ],
+            [
+                
+            ],
+            [
+                
+            ],
+            [
+                [
+                    {
+                        "id": "meta_export"
+                    },
+                    [
+                        "metaproteomics.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_metaproteomics_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_optimized.fasta:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_taxonomy_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-25T03:54:34.778498265",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "fragpipe_export - stub with saintexpress": {
+        "content": [
+            [
+                
+            ],
+            [
+                
+            ],
+            [
+                [
+                    {
+                        "id": "export"
+                    },
+                    "list.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                
+            ],
+            [
+                
+            ]
+        ],
+        "timestamp": "2026-03-25T03:54:20.647790664",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

@@ -1,0 +1,186 @@
+nextflow_process {
+
+    name "Test Process TMTINTEGRATOR"
+    script "../main.nf"
+    process "TMTINTEGRATOR"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "tmtintegrator"
+
+    test("tmtintegrator - stub TMT16") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def config_file = file("\${workDir}/tmtintegrator.yml")
+                config_file.text = '''tmtintegrator:
+  channel_num: 16
+  ref_tag: Bridge
+  ref_d_tag: Pool
+  min_pep_prob: 0.9
+  min_purity: 0.5
+  min_percent: 0.05
+  prot_norm: 1
+  groupby: -1
+  add_Ref: 1
+'''
+
+                // Create philosopher directories with psm.tsv and protein.tsv
+                def sample1_dir = file("\${workDir}/sample1")
+                sample1_dir.mkdirs()
+                file("\${sample1_dir}/psm.tsv").text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
+                file("\${sample1_dir}/protein.tsv").text = "protein\\nPROT1"
+                def sample2_dir = file("\${workDir}/sample2")
+                sample2_dir.mkdirs()
+                file("\${sample2_dir}/psm.tsv").text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
+                file("\${sample2_dir}/protein.tsv").text = "protein\\nPROT1"
+
+                input[0] = [[id: 'test'], [sample1_dir, sample2_dir]]
+                input[1] = [file('annotation.txt')]
+                input[2] = config_file
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(
+                    process.out.results_dir,
+                    process.out.abundance,
+                    process.out.ratio,
+                    process.out.proteins_txt,
+                    process.out.peptides_txt,
+                    process.out.versions_tmtintegrator,
+                    process.out.versions_fragpipe
+                ).match() }
+            )
+        }
+    }
+
+    test("tmtintegrator - stub TMT10") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def config_file = file("\${workDir}/tmtintegrator.yml")
+                config_file.text = '''tmtintegrator:
+  channel_num: 10
+  ref_tag: Pool
+  ref_d_tag: Pool
+  min_pep_prob: 0.9
+  min_purity: 0.5
+  min_percent: 0.05
+  prot_norm: 1
+  groupby: 0
+  add_Ref: 1
+'''
+
+                // Create philosopher directory with psm.tsv and protein.tsv
+                def sample1_dir = file("\${workDir}/sample1")
+                sample1_dir.mkdirs()
+                file("\${sample1_dir}/psm.tsv").text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
+                file("\${sample1_dir}/protein.tsv").text = "protein\\nPROT1"
+
+                input[0] = [[id: 'test'], [sample1_dir]]
+                input[1] = [file('annotation.txt')]
+                input[2] = config_file
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(
+                    process.out.results_dir,
+                    process.out.abundance,
+                    process.out.ratio,
+                    process.out.proteins_txt,
+                    process.out.peptides_txt,
+                    process.out.versions_tmtintegrator,
+                    process.out.versions_fragpipe
+                ).match() }
+            )
+        }
+    }
+
+    test("tmtintegrator - mock PSM") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                // Use real psm.tsv from test-datasets and append TMT10 intensity columns.
+                // IonQuant isobaric pass produces columns named "Intensity <channel>" (with trailing space
+                // before channel name). TMTIntegrator's findChannels() searches for columns starting
+                // with "Intensity " (note trailing space) to locate TMT reporter ion intensities.
+                def remote_psm = file("\${params.pipelines_testdata_base_path}/module_inputs/psm.tsv", checkIfExists: true)
+                def tmt_channels = "\\tIntensity 126\\tIntensity 127N\\tIntensity 127C\\tIntensity 128N\\tIntensity 128C\\tIntensity 129N\\tIntensity 129C\\tIntensity 130N\\tIntensity 130C\\tIntensity 131N"
+                def tmt_values = "\\t1000\\t1100\\t1200\\t1300\\t1400\\t1500\\t1600\\t1700\\t1800\\t1900"
+                // Create philosopher directory with psm.tsv and protein.tsv
+                def sample_dir = file("\${workDir}/sample")
+                sample_dir.mkdirs()
+                // Append TMT intensity columns to each line of the remote psm.tsv
+                def psm_lines = remote_psm.text.trim().split("\\n")
+                def psm_content = psm_lines[0] + tmt_channels + "\\n"
+                for (int i = 1; i < psm_lines.length; i++) {
+                    psm_content += psm_lines[i] + tmt_values + "\\n"
+                }
+                file("\${sample_dir}/psm.tsv").text = psm_content
+
+                def protein_header = 'Protein\\tProtein ID\\tEntry Name\\tGene\\tProtein Description\\tOrganism\\tProtein Existence\\tCoverage\\tProtein Probability\\tTop Peptide Probability\\tTotal Peptides\\tUnique Peptides\\tRazor Peptides\\tTotal Spectral Count\\tUnique Spectral Count\\tRazor Spectral Count\\tTotal Intensity\\tUnique Intensity\\tRazor Intensity\\tIndistinguishable Proteins'
+                def protein_row1 = 'sp|P12345|TEST_ECOLI\\tP12345\\tTEST_ECOLI\\tTEST\\tTest protein\\tErwinia carotovora\\t1\\t50.5\\t1.0\\t0.99\\t2\\t2\\t2\\t5\\t5\\t5\\t5000000\\t5000000\\t5000000\\t'
+                def protein_row2 = 'sp|P23456|PROT2_ECOLI\\tP23456\\tPROT2_ECOLI\\tPROT2\\tAnother test protein\\tErwinia carotovora\\t1\\t30.2\\t1.0\\t0.99\\t1\\t1\\t1\\t3\\t3\\t3\\t3000000\\t3000000\\t3000000\\t'
+                def protein_row3 = 'sp|P34567|PROT3_ECOLI\\tP34567\\tPROT3_ECOLI\\tPROT3\\tThird test protein\\tErwinia carotovora\\t1\\t25.0\\t1.0\\t0.99\\t1\\t1\\t1\\t2\\t2\\t2\\t2000000\\t2000000\\t2000000\\t'
+                file("\${sample_dir}/protein.tsv").text = protein_header + '\\n' + protein_row1 + '\\n' + protein_row2 + '\\n' + protein_row3 + '\\n'
+
+                // IonQuant annotation format: channel\\tsample_name
+                // sample_name must end with _N for replicate extraction
+                def annotation_file = file("\${workDir}/annotation.txt")
+                annotation_file.text = '126\\tcondition_1\\n127N\\tcondition_2\\n127C\\tcondition_3\\n128N\\tcondition_4\\n128C\\tcondition_5\\n129N\\tcondition_6\\n129C\\tcondition_7\\n130N\\tcondition_8\\n130C\\tcondition_9\\n131N\\tPool_1\\n'
+
+                def config_file = file("\${workDir}/tmtintegrator.yml")
+                config_file.text = '''tmtintegrator:
+  channel_num: 10
+  ref_tag: Pool
+  ref_d_tag: Pool
+  min_pep_prob: 0.9
+  min_purity: 0.5
+  min_percent: 0.05
+  prot_norm: 0
+  groupby: 0
+  add_Ref: 1
+'''
+
+                input[0] = [[id: 'tmt_test'], [sample_dir]]
+                input[1] = [annotation_file]
+                input[2] = config_file
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                {
+                    def outDir = new File(process.out.results_dir[0][1].toString())
+                    def outFiles = outDir.listFiles().sort { it.name }
+                    assert snapshot(outFiles.collect { it.name }).match("file_names")
+                },
+                {
+                    def outDir = new File(process.out.results_dir[0][1].toString())
+                    def outFiles = outDir.listFiles().sort { it.name }
+                    assert outFiles.every { it.size() > 0 }
+                },
+                { assert process.out.versions_tmtintegrator.size() == 1 },
+                { assert process.out.versions_fragpipe.size() == 1 }
+            )
+        }
+    }
+}

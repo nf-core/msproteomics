@@ -1,0 +1,62 @@
+nextflow_process {
+
+    name "Test Process PROTEINPROPHET"
+    script "../main.nf"
+    process "PROTEINPROPHET"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "proteinprophet"
+
+    test("proteinprophet - stub") {
+        options "-stub"
+        tag "stub"
+        tag "integration"
+
+        when {
+            process {
+                """
+                def pepxml_file = file("\${workDir}/interact-test.pep.xml")
+                pepxml_file.text = "mock"
+                // Config as CLI string (not file) - matching module signature
+                def config_cli = "--maxppmdiff 2000000"
+
+                // Single tuple input: [meta, pepxml_files, config_cli]
+                input[0] = channel.of([[ id: 'test' ], pepxml_file, config_cli])
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(
+                    process.out.results_dir,
+                    process.out.protxml,
+                    process.out.pepxml,
+                    process.out.versions_philosopher,
+                    process.out.versions_fragpipe
+                ).match() }
+            )
+        }
+    }
+
+    // ---------------------------------------------------------------------------
+    // Integration test notes
+    // ---------------------------------------------------------------------------
+    // Integration tests for PROTEINPROPHET require the FragPipe container
+    // (fcyucn/fragpipe:24.0) which includes the Philosopher binary
+    // (ProteinProphet is invoked via `philosopher proteinprophet`).
+    // Philosopher is not available in any public container.
+    //
+    // Required mock data for proper integration testing:
+    //   - pepXML file(s): valid interact-*.pep.xml from PeptideProphet or
+    //     Percolator, containing scored PSMs with probability values
+    //   - config_cli: ProteinProphet flags (e.g., "--maxppmdiff 2000000")
+    //
+    // The test subset (500 scans) does not produce enough PSMs for
+    // ProteinProphet to generate meaningful protein-level inference.
+    // Full integration is validated via FRAGPIPE_DDA and FRAGPIPE_TMT
+    // subworkflow-level tests.
+    // ---------------------------------------------------------------------------
+}

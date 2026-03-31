@@ -1,0 +1,73 @@
+nextflow_process {
+
+    name "Test Process PHILOSOPHER_REPORT"
+    script "../main.nf"
+    process "PHILOSOPHER_REPORT"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "philosopher"
+    tag "philosopher/report"
+
+    test("philosopher_report - stub") {
+        options "-stub"
+        tag "stub"
+        tag "integration"
+
+        when {
+            process {
+                """
+                def results_dir = file("\${workDir}/test_results")
+                results_dir.mkdirs()
+                // Simulate .meta/ workspace from PHILOSOPHER_FILTER (skip_report) + FREEQUANT
+                file("\${results_dir}/.meta").mkdirs()
+                file("\${results_dir}/ion.tsv").text = "mock"
+
+                def fasta_file = file("\${workDir}/test_philosopher.fasta")
+                fasta_file.text = ">test\\nMKFLVL"
+
+                def report_flags = "--msstats"
+
+                // Two inputs: tuple [meta, results_dir, report_flags] and path fasta
+                input[0] = channel.of([[ id: 'test' ], results_dir, report_flags])
+                input[1] = fasta_file
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(
+                    process.out.results_dir,
+                    process.out.psms,
+                    process.out.peptides,
+                    process.out.proteins,
+                    process.out.ions,
+                    process.out.versions_philosopher,
+                    process.out.versions_fragpipe
+                ).match() }
+            )
+        }
+    }
+
+    // ---------------------------------------------------------------------------
+    // Integration test notes
+    // ---------------------------------------------------------------------------
+    // Integration tests for PHILOSOPHER_REPORT require the FragPipe container
+    // (fcyucn/fragpipe:24.0) which includes the Philosopher binary.
+    // Philosopher is not available in any public container.
+    //
+    // Required mock data for proper integration testing:
+    //   - results_dir: directory with .meta/ workspace binaries from
+    //     PHILOSOPHER_FILTER (skip_report=true) + FREEQUANT or LABELQUANT,
+    //     containing updated quantification data in .meta/ binaries
+    //   - FASTA file: protein database with decoy prefix (rev_) and contaminants
+    //     as prepared by PHILOSOPHER_DATABASE (re-annotated in this module)
+    //   - report_cli: report flags (e.g., "--msstats")
+    //
+    // This module is the final reporting step after FreeQuant or LabelQuant
+    // has updated .meta/ binaries with quantification intensities. Full
+    // integration is validated via TMT and DDA LFQ subworkflow-level tests.
+    // ---------------------------------------------------------------------------
+}

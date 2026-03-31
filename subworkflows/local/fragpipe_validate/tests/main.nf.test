@@ -1,0 +1,203 @@
+nextflow_workflow {
+
+    name "Test Subworkflow FRAGPIPE_VALIDATE"
+    script "../main.nf"
+    workflow "FRAGPIPE_VALIDATE"
+    config "./test.config"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "fragpipe_validate"
+
+    test("fragpipe_validate - stub with percolator") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                def pin_file = file("\${workDir}/test.pin")
+                pin_file.text = "SpecId\\tLabel\\tScanNr\\ntest_1_1\\t1\\t1"
+                def pepxml_file = file("\${workDir}/test.pepXML")
+                pepxml_file.text = "<?xml version='1.0'?><msms_pipeline_analysis></msms_pipeline_analysis>"
+                def mzml_file = file("\${workDir}/test.mzML")
+                mzml_file.text = "<?xml version='1.0'?><mzML></mzML>"
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">PROT1\\nPEPTIDEK"
+
+                // Tool configs: only percolator enabled
+                def tool_configs = [
+                    percolator:     [run: true, args: '--only-psms --no-terminate --post-processing-tdc'],
+                    peptideprophet: [run: false, args: ''],
+                    ptmprophet:     [run: false, args: '']
+                ]
+
+                input[0] = channel.of([[ id: 'test_validate' ], pin_file])
+                input[1] = channel.of([[ id: 'test_validate' ], pepxml_file])
+                input[2] = channel.of([[ id: 'test_validate' ], mzml_file])
+                input[3] = fasta_file
+                input[4] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[5] = []                  // ch_peptideprophet_config (not used)
+                input[6] = channel.value('DDA')
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.out.pepxml,
+                    workflow.out.target_psms,
+                    workflow.out.decoy_psms,
+                    workflow.out.mod_pepxml,
+                    workflow.out.results_dir
+                ).match() }
+            )
+        }
+    }
+
+    test("fragpipe_validate - stub with peptideprophet") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                def pin_file = file("\${workDir}/test.pin")
+                pin_file.text = "SpecId\\tLabel\\tScanNr\\ntest_1_1\\t1\\t1"
+                def pepxml_file = file("\${workDir}/test.pepXML")
+                pepxml_file.text = "<?xml version='1.0'?><msms_pipeline_analysis></msms_pipeline_analysis>"
+                def mzml_file = file("\${workDir}/test.mzML")
+                mzml_file.text = "<?xml version='1.0'?><mzML></mzML>"
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">PROT1\\nPEPTIDEK"
+
+                // Tool configs: only peptideprophet enabled
+                def tool_configs = [
+                    percolator:     [run: false, args: ''],
+                    peptideprophet: [run: true, args: '--nonparam --expectscore'],
+                    ptmprophet:     [run: false, args: '']
+                ]
+
+                input[0] = channel.of([[ id: 'test_validate_pp' ], pin_file])
+                input[1] = channel.of([[ id: 'test_validate_pp' ], pepxml_file])
+                input[2] = channel.of([[ id: 'test_validate_pp' ], mzml_file])
+                input[3] = fasta_file
+                input[4] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[5] = []                  // ch_peptideprophet_config (not used)
+                input[6] = channel.value('DDA')
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.out.pepxml,
+                    workflow.out.target_psms,
+                    workflow.out.decoy_psms,
+                    workflow.out.mod_pepxml,
+                    workflow.out.results_dir
+                ).match() }
+            )
+        }
+    }
+
+    test("fragpipe_validate - stub with percolator and ptmprophet") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                def pin_file = file("\${workDir}/test.pin")
+                pin_file.text = "SpecId\\tLabel\\tScanNr\\ntest_1_1\\t1\\t1"
+                def pepxml_file = file("\${workDir}/test.pepXML")
+                pepxml_file.text = "<?xml version='1.0'?><msms_pipeline_analysis></msms_pipeline_analysis>"
+                def mzml_file = file("\${workDir}/test.mzML")
+                mzml_file.text = "<?xml version='1.0'?><mzML></mzML>"
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">PROT1\\nPEPTIDEK"
+
+                // Tool configs: percolator + ptmprophet enabled
+                def tool_configs = [
+                    percolator:     [run: true, args: '--only-psms --no-terminate'],
+                    peptideprophet: [run: false, args: ''],
+                    ptmprophet:     [run: true, args: 'MINPROB=0.5']
+                ]
+
+                input[0] = channel.of([[ id: 'test_validate_ptm' ], pin_file])
+                input[1] = channel.of([[ id: 'test_validate_ptm' ], pepxml_file])
+                input[2] = channel.of([[ id: 'test_validate_ptm' ], mzml_file])
+                input[3] = fasta_file
+                input[4] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[5] = []                  // ch_peptideprophet_config (not used)
+                input[6] = channel.value('DDA')
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.out.pepxml,
+                    workflow.out.target_psms,
+                    workflow.out.decoy_psms,
+                    workflow.out.mod_pepxml,
+                    workflow.out.results_dir
+                ).match() }
+            )
+        }
+    }
+
+    test("fragpipe_validate - stub passthrough") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                def pin_file = file("\${workDir}/test.pin")
+                pin_file.text = "SpecId\\tLabel\\tScanNr\\ntest_1_1\\t1\\t1"
+                def pepxml_file = file("\${workDir}/test.pepXML")
+                pepxml_file.text = "<?xml version='1.0'?><msms_pipeline_analysis></msms_pipeline_analysis>"
+                def mzml_file = file("\${workDir}/test.mzML")
+                mzml_file.text = "<?xml version='1.0'?><mzML></mzML>"
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">PROT1\\nPEPTIDEK"
+
+                // Tool configs: no validation tools enabled (passthrough)
+                def tool_configs = [
+                    percolator:     [run: false, args: ''],
+                    peptideprophet: [run: false, args: ''],
+                    ptmprophet:     [run: false, args: '']
+                ]
+
+                input[0] = channel.of([[ id: 'test_passthrough' ], pin_file])
+                input[1] = channel.of([[ id: 'test_passthrough' ], pepxml_file])
+                input[2] = channel.of([[ id: 'test_passthrough' ], mzml_file])
+                input[3] = fasta_file
+                input[4] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[5] = []                  // ch_peptideprophet_config (not used)
+                input[6] = channel.value('DDA')
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.out.pepxml,
+                    workflow.out.target_psms,
+                    workflow.out.decoy_psms,
+                    workflow.out.mod_pepxml,
+                    workflow.out.results_dir
+                ).match() }
+            )
+        }
+    }
+}

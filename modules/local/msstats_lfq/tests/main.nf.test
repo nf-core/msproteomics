@@ -1,0 +1,33 @@
+nextflow_process {
+
+    name "Test Process MSSTATS_LFQ"
+    script "../main.nf"
+    process "MSSTATS_LFQ"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "msstats_lfq"
+
+    test("msstats_lfq - stub") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            process {
+                """
+                def csv_input = file("\${workDir}/msstats_input.csv")
+                csv_input.text = "mock"
+
+                input[0] = csv_input
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(process.out.msstats_csv, process.out.log).match() }
+            )
+        }
+    }
+}

@@ -1,0 +1,112 @@
+nextflow_process {
+
+    name "Test Process SPECLIBGEN"
+    script "../main.nf"
+    process "SPECLIBGEN"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "speclibgen"
+
+    test("speclibgen - stub") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def psm_file = file("\${workDir}/psm.tsv")
+                psm_file.text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
+                def pep_file = file("\${workDir}/peptide.tsv")
+                pep_file.text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
+                def mzml_file = file("\${workDir}/test.mzML")
+                mzml_file.text = "mock"
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">PROT1\\nPEPTIDEK"
+                // SpecLibGen config as bash-sourceable string
+                def config_cli = "CONVERT_ARGS='--max_delta_unimod 0.02 --max_delta_ppm 15'; FRAGMENT_TYPES='[\\\"b\\\",\\\"y\\\"]'; LIBRARY_ARGS='--rt_lowess_fraction 0'; RT_CAL='noiRT'; IM_CAL='noIM'; KEEP_INTERMEDIATE='false'"
+
+                input[0] = channel.of([
+                    [ id: 'test_speclibgen' ],
+                    [ psm_file ],
+                    [ pep_file ],
+                    [ mzml_file ],
+                    config_cli
+                ])
+                input[1] = fasta_file
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(
+                    process.out.results_dir,
+                    process.out.library_tsv,
+                    process.out.library_speclib,
+                    process.out.library_parquet,
+                    process.out.versions_speclibgen,
+                    process.out.versions_fragpipe
+                ).match() }
+            )
+        }
+    }
+
+    // KNOWN ISSUE: The convertpsm step fails with:
+    //   AttributeError: 'numpy.ndarray' object has no attribute 'itertuples'
+    // Root cause: FragPipe-SpecLib <= 0.1.58 (bundled in fcyucn/fragpipe:24.0)
+    // uses np.array_split(DataFrame, nthreads) which converts DataFrame chunks to
+    // numpy arrays when nthreads > 1. Fixed in FragPipe-SpecLib commit e035d1df
+    // (2026-02-27) but the container predates this fix.
+    // This test will pass once the container is rebuilt with updated FragPipe-SpecLib.
+    test("speclibgen - integration with test data") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                // Use real psm.tsv from test-datasets directly (PSMs already reference
+                // tmt_erwinia_subset as the spectrum file basename)
+                def remote_psm = file("\${params.pipelines_testdata_base_path}/module_inputs/psm.tsv", checkIfExists: true)
+                def psm_file = file("\${workDir}/psm.tsv")
+                psm_file.text = remote_psm.text
+                // Use real peptide.tsv from test-datasets
+                def remote_pep = file("\${params.pipelines_testdata_base_path}/module_inputs/peptide.tsv", checkIfExists: true)
+                def pep_file = file("\${workDir}/peptide.tsv")
+                pep_file.text = remote_pep.text
+                // mzML and FASTA are large files — keep remote
+                def mzml_file = file("\${params.pipelines_testdata_base_path}/spectra/tmt_erwinia_subset.mzML", checkIfExists: true)
+                def fasta_file = file("\${params.pipelines_testdata_base_path}/databases/erwinia_carotovora.fasta", checkIfExists: true)
+                // SpecLibGen config as bash-sourceable string
+                def config_cli = "CONVERT_ARGS='--max_delta_unimod 0.02 --max_delta_ppm 15'; FRAGMENT_TYPES='[\\\"b\\\",\\\"y\\\"]'; LIBRARY_ARGS='--rt_lowess_fraction 0'; RT_CAL='noiRT'; IM_CAL='noIM'; KEEP_INTERMEDIATE='false'"
+
+                input[0] = channel.of([
+                    [ id: 'speclibgen_test' ],
+                    [ psm_file ],
+                    [ pep_file ],
+                    [ mzml_file ],
+                    config_cli
+                ])
+                input[1] = fasta_file
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                // results_dir contains non-deterministic PDF — check existence only
+                { assert process.out.results_dir.size() > 0 },
+                // Snapshot deterministic library outputs only
+                { assert snapshot(
+                    process.out.library_tsv,
+                    process.out.library_speclib,
+                    process.out.library_parquet,
+                    process.out.versions_speclibgen,
+                    process.out.versions_fragpipe
+                ).match() }
+            )
+        }
+    }
+}

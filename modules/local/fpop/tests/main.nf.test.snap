@@ -1,0 +1,104 @@
+{
+    "fpop - stub with TMT mode": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_fpop_tmt"
+                    },
+                    [
+                        "fpop.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_fpop_results.csv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_fpop_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_fpop_tmt"
+                    },
+                    "sample_fpop_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_fpop_tmt"
+                    },
+                    "sample_fpop_results.csv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    "FPOP",
+                    "fpop",
+                    "24.0"
+                ]
+            ],
+            [
+                [
+                    "FPOP",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-31T20:13:53.116211424",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "fpop - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_fpop"
+                    },
+                    [
+                        "fpop.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_fpop_results.csv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_fpop_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_fpop"
+                    },
+                    "sample_fpop_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_fpop"
+                    },
+                    "sample_fpop_results.csv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    "FPOP",
+                    "fpop",
+                    "24.0"
+                ]
+            ],
+            [
+                [
+                    "FPOP",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-31T20:13:40.870935734",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

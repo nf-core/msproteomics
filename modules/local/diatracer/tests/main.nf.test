@@ -1,0 +1,47 @@
+nextflow_process {
+
+    name "Test Process DIATRACER"
+    script "../main.nf"
+    process "DIATRACER"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "diatracer"
+
+    test("diatracer - stub") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def d_file = file("\${workDir}/test.d")
+                d_file.mkdirs()
+                def analysis_tdf = file("\${workDir}/test.d/analysis.tdf")
+                analysis_tdf.text = "mock"
+                // diaTracer CLI config
+                def config_cli = "--writeInter 0 --deltaApexIM 0.05 --deltaApexRT 3"
+
+                input[0] = channel.of([[ id: 'test_diatracer' ], d_file, config_cli])
+                input[1] = []  // diatracer_dir (use auto-discovery)
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(
+                    process.out.results_dir,
+                    process.out.mzml,
+                    process.out.license_agreement,
+                    process.out.versions_diatracer,
+                    process.out.versions_fragpipe
+                ).match() }
+            )
+        }
+    }
+
+    // Note: Full integration test requires Bruker .d files which are not included in test data
+    // diaTracer is specifically designed for timsTOF DIA data processing
+}

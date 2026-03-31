@@ -1,0 +1,61 @@
+name: "diatracer"
+description: Convert Bruker .d files to mzML for DIA analysis
+keywords:
+  - proteomics
+  - mass spectrometry
+  - DIA
+  - file conversion
+  - Bruker
+  - timsTOF
+tools:
+  - diatracer:
+      description: |
+        DIA-Tracer is a tool for processing Bruker timsTOF .d files for DIA
+        (Data Independent Acquisition) analysis. It converts raw Bruker data
+        into mzML format with DIA-specific optimizations for downstream analysis.
+        DIA-Tracer is part of the MSFragger/FragPipe suite.
+      homepage: "https://github.com/Nesvilab/MSFragger"
+      documentation: "https://github.com/Nesvilab/MSFragger/wiki"
+      tool_dev_url: "https://github.com/Nesvilab/MSFragger"
+      licence: ["Commercial"]
+      note: "License pre-installed in container"
+
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample information
+    - d_file:
+        type: directory
+        description: Bruker .d directory containing raw mass spectrometry data
+        pattern: "*.d"
+    - config_cli:
+        type: string
+        description: DIA-Tracer parameters as CLI string
+
+output:
+  results_dir:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}":
+          type: directory
+          description: Directory containing DIA-Tracer results and log
+          pattern: "${prefix}"
+  mzml:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/*_diatracer.mzML":
+          type: file
+          description: Converted mzML file from DIA-Tracer
+          pattern: "*_diatracer.mzML"
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

@@ -1,0 +1,99 @@
+nextflow_process {
+
+    name "Test Process MBG"
+    script "../main.nf"
+    process "MBG"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "mbg"
+
+    test("mbg - stub") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def psm_file = file("\${workDir}/psm.tsv")
+                psm_file.text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
+                def manifest_file = file("\${workDir}/manifest.fp-manifest")
+                manifest_file.text = "/path/to/sample.mzML\\tsample1\\texperiment\\tDDA"
+                def residue_db = file("\${workDir}/glycan_residues.txt")
+                residue_db.text = "HexNAc\\t203.0794\\tN"
+                def glycan_mod_db = file("\${workDir}/glycan_mods.txt")
+                glycan_mod_db.text = "Hex\\t162.0528"
+                // MBG CLI config
+                def config_cli = "--toaddresiduals HexNAc --maxq 0.01 --minpsms 2 --minglycans 1 --fdr 0.01 --mztol 10 --rttol 0.4 --imtol 0.05 --nopasef true --runtmt false --expanddb 1 --maxskips 1 --allowchimeric true"
+
+                input[0] = channel.of([
+                    [ id: 'test_mbg' ],
+                    psm_file,
+                    manifest_file,
+                    config_cli
+                ])
+                input[1] = residue_db
+                input[2] = glycan_mod_db
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(
+                    process.out.results_dir,
+                    process.out.results,
+                    process.out.glycan_results,
+                    process.out.versions_mbg,
+                    process.out.versions_fragpipe
+                ).match() }
+            )
+        }
+    }
+
+    test("mbg - integration with test data") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                // Create test input files inline
+                def psm_file = file("\${workDir}/psm.tsv")
+                psm_file.text = "Spectrum\\tSpectrum File\\tPeptide\\tModified Peptide\\tExtended Peptide\\tPrev AA\\tNext AA\\tPeptide Length\\tCharge\\tRetention\\tObserved Mass\\tCalibrated Observed Mass\\tObserved M/Z\\tCalibrated Observed M/Z\\tCalculated Peptide Mass\\tCalculated M/Z\\tDelta Mass\\tExpectation\\tHyperscore\\tNextscore\\tPeptideProphet Probability\\tNumber of Enzymatic Termini\\tNumber of Missed Cleavages\\tProtein Start\\tProtein End\\tIntensity\\tAssigned Modifications\\tObserved Modifications\\tPurity\\tIs Unique\\tProtein\\tProtein ID\\tEntry Name\\tGene\\tProtein Description\\tMapped Genes\\tMapped Proteins\\n" +
+                    "test_sample.00001.00001.2\\ttest_sample.mzML\\tPEPTIDEKTEST\\tPEPTIDEKM[147]TEST\\tR.PEPTIDEKTEST.A\\tR\\tA\\t12\\t2\\t30.01\\t1234.5678\\t1234.5679\\t618.2912\\t618.2912\\t1234.5678\\t618.2912\\t0.0001\\t0.0001\\t25.5\\t12.3\\t0.999\\t2\\t0\\t100\\t112\\t1500000\\t8M(15.9949)\\t8M(15.9949)\\t0.95\\tTRUE\\tsp|P12345|TEST_ECOLI\\tP12345\\tTEST_ECOLI\\tTEST\\tTest protein OS=Erwinia carotovora GN=test PE=1 SV=1\\tTEST\\tsp|P12345|TEST_ECOLI\\n" +
+                    "test_sample.00002.00002.3\\ttest_sample.mzML\\tANOTHERPEPTIDER\\tANOTHERPEPTIDER\\tK.ANOTHERPEPTIDER.L\\tK\\tL\\t15\\t3\\t35.01\\t1567.8901\\t1567.8902\\t523.6374\\t523.6374\\t1567.8901\\t523.6374\\t0.0001\\t0.00005\\t30.2\\t15.1\\t0.9995\\t2\\t0\\t200\\t215\\t2500000\\t\\t\\t0.98\\tTRUE\\tsp|P23456|PROT2_ECOLI\\tP23456\\tPROT2_ECOLI\\tPROT2\\tAnother test protein OS=Erwinia carotovora GN=prot2 PE=1 SV=1\\tPROT2\\tsp|P23456|PROT2_ECOLI"
+                def manifest_file = file("\${workDir}/manifest.fp-manifest")
+                manifest_file.text = "/path/to/test_sample.mzML\\ttest_sample\\texperiment1\\tDDA"
+                def residue_db = file("\${workDir}/glycan_residues.txt")
+                residue_db.text = "HexNAc\\t203.0794\\tN\\nHex\\t162.0528\\tS,T\\nFuc\\t146.0579\\tS,T\\nNeuAc\\t291.0954\\tS,T"
+                def glycan_mod_db = file("\${workDir}/glycan_mods.txt")
+                glycan_mod_db.text = "Hex\\t162.0528\\nHexNAc\\t203.0794\\nFuc\\t146.0579\\nNeuAc\\t291.0954"
+                def config_cli = "--toaddresiduals HexNAc --maxq 0.01 --minpsms 2 --minglycans 1 --fdr 0.01 --mztol 10 --rttol 0.4 --imtol 0.05 --nopasef true --runtmt false --expanddb 1 --maxskips 1 --allowchimeric true"
+
+                input[0] = channel.of([
+                    [ id: 'mbg_test' ],
+                    psm_file,
+                    manifest_file,
+                    config_cli
+                ])
+                input[1] = residue_db
+                input[2] = glycan_mod_db
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(
+                    process.out.results_dir,
+                    process.out.results,
+                    process.out.glycan_results,
+                    process.out.versions_mbg,
+                    process.out.versions_fragpipe
+                ).match() }
+            )
+        }
+    }
+}

@@ -7,3 +7,14 @@ testing/
 testing*
 *.pyc
 null/
+test-datasets/
+.nf-test/
+.nf-test.log
+nf-fragpipe/
+.nf-test-*.nf
+tmp/
+.claude/
+CLAUDE.md
+docs/plans/
+docs/failures/
+docs/knowledge_graph.md

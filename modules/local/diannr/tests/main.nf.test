@@ -1,0 +1,43 @@
+nextflow_process {
+
+    name "Test Process DIANNR"
+    script "../main.nf"
+    process "DIANNR"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "diannr"
+
+    test("diannr - stub") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            process {
+                """
+                def report_file = file("\${workDir}/diann_report.tsv")
+                report_file.text = "mock"
+
+                input[0] = report_file
+                input[1] = 0.01
+                input[2] = 0.01
+                input[3] = "CONT_"
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(
+                    process.out.contaminants_removed_report,
+                    process.out.precursors,
+                    process.out.peptides,
+                    process.out.peptides_maxlfq,
+                    process.out.unique_genes,
+                    process.out.protein_groups_maxlfq
+                ).match() }
+            )
+        }
+    }
+}

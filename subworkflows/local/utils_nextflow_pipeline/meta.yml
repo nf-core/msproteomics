@@ -1,0 +1,28 @@
+name: utils_nextflow_pipeline
+description: General Nextflow pipeline utilities for version printing, parameter dumping, and conda channel validation.
+keywords:
+  - utilities
+  - Nextflow
+  - parameters
+  - conda
+components:
+  - getworkflowversion
+input:
+  - print_version:
+      type: value
+      description: Boolean to print workflow version and exit
+  - dump_parameters:
+      type: value
+      description: Boolean to dump parameters to JSON file
+  - outdir:
+      type: path
+      description: Output directory for dumped parameters
+  - check_conda_channels:
+      type: value
+      description: Boolean to verify conda channel configuration
+output:
+  - dummy_emit:
+      type: value
+      description: Dummy boolean emit for workflow chaining
+authors:
+  - "@nf-core"

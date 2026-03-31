@@ -1,0 +1,44 @@
+{
+    "freequant - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_freequant"
+                    },
+                    [
+                        "freequant.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_freequant"
+                    },
+                    "ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    "FREEQUANT",
+                    "philosopher",
+                    "24.0"
+                ]
+            ],
+            [
+                [
+                    "FREEQUANT",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-31T19:39:33.083477439",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

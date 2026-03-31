@@ -1,0 +1,33 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/yaml-schema.json
+name: "generate_sdrf_from_samplesheet"
+description: Generates SDRF-proteomics TSV from a simple CSV samplesheet and experiment-level parameters
+keywords:
+  - sdrf
+  - samplesheet
+  - proteomics
+  - metadata
+tools:
+  - python:
+      description: Python programming language
+      homepage: https://www.python.org
+      licence: ["PSF-2.0"]
+input:
+  - - samplesheet:
+        type: file
+        description: CSV samplesheet with columns sample, spectra, condition (and optional label, fraction, replicate)
+        pattern: "*.csv"
+  - - params_json:
+        type: string
+        description: JSON string containing experiment-level parameters (organism, enzyme, modifications, etc.)
+output:
+  - sdrf:
+      - "*.sdrf.tsv":
+          type: file
+          description: Generated SDRF-proteomics file
+          pattern: "*.sdrf.tsv"
+  - versions:
+      - "versions":
+          type: string
+          description: Software versions emitted via topic channel
+authors:
+  - "@nf-core"

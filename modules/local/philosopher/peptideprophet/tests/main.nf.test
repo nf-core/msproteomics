@@ -1,0 +1,80 @@
+nextflow_process {
+
+    name "Test Process PEPTIDEPROPHET"
+    script "../main.nf"
+    process "PEPTIDEPROPHET"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "peptideprophet"
+
+    test("peptideprophet - stub") {
+        options "-stub"
+        tag "stub"
+        tag "integration"
+
+        when {
+            process {
+                """
+                def pepxml_file = file("\${workDir}/test.pepXML")
+                def mzml_file = file("\${workDir}/test.mzML")
+                def fasta_file = file("\${workDir}/test.fasta")
+                def config_file = file("\${workDir}/peptide-prophet.config")
+                pepxml_file.text = "mock"
+                mzml_file.text = "mock"
+                fasta_file.text = ">sp|P00001|TEST\\nMKTEST"
+                config_file.text = "peptideprophet=--decoyprobs --ppm --accmass --nonparam --expectscore"
+
+                input[0] = channel.of([[ id: 'test_sample' ], pepxml_file, mzml_file, config_file])
+                input[1] = fasta_file
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(
+                    process.out.results_dir,
+                    process.out.pepxml,
+                    process.out.versions_philosopher,
+                    process.out.versions_fragpipe
+                ).match() }
+            )
+        }
+    }
+
+    test("peptideprophet - from pre-computed pepXML") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                // Use pre-computed pepXML from test-datasets (real MSFragger output)
+                def pepxml_file = file("\${params.pipelines_testdata_base_path}/module_inputs/tmt_erwinia_subset_msfragger.pepXML", checkIfExists: true)
+                def mzml_file = file("\${params.pipelines_testdata_base_path}/spectra/tmt_erwinia_subset.mzML", checkIfExists: true)
+                def fasta_file = file("\${params.pipelines_testdata_base_path}/databases/erwinia_carotovora.fasta", checkIfExists: true)
+                def config_file = file("\${workDir}/peptide-prophet.config")
+                config_file.text = "peptideprophet=--decoyprobs --ppm --accmass --nonparam --expectscore"
+
+                input[0] = channel.of([ [ id: 'peptideprophet_test' ], pepxml_file, mzml_file, config_file ])
+                input[1] = fasta_file
+                """
+            }
+        }
+
+        then {
+            def outDir = new File(process.out.results_dir[0][1].toString())
+            def outFiles = outDir.listFiles().sort { it.name }
+            assertAll (
+                { assert process.success },
+                { assert snapshot(
+                    outFiles.collect { it.name },
+                    process.out.versions_philosopher,
+                    process.out.versions_fragpipe
+                ).match("file_names") },
+                { assert outFiles.every { it.size() > 0 } }
+            )
+        }
+    }
+}

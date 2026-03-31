@@ -1,0 +1,79 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "fragpipe_glyco"
+description: Glycoproteomics analysis with mass-based glycan matching (MBG) and O-glycoproteomics site localization (OPair)
+keywords:
+  - proteomics
+  - glycoproteomics
+  - glycan
+  - mbg
+  - opair
+  - o-glycosylation
+components:
+  - mbg
+  - opair
+input:
+  - ch_psm_files:
+      type: channel
+      description: |
+        PSM tables from PHILOSOPHER_FILTER for glycan matching.
+        Structure: [ val(meta), path(psm.tsv) ]
+  - ch_mzml:
+      type: channel
+      description: |
+        Spectra files in mzML format for OPair analysis.
+        Structure: [ val(meta), path(mzml) ]
+  - ch_manifest:
+      type: channel
+      description: |
+        FragPipe manifest file for MBG.
+        Structure: path(manifest.fp-manifest)
+  - ch_glycan_dbs:
+      type: channel
+      description: |
+        Glycan database files. Pass Channel.empty() when glyco is not enabled.
+        Structure: tuple path(residue_db), path(glycan_mod_db), path(oglycan_db)
+  - ch_tool_configs:
+      type: channel
+      description: |
+        Parsed JSON tool configuration map controlling which glyco tools to run.
+        Structure: val(tool_configs_map)
+output:
+  - mbg_results:
+      type: channel
+      description: |
+        MBG glycan matching results.
+        Structure: [ val(meta), path(*_mbg*.tsv) ]
+  - mbg_glycan:
+      type: channel
+      description: |
+        MBG glycan-level results.
+        Structure: [ val(meta), path(*_glycan*.tsv) ]
+  - opair_results:
+      type: channel
+      description: |
+        OPair O-glycoproteomics results.
+        Structure: [ val(meta), path(*_opair_results.tsv) ]
+  - opair_glycoforms:
+      type: channel
+      description: |
+        OPair glycoform assignment results.
+        Structure: [ val(meta), path(*_opair_glycoforms.tsv) ]
+  - mbg_dir:
+      type: channel
+      description: |
+        MBG results directory.
+        Structure: [ val(meta), path(results_dir) ]
+  - opair_dir:
+      type: channel
+      description: |
+        OPair results directory.
+        Structure: [ val(meta), path(results_dir) ]
+  - versions:
+      type: file
+      description: |
+        File containing software versions.
+        Structure: [ path(versions.yml) ]
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

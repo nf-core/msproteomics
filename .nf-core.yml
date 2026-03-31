@@ -2,7 +2,17 @@ repository_type: pipeline
 
 nf_core_version: 3.5.2
 
-lint: {}
+lint:
+  # FragPipe modules use a commercial Docker image (fragpipe/fragpipe:24.0)
+  # which does not have public conda/biocontainers equivalents
+  modules_config: false
+  # nf-fragpipe submodule has its own structure
+  files_exist:
+    - conf/modules.config
+  files_unchanged: false
+  # Skip container checks for local modules using commercial FragPipe image
+  nextflow_config:
+    - config_defaults
 
 template:
   org: nf-core

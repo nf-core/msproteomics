@@ -1,0 +1,29 @@
+{
+    "split_fasta - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_split"
+                    },
+                    [
+                        "test.fasta:md5,b4d80b85eb9fd17330830cc8d82140e8",
+                        "test.fasta:md5,d3946bf763aa3b30c11f8e4a6a9c14a8"
+                    ]
+                ]
+            ],
+            [
+                [
+                    "SPLIT_FASTA",
+                    "python",
+                    "3.12.2"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-31T19:45:42.755679811",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

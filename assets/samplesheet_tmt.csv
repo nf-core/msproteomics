@@ -1,0 +1,11 @@
+sample,spectra,condition,label,fraction
+Pool1_F1,/data/raw/pool1_f1.raw,control,TMT126,1
+Pool1_F1,/data/raw/pool1_f1.raw,control,TMT127N,1
+Pool1_F1,/data/raw/pool1_f1.raw,treated,TMT128C,1
+Pool1_F1,/data/raw/pool1_f1.raw,treated,TMT129N,1
+Pool1_F1,/data/raw/pool1_f1.raw,reference,TMT131C,1
+Pool1_F2,/data/raw/pool1_f2.raw,control,TMT126,2
+Pool1_F2,/data/raw/pool1_f2.raw,control,TMT127N,2
+Pool1_F2,/data/raw/pool1_f2.raw,treated,TMT128C,2
+Pool1_F2,/data/raw/pool1_f2.raw,treated,TMT129N,2
+Pool1_F2,/data/raw/pool1_f2.raw,reference,TMT131C,2

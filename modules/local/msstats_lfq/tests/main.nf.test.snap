@@ -1,0 +1,17 @@
+{
+    "msstats_lfq - stub": {
+        "content": [
+            [
+                "msstats_results.csv:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ],
+            [
+                "msstats.log:md5,1ad239c94b4b8739c6acd1bb40b24990"
+            ]
+        ],
+        "timestamp": "2026-03-25T03:50:01.338859704",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

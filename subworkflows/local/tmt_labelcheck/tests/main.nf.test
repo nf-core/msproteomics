@@ -1,0 +1,76 @@
+nextflow_workflow {
+
+    name "Test Subworkflow TMT_LABELCHECK"
+    script "../main.nf"
+    workflow "TMT_LABELCHECK"
+    config "./test.config"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "tmt_labelcheck"
+
+    test("TMT16 lbl - Stub") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            workflow {
+                """
+                // Create stub files
+                def mzml1 = file("\${workDir}/sample1.mzML")
+                def mzml2 = file("\${workDir}/sample2.mzML")
+                def fasta = file("\${workDir}/test.fasta")
+                mzml1.text = "mock"
+                mzml2.text = "mock"
+                fasta.text = ">test\\nMKFLVL"
+
+                // ch_file: [sample_meta, path(file)]
+                ch_input = channel.of(
+                    [ [ id:'sample1' ], mzml1 ],
+                    [ [ id:'sample2' ], mzml2 ]
+                )
+                // ch_database: [meta, fasta]
+                ch_database = channel.of([ [ id:'database' ], fasta ])
+                // ch_workflow_file: [meta, path(workflow_file)]
+                def wf_file = file("\${projectDir}/modules/local/fragpipe/resources/workflows/TMT-labelcheck-229.workflow")
+                ch_workflow_file = channel.of([ [ id:'labelcheck_workflow' ], wf_file ])
+                // TMT type
+                tmt_type = 'TMT10'
+                // ch_decoy_db: empty channel (not provided)
+                ch_decoy_db = channel.empty()
+
+                input[0] = ch_input
+                input[1] = ch_database
+                input[2] = ch_workflow_file
+                input[3] = tmt_type
+                input[4] = ch_decoy_db
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.out.mzml,
+                    workflow.out.pepxml,
+                    workflow.out.pin,
+                    workflow.out.protxml,
+                    workflow.out.psms,
+                    workflow.out.combined_peptide,
+                    workflow.out.html_report,
+                    workflow.out.md_report,
+                    workflow.out.summary,
+                    workflow.out.per_sample,
+                    workflow.out.html_report_combined,
+                    workflow.out.summary_combined
+                ).match() }
+            )
+        }
+    }
+
+    // Note: Full integration testing with real data (producing PSMs) is done
+    // outside CI using larger datasets. The small Erwinia subset (500 scans)
+    // doesn't produce enough PSMs for downstream channel joins to succeed.
+    // Individual module integration tests verify the real component behavior.
+}

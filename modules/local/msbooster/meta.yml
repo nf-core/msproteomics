@@ -1,0 +1,77 @@
+name: "msbooster"
+description: Deep learning-based rescoring using predicted retention time and spectra
+keywords:
+  - proteomics
+  - mass spectrometry
+  - deep learning
+  - rescoring
+  - retention time
+  - spectral prediction
+tools:
+  - msbooster:
+      description: |
+        MSBooster enhances peptide identification by using deep learning predictions
+        of retention time and MS2 spectra. It rescores PSMs using features derived
+        from comparing observed vs predicted properties, improving sensitivity.
+      homepage: "https://github.com/Nesvilab/MSBooster"
+      documentation: "https://github.com/Nesvilab/MSBooster/wiki"
+      tool_dev_url: "https://github.com/Nesvilab/MSBooster"
+      licence: ["Commercial"]
+      note: "License pre-installed in container"
+
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample information
+    - pin_files:
+        type: file
+        description: Percolator input file(s) from MSFragger
+        pattern: "*.pin"
+    - mzml_files:
+        type: file
+        description: mzML spectral file(s)
+        pattern: "*.mzML"
+  - - params_file:
+        type: file
+        description: |
+          Full MSBooster params file (key = value format). Pass [] when not using.
+          When provided, module operates in params-file mode (matching FragPipe calling convention).
+        pattern: "*.{config,txt}"
+  - - fragger_params:
+        type: file
+        description: |
+          MSFragger params file for modification definitions. Pass [] when not using.
+          MSBooster reads mod definitions from this file for rescoring (CmdMSBooster.java:171).
+        pattern: "*.params"
+  - - has_ion_mobility:
+        type: boolean
+        description: |
+          Whether input data has ion mobility (e.g., Bruker timsTOF .d files).
+          Used to auto-detect useIM when not set in params file.
+
+output:
+  results_dir:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}":
+          type: directory
+          description: Directory containing rescored PIN files and logs
+  pin_edited:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/*.pin":
+          type: file
+          description: Rescored PIN files with additional features (renamed from *_edited.pin)
+          pattern: "*.pin"
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

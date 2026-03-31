@@ -1,0 +1,61 @@
+{
+    "saintexpress - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_saint"
+                    },
+                    [
+                        "list.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "saintexpress.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_saint"
+                    },
+                    "list.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    "SAINTEXPRESS",
+                    "saintexpress",
+                    "24.0"
+                ]
+            ],
+            [
+                [
+                    "SAINTEXPRESS",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-31T19:44:48.116251018",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "saintexpress - integration with test data": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "saint_test"
+                    },
+                    "list.txt:md5,7f615498f2b4cfb486460c990104d2a8"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-27T19:38:56.906895438",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

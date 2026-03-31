@@ -1,0 +1,289 @@
+nextflow_workflow {
+
+    name "Test Workflow FRAGPIPE_WF"
+    script "../main.nf"
+    workflow "FRAGPIPE_WF"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "fragpipe_wf"
+
+    test("fragpipe_wf - stub test with LFQ workflow") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                // Create a test mzML file
+                def mzml_file = file("\${workDir}/test_sample.mzML")
+                mzml_file.text = '<?xml version="1.0" encoding="UTF-8"?><mzML></mzML>'
+
+                // Create a test FASTA file
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = '>sp|P00000|TEST_HUMAN Test protein\\nMKWVTFISLLLFSSAYSRGVFRRDTHKSEIAHR'
+
+                // Create a test workflow file
+                def workflow_file = file("\${workDir}/LFQ-MBR.workflow")
+                workflow_file.text = '''
+msfragger.calibrate_mass = 2
+msfragger.precursor_mass_lower = -20
+msfragger.precursor_mass_upper = 20
+msfragger.run-msfragger = true
+msbooster.run-msbooster = true
+ionquant.mbr = 1
+ionquant.maxlfq = 1
+ionquant.run-ionquant = true
+phi-report.filter = --sequential --prot 0.01 --picked
+phi-report.run-report = true
+percolator.run-percolator = true
+protein-prophet.run-protein-prophet = true
+database.decoy-tag = rev_
+'''.trim()
+
+                // Create input channels
+                input[0] = channel.of([[ id: 'test_sample' ], mzml_file])
+                input[1] = channel.of([[ id: 'test_db' ], fasta_file])
+                input[2] = channel.of([[ id: 'fragpipe_config' ], workflow_file])
+                input[3] = Channel.empty()  // ch_decoy_db (not used)
+                input[4] = []               // ch_annotation (not used)
+                input[5] = []               // ch_manifest (not used)
+
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.out.mzml,
+                    workflow.out.pepxml,
+                    workflow.out.pin,
+                    workflow.out.validated_pepxml,
+                    workflow.out.protxml,
+                    workflow.out.psms,
+                    workflow.out.peptides,
+                    workflow.out.proteins,
+                    workflow.out.results_dir,
+                    workflow.out.combined_protein,
+                    workflow.out.combined_peptide,
+                    workflow.out.combined_ion,
+                    workflow.out.ionquant_dir,
+                    workflow.out.tmt_abundance
+                ).match() }
+            )
+        }
+    }
+
+    test("fragpipe_wf - stub test with TMT workflow") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                // Create a test mzML file
+                def mzml_file = file("\${workDir}/test_sample.mzML")
+                mzml_file.text = '<?xml version="1.0" encoding="UTF-8"?><mzML></mzML>'
+
+                // Create a test FASTA file
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = '>sp|P00000|TEST_HUMAN Test protein\\nMKWVTFISLLLFSSAYSRGVFRRDTHKSEIAHR'
+
+                // Create a test workflow file
+                def workflow_file = file("\${workDir}/TMT16.workflow")
+                workflow_file.text = '''
+msfragger.calibrate_mass = 2
+msfragger.run-msfragger = true
+msbooster.run-msbooster = true
+tmtintegrator.run-tmtintegrator = true
+phi-report.filter = --sequential --prot 0.01 --picked
+phi-report.run-report = true
+percolator.run-percolator = true
+protein-prophet.run-protein-prophet = true
+database.decoy-tag = rev_
+'''.trim()
+
+                // Create input channels
+                input[0] = channel.of([[ id: 'test_sample' ], mzml_file])
+                input[1] = channel.of([[ id: 'test_db' ], fasta_file])
+                input[2] = channel.of([[ id: 'fragpipe_config' ], workflow_file])
+                input[3] = Channel.empty()  // ch_decoy_db (not used)
+                input[4] = []               // ch_annotation (not used)
+                input[5] = []               // ch_manifest (not used)
+
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.out.mzml,
+                    workflow.out.pepxml,
+                    workflow.out.pin,
+                    workflow.out.validated_pepxml,
+                    workflow.out.protxml,
+                    workflow.out.psms,
+                    workflow.out.peptides,
+                    workflow.out.proteins,
+                    workflow.out.results_dir,
+                    workflow.out.combined_protein,
+                    workflow.out.combined_peptide,
+                    workflow.out.combined_ion,
+                    workflow.out.ionquant_dir,
+                    workflow.out.tmt_abundance
+                ).match() }
+            )
+        }
+    }
+
+    test("fragpipe_wf - stub test with prebuilt philosopher database") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                // Create a test mzML file
+                def mzml_file = file("\${workDir}/test_sample.mzML")
+                mzml_file.text = '<?xml version="1.0" encoding="UTF-8"?><mzML></mzML>'
+
+                // Create a prebuilt philosopher database
+                def decoy_fasta = file("\${workDir}/philosopher_db.fas")
+                decoy_fasta.text = '>sp|P00000|TEST_HUMAN Test protein\\nMKWVTFISLLLFSSAYSRGVFRRDTHKSEIAHR\\n>rev_sp|P00000|TEST_HUMAN Decoy\\nRHAIESKHTDRRFVGRSYASSFLLLSIFTVWKM'
+
+                // Create a test workflow file
+                def workflow_file = file("\${workDir}/LFQ-MBR.workflow")
+                workflow_file.text = '''
+msfragger.calibrate_mass = 2
+msfragger.run-msfragger = true
+msbooster.run-msbooster = true
+ionquant.run-ionquant = true
+phi-report.filter = --sequential --prot 0.01 --picked
+phi-report.run-report = true
+percolator.run-percolator = true
+protein-prophet.run-protein-prophet = true
+database.decoy-tag = rev_
+'''.trim()
+
+                // Create input channels
+                input[0] = channel.of([[ id: 'test_sample' ], mzml_file])
+                input[1] = Channel.empty()  // ch_database (not used - using prebuilt)
+                input[2] = channel.of([[ id: 'fragpipe_config' ], workflow_file])
+                input[3] = channel.of([[ id: 'philosopher_db' ], decoy_fasta])  // ch_decoy_db
+                input[4] = []               // ch_annotation (not used)
+                input[5] = []               // ch_manifest (not used)
+
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.out.mzml,
+                    workflow.out.pepxml,
+                    workflow.out.pin,
+                    workflow.out.validated_pepxml,
+                    workflow.out.protxml,
+                    workflow.out.psms,
+                    workflow.out.peptides,
+                    workflow.out.proteins,
+                    workflow.out.results_dir,
+                    workflow.out.combined_protein,
+                    workflow.out.combined_peptide,
+                    workflow.out.combined_ion,
+                    workflow.out.ionquant_dir,
+                    workflow.out.tmt_abundance
+                ).match() }
+            )
+        }
+    }
+
+    test("fragpipe_wf - integration - Erwinia test data") {
+        tag "integration"
+
+        when {
+            workflow {
+                """
+                def workflow_file = file("\${projectDir}/modules/local/fragpipe/resources/workflows/LFQ-MBR.workflow")
+
+                input[0] = channel.of(
+                    [[ id: 'sample1' ], file("\${params.pipelines_testdata_base_path}/spectra/tmt_erwinia_subset.mzML", checkIfExists: true)],
+                    [[ id: 'sample2' ], file("\${params.pipelines_testdata_base_path}/spectra/tmt_erwinia_subset_2.mzML", checkIfExists: true)]
+                )
+                input[1] = channel.of([[ id: 'erwinia_db' ], file("\${params.pipelines_testdata_base_path}/databases/erwinia_carotovora.fasta", checkIfExists: true)])
+                input[2] = channel.of([[ id: 'fragpipe_config' ], workflow_file])
+                input[3] = Channel.empty()  // ch_decoy_db (not used)
+                input[4] = []               // ch_annotation (not used)
+                input[5] = []               // ch_manifest (not used)
+
+                """
+            }
+        }
+
+        then {
+            def names = [:]
+            workflow.out.psms.each { names["psm_${it[0].id}"] = path(it[1]).getFileName().toString() }
+            workflow.out.proteins.each { names["prot_${it[0].id}"] = path(it[1]).getFileName().toString() }
+            workflow.out.combined_protein.each { names["combined_protein"] = path(it[1]).getFileName().toString() }
+            workflow.out.combined_peptide.each { names["combined_peptide"] = path(it[1]).getFileName().toString() }
+            workflow.out.combined_ion.each { names["combined_ion"] = path(it[1]).getFileName().toString() }
+            assertAll (
+                { assert workflow.success },
+                { assert snapshot(names).match("erwinia_file_names") },
+                { assert workflow.out.psms.every { path(it[1]).size() > 0 } },
+                { assert workflow.out.proteins.every { path(it[1]).size() > 0 } },
+                { assert workflow.out.psms.size() > 0 }
+            )
+        }
+    }
+
+    test("fragpipe_wf - integration - DDA SILAC human test data") {
+        tag "integration"
+
+        when {
+            workflow {
+                """
+                def workflow_file = file("\${projectDir}/modules/local/fragpipe/resources/workflows/LFQ-MBR.workflow")
+
+                // Download once, copy with different name to avoid filename collision at aggregate steps
+                def mzml_src = file("\${params.pipelines_testdata_base_path}/spectra/dda_silac_subset.mzML", checkIfExists: true)
+                def mzml_copy = file("\${workDir}/dda_silac_subset_2.mzML")
+                mzml_src.copyTo(mzml_copy)
+
+                input[0] = channel.of(
+                    [[ id: 'silac_sample1' ], mzml_src],
+                    [[ id: 'silac_sample2' ], mzml_copy]
+                )
+                input[1] = channel.of([[ id: 'human_db' ], file("\${params.pipelines_testdata_base_path}/databases/human_sp_subset.fasta", checkIfExists: true)])
+                input[2] = channel.of([[ id: 'fragpipe_config' ], workflow_file])
+                input[3] = Channel.empty()  // ch_decoy_db (not used)
+                input[4] = []               // ch_annotation (not used)
+                input[5] = []               // ch_manifest (not used)
+
+                """
+            }
+        }
+
+        then {
+            def names = [:]
+            workflow.out.psms.each { names["psm_${it[0].id}"] = path(it[1]).getFileName().toString() }
+            workflow.out.proteins.each { names["prot_${it[0].id}"] = path(it[1]).getFileName().toString() }
+            workflow.out.combined_protein.each { names["combined_protein"] = path(it[1]).getFileName().toString() }
+            workflow.out.combined_peptide.each { names["combined_peptide"] = path(it[1]).getFileName().toString() }
+            workflow.out.combined_ion.each { names["combined_ion"] = path(it[1]).getFileName().toString() }
+            assertAll (
+                { assert workflow.success },
+                { assert snapshot(names).match("silac_file_names") },
+                { assert workflow.out.psms.every { path(it[1]).size() > 0 } },
+                { assert workflow.out.proteins.every { path(it[1]).size() > 0 } },
+                { assert workflow.out.psms.size() > 0 }
+            )
+        }
+    }
+}

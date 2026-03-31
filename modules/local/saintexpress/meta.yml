@@ -1,0 +1,73 @@
+name: "saintexpress"
+description: Scoring protein-protein interactions from AP-MS data with SAINTexpress
+keywords:
+  - proteomics
+  - mass spectrometry
+  - protein-protein interactions
+  - AP-MS
+  - affinity purification
+  - scoring
+tools:
+  - saintexpress:
+      description: |
+        SAINTexpress is a computational tool for scoring protein-protein
+        interactions from affinity purification-mass spectrometry (AP-MS)
+        experiments. It uses a statistical model to evaluate the significance
+        of prey proteins identified in bait purifications, supporting both
+        spectral count and intensity-based scoring modes.
+      homepage: "https://saint-apms.sourceforge.net/Main.html"
+      documentation: "https://saint-apms.sourceforge.net/Main.html"
+      tool_dev_url: "https://sourceforge.net/projects/saint-apms/"
+      doi: "10.1016/j.jprot.2013.10.023"
+      licence: ["Academic"]
+
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample information
+    - inter_file:
+        type: file
+        description: Interaction file containing prey-bait spectral counts or intensities
+        pattern: "inter.dat"
+    - bait_file:
+        type: file
+        description: Bait definition file mapping samples to baits and controls
+        pattern: "bait.dat"
+    - prey_file:
+        type: file
+        description: Prey definition file with protein lengths
+        pattern: "prey.dat"
+    - mode:
+        type: string
+        description: Scoring mode - "spc" for spectral count or "int" for intensity
+    - config_cli:
+        type: string
+        description: SAINTexpress parameters as CLI string (e.g., -R 2 -L 4)
+
+output:
+  results_dir:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}":
+          type: directory
+          description: Directory containing SAINTexpress results and log files
+          pattern: "${prefix}"
+  results_list:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/list.txt":
+          type: file
+          description: SAINTexpress results list with interaction scores
+          pattern: "list.txt"
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

@@ -1,0 +1,70 @@
+nextflow_process {
+
+    name "Test Process PHILOSOPHER_FILTER"
+    script "../main.nf"
+    process "PHILOSOPHER_FILTER"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "philosopher"
+    tag "philosopher/filter"
+
+    test("philosopher_filter - stub") {
+        options "-stub"
+        tag "stub"
+        tag "integration"
+
+        when {
+            process {
+                """
+                def pepxml_file = file("\${workDir}/interact-test.pep.xml")
+                def protxml_file = file("\${workDir}/combined.prot.xml")
+                def fasta_file = file("\${workDir}/test_philosopher.fasta")
+                pepxml_file.text = "mock"
+                protxml_file.text = "mock"
+                fasta_file.text = ">test\\nMKFLVL"
+                // Config as CLI strings (not file) - matching module signature
+                def filter_flags = "--sequential --prot 0.01 --picked"
+                def report_flags = "--msstats"
+
+                // Two inputs: tuple [meta, pepxml_files, protxml, filter_flags, report_flags] and path fasta
+                input[0] = channel.of([[ id: 'test' ], pepxml_file, protxml_file, filter_flags, report_flags])
+                input[1] = fasta_file
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(
+                    process.out.results_dir,
+                    process.out.psms,
+                    process.out.peptides,
+                    process.out.proteins,
+                    process.out.ions,
+                    process.out.versions_philosopher,
+                    process.out.versions_fragpipe
+                ).match() }
+            )
+        }
+    }
+
+    // ---------------------------------------------------------------------------
+    // Integration test notes
+    // ---------------------------------------------------------------------------
+    // Integration tests for PHILOSOPHER_FILTER require the FragPipe container
+    // (fcyucn/fragpipe:24.0) which includes the Philosopher binary.
+    // Philosopher is not available in any public container.
+    //
+    // Required mock data for proper integration testing:
+    //   - pepXML file(s): valid interact-*.pep.xml from PeptideProphet/Percolator
+    //   - protXML file: combined.prot.xml from ProteinProphet
+    //   - FASTA file: protein database with decoy prefix (rev_) and contaminants
+    //     as prepared by PHILOSOPHER_DATABASE
+    //
+    // The test subset (500 scans) does not produce enough PSMs for Philosopher
+    // filter to succeed. Full integration is validated via TMT_LABELCHECK and
+    // DDA_LFQ subworkflow-level tests.
+    // ---------------------------------------------------------------------------
+}

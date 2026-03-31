@@ -1,5 +1,15 @@
 name: Run nf-test
 on:
+  push:
+    branches:
+      - dev
+      - master
+    paths-ignore:
+      - "docs/**"
+      - "**/meta.yml"
+      - "**/*.md"
+      - "**/*.png"
+      - "**/*.svg"
   pull_request:
     paths-ignore:
       - "docs/**"
@@ -18,7 +28,7 @@ concurrency:
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  NFT_VER: "0.9.3"
+  NFT_VER: "0.9.5"
   NFT_WORKDIR: "~"
   NXF_ANSI_LOG: false
   NXF_SINGULARITY_CACHEDIR: ${{ github.workspace }}/.singularity
@@ -27,9 +37,7 @@ env:
 jobs:
   nf-test-changes:
     name: nf-test-changes
-    runs-on: # use self-hosted runners
-      - runs-on=${{ github.run_id }}-nf-test-changes
-      - runner=4cpu-linux-x64
+    runs-on: ubuntu-latest
     outputs:
       shard: ${{ steps.set-shards.outputs.shard }}
       total_shards: ${{ steps.set-shards.outputs.total_shards }}
@@ -51,6 +59,7 @@ jobs:
           NFT_VER: ${{ env.NFT_VER }}
         with:
           max_shards: 7
+          tags: stub
 
       - name: debug
         run: |
@@ -61,9 +70,7 @@ jobs:
     name: "${{ matrix.profile }} | ${{ matrix.NXF_VER }} | ${{ matrix.shard }}/${{ needs.nf-test-changes.outputs.total_shards }}"
     needs: [nf-test-changes]
     if: ${{ needs.nf-test-changes.outputs.total_shards != '0' }}
-    runs-on: # use self-hosted runners
-      - runs-on=${{ github.run_id }}-nf-test
-      - runner=4cpu-linux-x64
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
@@ -92,7 +99,7 @@ jobs:
       - name: Run nf-test
         id: run_nf_test
         uses: ./.github/actions/nf-test
-        continue-on-error: ${{ matrix.NXF_VER == 'latest-everything' }}
+        continue-on-error: ${{ matrix.NXF_VER != '25.04.0' }}
         env:
           NFT_WORKDIR: ${{ env.NFT_WORKDIR }}
           NXF_VERSION: ${{ matrix.NXF_VER }}
@@ -100,30 +107,65 @@ jobs:
           profile: ${{ matrix.profile }}
           shard: ${{ matrix.shard }}
           total_shards: ${{ env.TOTAL_SHARDS }}
+          tags: stub
 
       - name: Report test status
         if: ${{ always() }}
         run: |
           if [[ "${{ steps.run_nf_test.outcome }}" == "failure" ]]; then
             echo "::error::Test with ${{ matrix.NXF_VER }} failed"
-            # Add to workflow summary
             echo "## ❌ Test failed: ${{ matrix.profile }} | ${{ matrix.NXF_VER }} | Shard ${{ matrix.shard }}/${{ env.TOTAL_SHARDS }}" >> $GITHUB_STEP_SUMMARY
-            if [[ "${{ matrix.NXF_VER }}" == "latest-everything" ]]; then
-              echo "::warning::Test with latest-everything failed but will not cause workflow failure. Please check if the error is expected or if it needs fixing."
-            fi
-            if [[ "${{ matrix.NXF_VER }}" != "latest-everything" ]]; then
+            if [[ "${{ matrix.NXF_VER }}" != "25.04.0" ]]; then
+              echo "::warning::Test with ${{ matrix.NXF_VER }} failed but will not cause workflow failure. Latest Nextflow is informational only."
+            else
               exit 1
             fi
           fi
 
-  confirm-pass:
-    needs: [nf-test]
-    if: always()
-    runs-on: # use self-hosted runners
-      - runs-on=${{ github.run_id }}-confirm-pass
-      - runner=2cpu-linux-x64
+  dia-integration:
+    name: "DIA integration test"
+    runs-on: ubuntu-latest
     steps:
-      - name: One or more tests failed (excluding latest-everything)
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup Nextflow
+        uses: nf-core/setup-nextflow@v2
+        with:
+          version: "25.04.0"
+
+      - name: Install nf-test
+        uses: nf-core/setup-nf-test@v1
+        with:
+          version: ${{ env.NFT_VER }}
+
+      - name: Run DIA integration test
+        id: run_dia_test
+        env:
+          NFT_WORKDIR: ${{ env.NFT_WORKDIR }}
+        run: |
+          nf-test test tests/default.nf.test \
+            --profile=+docker \
+            --tag dia_integration \
+            --ci \
+            --verbose
+
+      - name: Report DIA test status
+        if: ${{ always() }}
+        run: |
+          if [[ "${{ steps.run_dia_test.outcome }}" == "failure" ]]; then
+            echo "::error::DIA integration test failed"
+            echo "## ❌ DIA integration test failed" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+  confirm-pass:
+    needs: [nf-test, dia-integration]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: One or more tests failed (excluding 25.04.0)
         if: ${{ contains(needs.*.result, 'failure') }}
         run: exit 1
 

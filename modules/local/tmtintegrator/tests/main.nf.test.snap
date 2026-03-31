@@ -1,0 +1,151 @@
+{
+    "file_names": {
+        "content": [
+            [
+                "abundance_gene_None.tsv",
+                "protein.tsv",
+                "psm.tsv",
+                "ratio_gene_None.tsv",
+                "tmt-integrator-conf.yml",
+                "tmt-integrator.log"
+            ]
+        ],
+        "timestamp": "2026-03-24T20:10:11.150489312",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "tmtintegrator - stub TMT10": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    [
+                        "abundance_gene_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "abundance_protein_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "ratio_gene_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "ratio_protein_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "tmt-integrator-conf.yml:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "tmt-integrator.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    [
+                        "abundance_gene_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "abundance_protein_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    [
+                        "ratio_gene_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "ratio_protein_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                
+            ],
+            [
+                
+            ],
+            [
+                [
+                    "TMTINTEGRATOR",
+                    "tmtintegrator",
+                    "24.0"
+                ]
+            ],
+            [
+                [
+                    "TMTINTEGRATOR",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-31T19:46:16.415431646",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "tmtintegrator - stub TMT16": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    [
+                        "abundance_gene_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "abundance_protein_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "ratio_gene_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "ratio_protein_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "tmt-integrator-conf.yml:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "tmt-integrator.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    [
+                        "abundance_gene_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "abundance_protein_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    [
+                        "ratio_gene_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "ratio_protein_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                
+            ],
+            [
+                
+            ],
+            [
+                [
+                    "TMTINTEGRATOR",
+                    "tmtintegrator",
+                    "24.0"
+                ]
+            ],
+            [
+                [
+                    "TMTINTEGRATOR",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-31T19:46:03.629740527",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

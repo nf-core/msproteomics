@@ -1,0 +1,87 @@
+nextflow_process {
+
+    name "Test Process MSFRAGGER"
+    script "../main.nf"
+    process "MSFRAGGER"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "msfragger"
+
+    test("msfragger - stub") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                // Create mock files
+                def mzml_file = file("\${workDir}/sample.mzML")
+                def fasta_file = file("\${workDir}/test.fasta")
+                mzml_file.text = "mock"
+                fasta_file.text = ">sp|P00001|TEST\\nMKTEST"
+
+                // Four inputs: tuple [meta, mzml], path fasta, path params_file, path pepindex
+                input[0] = channel.of([
+                    [ id: 'test_sample' ],
+                    mzml_file
+                ])
+                input[1] = fasta_file
+                input[2] = []  // params_file (CLI mode, uses ext.args)
+                input[3] = []  // pepindex (no prebuilt index)
+                input[4] = []  // msfragger_dir (use auto-discovery)
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(
+                    process.out.pepxml,
+                    process.out.pin,
+                    process.out.tsv,
+                    process.out.calibrated_mzml,
+                    process.out.uncalibrated_mzml,
+                    process.out.results_dir,
+                    process.out.log,
+                    process.out.license_agreement,
+                    process.out.versions_msfragger,
+                    process.out.versions_fragpipe
+                ).match() }
+            )
+        }
+    }
+
+    test("msfragger - local TMT subset") {
+        tag "integration"
+        config "./nextflow.config"
+
+        when {
+            process {
+                """
+                // Five inputs: tuple [meta, mzml], path fasta, path params_file, path pepindex, path msfragger_dir
+                input[0] = channel.of([
+                    [ id: 'msfragger_test' ],
+                    file("\${params.pipelines_testdata_base_path}/spectra/tmt_erwinia_subset.mzML", checkIfExists: true)
+                ])
+                input[1] = file("\${params.pipelines_testdata_base_path}/databases/erwinia_carotovora.fasta", checkIfExists: true)
+                input[2] = []  // params_file (CLI mode, uses ext.args)
+                input[3] = []  // pepindex (no prebuilt index)
+                input[4] = []  // msfragger_dir (use auto-discovery)
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(
+                    process.out.pepxml.collect { meta, f -> file(f).name },
+                    process.out.versions_msfragger,
+                    process.out.versions_fragpipe
+                ).match() }
+            )
+        }
+    }
+}

@@ -7,7 +7,7 @@
 
 [![Open in GitHub Codespaces](https://img.shields.io/badge/Open_In_GitHub_Codespaces-black?labelColor=grey&logo=github)](https://github.com/codespaces/new/nf-core/msproteomics)
 [![GitHub Actions CI Status](https://github.com/nf-core/msproteomics/actions/workflows/nf-test.yml/badge.svg)](https://github.com/nf-core/msproteomics/actions/workflows/nf-test.yml)
-[![GitHub Actions Linting Status](https://github.com/nf-core/msproteomics/actions/workflows/linting.yml/badge.svg)](https://github.com/nf-core/msproteomics/actions/workflows/linting.yml)[![AWS CI](https://img.shields.io/badge/CI%20tests-full%20size-FF9900?labelColor=000000&logo=Amazon%20AWS)](https://nf-co.re/msproteomics/results)[![Cite with Zenodo](http://img.shields.io/badge/DOI-10.5281/zenodo.XXXXXXX-1073c8?labelColor=000000)](https://doi.org/10.5281/zenodo.XXXXXXX)
+[![GitHub Actions Linting Status](https://github.com/nf-core/msproteomics/actions/workflows/linting.yml/badge.svg)](https://github.com/nf-core/msproteomics/actions/workflows/linting.yml)[![AWS CI](https://img.shields.io/badge/CI%20tests-full%20size-FF9900?labelColor=000000&logo=Amazon%20AWS)](https://nf-co.re/msproteomics/results)
 [![nf-test](https://img.shields.io/badge/unit_tests-nf--test-337ab7.svg)](https://www.nf-test.com)
 
 [![Nextflow](https://img.shields.io/badge/version-%E2%89%A525.04.0-green?style=flat&logo=nextflow&logoColor=white&color=%230DC09D&link=https%3A%2F%2Fnextflow.io)](https://www.nextflow.io/)
@@ -21,68 +21,125 @@
 
 ## Introduction
 
-**nf-core/msproteomics** is a bioinformatics pipeline that ...
+**nf-core/msproteomics** is a bioinformatics pipeline for mass spectrometry-based proteomics preprocessing.
+It accepts raw instrument data with a CSV samplesheet and produces quantified protein/peptide/ion matrices ready for downstream statistical analysis.
+The pipeline supports multiple acquisition strategies through dedicated workflow types:
 
-<!-- TODO nf-core:
-   Complete this sentence with a 2-3 sentence summary of what types of data the pipeline ingests, a brief overview of the
-   major pipeline sections and the types of output it produces. You're giving an overview to someone new
-   to nf-core here, in 15-20 seconds. For an example, see https://github.com/nf-core/rnaseq/blob/master/README.md#introduction
--->
+- **DIA** (Data-Independent Acquisition) -- analyzed with [DIA-NN](https://github.com/vdemichev/DiaNN), with optional MSstats and MaxLFQ quantification
+- **DDA LFQ** (Data-Dependent Acquisition, Label-Free Quantification) -- analyzed with the [FragPipe](https://fragpipe.nesvilab.org/) computational platform (MSFragger, MSBooster, Percolator, IonQuant)
+- **TMT Label Check** -- TMT labeling efficiency QC using FragPipe search followed by label incorporation analysis
+- **Generic FragPipe** -- fully configurable FragPipe workflows driven by `.workflow` files
 
-<!-- TODO nf-core: Include a figure that guides the user through the major workflow steps. Many nf-core
-     workflows use the "tube map" design for that. See https://nf-co.re/docs/guidelines/graphic_design/workflow_diagrams#examples for examples.   -->
-<!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))2. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
+Instrument-specific settings are applied via optional config files (`-c conf/instruments/*.config`).
+
+## Analysis Modes
+
+The `--mode` parameter selects the analysis engine.
+FragPipe sub-modes are controlled with `--tmt_mode` for TMT workflows.
+
+| Mode | Sub-mode | Description | Engine |
+| --- | --- | --- | --- |
+| `diann` | -- | DIA quantitative proteomics (standard, phospho) | [DIA-NN](https://github.com/vdemichev/DiaNN) |
+| `fragpipe` | *(none)* | Generic FragPipe workflows, configured by [workflow files](https://github.com/Nesvilab/FragPipe/tree/develop/workflows) | [FragPipe](https://fragpipe.nesvilab.org/) |
+| `fragpipe` | `--tmt_mode labelcheck` | TMT labeling efficiency QC | [FragPipe](https://fragpipe.nesvilab.org/) |
+| `fragpipe` | `--tmt_mode quant` | TMT isobaric quantification | [FragPipe](https://fragpipe.nesvilab.org/) |
+
+DIA method variants (e.g., phospho) and instrument-specific settings are applied via `-c` config files.
+See [docs/usage.md](docs/usage.md) for full details.
 
 ## Usage
 
 > [!NOTE]
-> If you are new to Nextflow and nf-core, please refer to [this page](https://nf-co.re/docs/usage/installation) on how to set-up Nextflow. Make sure to [test your setup](https://nf-co.re/docs/usage/introduction#how-to-run-a-pipeline) with `-profile test` before running the workflow on actual data.
+> If you are new to Nextflow and nf-core, please refer to [this page](https://nf-co.re/docs/usage/installation) on how to set-up Nextflow.
+> Make sure to [test your setup](https://nf-co.re/docs/usage/introduction#how-to-run-a-pipeline) with `-profile test` before running the workflow on actual data.
 
-<!-- TODO nf-core: Describe the minimum required steps to execute the pipeline, e.g. how to prepare samplesheets.
-     Explain what rows and columns represent. For instance (please edit as appropriate):
-
-First, prepare a samplesheet with your input data that looks as follows:
-
-`samplesheet.csv`:
+First, prepare a CSV samplesheet describing your samples:
 
 ```csv
-sample,fastq_1,fastq_2
-CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz
+sample,spectra
+Sample1,/path/to/sample1.raw
+Sample2,/path/to/sample2.raw
+Sample3,/path/to/sample3.raw
 ```
 
-Each row represents a fastq file (single-end) or a pair of fastq files (paired end).
+Optional columns: `condition` (experimental group), `label` (TMT channel, e.g. TMT126), `fraction` (fraction number). If present, these are parsed automatically.
 
--->
-
-Now, you can run the pipeline using:
-
-<!-- TODO nf-core: update the following command to include all required parameters for a minimal example -->
+Then run the pipeline:
 
 ```bash
+# DIA analysis
 nextflow run nf-core/msproteomics \
-   -profile <docker/singularity/.../institute> \
-   --input samplesheet.csv \
-   --outdir <OUTDIR>
+  --mode diann \
+  --input samplesheet.csv \
+  --database /path/to/database.fasta \
+  --outdir results \
+  -profile docker
+
+# FragPipe DDA LFQ analysis
+nextflow run nf-core/msproteomics \
+  --mode fragpipe \
+  --fragpipe_container your-registry/fragpipe:24.0 \
+  --fragpipe_workflow LFQ-MBR.workflow \
+  --input samplesheet.csv \
+  --database /path/to/uniprot_human.fasta \
+  --outdir results \
+  -profile docker
+
+# TMT label check (TMT18 example)
+nextflow run nf-core/msproteomics \
+  --mode fragpipe \
+  --fragpipe_container your-registry/fragpipe:24.0 \
+  --tmt_mode labelcheck \
+  --tmt_type TMT18 \
+  --input samplesheet.csv \
+  --database /path/to/uniprot_human.fasta \
+  --outdir results \
+  -profile docker
+
+# TMT quantification (TMT18 example)
+nextflow run nf-core/msproteomics \
+  --mode fragpipe \
+  --fragpipe_container your-registry/fragpipe:24.0 \
+  --tmt_mode quant \
+  --tmt_type TMT18 \
+  --fragpipe_workflow /path/to/TMT-quant.workflow \
+  --input samplesheet.csv \
+  --database /path/to/uniprot_human.fasta \
+  --outdir results \
+  -profile docker
 ```
 
 > [!WARNING]
-> Please provide pipeline parameters via the CLI or Nextflow `-params-file` option. Custom config files including those provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_; see [docs](https://nf-co.re/docs/usage/getting_started/configuration#custom-configuration-files).
+> Please provide pipeline parameters via the CLI or Nextflow `-params-file` option.
+> Custom config files including those provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_; see [docs](https://nf-co.re/docs/usage/getting_started/configuration#custom-configuration-files).
 
-For more details and further functionality, please refer to the [usage documentation](https://nf-co.re/msproteomics/usage) and the [parameter documentation](https://nf-co.re/msproteomics/parameters).
+For more details and further functionality, please refer to the [usage documentation](docs/usage.md) and the [parameter documentation](https://nf-co.re/msproteomics/parameters).
 
-## Pipeline output
+## Pipeline Output
 
 To see the results of an example test run with a full size dataset refer to the [results](https://nf-co.re/msproteomics/results) tab on the nf-core website pipeline page.
-For more details about the output files and reports, please refer to the
-[output documentation](https://nf-co.re/msproteomics/output).
+For more details about the output files and reports, please refer to the [output documentation](docs/output.md).
+
+## FragPipe License
+
+FragPipe-based workflows (DDA LFQ, TMT Label Check, generic FragPipe) require a [FragPipe](https://fragpipe.nesvilab.org/) installation with a valid license.
+FragPipe is free for academic use; commercial users must obtain a license from the University of Michigan.
+You must build or provide a Docker/Singularity container that includes FragPipe, MSFragger, IonQuant, and Philosopher under your own license terms.
+
+## Documentation
+
+- [Usage guide](docs/usage.md) -- full parameter reference and workflow examples
+- [Output documentation](docs/output.md) -- description of pipeline output files and reports
+- [Module documentation](docs/modules/README.md) -- per-module reference for all local modules
+- [Docker build instructions](docs/fragpipe-docker/README.md) -- building the FragPipe container image
 
 ## Credits
 
-nf-core/msproteomics was originally written by Dongze He.
+The pipeline was originally created by [Dongze He](https://github.com/DongzeHE) and is maintained and developed by [Dongze He](https://github.com/DongzeHE) and [Fengchao Yu](https://github.com/fcyu).
 
-We thank the following people for their extensive assistance in the development of this pipeline:
+The DIA-NN workflow is inherited from [quantms](https://github.com/bigbio/quantms), developed by the [bigbio](https://github.com/bigbio) community.
 
-<!-- TODO nf-core: If applicable, make list of people who have also contributed -->
+The advisory team includes Dr. Stefka Tyanova (Altos Labs), Dr. Daniel Itzhak (Altos Labs), Dr. Felix Krueger (Altos Labs), and [Dr. Alexey I. Nesvizhskii](https://medschool.umich.edu/profile/3401/alexey-nesvizhskii) (University of Michigan Medical School).
 
 ## Contributions and Support
 
@@ -92,12 +149,21 @@ For further information or help, don't hesitate to get in touch on the [Slack `#
 
 ## Citations
 
-<!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi and badge at the top of this file. -->
-<!-- If you use nf-core/msproteomics for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
+If you use nf-core/msproteomics for your analysis, please cite it using the nf-core publication and the underlying tools.
 
-<!-- TODO nf-core: Add bibliography of tools and data used in your pipeline -->
+### Underlying Tools
 
-An extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.
+Please cite the tools used by this pipeline depending on the workflow you run:
+
+**FragPipe** (DDA LFQ, TMT workflows):
+See the full list of key references at [FragPipe GitHub](https://github.com/Nesvilab/FragPipe#key-references), including MSFragger, Philosopher, IonQuant, and TMT-Integrator.
+
+**DIA-NN** (DIA workflows):
+See the key publications at [DIA-NN GitHub](https://github.com/vdemichev/diann#key-publications).
+
+An extensive list of references for all tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.
+
+### nf-core
 
 You can cite the `nf-core` publication as follows:
 

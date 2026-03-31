@@ -355,7 +355,7 @@ def completionSummary(monochrome_logs=true) {
 }
 
 //
-// Construct and send a notification to a web server as JSON e.g. Microsoft Teams and Slack
+// Construct and send a notification to a web server as JSON (e.g. Microsoft Teams and Slack)
 //
 def imNotification(summary_params, hook_url) {
     def summary = [:]
@@ -371,15 +371,9 @@ def imNotification(summary_params, hook_url) {
     misc_fields['complete']       = workflow.complete
     misc_fields['scriptfile']     = workflow.scriptFile
     misc_fields['scriptid']       = workflow.scriptId
-    if (workflow.repository) {
-        misc_fields['repository'] = workflow.repository
-    }
-    if (workflow.commitId) {
-        misc_fields['commitid']   = workflow.commitId
-    }
-    if (workflow.revision) {
-        misc_fields['revision']   = workflow.revision
-    }
+    if (workflow.repository) misc_fields['repository'] = workflow.repository
+    if (workflow.commitId)   misc_fields['commitid']   = workflow.commitId
+    if (workflow.revision)   misc_fields['revision']   = workflow.revision
     misc_fields['nxf_version']    = workflow.nextflow.version
     misc_fields['nxf_build']      = workflow.nextflow.build
     misc_fields['nxf_timestamp']  = workflow.nextflow.timestamp
@@ -397,16 +391,12 @@ def imNotification(summary_params, hook_url) {
     msg_fields['projectDir']   = workflow.projectDir
     msg_fields['summary']      = summary << misc_fields
 
-    // Render the JSON template
     def engine       = new groovy.text.GStringTemplateEngine()
-    // Different JSON depending on the service provider
-    // Defaults to "Adaptive Cards" (https://adaptivecards.io), except Slack which has its own format
-    def json_path     = hook_url.contains("hooks.slack.com") ? "slackreport.json" : "adaptivecard.json"
-    def hf            = new File("${workflow.projectDir}/assets/${json_path}")
+    def json_path    = hook_url.contains("hooks.slack.com") ? "slackreport.json" : "adaptivecard.json"
+    def hf           = new File("${workflow.projectDir}/assets/${json_path}")
     def json_template = engine.createTemplate(hf).make(msg_fields)
     def json_message  = json_template.toString()
 
-    // POST
     def post = new URL(hook_url).openConnection()
     post.setRequestMethod("POST")
     post.setDoOutput(true)

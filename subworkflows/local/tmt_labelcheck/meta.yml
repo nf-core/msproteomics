@@ -1,0 +1,117 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "tmt_labelcheck"
+description: TMT labeling efficiency QC workflow that runs the full FragPipe pipeline to verify TMT labeling before committing to full analysis
+keywords:
+  - proteomics
+  - tmt
+  - label-check
+  - quality-control
+  - labeling-efficiency
+  - tandem-mass-tag
+components:
+  - parse/fragpipe/workflow
+  - msfragger
+  - tmt/labelcheck/analyze
+  - fragpipe_database
+  - fragpipe_convert
+  - fragpipe_validate
+  - fragpipe_inference
+  - fragpipe_quant
+input:
+  - ch_file:
+      type: channel
+      description: |
+        Sample files in RAW, mzML, or .d format with metadata.
+        Structure: [ val(sample_meta), path(mzml/raw/d) ]
+  - ch_database:
+      type: channel
+      description: |
+        Protein database FASTA file.
+        Structure: [ val(meta), path(fasta) ]
+  - ch_workflow_file:
+      type: channel
+      description: |
+        FragPipe workflow file for TMT label check. Contains all tool parameters
+        (MSFragger search settings, TMT mass as variable mod, Percolator flags, etc.)
+        Structure: [ val(meta), path(workflow_file) ]
+  - tmt_type:
+      type: value
+      description: |
+        TMT type string specifying the TMT plex (e.g., TMT6, TMT10, TMT16, TMTPRO).
+        Used by TMT_LABELCHECK_ANALYZE to determine which mass to search for in results.
+  - ch_decoy_db:
+      type: channel
+      description: |
+        Prebuilt philosopher database with decoys (empty channel if not provided,
+        in which case FRAGPIPE_DATABASE will be run on ch_database).
+        Structure: [ val(meta), path(fasta) ]
+output:
+  - mzml:
+      type: channel
+      description: |
+        Converted mzML spectra files.
+        Structure: [ val(meta), path(mzml) ]
+  - pepxml:
+      type: channel
+      description: |
+        Validated pepXML files from Percolator.
+        Structure: [ val(meta), path(pepxml) ]
+  - pin:
+      type: channel
+      description: |
+        Percolator input (PIN) files from MSFragger.
+        Structure: [ val(meta), path(pin) ]
+  - protxml:
+      type: channel
+      description: |
+        ProteinProphet combined protein inference XML.
+        Structure: [ val(meta), path(protxml) ]
+  - psms:
+      type: channel
+      description: |
+        Per-sample PSM tables from Philosopher Filter.
+        Structure: [ val(meta), path(psm.tsv) ]
+  - combined_peptide:
+      type: channel
+      description: |
+        Combined modified peptide table from IonQuant for aggregate analysis.
+        Structure: [ val(meta), path(combined_modified_peptide.tsv) ]
+  - html_report:
+      type: channel
+      description: |
+        Per-sample TMT labeling efficiency HTML report.
+        Structure: [ val(meta), path(report.html) ]
+  - md_report:
+      type: channel
+      description: |
+        Per-sample TMT labeling efficiency Markdown report.
+        Structure: [ val(meta), path(report.md) ]
+  - summary:
+      type: channel
+      description: |
+        Combined labeling efficiency summary TSV.
+        Structure: [ val(meta), path(labeling_summary.tsv) ]
+  - per_sample:
+      type: channel
+      description: |
+        Per-sample labeling efficiency CSV.
+        Structure: [ val(meta), path(per_sample_efficiency.csv) ]
+  - html_report_combined:
+      type: channel
+      description: |
+        Combined TMT labeling efficiency HTML report from IonQuant aggregate analysis.
+        Structure: [ val(meta), path(report.html) ]
+  - summary_combined:
+      type: channel
+      description: |
+        Combined labeling efficiency summary from IonQuant aggregate analysis.
+        Structure: [ val(meta), path(labeling_summary.tsv) ]
+  - versions:
+      type: file
+      description: |
+        File containing software versions.
+        Structure: [ path(versions.yml) ]
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

@@ -1,0 +1,41 @@
+{
+    "erwinia_headless_result_names": {
+        "content": [
+            [
+                
+            ]
+        ],
+        "timestamp": "2026-03-25T18:36:10.868197652",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "fragpipe_headless_wf - stub with RAW input": {
+        "content": [
+            [
+                [
+                    "combined_ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "combined_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "combined_protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                "combined_protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ],
+            [
+                "combined_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ],
+            [
+                "combined_ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ]
+        ],
+        "timestamp": "2026-03-31T18:32:04.260052282",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

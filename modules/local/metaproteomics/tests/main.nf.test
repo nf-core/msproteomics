@@ -1,0 +1,146 @@
+nextflow_process {
+
+    name "Test Process METAPROTEOMICS"
+    script "../main.nf"
+    process "METAPROTEOMICS"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "metaproteomics"
+
+    test("metaproteomics - stub") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def project_dir = file("\${workDir}/project")
+                project_dir.mkdirs()
+                def psm_file = file("\${workDir}/project/psm.tsv")
+                psm_file.text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">PROT1\\nPEPTIDEK"
+                def taxon_name_file = file("\${workDir}/names.dmp")
+                taxon_name_file.text = "1\\t|\\troot\\t|\\t\\t|\\tscientific name\\t|"
+                def taxon_node_file = file("\${workDir}/nodes.dmp")
+                taxon_node_file.text = "1\\t|\\t1\\t|\\tno rank\\t|\\t\\t|"
+                // Metaproteomics CLI config
+                def config_cli = "--decoyTag rev_ --qvalue 0.01 --deltaHyperscore 5.0 --minPeptCntPerProt 2 --minUniqPeptCntPerProt 1 --minUniqPeptCnt 2 --hostName 'Homo sapiens' --iterations 3"
+
+                input[0] = channel.of([
+                    [ id: 'test_meta' ],
+                    project_dir,
+                    config_cli
+                ])
+                input[1] = fasta_file
+                input[2] = taxon_name_file
+                input[3] = taxon_node_file
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(
+                    process.out.results_dir,
+                    process.out.optimized_fasta,
+                    process.out.taxonomy_results,
+                    process.out.results,
+                    process.out.versions_metaproteomics,
+                    process.out.versions_fragpipe
+                ).match() }
+            )
+        }
+    }
+
+    test("metaproteomics - integration with test data") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                // Create project directory with PSM data and Percolator outputs
+                // FP-Meta DbOptimizer expects a FragPipe project directory layout where
+                // each sample has its own subdirectory containing psm.tsv, pepXML, and
+                // Percolator output files. The subdirectory name must match the sample
+                // name referenced in the PSM Spectrum column.
+                def project_dir = file("\${workDir}/project")
+                project_dir.mkdirs()
+                // Create sample subdirectory matching the Spectrum column basename
+                def sample_dir = file("\${workDir}/project/tmt_erwinia_subset")
+                sample_dir.mkdirs()
+                // Use real PSM data from test-datasets directly (PSMs already reference
+                // tmt_erwinia_subset as the spectrum file basename)
+                def remote_psm = file("\${params.pipelines_testdata_base_path}/module_inputs/psm.tsv", checkIfExists: true)
+                def psm_file = file("\${workDir}/project/tmt_erwinia_subset/psm.tsv")
+                psm_file.text = remote_psm.text
+                // Use real PeptideProphet interact pepXML from test-datasets
+                def remote_pepxml = file("\${params.pipelines_testdata_base_path}/module_inputs/interact-tmt_erwinia_subset.pep.xml", checkIfExists: true)
+                def pepxml_file = file("\${workDir}/project/tmt_erwinia_subset/interact-tmt_erwinia_subset.pep.xml")
+                pepxml_file.text = remote_pepxml.text
+                // Use pre-computed Percolator output files from test-datasets
+                // Copy into sample subdirectory with correct basename prefix (tmt_erwinia_subset)
+                // matching the Spectrum column prefix in psm.tsv
+                def remote_target = file("\${params.pipelines_testdata_base_path}/module_inputs/tmt_erwinia_subset_percolator_target_psms.tsv", checkIfExists: true)
+                def percolator_target = file("\${workDir}/project/tmt_erwinia_subset/tmt_erwinia_subset_percolator_target_psms.tsv")
+                percolator_target.text = remote_target.text
+                def remote_decoy = file("\${params.pipelines_testdata_base_path}/module_inputs/tmt_erwinia_subset_percolator_decoy_psms.tsv", checkIfExists: true)
+                def percolator_decoy = file("\${workDir}/project/tmt_erwinia_subset/tmt_erwinia_subset_percolator_decoy_psms.tsv")
+                percolator_decoy.text = remote_decoy.text
+                // PIN file required by FP-Meta DbOptimizer
+                def remote_pin = file("\${params.pipelines_testdata_base_path}/module_inputs/tmt_erwinia_subset.pin", checkIfExists: true)
+                def pin_file = file("\${workDir}/project/tmt_erwinia_subset/tmt_erwinia_subset.pin")
+                pin_file.text = remote_pin.text
+                // UniProt-style FASTA with OS=/OX= headers required by FP-Meta for taxonomy parsing
+                def fasta_file = file("\${params.pipelines_testdata_base_path}/databases/erwinia_uniprot.fasta", checkIfExists: true)
+                // Create NCBI taxonomy files inline
+                def taxon_name_file = file("\${workDir}/names.dmp")
+                taxon_name_file.text = "1\\t|\\troot\\t|\\t\\t|\\tscientific name\\t|\\n" +
+                    "9606\\t|\\tHomo sapiens\\t|\\t\\t|\\tscientific name\\t|\\n" +
+                    "9606\\t|\\thuman\\t|\\t\\t|\\tcommon name\\t|\\n" +
+                    "554\\t|\\tPectobacterium carotovorum\\t|\\t\\t|\\tscientific name\\t|\\n" +
+                    "554\\t|\\tErwinia carotovora\\t|\\t\\t|\\tsynonym\\t|\\n" +
+                    "262\\t|\\tErwinia carotovora\\t|\\t\\t|\\tscientific name\\t|\\n" +
+                    "262\\t|\\tPectobacterium carotovorum\\t|\\t\\t|\\tsynonym\\t|"
+                def taxon_node_file = file("\${workDir}/nodes.dmp")
+                taxon_node_file.text = "1\\t|\\t1\\t|\\tno rank\\t|\\t\\t|\\t8\\t|\\t0\\t|\\t1\\t|\\t0\\t|\\t0\\t|\\t0\\t|\\t0\\t|\\t0\\t|\\t\\t|\\n" +
+                    "9606\\t|\\t9605\\t|\\tspecies\\t|\\t\\t|\\t0\\t|\\t1\\t|\\t1\\t|\\t1\\t|\\t0\\t|\\t1\\t|\\t1\\t|\\t0\\t|\\t\\t|\\n" +
+                    "554\\t|\\t553\\t|\\tspecies\\t|\\t\\t|\\t0\\t|\\t1\\t|\\t1\\t|\\t1\\t|\\t0\\t|\\t1\\t|\\t0\\t|\\t0\\t|\\t\\t|\\n" +
+                    "262\\t|\\t553\\t|\\tspecies\\t|\\t\\t|\\t0\\t|\\t1\\t|\\t1\\t|\\t1\\t|\\t0\\t|\\t1\\t|\\t0\\t|\\t0\\t|\\t\\t|\\n" +
+                    "553\\t|\\t543\\t|\\tgenus\\t|\\t\\t|\\t0\\t|\\t1\\t|\\t1\\t|\\t1\\t|\\t0\\t|\\t1\\t|\\t0\\t|\\t0\\t|\\t\\t|\\n" +
+                    "543\\t|\\t91347\\t|\\tfamily\\t|\\t\\t|\\t0\\t|\\t1\\t|\\t1\\t|\\t1\\t|\\t0\\t|\\t1\\t|\\t0\\t|\\t0\\t|\\t\\t|"
+                // Use relaxed thresholds for test data (all PSMs have q-value >= 0.14)
+                // and disable taxonomy correction (test FASTA lacks UniProt OS=/OX= annotations)
+                def config_cli = "--decoyTag rev_ --qvalue 1.0 --deltaHyperscore 0 --minPeptCntPerProt 1 --minUniqPeptCntPerProt 1 --minUniqPeptCnt 1 --hostName 'Homo sapiens' --iterations 1 --correctTaxa 0"
+
+                input[0] = channel.of([
+                    [ id: 'meta_test' ],
+                    project_dir,
+                    config_cli
+                ])
+                input[1] = fasta_file
+                input[2] = taxon_name_file
+                input[3] = taxon_node_file
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                // results_dir contains non-deterministic log (timestamps) — check existence only
+                { assert process.out.results_dir.size() > 0 },
+                // Snapshot deterministic outputs only
+                { assert snapshot(
+                    process.out.optimized_fasta,
+                    process.out.taxonomy_results,
+                    process.out.results,
+                    process.out.versions_metaproteomics,
+                    process.out.versions_fragpipe
+                ).match() }
+            )
+        }
+    }
+}

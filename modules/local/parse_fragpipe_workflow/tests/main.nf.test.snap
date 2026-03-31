@@ -1,0 +1,110 @@
+{
+    "parse_fragpipe_workflow - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "tool_configs.json:md5,8cedc05e903bb22309de5cbb7045ecb9"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "fragger.params:md5,d2a9af2b90acc1872c05b0eb107bdc5f"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "ionquant.config:md5,c755ec76550d4836bfbc3df30bc81f50"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "msbooster.config:md5,cfcf4a57c3b686f5c6b2fd4684411166"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "percolator.config:md5,9bd2e62d641be315343bb2f8aff77205"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "phi-report.config:md5,671c6da2a0fc5fe8b41860d511cb2f71"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "peptide-prophet.config:md5,94e4f08e1ecba07a39b3d1f30533591e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "protein-prophet.config:md5,a2a0586688455d77a26caa75ec4e1a18"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "database.config:md5,9ddd01c17e0f1748903ba9450108c313"
+                ]
+            ],
+            [
+                
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    [
+                        "database.config:md5,9ddd01c17e0f1748903ba9450108c313",
+                        "fragger.params:md5,d2a9af2b90acc1872c05b0eb107bdc5f",
+                        "ionquant.config:md5,c755ec76550d4836bfbc3df30bc81f50",
+                        "msbooster.config:md5,cfcf4a57c3b686f5c6b2fd4684411166",
+                        "peptide-prophet.config:md5,94e4f08e1ecba07a39b3d1f30533591e",
+                        "percolator.config:md5,9bd2e62d641be315343bb2f8aff77205",
+                        "phi-report.config:md5,671c6da2a0fc5fe8b41860d511cb2f71",
+                        "protein-prophet.config:md5,a2a0586688455d77a26caa75ec4e1a18"
+                    ]
+                ]
+            ],
+            [
+                [
+                    "PARSE_FRAGPIPE_WORKFLOW",
+                    "python",
+                    "3.12.2"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-31T19:42:01.926445869",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

@@ -1,0 +1,40 @@
+name: pmultiqc
+description: A library for proteomics QC report based on MultiQC framework.
+keywords:
+  - MultiQC
+  - QC
+  - Proteomics
+tools:
+  - pmultiqc:
+      description: |
+        A library for proteomics QC report based on MultiQC framework.
+      homepage: https://github.com/bigbio/pmultiqc/
+      documentation: https://github.com/bigbio/pmultiqc/
+input:
+  - results:
+      type: file
+      description: Staged result files for MultiQC analysis
+      pattern: "results/*"
+  - quantms_log:
+      type: file
+      description: Log file from quantms pipeline
+      pattern: "*.log"
+output:
+  - ch_pmultiqc_report:
+      type: file
+      description: MultiQC report file
+      pattern: "*.html"
+  - ch_pmultiqc_db:
+      type: file
+      description: Sqlite3 database file with protein, PSM, and quantification information (optional)
+      pattern: "*.db"
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+  - data:
+      type: directory
+      description: MultiQC data directory
+      pattern: "*_data"
+authors:
+  - "@Chengxin Dai"

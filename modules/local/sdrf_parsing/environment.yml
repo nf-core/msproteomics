@@ -1,0 +1,6 @@
+name: sdrf_parsing
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bioconda::sdrf-pipelines=0.0.33

@@ -1,0 +1,135 @@
+nextflow_process {
+
+    name "Test Process PARSE_FRAGPIPE_WORKFLOW"
+    script "../main.nf"
+    process "PARSE_FRAGPIPE_WORKFLOW"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "parse_fragpipe_workflow"
+
+    test("parse_fragpipe_workflow - stub") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def workflow_file = file("\${workDir}/test.workflow")
+                workflow_file.text = '''
+msfragger.calibrate_mass = 2
+msfragger.precursor_mass_lower = -20
+msfragger.precursor_mass_upper = 20
+msfragger.run-msfragger = true
+ionquant.mbr = 1
+ionquant.maxlfq = 1
+ionquant.run-ionquant = true
+phi-report.filter = --sequential --prot 0.01 --picked
+phi-report.run-report = true
+percolator.run-percolator = true
+protein-prophet.run-protein-prophet = true
+database.decoy-tag = rev_
+'''.trim()
+
+                input[0] = channel.of([[ id: 'test_experiment' ], workflow_file])
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(
+                    process.out.tool_configs_json,
+                    process.out.msfragger_config,
+                    process.out.ionquant_config,
+                    process.out.msbooster_config,
+                    process.out.percolator_config,
+                    process.out.phi_report_config,
+                    process.out.peptideprophet_config,
+                    process.out.proteinprophet_config,
+                    process.out.database_config,
+                    process.out.tmtintegrator_config,
+                    process.out.all_configs,
+                    process.out.versions_python
+                ).match() }
+            )
+        }
+    }
+
+    test("parse_fragpipe_workflow - integration with real workflow file") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                def workflow_file = file("\${workDir}/fragpipe.workflow")
+                workflow_file.text = '''
+# FragPipe workflow file
+msfragger.calibrate_mass = 2
+msfragger.precursor_mass_lower = -20
+msfragger.precursor_mass_upper = 20
+msfragger.precursor_mass_units = 1
+msfragger.fragment_mass_tolerance = 20
+msfragger.fragment_mass_units = 1
+msfragger.num_enzyme_termini = 2
+msfragger.search_enzyme_name_1 = stricttrypsin
+msfragger.search_enzyme_cut_1 = KR
+msfragger.allowed_missed_cleavage_1 = 2
+msfragger.output_format = pepXML_pin
+msfragger.run-msfragger = true
+ionquant.mbr = 1
+ionquant.maxlfq = 1
+ionquant.requantify = 1
+ionquant.mztol = 10
+ionquant.rttol = 0.4
+ionquant.normalization = 1
+ionquant.minisotopes = 2
+ionquant.minscans = 3
+ionquant.ionfdr = 0.01
+ionquant.proteinfdr = 1
+ionquant.peptidefdr = 1
+ionquant.run-ionquant = true
+msbooster.predict-rt = true
+msbooster.predict-spectra = true
+msbooster.run-msbooster = true
+percolator.run-percolator = true
+percolator.cmd-opts = --trainFDR 0.01 --testFDR 0.01
+phi-report.filter = --sequential --prot 0.01 --picked --razor
+phi-report.run-report = true
+phi-report.print-decoys = false
+phi-report.remove-contaminants = true
+peptide-prophet.run-peptide-prophet = false
+peptide-prophet.cmd-opts = --decoyprobs --ppm --accmass --nonparam --expectscore
+protein-prophet.run-protein-prophet = true
+protein-prophet.cmd-opts = --maxppmdiff 2000000
+database.decoy-tag = rev_
+tmtintegrator.run-tmtintegrator = false
+'''.trim()
+
+                input[0] = channel.of([[ id: 'test_experiment' ], workflow_file])
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(
+                    process.out.tool_configs_json,
+                    process.out.msfragger_config,
+                    process.out.ionquant_config,
+                    process.out.msbooster_config,
+                    process.out.percolator_config,
+                    process.out.phi_report_config,
+                    process.out.peptideprophet_config,
+                    process.out.proteinprophet_config,
+                    process.out.database_config,
+                    process.out.tmtintegrator_config,
+                    process.out.all_configs,
+                    process.out.versions_python
+                ).match() }
+            )
+        }
+    }
+}

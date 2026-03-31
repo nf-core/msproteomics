@@ -1,0 +1,38 @@
+{
+    "file_preparation - stub with RAW input": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "sample1",
+                        "mzml_id": "sample1"
+                    },
+                    "sample1.mzML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-31T18:31:36.927530133",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "file_preparation - stub with mzML input": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "sample1",
+                        "mzml_id": "sample1"
+                    },
+                    "sample.mzML:md5,17404a596cbd0d1e6c7d23fcd845ab82"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-25T03:53:01.182283577",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

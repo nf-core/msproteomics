@@ -1,0 +1,7 @@
+name: decompress
+channels:
+  - conda-forge
+dependencies:
+  - conda-forge::tar
+  - conda-forge::gzip
+  - conda-forge::unzip

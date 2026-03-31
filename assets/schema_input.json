@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://raw.githubusercontent.com/nf-core/msproteomics/master/assets/schema_input.json",
     "title": "nf-core/msproteomics pipeline - params.input schema",
-    "description": "Schema for the file provided with params.input",
+    "description": "Schema for the input samplesheet CSV file",
     "type": "array",
     "items": {
         "type": "object",
@@ -13,21 +13,27 @@
                 "errorMessage": "Sample name must be provided and cannot contain spaces",
                 "meta": ["id"]
             },
-            "fastq_1": {
+            "spectra": {
                 "type": "string",
                 "format": "file-path",
                 "exists": true,
-                "pattern": "^([\\S\\s]*\\/)?[^\\s\\/]+\\.f(ast)?q\\.gz$",
-                "errorMessage": "FastQ file for reads 1 must be provided, cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'"
+                "pattern": "^\\S+\\.(raw|RAW|mzML|mzml|d|dia)$",
+                "errorMessage": "Mass spectrometry data file must be provided (.raw, .mzML, .d, or .dia)"
             },
-            "fastq_2": {
+            "condition": {
                 "type": "string",
-                "format": "file-path",
-                "exists": true,
-                "pattern": "^([\\S\\s]*\\/)?[^\\s\\/]+\\.f(ast)?q\\.gz$",
-                "errorMessage": "FastQ file for reads 2 cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'"
+                "errorMessage": "Experimental condition/group must be provided"
+            },
+            "label": {
+                "type": "string",
+                "errorMessage": "TMT label channel (e.g., TMT126, TMT127N)"
+            },
+            "fraction": {
+                "type": "integer",
+                "minimum": 1,
+                "errorMessage": "Fraction identifier must be a positive integer"
             }
         },
-        "required": ["sample", "fastq_1"]
+        "required": ["sample", "spectra"]
     }
 }

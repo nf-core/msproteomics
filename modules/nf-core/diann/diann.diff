@@ -1,0 +1,38 @@
+Changes in component 'nf-core/diann'
+'modules/nf-core/diann/meta.yml' is unchanged
+Changes in 'diann/main.nf':
+--- modules/nf-core/diann/main.nf
++++ modules/nf-core/diann/main.nf
+@@ -11,7 +11,9 @@
+ 
+     output:
+     // Library outputs
+-    tuple val(meta), path("${prefix}.predicted.speclib"), emit: predict_speclib, optional: true
++    // Note: DIA-NN names .predicted.speclib based on the FASTA filename (not --out-lib prefix),
++    // so we use a glob pattern for predicted speclib output
++    tuple val(meta), path("*.predicted.speclib"), emit: predict_speclib, optional: true
+     tuple val(meta), path("${prefix}.speclib"), emit: final_speclib, optional: true
+     tuple val(meta), path("${prefix}.tsv.skyline.speclib"), emit: skyline_speclib, optional: true
+ 
+@@ -103,6 +105,6 @@
+     touch ${prefix}.unique_genes_matrix.tsv
+ 
+     # Common outputs
+-    touch ${prefix}.log
++    touch ${prefix}.log.txt
+     """
+ }
+
+'modules/nf-core/diann/insilicolibrarygeneration/meta.yml' was removed
+'modules/nf-core/diann/insilicolibrarygeneration/main.nf' was removed
+'modules/nf-core/diann/insilicolibrarygeneration/tests/nextflow.config' was removed
+'modules/nf-core/diann/insilicolibrarygeneration/tests/main.nf.test' was removed
+'modules/nf-core/diann/insilicolibrarygeneration/tests/main.nf.test.snap' was removed
+'modules/nf-core/diann/tests/nextflow.config' was removed
+'modules/nf-core/diann/tests/main.nf.test' was removed
+'modules/nf-core/diann/tests/nextflow_individualanalysis.config' was removed
+'modules/nf-core/diann/tests/nextflow_finalquantification.config' was removed
+'modules/nf-core/diann/tests/nextflow_assembleempiricallibrary.config' was removed
+'modules/nf-core/diann/tests/nextflow_preliminaryanalysis.config' was removed
+'modules/nf-core/diann/tests/main.nf.test.snap' was removed
+************************************************************

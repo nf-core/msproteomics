@@ -1,0 +1,37 @@
+nextflow_process {
+
+    name "Test Process SDRF_PARSING"
+    script "../main.nf"
+    process "SDRF_PARSING"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "sdrf_parsing"
+
+    test("sdrf_parsing - stub") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            process {
+                """
+                def sdrf_file = file("\${workDir}/test.sdrf.tsv")
+                sdrf_file.text = "source name\\tcharacteristics[organism]\\tcomment[data file]\\ntest\\tHomo sapiens\\ttest.raw"
+
+                input[0] = sdrf_file
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(
+                    process.out.ch_expdesign,
+                    process.out.ch_sdrf_config_file,
+                    process.out.log
+                ).match() }
+            )
+        }
+    }
+}

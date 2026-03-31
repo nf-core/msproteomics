@@ -1,0 +1,52 @@
+nextflow_process {
+
+    name "Test Process MSFRAGGER_CALIBRATE"
+    script "../main.nf"
+    process "MSFRAGGER_CALIBRATE"
+    config "./test.config"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "msfragger_calibrate"
+
+    test("msfragger_calibrate - stub") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                // Create mock input files
+                def fasta_file = file("\${workDir}/test.fasta")
+                def mzml_file1 = file("\${workDir}/sample1.mzML")
+                def mzml_file2 = file("\${workDir}/sample2.mzML")
+                def params_file = file("\${workDir}/fragger.params")
+
+                fasta_file.text = ">sp|P00001|TEST\\nMKTESTPEPTIDE"
+                mzml_file1.text = "mock mzML 1"
+                mzml_file2.text = "mock mzML 2"
+                params_file.text = "calibrate_mass = 2\\nfragment_mass_tolerance = 20"
+
+                // Plain path inputs (not tuples)
+                input[0] = fasta_file
+                input[1] = [mzml_file1, mzml_file2]
+                input[2] = params_file
+                input[3] = []  // msfragger_dir (not used)
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(
+                    process.out.calibrated_spectra,
+                    process.out.params,
+                    process.out.license_agreement,
+                    process.out.versions_msfragger,
+                    process.out.versions_fragpipe
+                ).match() }
+            )
+        }
+    }
+}

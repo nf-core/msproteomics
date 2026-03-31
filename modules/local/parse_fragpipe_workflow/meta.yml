@@ -1,0 +1,128 @@
+name: "parse_fragpipe_workflow"
+description: Parse FragPipe workflow files into per-tool configuration files and JSON
+keywords:
+  - proteomics
+  - fragpipe
+  - workflow
+  - configuration
+  - parsing
+tools:
+  - parse_fragpipe_workflow:
+      description: |
+        Custom Python script that parses FragPipe .workflow files and extracts
+        per-tool configuration into individual config files and a unified JSON
+        output. Generates fragger.params, ionquant.config, msbooster.config,
+        percolator.config, and other tool-specific configuration files.
+      homepage: "https://github.com/nf-fragpipe/nf-fragpipe"
+      documentation: "https://github.com/nf-fragpipe/nf-fragpipe"
+      tool_dev_url: "https://github.com/nf-fragpipe/nf-fragpipe"
+      licence: ["MIT"]
+
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample information
+    - workflow_file:
+        type: file
+        description: FragPipe workflow file containing tool parameters
+        pattern: "*.workflow"
+
+output:
+  tool_configs_json:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "tool_configs.json":
+          type: file
+          description: JSON file with all tool configs including run flags and arguments
+          pattern: "tool_configs.json"
+  msfragger_config:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "configs/fragger.params":
+          type: file
+          description: MSFragger parameters file
+          pattern: "configs/fragger.params"
+  ionquant_config:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "configs/ionquant.config":
+          type: file
+          description: IonQuant CLI configuration
+          pattern: "configs/ionquant.config"
+  msbooster_config:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "configs/msbooster.config":
+          type: file
+          description: MSBooster parameters file
+          pattern: "configs/msbooster.config"
+  percolator_config:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "configs/percolator.config":
+          type: file
+          description: Percolator CLI configuration
+          pattern: "configs/percolator.config"
+  phi_report_config:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "configs/phi-report.config":
+          type: file
+          description: Philosopher filter/report CLI configuration
+          pattern: "configs/phi-report.config"
+  peptideprophet_config:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "configs/peptide-prophet.config":
+          type: file
+          description: PeptideProphet CLI configuration
+          pattern: "configs/peptide-prophet.config"
+  proteinprophet_config:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "configs/protein-prophet.config":
+          type: file
+          description: ProteinProphet CLI configuration
+          pattern: "configs/protein-prophet.config"
+  database_config:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "configs/database.config":
+          type: file
+          description: Philosopher database CLI configuration
+          pattern: "configs/database.config"
+  tmtintegrator_config:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "configs/tmtintegrator.yml":
+          type: file
+          description: TMTIntegrator YAML configuration
+          pattern: "configs/tmtintegrator.yml"
+  all_configs:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "configs":
+          type: directory
+          description: Directory containing all generated config files
+          pattern: "configs"
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

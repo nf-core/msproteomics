@@ -1,0 +1,88 @@
+name: "philosopher_report"
+description: Generate TSV reports from Philosopher workspace binaries
+keywords:
+  - proteomics
+  - report
+  - PSM
+  - peptide
+  - protein
+  - quantification
+tools:
+  - philosopher:
+      description: |
+        Philosopher report command generates TSV result files (PSM, peptide, protein, ion)
+        from the .meta/ workspace binaries. When used after FreeQuant or LabelQuant,
+        the generated TSVs contain correct quantification intensities.
+      homepage: "https://philosopher.nesvilab.org/"
+      documentation: "https://github.com/Nesvilab/philosopher/wiki"
+      tool_dev_url: "https://github.com/Nesvilab/philosopher"
+      doi: "10.1038/s41592-020-0912-y"
+      licence: ["GPL-3.0"]
+
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample information
+    - results_dir:
+        type: directory
+        description: |
+          Directory containing .meta/ workspace binaries from PHILOSOPHER_FILTER
+          (with skip_report=true) and updated by FREEQUANT/LabelQuant.
+    - report_cli:
+        type: string
+        description: CLI flags for philosopher report (e.g., "--msstats")
+  - fasta:
+      type: file
+      description: FASTA database with decoys from PHILOSOPHER_DATABASE
+      pattern: "*.fasta"
+
+output:
+  results_dir:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}":
+          type: directory
+          description: Directory containing all output TSV files
+  psms:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/psm.tsv":
+          type: file
+          description: PSM-level results with quantification intensities
+          pattern: "psm.tsv"
+  peptides:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/peptide.tsv":
+          type: file
+          description: Peptide-level results with quantification intensities
+          pattern: "peptide.tsv"
+  proteins:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/protein.tsv":
+          type: file
+          description: Protein-level results with quantification intensities
+          pattern: "protein.tsv"
+  ions:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/ion.tsv":
+          type: file
+          description: Ion-level results (optional)
+          pattern: "ion.tsv"
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

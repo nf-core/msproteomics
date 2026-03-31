@@ -1,0 +1,75 @@
+name: "fpop"
+description: Fast Photochemical Oxidation of Proteins analysis
+keywords:
+  - proteomics
+  - mass spectrometry
+  - FPOP
+  - oxidation
+  - structural proteomics
+  - protein footprinting
+tools:
+  - fpop:
+      description: |
+        FPOP (Fast Photochemical Oxidation of Proteins) analysis module performs
+        quantitative analysis of protein oxidation data from FPOP experiments.
+        It calculates oxidation levels per residue/region, compares FPOP vs control
+        samples, and supports both label-free and TMT-based workflows. The analysis
+        is performed using a Python script bundled with FragPipe.
+      homepage: "https://fragpipe.nesvilab.org/"
+      documentation: "https://fragpipe.nesvilab.org/docs/tutorial_fpop.html"
+      tool_dev_url: "https://github.com/Nesvilab/FragPipe"
+      licence: ["Academic"]
+
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample information
+    - input_file:
+        type: file
+        description: Peptide quantification file (combined_modified_peptide.tsv for LFQ or TMT abundance file)
+        pattern: "*.tsv"
+    - secondary_file:
+        type: file
+        description: Optional secondary TMT file for TMT mode (use NO_FILE placeholder if not applicable)
+        pattern: "*.tsv"
+    - config_cli:
+        type: string
+        description: |
+          FPOP parameters as CLI string with space-separated values:
+          region_size control_label fpop_label subtract_control is_tmt
+
+output:
+  results_dir:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}":
+          type: directory
+          description: Directory containing FPOP analysis results and log
+          pattern: "${prefix}"
+  results:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/*_fpop*.tsv":
+          type: file
+          description: FPOP analysis results in TSV format
+          pattern: "*_fpop*.tsv"
+  results_csv:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/*_fpop*.csv":
+          type: file
+          description: FPOP analysis results in CSV format
+          pattern: "*_fpop*.csv"
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

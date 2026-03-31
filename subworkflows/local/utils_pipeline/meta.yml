@@ -1,0 +1,41 @@
+name: pipeline_completion
+description: Pipeline-specific utility subworkflow providing completion handling (email, summary, notifications) and methods description generation for MultiQC.
+keywords:
+  - pipeline completion
+  - email
+  - MultiQC
+  - methods description
+components:
+  - utils_nfcore_pipeline
+  - paramssummarymap
+  - completionemail
+  - completionsummary
+  - imnotification
+input:
+  - email:
+      type: value
+      description: Email address for completion notification
+  - email_on_fail:
+      type: value
+      description: Email address for failure notification
+  - plaintext_email:
+      type: value
+      description: Boolean to send plain-text email instead of HTML
+  - outdir:
+      type: path
+      description: Output directory path
+  - monochrome_logs:
+      type: value
+      description: Boolean to disable ANSI colour codes in log output
+  - hook_url:
+      type: value
+      description: Webhook URL for Slack/Teams notifications
+  - multiqc_report:
+      type: file
+      description: Path to MultiQC report for email attachment
+output:
+  - completion_status:
+      type: value
+      description: Pipeline completion status indicator
+authors:
+  - "@daichengxin"

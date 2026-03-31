@@ -1,0 +1,19 @@
+name: utils_nfcore_pipeline
+description: Utility functions for nf-core pipeline template including config validation, version reporting, MultiQC integration, email notifications, and completion handling.
+keywords:
+  - utilities
+  - nf-core
+  - MultiQC
+  - email
+  - notifications
+components: []
+input:
+  - nextflow_cli_args:
+      type: value
+      description: Nextflow CLI positional arguments for validation
+output:
+  - valid_config:
+      type: value
+      description: Boolean indicating whether a valid configuration was provided
+authors:
+  - "@nf-core"

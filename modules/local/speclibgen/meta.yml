@@ -1,0 +1,84 @@
+name: "speclibgen"
+description: Spectral library generation using EasyPQP via FragPipe-SpecLib
+keywords:
+  - proteomics
+  - mass spectrometry
+  - spectral library
+  - EasyPQP
+  - DIA
+tools:
+  - speclibgen:
+      description: |
+        SpecLibGen generates spectral libraries from database search results
+        using EasyPQP (Easy Peptide Quantification Pipeline) within the FragPipe
+        framework. The generated libraries can be used for DIA data analysis
+        or targeted proteomics. Supports multiple output formats including TSV,
+        speclib, and parquet.
+      homepage: "https://fragpipe.nesvilab.org/"
+      documentation: "https://fragpipe.nesvilab.org/docs/tutorial_speclib.html"
+      tool_dev_url: "https://github.com/Nesvilab/FragPipe"
+      licence: ["GPL-3.0"]
+
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample information
+    - psm_files:
+        type: file
+        description: PSM files from Philosopher filter
+        pattern: "*.tsv"
+    - mzml_files:
+        type: file
+        description: Mass spectrometry files for spectrum extraction
+        pattern: "*.{mzML,mzXML}"
+    - config_cli:
+        type: string
+        description: SpecLibGen parameters as CLI string
+  - - fasta:
+        type: file
+        description: Protein sequence database
+        pattern: "*.{fasta,fas,fa}"
+
+output:
+  results_dir:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}":
+          type: directory
+          description: Directory containing spectral library output files and log
+          pattern: "${prefix}"
+  library_tsv:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/library.tsv":
+          type: file
+          description: Spectral library in TSV format
+          pattern: "library.tsv"
+  library_speclib:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/library.speclib":
+          type: file
+          description: Spectral library in speclib binary format
+          pattern: "library.speclib"
+  library_parquet:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/library.parquet":
+          type: file
+          description: Spectral library in Parquet columnar format
+          pattern: "library.parquet"
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

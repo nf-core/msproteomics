@@ -1,0 +1,62 @@
+{
+    "ptmshepherd - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_shepherd"
+                    },
+                    [
+                        "global.modsummary.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "global.profile.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "ptmshepherd.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_shepherd"
+                    },
+                    "global.profile.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_shepherd"
+                    },
+                    "global.modsummary.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                
+            ],
+            [
+                
+            ],
+            [
+                
+            ],
+            [
+                [
+                    "PTMSHEPHERD",
+                    "ptmshepherd",
+                    "24.0"
+                ]
+            ],
+            [
+                [
+                    "PTMSHEPHERD",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-31T19:44:35.727127132",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

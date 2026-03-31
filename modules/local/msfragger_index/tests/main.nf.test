@@ -1,0 +1,133 @@
+nextflow_process {
+
+    name "Test Process MSFRAGGER_INDEX"
+    script "../main.nf"
+    process "MSFRAGGER_INDEX"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "msfragger_index"
+
+    test("msfragger_index - stub") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                // Create mock files
+                def fasta_file = file("\${workDir}/test.fasta")
+                def params_file = file("\${workDir}/fragger.params")
+                fasta_file.text = ">sp|P00001|TEST\\nMKTEST"
+                params_file.text = "database_name = test.fasta\\nnum_threads = 1\\ncalibrate_mass = 0"
+
+                // Two inputs: tuple [meta, fasta], path params_file
+                input[0] = channel.of([
+                    [ id: 'test_index' ],
+                    fasta_file
+                ])
+                input[1] = params_file
+                input[2] = []  // msfragger_dir (use auto-discovery)
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(process.out.indexed_fasta, process.out.license_agreement, process.out.versions_msfragger, process.out.versions_fragpipe).match() }
+            )
+        }
+    }
+
+    test("msfragger_index - integration builds pepindex from FASTA") {
+        tag "integration"
+        config "./nextflow.config"
+
+        when {
+            process {
+                """
+                // Use the smallest test FASTA (erwinia_carotovora, ~9k lines)
+                def fasta_file = file("\${params.pipelines_testdata_base_path}/databases/erwinia_carotovora.fasta", checkIfExists: true)
+
+                // Build a minimal but valid MSFragger params file for digest-only mode
+                // Only search parameters that affect digest are needed
+                def params_file = file("\${workDir}/msfragger_input.params")
+                params_file.text = [
+                    "database_name = placeholder",
+                    "num_threads = 1",
+                    "precursor_mass_lower = -20",
+                    "precursor_mass_upper = 20",
+                    "precursor_mass_units = 1",
+                    "precursor_true_tolerance = 20",
+                    "precursor_true_units = 1",
+                    "fragment_mass_tolerance = 20",
+                    "fragment_mass_units = 1",
+                    "calibrate_mass = 0",
+                    "search_enzyme_name_1 = trypsin",
+                    "search_enzyme_cut_1 = KR",
+                    "search_enzyme_nocut_1 = P",
+                    "search_enzyme_sense_1 = C",
+                    "allowed_missed_cleavage_1 = 2",
+                    "search_enzyme_name_2 = null",
+                    "search_enzyme_cut_2 = ",
+                    "search_enzyme_nocut_2 = ",
+                    "search_enzyme_sense_2 = C",
+                    "allowed_missed_cleavage_2 = 2",
+                    "num_enzyme_termini = 2",
+                    "clip_nTerm_M = 1",
+                    "variable_mod_01 = 15.99490 M 3",
+                    "variable_mod_02 = 42.01060 [^ 1",
+                    "allow_multiple_variable_mods_on_residue = 0",
+                    "max_variable_mods_per_peptide = 3",
+                    "max_variable_mods_combinations = 5000",
+                    "precursor_charge = 1 4",
+                    "override_charge = 0",
+                    "digest_min_length = 7",
+                    "digest_max_length = 50",
+                    "digest_mass_range = 500.0 5000.0",
+                    "max_fragment_charge = 2",
+                    "output_report_topN = 1",
+                    "output_max_expect = 50",
+                    "report_alternative_proteins = 1",
+                    "fragment_ion_series = b,y",
+                    "ion_series_definitions = ",
+                    "search_enzyme_butnotafter_1 = ",
+                    "search_enzyme_butnotafter_2 = ",
+                ].join("\\n")
+
+                // Three inputs: tuple [meta, fasta], path params_file, path msfragger_dir
+                input[0] = channel.of([
+                    [ id: 'erwinia_index' ],
+                    fasta_file
+                ])
+                input[1] = params_file
+                input[2] = []  // msfragger_dir (use auto-discovery)
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(
+                    // Snapshot the file names from indexed_fasta output
+                    // (pepindex files are binary and vary by platform, so only check names)
+                    process.out.indexed_fasta.collect { meta, fasta, pepindex ->
+                        [
+                            meta: meta,
+                            fasta_name: file(fasta).name,
+                            pepindex_name: file(pepindex).name
+                        ]
+                    },
+                    process.out.versions_msfragger,
+                    process.out.versions_fragpipe
+                ).match() },
+                // Verify the pepindex file is non-empty (real index was built)
+                { assert process.out.indexed_fasta.every { meta, fasta, pepindex ->
+                    file(pepindex).size() > 0
+                }}
+            )
+        }
+    }
+}

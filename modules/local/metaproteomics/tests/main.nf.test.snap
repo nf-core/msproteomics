@@ -1,0 +1,80 @@
+{
+    "metaproteomics - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_meta"
+                    },
+                    [
+                        "metaproteomics.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_metaproteomics_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_optimized.fasta:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_taxonomy_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_meta"
+                    },
+                    "sample_optimized.fasta:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_meta"
+                    },
+                    "sample_taxonomy_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_meta"
+                    },
+                    "sample_metaproteomics_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    "METAPROTEOMICS",
+                    "metaproteomics",
+                    "24.0"
+                ]
+            ],
+            [
+                [
+                    "METAPROTEOMICS",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-31T19:40:30.82722746",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "metaproteomics - integration with test data": {
+        "content": [
+            [
+                
+            ],
+            [
+                
+            ],
+            [
+                
+            ]
+        ],
+        "timestamp": "2026-03-27T19:33:57.596421775",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

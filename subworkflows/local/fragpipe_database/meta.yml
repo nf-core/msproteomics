@@ -1,0 +1,38 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "fragpipe_database"
+description: Prepares protein database with decoy sequences and contaminants using Philosopher
+keywords:
+  - proteomics
+  - database
+  - fasta
+  - decoy
+  - contaminants
+  - philosopher
+components:
+  - philosopher/database
+input:
+  - ch_fasta:
+      type: channel
+      description: |
+        Protein database FASTA file.
+        Structure: [ val(meta), path(fasta) ]
+output:
+  - fasta:
+      type: channel
+      description: |
+        Prepared FASTA with decoys and contaminants appended.
+        Structure: [ val(meta), path(prepared_fasta) ]
+  - fasta_path:
+      type: channel
+      description: |
+        Value channel of the prepared FASTA path for broadcasting to multiple downstream processes.
+        Structure: path(fasta)
+  - versions:
+      type: file
+      description: |
+        File containing software versions.
+        Structure: [ path(versions.yml) ]
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

@@ -1,0 +1,78 @@
+{
+    "mbg - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_mbg"
+                    },
+                    [
+                        "mbg.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_glycan_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_mbg_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_mbg"
+                    },
+                    "sample_mbg_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_mbg"
+                    },
+                    "sample_glycan_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    "MBG",
+                    "mbg",
+                    "24.0"
+                ]
+            ],
+            [
+                [
+                    "MBG",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-31T19:40:12.347520662",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "mbg - integration with test data": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "mbg_test"
+                    },
+                    [
+                        "mbg.log:md5,5a53e32a484cc3469d28b7f256803dd3"
+                    ]
+                ]
+            ],
+            [
+                
+            ],
+            [
+                
+            ]
+        ],
+        "timestamp": "2026-03-28T02:02:50.4747555",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

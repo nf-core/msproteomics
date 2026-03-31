@@ -1,0 +1,76 @@
+name: "opair"
+description: O-glycoproteomics analysis for O-glycan identification and localization
+keywords:
+  - proteomics
+  - mass spectrometry
+  - glycoproteomics
+  - O-glycan
+  - glycosylation
+  - localization
+tools:
+  - opair:
+      description: |
+        O-Pair performs O-glycoproteomics analysis by identifying and localizing
+        O-linked glycan modifications on peptides. It uses paired fragmentation
+        spectra to determine glycan compositions and attachment sites, generating
+        glycoform-level results. O-Pair is part of the FragPipe glycoproteomics
+        analysis suite and runs as a .NET application.
+      homepage: "https://fragpipe.nesvilab.org/"
+      documentation: "https://fragpipe.nesvilab.org/docs/tutorial_glyco.html"
+      tool_dev_url: "https://github.com/Nesvilab/FragPipe"
+      licence: ["Academic"]
+
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample information
+    - psm_file:
+        type: file
+        description: PSM file from PHILOSOPHER_FILTER
+        pattern: "psm.tsv"
+    - mzml_files:
+        type: file
+        description: Mass spectrometry data files in mzML format
+        pattern: "*.mzML"
+    - config_cli:
+        type: string
+        description: O-Pair parameters as CLI string (e.g., -b 20 -c 20 -n 3)
+  - - glycan_db:
+        type: file
+        description: Glycan database file for O-glycan matching
+
+output:
+  results_dir:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}":
+          type: directory
+          description: Directory containing O-Pair results and log
+          pattern: "${prefix}"
+  results:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/*_opair_results.tsv":
+          type: file
+          description: O-Pair glycan identification results
+          pattern: "*_opair_results.tsv"
+  glycoforms:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/*_opair_glycoforms.tsv":
+          type: file
+          description: O-Pair glycoform-level results
+          pattern: "*_opair_glycoforms.tsv"
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

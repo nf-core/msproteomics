@@ -1,0 +1,210 @@
+nextflow_workflow {
+
+    name "Test Subworkflow FRAGPIPE_EXPORT"
+    script "../main.nf"
+    workflow "FRAGPIPE_EXPORT"
+    config "./test.config"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "fragpipe_export"
+
+    test("fragpipe_export - stub with saintexpress") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                def results_dir = file("\${workDir}/sample_results")
+                results_dir.mkdirs()
+                file("\${results_dir}/psm.tsv").text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
+
+                def mzml_file = file("\${workDir}/sample.mzML")
+                mzml_file.text = "<?xml version='1.0'?><mzML></mzML>"
+
+                def speclib_file = file("\${workDir}/empty.speclib")
+                speclib_file.text = ""
+
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">PROT1\\nPEPTIDEK"
+
+                def taxon_names = file("\${workDir}/names.dmp")
+                taxon_names.text = "1\\t|\\troot\\t|"
+                def taxon_nodes = file("\${workDir}/nodes.dmp")
+                taxon_nodes.text = "1\\t|\\t1\\t|\\tno rank"
+
+                def inter_file = file("\${workDir}/inter.dat")
+                inter_file.text = "bait\\tprey\\tcount"
+                def bait_file = file("\${workDir}/bait.dat")
+                bait_file.text = "bait\\tT"
+                def prey_file = file("\${workDir}/prey.dat")
+                prey_file.text = "prey\\t100"
+
+                // Tool configs: saintexpress enabled
+                def tool_configs = [
+                    skyline:        [run: false, args: ''],
+                    saintexpress:   [run: true, args: '-R 3 -L 0'],
+                    fpop:           [run: false, args: ''],
+                    metaproteomics: [run: false, args: '']
+                ]
+
+                input[0] = channel.of([[ id: 'sample' ], results_dir])
+                input[1] = channel.of([[ id: 'sample' ], mzml_file])
+                input[2] = channel.of([[ id: 'speclib' ], speclib_file])
+                input[3] = fasta_file
+                input[4] = channel.of([taxon_names, taxon_nodes])
+                input[5] = channel.of([inter_file, bait_file, prey_file])
+                input[6] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[7] = [ id: 'export' ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.out.skyline_doc,
+                    workflow.out.skyline_reports,
+                    workflow.out.saint_results,
+                    workflow.out.fpop_results,
+                    workflow.out.taxonomy_results
+                ).match() }
+            )
+        }
+    }
+
+    test("fragpipe_export - stub with fpop") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                def results_dir = file("\${workDir}/sample_results_fpop")
+                results_dir.mkdirs()
+                file("\${results_dir}/combined_modified_peptide.tsv").text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
+
+                def mzml_file = file("\${workDir}/sample.mzML")
+                mzml_file.text = "<?xml version='1.0'?><mzML></mzML>"
+
+                def speclib_file = file("\${workDir}/empty.speclib")
+                speclib_file.text = ""
+
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">PROT1\\nPEPTIDEK"
+
+                def taxon_names = file("\${workDir}/names.dmp")
+                taxon_names.text = "1\\t|\\troot\\t|"
+                def taxon_nodes = file("\${workDir}/nodes.dmp")
+                taxon_nodes.text = "1\\t|\\t1\\t|\\tno rank"
+
+                def inter_file = file("\${workDir}/inter.dat")
+                inter_file.text = ""
+                def bait_file = file("\${workDir}/bait.dat")
+                bait_file.text = ""
+                def prey_file = file("\${workDir}/prey.dat")
+                prey_file.text = ""
+
+                // Tool configs: fpop enabled with bash_source config
+                def fpop_args = "REGION_SIZE='50'; CONTROL_LABEL='control'; FPOP_LABEL='fpop'; SUBTRACT_CONTROL='true'; IS_TMT='false'"
+                def tool_configs = [
+                    skyline:        [run: false, args: ''],
+                    saintexpress:   [run: false, args: ''],
+                    fpop:           [run: true, args: fpop_args, config_type: 'bash_source'],
+                    metaproteomics: [run: false, args: '']
+                ]
+
+                input[0] = channel.of([[ id: 'sample_fpop' ], results_dir])
+                input[1] = channel.of([[ id: 'sample_fpop' ], mzml_file])
+                input[2] = channel.of([[ id: 'speclib' ], speclib_file])
+                input[3] = fasta_file
+                input[4] = channel.of([taxon_names, taxon_nodes])
+                input[5] = channel.of([inter_file, bait_file, prey_file])
+                input[6] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[7] = [ id: 'fpop_export' ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.out.skyline_doc,
+                    workflow.out.skyline_reports,
+                    workflow.out.saint_results,
+                    workflow.out.fpop_results,
+                    workflow.out.taxonomy_results
+                ).match() }
+            )
+        }
+    }
+
+    test("fragpipe_export - stub with metaproteomics") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                def project_dir = file("\${workDir}/project")
+                project_dir.mkdirs()
+                file("\${project_dir}/psm.tsv").text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
+
+                def mzml_file = file("\${workDir}/sample.mzML")
+                mzml_file.text = "<?xml version='1.0'?><mzML></mzML>"
+
+                def speclib_file = file("\${workDir}/empty.speclib")
+                speclib_file.text = ""
+
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">PROT1\\nPEPTIDEK"
+
+                def taxon_names = file("\${workDir}/names.dmp")
+                taxon_names.text = "1\\t|\\troot\\t|\\t\\t|\\tscientific name\\t|"
+                def taxon_nodes = file("\${workDir}/nodes.dmp")
+                taxon_nodes.text = "1\\t|\\t1\\t|\\tno rank\\t|\\t\\t|"
+
+                def inter_file = file("\${workDir}/inter.dat")
+                inter_file.text = ""
+                def bait_file = file("\${workDir}/bait.dat")
+                bait_file.text = ""
+                def prey_file = file("\${workDir}/prey.dat")
+                prey_file.text = ""
+
+                // Tool configs: metaproteomics enabled
+                def tool_configs = [
+                    skyline:        [run: false, args: ''],
+                    saintexpress:   [run: false, args: ''],
+                    fpop:           [run: false, args: ''],
+                    metaproteomics: [run: true, args: '--decoyTag rev_ --qvalue 0.01']
+                ]
+
+                input[0] = channel.of([[ id: 'meta_sample' ], project_dir])
+                input[1] = channel.of([[ id: 'meta_sample' ], mzml_file])
+                input[2] = channel.of([[ id: 'speclib' ], speclib_file])
+                input[3] = fasta_file
+                input[4] = channel.of([taxon_names, taxon_nodes])
+                input[5] = channel.of([inter_file, bait_file, prey_file])
+                input[6] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[7] = [ id: 'meta_export' ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.out.skyline_doc,
+                    workflow.out.skyline_reports,
+                    workflow.out.saint_results,
+                    workflow.out.fpop_results,
+                    workflow.out.taxonomy_results
+                ).match() }
+            )
+        }
+    }
+}

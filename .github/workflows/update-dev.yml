@@ -1,0 +1,157 @@
+# .github/workflows/update-dev.yml
+#
+# This workflow automatically:
+# 1. Bumps the version based on PR release type (Major/Minor/Patch)
+# 2. Updates the 'dev' branch to be in sync with 'master'
+# Only runs when a PR from 'dev' to 'master' is merged.
+#
+name: Update Dev Branch and Bump Version
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [master]
+
+jobs:
+  update-dev:
+    runs-on: ubuntu-latest
+    # Only run if:
+    # 1. PR was merged (not just closed)
+    # 2. PR is from dev branch to master
+    if: |
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'master' &&
+      github.event.pull_request.head.ref == 'dev'
+
+    permissions:
+      contents: write # Required to push to branches
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for proper merging
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Extract release type from PR body
+        id: release-type
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          echo "PR Body: $PR_BODY"
+
+          # Check for release type in PR body (case-insensitive)
+          if echo "$PR_BODY" | grep -qiE "^\s*-\s*\[x\]\s+Major|Release Type.*Major|Major.*\[x\]"; then
+            echo "release_type=major" >> $GITHUB_OUTPUT
+            echo "Detected Major release"
+          elif echo "$PR_BODY" | grep -qiE "^\s*-\s*\[x\]\s+Minor|Release Type.*Minor|Minor.*\[x\]"; then
+            echo "release_type=minor" >> $GITHUB_OUTPUT
+            echo "Detected Minor release"
+          elif echo "$PR_BODY" | grep -qiE "^\s*-\s*\[x\]\s+Patch|Release Type.*Patch|Patch.*\[x\]"; then
+            echo "release_type=patch" >> $GITHUB_OUTPUT
+            echo "Detected Patch release"
+          else
+            # Default to patch if not specified
+            echo "release_type=patch" >> $GITHUB_OUTPUT
+            echo "No release type specified, defaulting to Patch"
+          fi
+
+      - name: Checkout master branch
+        run: |
+          git checkout master
+          git pull origin master
+
+      - name: Get current version
+        id: current-version
+        run: |
+          # Extract version from nextflow.config in root directory
+          VERSION=$(grep -E "^\s*version\s*=" nextflow.config | sed -E "s/.*version\s*=\s*['\"]([^'\"]+)['\"].*/\1/" | head -1)
+          if [ -z "$VERSION" ]; then
+            echo "Error: Could not find version in nextflow.config"
+            exit 1
+          fi
+          echo "current_version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Current version: $VERSION"
+
+      - name: Bump version
+        id: new-version
+        run: |
+          CURRENT_VERSION="${{ steps.current-version.outputs.current_version }}"
+          RELEASE_TYPE="${{ steps.release-type.outputs.release_type }}"
+
+          # Parse version components
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+
+          # Bump version based on release type
+          case "$RELEASE_TYPE" in
+            major)
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+              ;;
+            minor)
+              MINOR=$((MINOR + 1))
+              PATCH=0
+              ;;
+            patch)
+              PATCH=$((PATCH + 1))
+              ;;
+          esac
+
+          NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "Bumping version: $CURRENT_VERSION -> $NEW_VERSION ($RELEASE_TYPE)"
+
+      - name: Update version in config file
+        run: |
+          NEW_VERSION="${{ steps.new-version.outputs.new_version }}"
+          CONFIG_FILE="nextflow.config"
+
+          # Update version in the config file
+          # This handles both single and double quotes
+          sed -i.bak -E "s|(version\s*=\s*['\"])[^'\"]+(['\"])|\1${NEW_VERSION}\2|" "$CONFIG_FILE"
+          rm -f "${CONFIG_FILE}.bak"
+
+          # Verify the change
+          echo "Updated version in $CONFIG_FILE:"
+          grep "version" "$CONFIG_FILE"
+
+      - name: Commit version bump to master
+        run: |
+          git add nextflow.config
+          git commit -m "chore: bump version to ${{ steps.new-version.outputs.new_version }} [skip ci]"
+          git push origin master
+
+      - name: Checkout dev branch
+        run: |
+          git checkout dev
+          git pull origin dev
+
+      - name: Check if dev needs updating
+        id: check-update
+        run: |
+          # Check if there are any commits in master that are not in dev
+          if [ -z "$(git log dev..origin/master --oneline)" ]; then
+            echo "up_to_date=true" >> $GITHUB_OUTPUT
+            echo "Dev branch is already up to date with master"
+          else
+            echo "up_to_date=false" >> $GITHUB_OUTPUT
+            echo "Dev branch needs to be updated"
+            echo "Commits in master not in dev:"
+            git log dev..origin/master --oneline
+          fi
+
+      - name: Merge master into dev
+        if: steps.check-update.outputs.up_to_date == 'false'
+        run: |
+          git merge origin/master --no-edit -m "chore: merge master into dev [skip ci]"
+
+      - name: Push updated dev branch
+        if: steps.check-update.outputs.up_to_date == 'false'
+        run: |
+          git push origin dev

@@ -1,0 +1,6 @@
+name: pmultiqc
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bioconda::pmultiqc=0.0.39

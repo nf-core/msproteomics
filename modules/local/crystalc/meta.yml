@@ -1,0 +1,68 @@
+name: "crystalc"
+description: Remove chimeric artifact PSMs from pepXML search results
+keywords:
+  - proteomics
+  - mass spectrometry
+  - chimeric spectra
+  - artifact removal
+  - post-processing
+tools:
+  - crystalc:
+      description: |
+        Crystal-C is a post-processing tool for tandem mass spectrometry database
+        search results that identifies and removes chimeric spectrum artifacts.
+        It improves the accuracy of peptide identifications by filtering out
+        PSMs that originate from co-fragmented precursor ions.
+      homepage: "https://github.com/AimeeD90/Crystal-C"
+      documentation: "https://github.com/AimeeD90/Crystal-C"
+      tool_dev_url: "https://github.com/AimeeD90/Crystal-C"
+      licence: ["Apache-2.0"]
+
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample information
+    - pepxml_file:
+        type: file
+        description: Search results in pepXML format from MSFragger
+        pattern: "*.pepXML"
+    - mzml_file:
+        type: file
+        description: Mass spectrometry data file for spectrum access
+        pattern: "*.{mzML,mzXML}"
+    - config_file:
+        type: file
+        description: Crystal-C parameters file with paths configured
+        pattern: "*.params"
+  - - fasta:
+        type: file
+        description: Protein sequence database FASTA (shared resource, required by CrystalC)
+        pattern: "*.{fasta,fas,fa}"
+
+output:
+  results_dir:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}":
+          type: directory
+          description: Directory containing Crystal-C results and log
+          pattern: "${prefix}"
+  pepxml_filtered:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/*_c.pepXML":
+          type: file
+          description: Filtered pepXML files with chimeric artifacts removed
+          pattern: "*_c.pepXML"
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

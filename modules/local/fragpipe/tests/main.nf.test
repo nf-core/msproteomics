@@ -1,0 +1,76 @@
+nextflow_process {
+
+    name "Test Process FRAGPIPE"
+    script "../main.nf"
+    process "FRAGPIPE"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "fragpipe"
+
+    test("fragpipe - stub LFQ") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = channel.of([[ id: 'test_lfq' ], [ file("sample.mzML") ]])
+                input[1] = file("test.fasta")
+                input[2] = file('NO_WORKFLOW')
+                input[3] = 'LFQ-MBR'
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(
+                    process.out.results_dir,
+                    process.out.proteins,
+                    process.out.peptides,
+                    process.out.psms,
+                    process.out.ions,
+                    process.out.pepxml,
+                    process.out.protxml,
+                    process.out.versions_fragpipe
+                ).match() }
+            )
+        }
+    }
+
+    test("fragpipe - stub TMT") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = channel.of([[ id: 'test_tmt' ], [ file("sample.mzML") ]])
+                input[1] = file("test.fasta")
+                input[2] = file('NO_WORKFLOW')
+                input[3] = 'DDA-TMT'
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(
+                    process.out.results_dir,
+                    process.out.proteins,
+                    process.out.peptides,
+                    process.out.psms,
+                    process.out.ions,
+                    process.out.pepxml,
+                    process.out.protxml,
+                    process.out.versions_fragpipe
+                ).match() }
+            )
+        }
+    }
+
+    // Full integration testing done via FRAGPIPE_DDA/TMT subworkflows
+}

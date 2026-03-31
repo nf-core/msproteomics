@@ -1,0 +1,38 @@
+{
+    "philosopher_labelquant - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    [
+                        "labelquant.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    "PHILOSOPHER_LABELQUANT",
+                    "philosopher",
+                    ""
+                ]
+            ],
+            [
+                [
+                    "PHILOSOPHER_LABELQUANT",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ]
+        ],
+        "timestamp": "2026-03-31T19:42:52.344469569",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    }
+}

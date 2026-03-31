@@ -1,0 +1,59 @@
+name: "ptmprophet"
+description: PTM site localization using PTMProphet from the Trans-Proteomic Pipeline
+keywords:
+  - proteomics
+  - mass spectrometry
+  - post-translational modifications
+  - PTM localization
+  - site localization
+tools:
+  - ptmprophet:
+      description: |
+        PTMProphet is a tool for PTM (post-translational modification) site
+        localization from peptide search results. It computes probabilities
+        for the precise localization of modifications on peptide sequences
+        using pepXML search results as input.
+      homepage: "http://tools.proteomecenter.org/wiki/index.php?title=Software:TPP"
+      documentation: "http://tools.proteomecenter.org/wiki/index.php?title=Software:TPP"
+      tool_dev_url: "https://sourceforge.net/projects/sashimi/"
+      licence: ["GPL-2.0"]
+
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample information
+    - pepxml_file:
+        type: file
+        description: PepXML file containing peptide search results with PTMs
+        pattern: "*.pep.xml"
+    - config_cli:
+        type: string
+        description: PTMProphet parameters as CLI string (e.g., MINPROB=0.5 STATIC KEEPOLD)
+
+output:
+  results_dir:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}":
+          type: directory
+          description: Directory containing PTMProphet results and log files
+          pattern: "${prefix}"
+  mod_pepxml:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/*.mod.pep.xml":
+          type: file
+          description: Modified pepXML with PTM site localization probabilities
+          pattern: "*.mod.pep.xml"
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"
