@@ -50,8 +50,7 @@ database.decoy-tag = rev_
                     process.out.proteinprophet_config,
                     process.out.database_config,
                     process.out.tmtintegrator_config,
-                    process.out.all_configs,
-                    process.out.versions_python
+                    process.out.all_configs
                 ).match() }
             )
         }
@@ -126,8 +125,7 @@ tmtintegrator.run-tmtintegrator = false
                     process.out.proteinprophet_config,
                     process.out.database_config,
                     process.out.tmtintegrator_config,
-                    process.out.all_configs,
-                    process.out.versions_python
+                    process.out.all_configs
                 ).match() }
             )
         }

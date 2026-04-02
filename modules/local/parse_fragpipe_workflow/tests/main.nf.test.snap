@@ -92,16 +92,9 @@
                         "protein-prophet.config:md5,a2a0586688455d77a26caa75ec4e1a18"
                     ]
                 ]
-            ],
-            [
-                [
-                    "PARSE_FRAGPIPE_WORKFLOW",
-                    "python",
-                    "3.12.3"
-                ]
             ]
         ],
-        "timestamp": "2026-04-02T02:25:59.246009812",
+        "timestamp": "2026-04-02T02:44:35.226027251",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.2"
@@ -206,16 +199,9 @@
                         "tmtintegrator.yml:md5,496191697c8de3c0db699518afde009a"
                     ]
                 ]
-            ],
-            [
-                [
-                    "PARSE_FRAGPIPE_WORKFLOW",
-                    "python",
-                    "3.12.3"
-                ]
             ]
         ],
-        "timestamp": "2026-04-02T02:25:29.959752355",
+        "timestamp": "2026-04-02T02:44:41.523911058",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.2"
