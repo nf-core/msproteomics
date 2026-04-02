@@ -89,9 +89,9 @@ def update_workflow(input_file, output_file, fasta_path, threads,
 
         # Update paths for Docker container
         elif line.startswith('diann.exec-path='):
-            line = 'diann.exec-path=/opt/tools/diann/diann-1.8.1\n'
+            line = 'diann.exec-path=/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools/diann/1.8.2_beta_8/linux/diann-1.8.1.8\n'
         elif line.startswith('diann.exe='):
-            line = 'diann.exe=/opt/tools/diann/diann-1.8.1\n'
+            line = 'diann.exe=/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools/diann/1.8.2_beta_8/linux/diann-1.8.1.8\n'
 
         # Disable decoy generation (assume database already has decoys)
         elif line.startswith('database.generate-decoys='):

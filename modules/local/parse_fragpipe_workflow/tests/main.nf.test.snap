@@ -97,11 +97,125 @@
                 [
                     "PARSE_FRAGPIPE_WORKFLOW",
                     "python",
-                    "3.12.2"
+                    "3.12.3"
                 ]
             ]
         ],
-        "timestamp": "2026-03-31T19:42:01.926445869",
+        "timestamp": "2026-04-02T02:25:59.246009812",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "parse_fragpipe_workflow - integration with real workflow file": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "tool_configs.json:md5,ab166dc48997259c2feeca1dc8b05267"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "fragger.params:md5,fe780ec0f97c71f1a77b7e53aaccbf19"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "ionquant.config:md5,b0b742c1b27e700a3bcc2bedf806588d"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "msbooster.config:md5,10d6f08e343a3bc4ab2360895bd34ade"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "percolator.config:md5,a03660f366829ad361e5549052b57249"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "phi-report.config:md5,2ca53efb4e4dbfecf7a2a44b52412452"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "peptide-prophet.config:md5,513f37cf7a92e4a71f43018818615d50"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "protein-prophet.config:md5,ca53bcff706030eb6dc8d78f3e9930e9"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "database.config:md5,858c6fcee6f0be037d299a71e8d22b56"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "tmtintegrator.yml:md5,496191697c8de3c0db699518afde009a"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    [
+                        "database.config:md5,858c6fcee6f0be037d299a71e8d22b56",
+                        "fragger.params:md5,fe780ec0f97c71f1a77b7e53aaccbf19",
+                        "ionquant.config:md5,b0b742c1b27e700a3bcc2bedf806588d",
+                        "msbooster.config:md5,10d6f08e343a3bc4ab2360895bd34ade",
+                        "peptide-prophet.config:md5,513f37cf7a92e4a71f43018818615d50",
+                        "percolator.config:md5,a03660f366829ad361e5549052b57249",
+                        "phi-report.config:md5,2ca53efb4e4dbfecf7a2a44b52412452",
+                        "protein-prophet.config:md5,ca53bcff706030eb6dc8d78f3e9930e9",
+                        "tmtintegrator.yml:md5,496191697c8de3c0db699518afde009a"
+                    ]
+                ]
+            ],
+            [
+                [
+                    "PARSE_FRAGPIPE_WORKFLOW",
+                    "python",
+                    "3.12.3"
+                ]
+            ]
+        ],
+        "timestamp": "2026-04-02T02:25:29.959752355",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.2"

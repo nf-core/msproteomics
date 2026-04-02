@@ -1745,10 +1745,10 @@ def generate_ptmshepherd_config(
     # M15-Bug2: Inject glycan database file paths when glyco mode is enabled.
     # Replicates PTMSGlycanAssignPanel.getGlycanAssignParams() (lines 130-134).
     # FragPipe injects these paths from the tools directory; in Docker the path
-    # is /opt/fragpipe/tools/Glycan_Databases/.
+    # is /fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools/Glycan_Databases/.
     run_glyco_mode = params.get("run_glyco_mode", "false").lower() == "true"
     if run_glyco_mode:
-        glycan_db_dir = "/opt/fragpipe/tools/Glycan_Databases"
+        glycan_db_dir = "/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools/Glycan_Databases"
         glyco_file_params = {
             "glyco_residue_list": f"{glycan_db_dir}/glycan_residues.txt",
             "glyco_mod_list": f"{glycan_db_dir}/glycan_mods.txt",

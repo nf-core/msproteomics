@@ -120,7 +120,7 @@ process FRAGPIPE {
     echo "\$_fp_ver" > .fragpipe_version
 
     # Define the main command
-    CMD="/opt/fragpipe/bin/fragpipe --headless --workflow fragpipe.workflow --manifest manifest.tsv --workdir ${prefix} --config-tools-folder /opt/fp_tools --config-diann /usr/local/bin/diann --config-python /usr/bin/python3 --ram ${ram} --threads ${threads} ${args}"
+    CMD="/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/bin/fragpipe --headless --workflow fragpipe.workflow --manifest manifest.tsv --workdir ${prefix} --config-tools-folder /fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools --config-diann /fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools/diann/1.8.2_beta_8/linux/diann-1.8.1.8 --config-python /usr/bin/python3 --ram ${ram} --threads ${threads} ${args}"
 
     echo "=== Command ===" >> \$LOG_FILE
     echo "\$CMD" >> \$LOG_FILE
