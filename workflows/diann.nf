@@ -101,9 +101,10 @@ workflow MSPROTEOMICS_DIANN {
     // Section 1: file table (Fraction_Group, Fraction, Spectra_Filepath, Label, Sample)
     // Section 2: sample table (Sample, MSstats_Condition, MSstats_BioReplicate)
     // Sections separated by an empty line.
-    // Only generated when condition column provides distinct values.
+    // Always generated: the converter requires the design file, so a samplesheet without a
+    // condition column uses parse_samplesheet's default (condition = sample). Filtering these
+    // rows out used to leave the design empty and crash DIANN2MZTAB on a bare --exp_design flag.
     ch_expdesign_lines = ch_input
-        .filter { meta, _file -> meta.condition != meta.sample }
 
     ch_expdesign_file_section = ch_expdesign_lines
         .map { meta, ms_file ->
