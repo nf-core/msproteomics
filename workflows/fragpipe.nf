@@ -71,8 +71,15 @@ workflow MSPROTEOMICS_FRAGPIPE {
     def organism = WorkflowUtils.convertOrganismToStandardName(params.organism ?: 'Homo sapiens')
     def db_channels = WorkflowUtils.resolveFragPipeDatabaseChannels(organism, params)
 
+    // Workflow file: default to the shipped DDA LFQ workflow (docs/usage.md), which is only
+    // valid when no TMT quantification was requested; TMT quant has no shipped asset, so it
+    // requires an explicit --fragpipe_workflow instead of crashing on file(null).
+    if (!params.fragpipe_workflow && params.tmt_mode) {
+        error "--tmt_mode ${params.tmt_mode} requires --fragpipe_workflow (a FragPipe .workflow file — see docs/usage.md)"
+    }
+    def fragpipe_workflow_path = params.fragpipe_workflow ?: "${projectDir}/assets/LFQ-MBR.workflow"
     ch_workflow_file = Channel.of(
-        [[id: 'fragpipe_config'], file(params.fragpipe_workflow, checkIfExists: true)]
+        [[id: 'fragpipe_config'], file(fragpipe_workflow_path, checkIfExists: true)]
     )
 
     // TMT annotation: built from samplesheet label column.
@@ -160,8 +167,8 @@ workflow MSPROTEOMICS_FRAGPIPE {
             .mix(db_channels.ch_prebuilt_db)
             .map { _meta, db -> db }
 
-        // Workflow file (plain path, not tuple)
-        ch_wf_file = Channel.of(file(params.fragpipe_workflow, checkIfExists: true))
+        // Workflow file (plain path, not tuple) — same default/guard as ch_workflow_file above
+        ch_wf_file = Channel.of(file(fragpipe_workflow_path, checkIfExists: true))
 
         FRAGPIPE_HEADLESS_WF(
             ch_unique_files,
