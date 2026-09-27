@@ -450,6 +450,8 @@ workflow DIA_PROTEOMICS_ANALYSIS {
     versions                = ch_versions
     diann_report            = DIANN_FINALQUANTIFICATION.out.main_report
     diann_report_parquet    = DIANN_FINALQUANTIFICATION.out.report_parquet
+    pg_matrix               = DIANN_FINALQUANTIFICATION.out.pg_matrix
+    diann_log               = DIANN_FINALQUANTIFICATION.out.log
     mzml_statistics         = QUANTMSUTILS_MZMLSTATISTICS.out.ms_statistics
     msstats_in              = QUANTMSUTILS_DIANN2MZTAB.out.out_msstats
     out_triqler             = QUANTMSUTILS_DIANN2MZTAB.out.out_triqler

@@ -64,7 +64,8 @@
                         "git_sha": "146a155d778ba9a944ded6939ed5644307a8600a",
                         "installed_by": [
                             "subworkflows"
-                        ]
+                        ],
+                        "patch": "subworkflows/nf-core/dia_proteomics_analysis/dia_proteomics_analysis.diff"
                     },
                     "utils_nextflow_pipeline": {
                         "branch": "master",

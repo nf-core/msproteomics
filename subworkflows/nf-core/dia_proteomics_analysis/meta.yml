@@ -147,6 +147,26 @@ output:
             type: file
             description: Main DIA-NN report in Parquet format
             pattern: "*.parquet"
+  - pg_matrix:
+      description: DIA-NN protein group matrix from the final quantification step
+      structure:
+        - meta:
+            type: map
+            description: Groovy Map containing experiment and search database information
+        - pg_matrix:
+            type: file
+            description: DIA-NN protein group quantification matrix
+            pattern: "*.pg_matrix.tsv"
+  - diann_log:
+      description: DIA-NN log from the final quantification step
+      structure:
+        - meta:
+            type: map
+            description: Groovy Map containing experiment and search database information
+        - log:
+            type: file
+            description: DIA-NN final quantification log
+            pattern: "*.log.txt"
   - mzml_statistics:
       description: Statistics extracted from mzML files
       structure:
