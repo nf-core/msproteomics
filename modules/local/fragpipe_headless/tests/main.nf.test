@@ -1,8 +1,17 @@
+/*
+ * FRAGPIPE_HEADLESS tests.
+ *
+ * The stub test covers -stub output. The manifest tests run the REAL script: block with a
+ * fake `java` on PATH (fake_fragpipe/bin/java, see ./nextflow.config) that copies the manifest
+ * handed to FragPipe into results/fragpipe-files.fp-manifest, so they check the experiment,
+ * bioreplicate and data type FragPipe would actually receive.
+ */
 nextflow_process {
 
     name "Test Process FRAGPIPE_HEADLESS"
     script "../main.nf"
     process "FRAGPIPE_HEADLESS"
+    config "./nextflow.config"
 
     tag "modules"
     tag "modules_nfcore"
@@ -13,6 +22,9 @@ nextflow_process {
         options "-stub"
 
         when {
+            params {
+                fake_fragpipe_dir = "${projectDir}/modules/local/fragpipe_headless/tests/fake_fragpipe"
+            }
             process {
                 """
                 def raw_file = file("\${workDir}/sample.mzML")
@@ -41,6 +53,216 @@ nextflow_process {
                     process.out.combined_peptide,
                     process.out.combined_ion
                 ).match() }
+            )
+        }
+    }
+
+    test("fragpipe_headless - manifest_content is authoritative: 3 experiments, DDA+") {
+        tag "stub"
+
+        when {
+            params {
+                fake_fragpipe_dir = "${projectDir}/modules/local/fragpipe_headless/tests/fake_fragpipe"
+            }
+            process {
+                """
+                input[0] = ['S1.mzML', 'S2.mzML', 'S3.mzML'].collect { name ->
+                    def spectra = file("\${workDir}/fake_spectra/\${name}")
+                    spectra.parent.mkdirs()
+                    spectra.text = "mock"
+                    spectra
+                }
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">sp|P00001|TEST\\nMKTEST"
+                def workflow_file = file("\${workDir}/test.workflow")
+                workflow_file.text = "database.db-path=/placeholder.fasta"
+
+                input[1] = fasta_file
+                input[2] = workflow_file
+                input[3] = "S1.mzML\\tS1\\t1\\tDDA+\\nS2.mzML\\tS2\\t1\\tDDA+\\nS3.mzML\\tS3\\t1\\tDDA+"
+                input[4] = ""
+                input[5] = ""
+                """
+            }
+        }
+
+        then {
+            // [file name, experiment, bioreplicate, data_type] per manifest row handed to FragPipe
+            // (the fake java copies it to results/fragpipe-files.fp-manifest; absolute paths differ per run)
+            def manifest = process.out.all_results.flatten().find { it.toString().endsWith('fragpipe-files.fp-manifest') }
+            def rows = path(manifest.toString()).readLines().collect { line ->
+                def cols = line.split('\t', -1)
+                [ file(cols[0]).name, cols[1], cols[2], cols[3] ]
+            }
+            assertAll(
+                { assert process.success },
+                { assert rows.collect { it[1] } == ['S1', 'S2', 'S3'] : "experiments: ${rows.collect { it[1] }}" },
+                { assert rows.every { it[3] == 'DDA+' } : "data types: ${rows.collect { it[3] }}" },
+                { assert snapshot(rows, process.out.versions).match() }
+            )
+        }
+    }
+
+    test("fragpipe_headless - manifest_content keeps the empty bioreplicate of fractions") {
+        tag "stub"
+
+        when {
+            params {
+                fake_fragpipe_dir = "${projectDir}/modules/local/fragpipe_headless/tests/fake_fragpipe"
+            }
+            process {
+                """
+                input[0] = ['F1.mzML', 'F2.mzML'].collect { name ->
+                    def spectra = file("\${workDir}/fake_spectra/\${name}")
+                    spectra.parent.mkdirs()
+                    spectra.text = "mock"
+                    spectra
+                }
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">sp|P00001|TEST\\nMKTEST"
+                def workflow_file = file("\${workDir}/test.workflow")
+                workflow_file.text = "database.db-path=/placeholder.fasta"
+
+                input[1] = fasta_file
+                input[2] = workflow_file
+                input[3] = "F1.mzML\\tG1\\t\\tDDA\\nF2.mzML\\tG1\\t\\tDDA"
+                input[4] = ""
+                input[5] = ""
+                """
+            }
+        }
+
+        then {
+            // [file name, experiment, bioreplicate, data_type] per manifest row handed to FragPipe
+            // (the fake java copies it to results/fragpipe-files.fp-manifest; absolute paths differ per run)
+            def manifest = process.out.all_results.flatten().find { it.toString().endsWith('fragpipe-files.fp-manifest') }
+            def rows = path(manifest.toString()).readLines().collect { line ->
+                def cols = line.split('\t', -1)
+                [ file(cols[0]).name, cols[1], cols[2], cols[3] ]
+            }
+            assertAll(
+                { assert process.success },
+                { assert snapshot(rows).match() }
+            )
+        }
+    }
+
+    test("fragpipe_headless - file_experiment_map matches file names exactly: A1 keeps GA, XA1 keeps GX") {
+        // XA1.mzML is listed first: a substring lookup (grep -F A1.mzML) would give A1.mzML experiment GX.
+        tag "stub"
+
+        when {
+            params {
+                fake_fragpipe_dir = "${projectDir}/modules/local/fragpipe_headless/tests/fake_fragpipe"
+            }
+            process {
+                """
+                input[0] = ['A1.mzML', 'XA1.mzML'].collect { name ->
+                    def spectra = file("\${workDir}/fake_spectra/\${name}")
+                    spectra.parent.mkdirs()
+                    spectra.text = "mock"
+                    spectra
+                }
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">sp|P00001|TEST\\nMKTEST"
+                def workflow_file = file("\${workDir}/test.workflow")
+                workflow_file.text = "database.db-path=/placeholder.fasta"
+
+                input[1] = fasta_file
+                input[2] = workflow_file
+                input[3] = ""
+                input[4] = ""
+                input[5] = "XA1.mzML\\tGX\\nA1.mzML\\tGA"
+                """
+            }
+        }
+
+        then {
+            // [file name, experiment, bioreplicate, data_type] per manifest row handed to FragPipe
+            // (the fake java copies it to results/fragpipe-files.fp-manifest; absolute paths differ per run)
+            def manifest = process.out.all_results.flatten().find { it.toString().endsWith('fragpipe-files.fp-manifest') }
+            def rows = path(manifest.toString()).readLines().collect { line ->
+                def cols = line.split('\t', -1)
+                [ file(cols[0]).name, cols[1], cols[2], cols[3] ]
+            }
+            assertAll(
+                { assert process.success },
+                { assert rows.collectEntries { [ (it[0]): it[1] ] } == ['A1.mzML': 'GA', 'XA1.mzML': 'GX'] : "rows: ${rows}" },
+                { assert snapshot(rows).match() }
+            )
+        }
+    }
+
+    test("fragpipe_headless - staged file without a manifest row fails") {
+        tag "stub"
+
+        when {
+            params {
+                fake_fragpipe_dir = "${projectDir}/modules/local/fragpipe_headless/tests/fake_fragpipe"
+            }
+            process {
+                """
+                input[0] = ['S1.mzML', 'S2.mzML'].collect { name ->
+                    def spectra = file("\${workDir}/fake_spectra/\${name}")
+                    spectra.parent.mkdirs()
+                    spectra.text = "mock"
+                    spectra
+                }
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">sp|P00001|TEST\\nMKTEST"
+                def workflow_file = file("\${workDir}/test.workflow")
+                workflow_file.text = "database.db-path=/placeholder.fasta"
+
+                input[1] = fasta_file
+                input[2] = workflow_file
+                input[3] = "S1.mzML\\tS1\\t1\\tDDA"
+                input[4] = ""
+                input[5] = ""
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.failed },
+                { assert process.errorReport.contains('ERROR: FRAGPIPE_HEADLESS: no manifest_content row for staged file(s): S2.mzML') : process.errorReport }
+            )
+        }
+    }
+
+    test("fragpipe_headless - manifest_content and file_experiment_map both empty fails") {
+        tag "stub"
+
+        when {
+            params {
+                fake_fragpipe_dir = "${projectDir}/modules/local/fragpipe_headless/tests/fake_fragpipe"
+            }
+            process {
+                """
+                input[0] = ['S1.mzML'].collect { name ->
+                    def spectra = file("\${workDir}/fake_spectra/\${name}")
+                    spectra.parent.mkdirs()
+                    spectra.text = "mock"
+                    spectra
+                }
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">sp|P00001|TEST\\nMKTEST"
+                def workflow_file = file("\${workDir}/test.workflow")
+                workflow_file.text = "database.db-path=/placeholder.fasta"
+
+                input[1] = fasta_file
+                input[2] = workflow_file
+                input[3] = ""
+                input[4] = ""
+                input[5] = ""
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.failed },
+                { assert process.errorReport.contains('ERROR: FRAGPIPE_HEADLESS: manifest_content and file_experiment_map are both empty') : process.errorReport }
             )
         }
     }

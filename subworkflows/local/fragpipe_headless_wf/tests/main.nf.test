@@ -26,7 +26,7 @@ nextflow_workflow {
                 input[0] = channel.of([ [ id: 'test', mzml_id: 'test' ], raw_file ])
                 input[1] = channel.value(fasta_file)
                 input[2] = channel.value(workflow_file)
-                input[3] = channel.value("sample.mzML\\texperiment1\\t1\\tDDA")
+                input[3] = channel.value("test.mzML\\texperiment1\\t1\\tDDA")  // THERMORAWFILEPARSER names the mzML after meta.id
                 input[4] = channel.value("")  // No TMT annotation (LFQ mode)
                 input[5] = channel.value("")  // No file-experiment map (LFQ mode)
                 """

@@ -33,7 +33,8 @@ input:
   - ch_manifest_content:
       type: channel
       description: |
-        TSV-formatted manifest content mapping spectra files to experiments.
+        TSV-formatted manifest content mapping spectra files to experiments
+        (file name, experiment, bioreplicate, data_type; no header). Authoritative when non-empty.
         Structure: val(manifest_string)
   - ch_annotation_content:
       type: channel
@@ -44,8 +45,8 @@ input:
   - ch_file_experiment_map:
       type: channel
       description: |
-        File-to-experiment mapping (filename, experiment columns).
-        Pass empty string for LFQ workflows.
+        File-to-experiment mapping (file name, experiment columns).
+        Used only when ch_manifest_content is empty; pass an empty string otherwise.
         Structure: val(map_string)
 output:
   - all_results:

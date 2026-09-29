@@ -1,4 +1,82 @@
 {
+    "fragpipe_headless - file_experiment_map matches file names exactly: A1 keeps GA, XA1 keeps GX": {
+        "content": [
+            [
+                [
+                    "XA1.mzML",
+                    "GX",
+                    "1",
+                    "DDA"
+                ],
+                [
+                    "A1.mzML",
+                    "GA",
+                    "1",
+                    "DDA"
+                ]
+            ]
+        ],
+        "timestamp": "2026-09-29T00:00:00.000000000",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "fragpipe_headless - manifest_content is authoritative: 3 experiments, DDA+": {
+        "content": [
+            [
+                [
+                    "S1.mzML",
+                    "S1",
+                    "1",
+                    "DDA+"
+                ],
+                [
+                    "S2.mzML",
+                    "S2",
+                    "1",
+                    "DDA+"
+                ],
+                [
+                    "S3.mzML",
+                    "S3",
+                    "1",
+                    "DDA+"
+                ]
+            ],
+            [
+                "versions.yml:md5,bb4d13cb9bebee2a60cd249d64401e43"
+            ]
+        ],
+        "timestamp": "2026-09-29T00:00:00.000000000",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "fragpipe_headless - manifest_content keeps the empty bioreplicate of fractions": {
+        "content": [
+            [
+                [
+                    "F1.mzML",
+                    "G1",
+                    "",
+                    "DDA"
+                ],
+                [
+                    "F2.mzML",
+                    "G1",
+                    "",
+                    "DDA"
+                ]
+            ]
+        ],
+        "timestamp": "2026-09-29T00:00:00.000000000",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
     "fragpipe_headless - stub": {
         "content": [
             [
@@ -6,6 +84,8 @@
                     "combined_ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
                     "combined_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
                     "combined_protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "experiment_annotation.tsv:md5,179b76ced1e83e291436194016eabcb4",
+                    "fragpipe-files.fp-manifest:md5,01e0f6fada67016e2eee50ba854551c6",
                     "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
                     "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
@@ -20,7 +100,7 @@
                 "combined_ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
             ]
         ],
-        "timestamp": "2026-03-25T03:48:50.692202093",
+        "timestamp": "2026-09-29T00:00:00.000000000",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.2"

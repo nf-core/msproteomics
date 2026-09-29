@@ -29,7 +29,23 @@ input:
       pattern: "*.workflow"
   - manifest_content:
       type: value
-      description: Tab-separated manifest content (filename, experiment, bioreplicate, data_type)
+      description: |
+        Tab-separated manifest rows (file name, experiment, bioreplicate, data_type), no header.
+        Authoritative when non-empty: each staged .mzML/.d file must have exactly one row whose
+        first column equals its file name. Bioreplicate may be empty (fractions of one sample);
+        data_type is passed through (e.g. DDA, DDA+).
+  - annotation_content:
+      type: value
+      description: |
+        TMT annotation rows (experiment, channel, sample_name), empty for LFQ.
+        When non-empty, each file is placed in raw_files/<experiment>/ with that experiment's
+        annotation, and every file's experiment must appear in this annotation.
+  - file_experiment_map:
+      type: value
+      description: |
+        Tab-separated rows (file name, experiment), used only when manifest_content is empty;
+        bioreplicate is then 1 and data_type DDA. File names are matched exactly.
+        The task fails when both manifest_content and file_experiment_map are empty.
 output:
   - all_results:
       type: file

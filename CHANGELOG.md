@@ -3,6 +3,20 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Fixed
+
+- `FRAGPIPE_HEADLESS`: `manifest_content` is used again and is authoritative (file, experiment, bioreplicate, data type), so allinone runs keep one experiment per sample, empty bioreplicates for fractions, and `DDA+`; before, every LFQ file fell back to `experiment1` / `1` / `DDA`.
+- `FRAGPIPE_HEADLESS`: file names are matched exactly against the manifest (or `file_experiment_map`) first column; the substring lookup (`grep -F`) gave `A1.mzML` the experiment of `XA1.mzML`.
+- `FRAGPIPE_HEADLESS`: the task fails loudly when a staged file has no row, a row names an unstaged file, a file is listed twice, a TMT file's experiment is not in `annotation_content`, or both `manifest_content` and `file_experiment_map` are empty (TMT files were silently dropped before).
+- `FRAGPIPE_HEADLESS`: `versions.yml` no longer carries a stray `END_VERSIONS` line when a multi-line value was pasted into the script (inputs are now passed base64-encoded, so no value can break indentation or expand in bash).
+
+### Changed
+
+- `FRAGPIPE_HEADLESS`: single-plex TMT files are placed in `raw_files/<experiment>/` like multi-plex ones.
+- `FRAGPIPE_HEADLESS` stub writes `results/fragpipe-files.fp-manifest` and `results/experiment_annotation.tsv`.
+
 ## v1.0.0 - Initial Release
 
 ### Added
