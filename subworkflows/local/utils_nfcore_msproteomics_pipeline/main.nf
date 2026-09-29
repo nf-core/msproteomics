@@ -224,6 +224,27 @@ def genomeExistsError() {
         error(error_string)
     }
 }
+/**
+ * Resolve the protein FASTA for a search.
+ * --database is authoritative; otherwise the reference proteome configured for
+ * the organism in params.databases (conf/reference_proteomes.config, downloaded
+ * from UniProt at runtime) is used. Fails if neither is available.
+ *
+ * @param organism Organism name as returned by WorkflowUtils.convertOrganismToStandardName (e.g. 'Homo sapiens')
+ * @return FASTA path or URL
+ */
+def getProteinDatabase(String organism) {
+    if (params.database) {
+        return params.database
+    }
+    def entry = params.databases ? params.databases[organism] : null
+    if (entry?.database) {
+        return entry.database
+    }
+    def available = params.databases ? params.databases.keySet().join(', ') : 'none (--proteomes_ignore is set)'
+    error("No protein database for organism '${organism}': pass --database <fasta>, or set --organism to one with a UniProt reference proteome in conf/reference_proteomes.config. Available: ${available}")
+}
+
 //
 // Generate methods description for MultiQC
 //

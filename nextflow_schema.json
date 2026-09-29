@@ -26,7 +26,7 @@
                 "organism": {
                     "type": "string",
                     "default": "Homo sapiens",
-                    "description": "Organism name for SDRF generation (e.g., Homo sapiens, Mus musculus, Saccharomyces cerevisiae).",
+                    "description": "Organism name for SDRF generation and, when --database is not given, for selecting the UniProt reference proteome (e.g., Homo sapiens, Mus musculus, Saccharomyces cerevisiae).",
                     "fa_icon": "fas fa-dna"
                 },
                 "dissociation_method": {
@@ -122,7 +122,7 @@
                     "pattern": "^\\S+\\.(?:fasta|fa)$",
                     "description": "Path to a protein database FASTA file.",
                     "fa_icon": "fas fa-file",
-                    "help_text": "A protein FASTA file for database search. For DIA workflows, if not provided, the pipeline uses a reference proteome based on the organism parameter (human, mouse, or yeast). For FragPipe-based workflows (DDA LFQ, TMT), the pipeline auto-resolves the database from the organism parameter."
+                    "help_text": "A protein FASTA file for database search. Takes precedence over the reference proteome. If not provided, the pipeline downloads the UniProt reference proteome (Swiss-Prot reviewed + isoforms) for `--organism` from `conf/reference_proteomes.config`, and fails if the organism has no configured proteome."
                 },
                 "diann_speclib": {
                     "type": "string",
@@ -800,7 +800,7 @@
                 "proteomes_base": {
                     "type": "string",
                     "description": "Base URL for UniProt reference proteome FASTA downloads.",
-                    "default": null,
+                    "default": "https://rest.uniprot.org/uniprotkb/stream?format=fasta&includeIsoform=true&query=(reviewed:true)+AND+(proteome:",
                     "fa_icon": "fas fa-cloud-download-alt",
                     "hidden": true
                 },
@@ -808,7 +808,8 @@
                     "type": "boolean",
                     "description": "Do not load the reference proteomes config.",
                     "fa_icon": "fas fa-ban",
-                    "hidden": true
+                    "hidden": true,
+                    "help_text": "Do not load `conf/reference_proteomes.config`. No UniProt reference proteome is then available, so `--database` (or `--philosopher_database` for FragPipe modes) must be given."
                 }
             }
         },

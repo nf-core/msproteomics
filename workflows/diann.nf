@@ -8,6 +8,7 @@ include { paramsSummaryMap       } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_msproteomics_pipeline'
+include { getProteinDatabase     } from '../subworkflows/local/utils_nfcore_msproteomics_pipeline'
 
 // SDRF generation (bookkeeping only)
 include { GENERATE_SDRF_FROM_SAMPLESHEET } from '../modules/local/generate_sdrf_from_samplesheet/main'
@@ -68,15 +69,8 @@ workflow MSPROTEOMICS_DIANN {
     // Convert raw files if needed
     FILE_PREPARATION(ch_input)
 
-    // Resolve database
-    def database
-    if (params.database) {
-        database = params.database
-    } else if (params.databases && params.databases[organism]?.database) {
-        database = params.databases[organism].database
-    } else {
-        error "Neither --database is set nor a default database is found for ${organism}"
-    }
+    // Resolve database: --database, else the UniProt reference proteome for the organism
+    def database = getProteinDatabase(organism)
 
     // Build DIA input channel with params from nextflow.config
     ch_dia_input = FILE_PREPARATION.out.results.map { meta, ms_file ->
@@ -93,7 +87,8 @@ workflow MSPROTEOMICS_DIANN {
         ]
     }
 
-    Channel.fromPath(database).map { fasta ->
+    // glob: false keeps the query string of a UniProt REST URL (fromPath treats '?' as a glob)
+    Channel.fromPath(database, glob: false, checkIfExists: true).map { fasta ->
         [[id: fasta.baseName], fasta]
     }.set { ch_searchdb }
 

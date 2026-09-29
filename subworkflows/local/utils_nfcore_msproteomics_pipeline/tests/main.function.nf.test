@@ -1,0 +1,68 @@
+nextflow_function {
+
+    name "Test Functions"
+    script "../main.nf"
+    function "getProteinDatabase"
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "utils_nfcore_msproteomics_pipeline"
+    tag "stub"
+
+    test("getProteinDatabase - organism without --database resolves to the UniProt reference proteome") {
+
+        when {
+            function {
+                """
+                input[0] = 'Homo sapiens'
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'https://rest.uniprot.org/uniprotkb/stream?format=fasta&includeIsoform=true&query=(reviewed:true)+AND+(proteome:UP000005640)' }
+            )
+        }
+    }
+
+    test("getProteinDatabase - unknown organism without --database fails with a clear message") {
+
+        when {
+            function {
+                """
+                input[0] = 'Xenopus laevis'
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert function.stdout.any { it.contains("No protein database for organism 'Xenopus laevis': pass --database <fasta>") } },
+                { assert function.stdout.any { it.contains('Available: Homo sapiens, Mus musculus') } }
+            )
+        }
+    }
+
+    test("getProteinDatabase - --database overrides the reference proteome") {
+
+        when {
+            params {
+                database = 'custom_database.fasta'
+            }
+            function {
+                """
+                input[0] = 'Homo sapiens'
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'custom_database.fasta' }
+            )
+        }
+    }
+}

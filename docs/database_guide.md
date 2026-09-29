@@ -4,7 +4,7 @@
 
 Protein identification in mass spectrometry proteomics requires a FASTA database of protein sequences to search spectra against.
 The nf-core/msproteomics pipeline supports both pre-built reference proteomes and custom user-provided databases.
-Pre-built databases are fetched automatically from UniProt based on organism metadata in the samplesheet, while custom databases can be supplied via the `--database` parameter.
+When `--database` is not given, the UniProt reference proteome for `--organism` is downloaded automatically at runtime; a custom database supplied via `--database` always takes precedence.
 
 ## Pre-Built Reference Proteomes
 
@@ -24,16 +24,26 @@ These databases contain Swiss-Prot reviewed proteins with isoforms, fetched from
 
 ### How pre-built databases are selected
 
-The pipeline auto-selects the correct reference proteome based on the organism metadata in your samplesheet SDRF.
-No additional parameters are needed when working with one of the eight supported organisms.
-If the organism in your samplesheet matches a pre-built proteome, the pipeline downloads the FASTA automatically at runtime.
+The reference proteome is selected by the `--organism` parameter (default `Homo sapiens`), not by the samplesheet.
+The aliases `human`/`hs`, `mouse`/`mm` and `yeast`/`sc` map to _Homo sapiens_, _Mus musculus_ and _Saccharomyces cerevisiae_.
+Any other organism must be given exactly as in the table above (e.g. `--organism 'Danio rerio'`).
+When `--database` is not given, the pipeline downloads the FASTA for that organism from UniProt at runtime.
 
-You can override the automatic selection by providing `--database /path/to/custom.fasta`.
+Resolution order:
+
+| Priority | Source                                                                         |
+| -------- | ------------------------------------------------------------------------------ |
+| 1        | `--philosopher_database` (FragPipe mode only)                                  |
+| 2        | `--database`                                                                   |
+| 3        | `params.databases[<organism>].database` from `conf/reference_proteomes.config` |
+
+If none applies (an organism outside the table and no `--database`), the pipeline stops before any task runs with `No protein database for organism '<organism>': pass --database <fasta> ...`, listing the available organisms.
 
 ### Configuration
 
-Pre-built proteome URLs are defined in `conf/reference_proteomes.config`.
-Each entry uses the UniProt REST API endpoint:
+Pre-built proteome URLs are defined in `conf/reference_proteomes.config` as the `params.databases` map, following the nf-core iGenomes pattern (`params.genomes` / `conf/igenomes.config`).
+It is loaded unless `--proteomes_ignore` is set; with `--proteomes_ignore`, `params.databases` is empty and `--database` is required.
+Each entry is `--proteomes_base` followed by the proteome ID and `)`, which gives the UniProt REST API endpoint:
 
 ```
 https://rest.uniprot.org/uniprotkb/stream?format=fasta&includeIsoform=true&query=(reviewed:true)+AND+(proteome:<PROTEOME_ID>)

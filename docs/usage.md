@@ -74,8 +74,8 @@ nextflow run nf-core/msproteomics \
   -profile docker
 ```
 
-Reference proteomes can be automatically fetched from UniProt for supported organisms when configured via `conf/reference_proteomes.config`.
-To use a custom database, provide `--database /path/to/database.fasta`.
+If `--database` is omitted, the UniProt reference proteome for `--organism` (default `Homo sapiens`) is downloaded at runtime from `conf/reference_proteomes.config`; see [Database Preparation](database_guide.md).
+`--database /path/to/database.fasta` always takes precedence.
 
 ### FragPipe Mode (`--mode fragpipe`)
 
@@ -170,15 +170,15 @@ The `--fragpipe_mode` parameter controls execution mode:
 
 ## Key Parameters
 
-| Parameter             | Description                                                | Default                                                |
-| --------------------- | ---------------------------------------------------------- | ------------------------------------------------------ |
-| `--input`             | Path to CSV samplesheet                                    | Required                                               |
-| `--mode`              | Analysis mode: `diann` or `fragpipe`                       | Required                                               |
-| `--outdir`            | Output directory                                           | Required                                               |
-| `--database`          | FASTA protein database                                     | Auto-selected for DIA; required for FragPipe workflows |
-| `--fragpipe_workflow` | FragPipe `.workflow` file or workflow name (FragPipe mode) | None                                                   |
-| `--tmt_mode`          | TMT analysis mode: `labelcheck` or `quant` (FragPipe mode) | None                                                   |
-| `--fragpipe_mode`     | FragPipe execution mode: `pipeline` or `headless`          | `pipeline`                                             |
+| Parameter             | Description                                                | Default                                     |
+| --------------------- | ---------------------------------------------------------- | ------------------------------------------- |
+| `--input`             | Path to CSV samplesheet                                    | Required                                    |
+| `--mode`              | Analysis mode: `diann` or `fragpipe`                       | Required                                    |
+| `--outdir`            | Output directory                                           | Required                                    |
+| `--database`          | FASTA protein database                                     | UniProt reference proteome for `--organism` |
+| `--fragpipe_workflow` | FragPipe `.workflow` file or workflow name (FragPipe mode) | None                                        |
+| `--tmt_mode`          | TMT analysis mode: `labelcheck` or `quant` (FragPipe mode) | None                                        |
+| `--fragpipe_mode`     | FragPipe execution mode: `pipeline` or `headless`          | `pipeline`                                  |
 
 ## Container Requirements
 

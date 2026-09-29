@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `nf-core pipelines lint`: removed the `max_cpus` / `max_memory` / `max_time` schema params and the `test` profile's `params.max_*`; resource caps are set by `process.resourceLimits`, and nothing read the params.
 - `nf-core pipelines lint`: removed `params.proteomes = null` from `conf/reference_proteomes_ignored.config`; no code reads `params.proteomes`.
 - `utils_nfcore_pipeline`: tests match the installed nf-core/modules commit (`tests/main.nf.test` restored; stale `tests/main.workflow.nf.test` and its snapshot removed).
+- Reference proteomes: the documented UniProt download now works. `conf/reference_proteomes.config` defines `params.databases` (keyed by organism, e.g. `'Homo sapiens'`, with a `database` URL), which is what the workflows read; before it defined an unused `params.proteomes` and `params.proteomes_ignore` defaulted to `true`, so without `--database` every run failed. Mirrors nf-core iGenomes: `proteomes_ignore` defaults to `false`, `proteomes_base` holds the UniProt URL prefix, `conf/reference_proteomes_ignored.config` sets `params.databases = [:]`, and `databases` is in `validation.defaultIgnoreParams`. `--database` stays authoritative; an organism with no proteome and no `--database` fails with `No protein database for organism '<organism>': ...` listing the available organisms (`getProteinDatabase`, new function tests).
+- Database channels use `Channel.fromPath(..., glob: false)`; with globbing, the `?` in a UniProt REST URL dropped the query string.
 
 ### Changed
 
