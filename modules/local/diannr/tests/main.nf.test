@@ -40,4 +40,69 @@ nextflow_process {
             )
         }
     }
+
+    // Regression: DIA-NN on a small search space (500-protein human FASTA) reports
+    // PG.Q.Value = 1 for every row, so no row passes the protein-group FDR filter.
+    // diann_maxlfq() failed on the empty table with "subscript out of bounds".
+    test("diannr - no row passes protein-group FDR writes header-only tables") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                input[0] = file("\${projectDir}/modules/local/diannr/tests/diann_report_pgq1.tsv", checkIfExists: true)
+                input[1] = 0.01
+                input[2] = 0.05
+                input[3] = "contaminant_"
+                """
+            }
+        }
+
+        then {
+            def header_only = ['precursors', 'peptides', 'unique_genes', 'protein_groups_maxlfq']
+            assertAll (
+                { assert process.success },
+                { header_only.each { ch ->
+                    assert path(process.out[ch][0]).readLines() == ['dia_cptac_subset.mzML'] : ch
+                } },
+                { assert path(process.out.peptides_maxlfq[0]).readLines().size() > 1 },
+                // process.stderr is the Nextflow console, not the task's; read the task's .command.err
+                { def task_err = new File(new File(process.out.protein_groups_maxlfq[0].toString()).parentFile, '.command.err').text
+                  assert task_err.contains('WARNING: DIANNR: protein_groups_maxlfq.tsv: no report row passes') : task_err },
+                { assert snapshot(
+                    process.out.contaminants_removed_report,
+                    process.out.precursors,
+                    process.out.peptides,
+                    process.out.peptides_maxlfq,
+                    process.out.unique_genes,
+                    process.out.protein_groups_maxlfq
+                ).match() }
+            )
+        }
+    }
+
+    test("diannr - report with no rows fails") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                def report_file = file("\${workDir}/diann_report.tsv")
+                report_file.text = file("\${projectDir}/modules/local/diannr/tests/diann_report_pgq1.tsv", checkIfExists: true).readLines()[0] + "\\n"
+
+                input[0] = report_file
+                input[1] = 0.01
+                input[2] = 0.05
+                input[3] = "contaminant_"
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.failed },
+                { assert process.errorReport.contains('ERROR: DIANNR: DIA-NN report') : process.errorReport }
+            )
+        }
+    }
 }

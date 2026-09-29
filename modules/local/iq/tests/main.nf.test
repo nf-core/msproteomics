@@ -33,4 +33,59 @@ nextflow_process {
             )
         }
     }
+
+    // Regression: DIA-NN on a small search space (500-protein human FASTA) reports
+    // PG.Q.Value = 1 for every row, so no row passes the protein-group FDR filter.
+    // process_long_format() then wrote no maxlfq.tsv and R exited 0, so the task
+    // failed with "Missing output file(s) `maxlfq.tsv`".
+    test("iq - no row passes protein-group FDR writes header-only maxlfq table") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                input[0] = file("\${projectDir}/modules/local/diannr/tests/diann_report_pgq1.tsv", checkIfExists: true)
+                input[1] = 0.01
+                input[2] = 0.05
+                input[3] = "contaminant_"
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert path(process.out.maxlfq[0]).readLines() == ['Protein.Group\tProtein.Names\tGenes\tdia_cptac_subset'] },
+                // process.stderr is the Nextflow console, not the task's; read the task's .command.err
+                { def task_err = new File(new File(process.out.maxlfq[0].toString()).parentFile, '.command.err').text
+                  assert task_err.contains('WARNING: IQ: maxlfq.tsv: no report row passes Q.Value < 0.01 & PG.Q.Value < 0.05') : task_err },
+                { assert snapshot(process.out.contaminants_removed_report, process.out.maxlfq).match() }
+            )
+        }
+    }
+
+    test("iq - report with no rows fails") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                def report_file = file("\${workDir}/diann_report.tsv")
+                report_file.text = file("\${projectDir}/modules/local/diannr/tests/diann_report_pgq1.tsv", checkIfExists: true).readLines()[0] + "\\n"
+
+                input[0] = report_file
+                input[1] = 0.01
+                input[2] = 0.05
+                input[3] = "contaminant_"
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.failed },
+                { assert process.errorReport.contains('ERROR: IQ: DIA-NN report') : process.errorReport }
+            )
+        }
+    }
 }
