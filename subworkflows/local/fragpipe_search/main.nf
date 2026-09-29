@@ -35,7 +35,7 @@ include { SPLIT_FASTA         } from '../../../modules/local/split_fasta/main'
 include { MERGE_SPLIT_SEARCH  } from '../../../modules/local/merge_split_search/main'
 include { MSBOOSTER           } from '../../../modules/local/msbooster/main'
 include { CRYSTALC            } from '../../../modules/local/crystalc/main'
-include { shouldRunTool; getToolArgs } from '../fragpipe_utils'
+include { shouldRunTool; getToolArgs } from '../utils_nfcore_msproteomics_pipeline'
 
 workflow FRAGPIPE_SEARCH {
     take:

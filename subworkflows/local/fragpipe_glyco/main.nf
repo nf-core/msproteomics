@@ -14,7 +14,7 @@
 
 include { MBG   } from '../../../modules/local/mbg/main'
 include { OPAIR } from '../../../modules/local/opair/main'
-include { shouldRunTool; getToolArgs } from '../fragpipe_utils'
+include { shouldRunTool; getToolArgs } from '../utils_nfcore_msproteomics_pipeline'
 
 workflow FRAGPIPE_GLYCO {
     take:

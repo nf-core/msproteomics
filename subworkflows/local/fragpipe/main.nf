@@ -31,7 +31,7 @@
 include { PARSE_FRAGPIPE_WORKFLOW  } from '../../../modules/local/parse_fragpipe_workflow/main'
 
 // Import utility functions
-include { shouldRunTool } from '../fragpipe_utils'
+include { shouldRunTool } from '../utils_nfcore_msproteomics_pipeline'
 
 // Import subworkflows
 include { FRAGPIPE_DATABASE                                    } from '../fragpipe_database/main'

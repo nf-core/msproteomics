@@ -14,7 +14,7 @@
 
 include { PROTEINPROPHET    } from '../../../modules/local/philosopher/proteinprophet/main'
 include { PHILOSOPHER_FILTER } from '../../../modules/local/philosopher/filter/main'
-include { shouldRunTool; getToolArgs; getToolReportArgs } from '../fragpipe_utils'
+include { shouldRunTool; getToolArgs; getToolReportArgs } from '../utils_nfcore_msproteomics_pipeline'
 
 workflow FRAGPIPE_INFERENCE {
     take:

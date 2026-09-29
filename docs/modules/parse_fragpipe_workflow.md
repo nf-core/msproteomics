@@ -45,7 +45,7 @@ The JSON output includes run flags, args, and config_type for each tool, enablin
 ## Usage
 
 Used in the `FRAGPIPE` subworkflow (`subworkflows/local/fragpipe/main.nf`) and `TMT_LABELCHECK` subworkflow (`subworkflows/local/tmt_labelcheck/main.nf`) to parse `.workflow` files into tool-specific configs that drive downstream module execution.
-Also used via the `fragpipe_utils.nf` helper subworkflow.
+Its `tool_configs` JSON is read by the helper functions (`shouldRunTool`, `getToolArgs`, ...) in `subworkflows/local/utils_nfcore_msproteomics_pipeline/main.nf`.
 
 ## References
 

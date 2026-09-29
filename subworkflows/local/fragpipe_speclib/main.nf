@@ -12,7 +12,7 @@
 */
 
 include { SPECLIBGEN } from '../../../modules/local/speclibgen/main'
-include { shouldRunTool; getToolArgs } from '../fragpipe_utils'
+include { shouldRunTool; getToolArgs } from '../utils_nfcore_msproteomics_pipeline'
 
 workflow FRAGPIPE_SPECLIB {
     take:

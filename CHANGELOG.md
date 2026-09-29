@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `FRAGPIPE_HEADLESS`: single-plex TMT files are placed in `raw_files/<experiment>/` like multi-plex ones.
 - `FRAGPIPE_HEADLESS` stub writes `results/fragpipe-files.fp-manifest` and `results/experiment_annotation.tsv`.
+- FragPipe helper functions (`shouldRunTool`, `getToolArgs`, `getToolModmasses`, `getToolField`, `getToolReportArgs`, `generateFragpipeManifest`) moved from `subworkflows/local/fragpipe_utils.nf` into `subworkflows/local/utils_nfcore_msproteomics_pipeline/main.nf`; `nf-core pipelines lint` crashed (`IndexError` in the subworkflow `main_nf` check) on the functions-only file. The unused duplicate `lib/FragpipeUtils.nf` is removed.
 
 ## v1.0.0 - Initial Release
 
