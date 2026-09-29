@@ -40,5 +40,34 @@
             "nextflow": "25.10.4"
         },
         "timestamp": "2026-09-29T17:21:41.154969394"
+    },
+    "merge_split_search - integration with mock data": {
+        "content": [
+            [
+                "test_sample.pepXML"
+            ],
+            [
+                "test_sample.pin"
+            ],
+            [
+                [
+                    "MERGE_SPLIT_SEARCH",
+                    "msfragger",
+                    "4.4.1"
+                ]
+            ],
+            [
+                [
+                    "MERGE_SPLIT_SEARCH",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-09-29T17:26:24.352887732"
     }
 }
