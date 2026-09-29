@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `FRAGPIPE_HEADLESS`: file names are matched exactly against the manifest (or `file_experiment_map`) first column; the substring lookup (`grep -F`) gave `A1.mzML` the experiment of `XA1.mzML`.
 - `FRAGPIPE_HEADLESS`: the task fails loudly when a staged file has no row, a row names an unstaged file, a file is listed twice, a TMT file's experiment is not in `annotation_content`, or both `manifest_content` and `file_experiment_map` are empty (TMT files were silently dropped before).
 - `FRAGPIPE_HEADLESS`: `versions.yml` no longer carries a stray `END_VERSIONS` line when a multi-line value was pasted into the script (inputs are now passed base64-encoded, so no value can break indentation or expand in bash).
+- `nf-core pipelines lint`: `params.diann_additional_analysis_args` defaults to `null` (schema has no default); nf-core reads a config `''` as `null`, so `''` could never match the schema. All consumers use `?: ''`, so behaviour is unchanged.
+- `nf-core pipelines lint`: removed the `max_cpus` / `max_memory` / `max_time` schema params and the `test` profile's `params.max_*`; resource caps are set by `process.resourceLimits`, and nothing read the params.
+- `nf-core pipelines lint`: removed `params.proteomes = null` from `conf/reference_proteomes_ignored.config`; no code reads `params.proteomes`.
+- `utils_nfcore_pipeline`: tests match the installed nf-core/modules commit (`tests/main.nf.test` restored; stale `tests/main.workflow.nf.test` and its snapshot removed).
 
 ### Changed
 
