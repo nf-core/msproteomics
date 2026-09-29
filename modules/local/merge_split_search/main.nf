@@ -81,6 +81,11 @@ process MERGE_SPLIT_SEARCH {
         BRUKER_DIR="${tools_dir}/../ext/bruker"
         THERMO_DIR="${tools_dir}/../ext/thermo"
     fi
+    if [ -z "\$MSFRAGGER_JAR" ] || [ ! -f "\$MSFRAGGER_JAR" ]; then
+        echo "ERROR: MERGE_SPLIT_SEARCH: no MSFragger*.jar found (searched msfragger_dir='${msfragger_dir}' and ext.fragpipe_tools_dir='\$TOOLS_DIR')." >&2
+        echo "Run in the licensed FragPipe container (--fragpipe_container), pass an unzipped MSFragger directory as msfragger_dir, or set ext.fragpipe_tools_dir." >&2
+        exit 1
+    fi
     NATIVE_FLAGS=""
     [ -d "\$BRUKER_DIR" ] && NATIVE_FLAGS="\$NATIVE_FLAGS -Dlibs.bruker.dir=\$BRUKER_DIR"
     [ -d "\$THERMO_DIR" ] && NATIVE_FLAGS="\$NATIVE_FLAGS -Dlibs.thermo.dir=\$THERMO_DIR"

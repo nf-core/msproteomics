@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `MERGE_SPLIT_SEARCH`: the task fails at once with `ERROR: MERGE_SPLIT_SEARCH: no MSFragger*.jar found` (naming the searched `msfragger_dir` and `ext.fragpipe_tools_dir`) when no MSFragger jar is found; before, `java -jar` got an empty jar path and reported a misleading "Invalid or corrupt jarfile <histogram>.tsv". `merge_split_search.py` also rejects a `--msfragger_cmd` whose `-jar` path is missing.
+- `MERGE_SPLIT_SEARCH` tests: the integration test runs in the FragPipe image given by `FRAGPIPE_CONTAINER` (it ran on the host before); a new stub-tagged test covers the missing-jar error; the stub snapshot no longer records the host Python version.
 - `FRAGPIPE_HEADLESS`: `manifest_content` is used again and is authoritative (file, experiment, bioreplicate, data type), so allinone runs keep one experiment per sample, empty bioreplicates for fractions, and `DDA+`; before, every LFQ file fell back to `experiment1` / `1` / `DDA`.
 - `FRAGPIPE_HEADLESS`: file names are matched exactly against the manifest (or `file_experiment_map`) first column; the substring lookup (`grep -F`) gave `A1.mzML` the experiment of `XA1.mzML`.
 - `FRAGPIPE_HEADLESS`: the task fails loudly when a staged file has no row, a row names an unstaged file, a file is listed twice, a TMT file's experiment is not in `annotation_content`, or both `manifest_content` and `file_experiment_map` are empty (TMT files were silently dropped before).
