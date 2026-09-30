@@ -11,6 +11,10 @@ nextflow_function {
     test("getProteinDatabase - organism without --database resolves to the UniProt reference proteome") {
 
         when {
+            // -profile test sets params.database; clear it so the reference proteome is used
+            params {
+                database = null
+            }
             function {
                 """
                 input[0] = 'Homo sapiens'
@@ -29,6 +33,10 @@ nextflow_function {
     test("getProteinDatabase - unknown organism without --database fails with a clear message") {
 
         when {
+            // -profile test sets params.database; clear it so the reference proteome is used
+            params {
+                database = null
+            }
             function {
                 """
                 input[0] = 'Xenopus laevis'
