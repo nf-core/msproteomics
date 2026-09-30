@@ -10,31 +10,31 @@ Used within the FRAGPIPE_CONVERT subworkflow for Bruker DIA file conversion.
 
 ## Inputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| meta | val(map) | Sample metadata map |
-| d_file | path | Bruker `.d` directory containing raw mass spectrometry data |
-| config_cli | val(string) | diaTracer parameters as CLI string |
-| diatracer_dir | path | Unzipped diaTracer tool directory (optional, pass `[]` when not using) |
+| Channel       | Type        | Description                                                            |
+| ------------- | ----------- | ---------------------------------------------------------------------- |
+| meta          | val(map)    | Sample metadata map                                                    |
+| d_file        | path        | Bruker `.d` directory containing raw mass spectrometry data            |
+| config_cli    | val(string) | diaTracer parameters as CLI string                                     |
+| diatracer_dir | path        | Unzipped diaTracer tool directory (optional, pass `[]` when not using) |
 
 ## Outputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| results_dir | tuple(meta, path) | Directory containing diaTracer results and log |
-| mzml | tuple(meta, path) | Converted mzML file (`*_diatracer.mzML`) |
-| license_agreement | path | License agreement marker file |
-| versions_diatracer | tuple | diaTracer software version (topic channel) |
-| versions_fragpipe | tuple | FragPipe software version (topic channel) |
+| Channel            | Type              | Description                                    |
+| ------------------ | ----------------- | ---------------------------------------------- |
+| results_dir        | tuple(meta, path) | Directory containing diaTracer results and log |
+| mzml               | tuple(meta, path) | Converted mzML file (`*_diatracer.mzML`)       |
+| license_agreement  | path              | License agreement marker file                  |
+| versions_diatracer | tuple             | diaTracer software version (topic channel)     |
+| versions_fragpipe  | tuple             | FragPipe software version (topic channel)      |
 
 ## Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| ext.args | '' | Additional CLI arguments appended to the diaTracer Java command |
-| ext.prefix | meta.id | Override for the output directory name |
-| ext.fragpipe_tools_dir | (auto-detected) | Override for the FragPipe tools directory path |
-| ext.agree_fragpipe_license_agreement | (required) | Must be `true` or the process exits with an error |
+| Parameter                            | Default         | Description                                                     |
+| ------------------------------------ | --------------- | --------------------------------------------------------------- |
+| ext.args                             | ''              | Additional CLI arguments appended to the diaTracer Java command |
+| ext.prefix                           | meta.id         | Override for the output directory name                          |
+| ext.fragpipe_tools_dir               | (auto-detected) | Override for the FragPipe tools directory path                  |
+| ext.agree_fragpipe_license_agreement | (required)      | Must be `true` or the process exits with an error               |
 
 ## Container
 

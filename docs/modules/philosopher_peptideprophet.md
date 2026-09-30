@@ -10,31 +10,31 @@ This module parses a config file for `peptideprophet=` flags, initializes a Phil
 
 ## Inputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| meta | val(map) | Sample/experiment metadata |
-| pepxml | path | PepXML file from search engine (`*.pepXML`) |
-| mzml | path | mzML spectral file (used for base_name normalization) |
-| config_file | path | Config file with `peptideprophet=flags` line from PARSE_FRAGPIPE_WORKFLOW |
-| fasta | path | Protein sequence database |
+| Channel     | Type     | Description                                                               |
+| ----------- | -------- | ------------------------------------------------------------------------- |
+| meta        | val(map) | Sample/experiment metadata                                                |
+| pepxml      | path     | PepXML file from search engine (`*.pepXML`)                               |
+| mzml        | path     | mzML spectral file (used for base_name normalization)                     |
+| config_file | path     | Config file with `peptideprophet=flags` line from PARSE_FRAGPIPE_WORKFLOW |
+| fasta       | path     | Protein sequence database                                                 |
 
 ## Outputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| results_dir | tuple(val, path) | Output directory `${prefix}` with PeptideProphet results and logs |
-| pepxml | tuple(val, path) | `${prefix}/interact-*.pep.xml` PepXML with probabilities |
-| versions_philosopher | topic: versions | Philosopher version |
-| versions_fragpipe | topic: versions | FragPipe version |
+| Channel              | Type             | Description                                                       |
+| -------------------- | ---------------- | ----------------------------------------------------------------- |
+| results_dir          | tuple(val, path) | Output directory `${prefix}` with PeptideProphet results and logs |
+| pepxml               | tuple(val, path) | `${prefix}/interact-*.pep.xml` PepXML with probabilities          |
+| versions_philosopher | topic: versions  | Philosopher version                                               |
+| versions_fragpipe    | topic: versions  | FragPipe version                                                  |
 
 ## Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| ext.args | '' | Additional command-line arguments for `philosopher peptideprophet` |
-| ext.prefix | `${meta.id}` | Output directory name |
-| ext.decoy_tag | `rev_` | Decoy protein prefix |
-| ext.fragpipe_tools_dir | `/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools` | FragPipe tools directory |
+| Parameter              | Default                                           | Description                                                        |
+| ---------------------- | ------------------------------------------------- | ------------------------------------------------------------------ |
+| ext.args               | ''                                                | Additional command-line arguments for `philosopher peptideprophet` |
+| ext.prefix             | `${meta.id}`                                      | Output directory name                                              |
+| ext.decoy_tag          | `rev_`                                            | Decoy protein prefix                                               |
+| ext.fragpipe_tools_dir | `/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools` | FragPipe tools directory                                           |
 
 ## Container
 

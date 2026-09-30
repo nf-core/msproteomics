@@ -47,7 +47,7 @@ process OPAIR {
     // -o: output directory
 
     """
-    
+
     export HOME=\$(pwd)
     mkdir -p ${prefix}
 

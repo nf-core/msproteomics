@@ -10,28 +10,28 @@ Used in the main `msproteomics.nf` workflow as an alternative to the modular FRA
 
 ## Inputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| raw_files | path | All raw data files (`.d`, `.raw`, `.mzML`) staged into `raw_files/` subdirectory |
-| database | path | FASTA database file for protein identification |
-| workflow_file | path | FragPipe `.workflow` configuration file |
-| manifest_content | val(string) | Tab-separated manifest content (filename, experiment, bioreplicate, data_type) |
+| Channel          | Type        | Description                                                                      |
+| ---------------- | ----------- | -------------------------------------------------------------------------------- |
+| raw_files        | path        | All raw data files (`.d`, `.raw`, `.mzML`) staged into `raw_files/` subdirectory |
+| database         | path        | FASTA database file for protein identification                                   |
+| workflow_file    | path        | FragPipe `.workflow` configuration file                                          |
+| manifest_content | val(string) | Tab-separated manifest content (filename, experiment, bioreplicate, data_type)   |
 
 ## Outputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| all_results | path | All FragPipe output files (`results/**`) |
+| Channel          | Type | Description                                                                       |
+| ---------------- | ---- | --------------------------------------------------------------------------------- |
+| all_results      | path | All FragPipe output files (`results/**`)                                          |
 | combined_protein | path | Combined protein report across all experiments (`combined_protein.tsv`, optional) |
 | combined_peptide | path | Combined peptide report across all experiments (`combined_peptide.tsv`, optional) |
-| combined_ion | path | Combined ion report across all experiments (`combined_ion.tsv`, optional) |
-| versions | path | Software versions (`versions.yml`) |
+| combined_ion     | path | Combined ion report across all experiments (`combined_ion.tsv`, optional)         |
+| versions         | path | Software versions (`versions.yml`)                                                |
 
 ## Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| (memory) | 90% of task.memory | Java heap size computed automatically from allocated task memory |
+| Parameter | Default            | Description                                                      |
+| --------- | ------------------ | ---------------------------------------------------------------- |
+| (memory)  | 90% of task.memory | Java heap size computed automatically from allocated task memory |
 
 ## Container
 

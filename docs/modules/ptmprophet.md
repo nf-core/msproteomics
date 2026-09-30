@@ -10,28 +10,28 @@ The module always uses `MAXTHREADS=1` (matching FragPipe convention, since Nextf
 
 ## Inputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| meta | val(map) | Sample metadata map |
-| pepxml_file | path | PepXML file containing peptide search results with PTMs (`*.pep.xml`) |
-| config_cli | val(string) | PTMProphet parameters as CLI string (UPPERCASE=value format, e.g., `MINPROB=0.5 STATIC KEEPOLD`) |
+| Channel     | Type        | Description                                                                                      |
+| ----------- | ----------- | ------------------------------------------------------------------------------------------------ |
+| meta        | val(map)    | Sample metadata map                                                                              |
+| pepxml_file | path        | PepXML file containing peptide search results with PTMs (`*.pep.xml`)                            |
+| config_cli  | val(string) | PTMProphet parameters as CLI string (UPPERCASE=value format, e.g., `MINPROB=0.5 STATIC KEEPOLD`) |
 
 ## Outputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| results_dir | tuple(val, path) | Results directory containing PTMProphet output and logs |
-| mod_pepxml | tuple(val, path) | Modified pepXML with PTM site localization probabilities (`*.mod.pep.xml`) |
-| versions_ptmprophet | tuple (topic: versions) | PTMProphet version |
-| versions_fragpipe | tuple (topic: versions) | FragPipe version |
+| Channel             | Type                    | Description                                                                |
+| ------------------- | ----------------------- | -------------------------------------------------------------------------- |
+| results_dir         | tuple(val, path)        | Results directory containing PTMProphet output and logs                    |
+| mod_pepxml          | tuple(val, path)        | Modified pepXML with PTM site localization probabilities (`*.mod.pep.xml`) |
+| versions_ptmprophet | tuple (topic: versions) | PTMProphet version                                                         |
+| versions_fragpipe   | tuple (topic: versions) | FragPipe version                                                           |
 
 ## Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| ext.args | '' | Inserted into PTMProphet command after `config_cli` and before input/output files |
-| ext.decoy_tag | 'rev_' | Decoy prefix for decoy protein identification |
-| ext.fragpipe_tools_dir | (default path) | Override FragPipe tools directory |
+| Parameter              | Default        | Description                                                                       |
+| ---------------------- | -------------- | --------------------------------------------------------------------------------- |
+| ext.args               | ''             | Inserted into PTMProphet command after `config_cli` and before input/output files |
+| ext.decoy_tag          | 'rev\_'        | Decoy prefix for decoy protein identification                                     |
+| ext.fragpipe_tools_dir | (default path) | Override FragPipe tools directory                                                 |
 
 ## Container
 

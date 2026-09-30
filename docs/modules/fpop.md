@@ -10,30 +10,30 @@ Used within the FRAGPIPE_EXPORT subworkflow for structural proteomics experiment
 
 ## Inputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| meta | val(map) | Sample metadata map |
-| input_file | path | Peptide quantification file (`combined_modified_peptide.tsv` for LFQ, or TMT abundance file) |
-| secondary_file | path | Optional secondary TMT file (use `NO_FILE` placeholder if not applicable) |
-| config_cli | val(string) | Bash-sourceable config: REGION_SIZE, CONTROL_LABEL, FPOP_LABEL, SUBTRACT_CONTROL, IS_TMT |
+| Channel        | Type        | Description                                                                                  |
+| -------------- | ----------- | -------------------------------------------------------------------------------------------- |
+| meta           | val(map)    | Sample metadata map                                                                          |
+| input_file     | path        | Peptide quantification file (`combined_modified_peptide.tsv` for LFQ, or TMT abundance file) |
+| secondary_file | path        | Optional secondary TMT file (use `NO_FILE` placeholder if not applicable)                    |
+| config_cli     | val(string) | Bash-sourceable config: REGION_SIZE, CONTROL_LABEL, FPOP_LABEL, SUBTRACT_CONTROL, IS_TMT     |
 
 ## Outputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| results_dir | tuple(meta, path) | Directory containing FPOP analysis results and log |
-| results | tuple(meta, path) | FPOP analysis results in TSV format (`*_fpop*.tsv`, optional) |
-| results_csv | tuple(meta, path) | FPOP analysis results in CSV format (`*_fpop*.csv`, optional) |
-| versions_fpop | tuple | FPOP software version (topic channel) |
-| versions_fragpipe | tuple | FragPipe software version (topic channel) |
+| Channel           | Type              | Description                                                   |
+| ----------------- | ----------------- | ------------------------------------------------------------- |
+| results_dir       | tuple(meta, path) | Directory containing FPOP analysis results and log            |
+| results           | tuple(meta, path) | FPOP analysis results in TSV format (`*_fpop*.tsv`, optional) |
+| results_csv       | tuple(meta, path) | FPOP analysis results in CSV format (`*_fpop*.csv`, optional) |
+| versions_fpop     | tuple             | FPOP software version (topic channel)                         |
+| versions_fragpipe | tuple             | FragPipe software version (topic channel)                     |
 
 ## Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| ext.args | '' | Additional CLI arguments appended to the FPOP Python command |
-| ext.prefix | meta.id | Override for the output directory name |
-| ext.fragpipe_tools_dir | (auto-detected) | Override for the FragPipe tools directory path |
+| Parameter              | Default         | Description                                                  |
+| ---------------------- | --------------- | ------------------------------------------------------------ |
+| ext.args               | ''              | Additional CLI arguments appended to the FPOP Python command |
+| ext.prefix             | meta.id         | Override for the output directory name                       |
+| ext.fragpipe_tools_dir | (auto-detected) | Override for the FragPipe tools directory path               |
 
 ## Container
 

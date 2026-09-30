@@ -40,7 +40,7 @@ process DIATRACER {
     // --RFMax: max RF value
 
     """
-    
+
     export HOME=\$(pwd)
     mkdir -p ${prefix}
 

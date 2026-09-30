@@ -10,30 +10,30 @@ This module fits at the end of the DIA pipeline for downstream statistical analy
 
 ## Inputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
+| Channel           | Type | Description                                          |
+| ----------------- | ---- | ---------------------------------------------------- |
 | msstats_csv_input | path | MSstats-formatted CSV input file (`out_msstats.csv`) |
 
 ## Outputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| msstats_csv | path | MSstats result CSV files (`*.csv`) |
-| log | path | Log file (`*.log`) |
-| versions | path | Software versions file (`versions.yml`) with r-base and bioconductor-msstats versions |
+| Channel     | Type | Description                                                                           |
+| ----------- | ---- | ------------------------------------------------------------------------------------- |
+| msstats_csv | path | MSstats result CSV files (`*.csv`)                                                    |
+| log         | path | Log file (`*.log`)                                                                    |
+| versions    | path | Software versions file (`versions.yml`) with r-base and bioconductor-msstats versions |
 
 ## Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| ext.args | '' | Passed as last positional argument to `msstats_plfq.R` |
-| params.contrasts | - | Contrast definitions for statistical testing |
-| params.ref_condition | - | Reference condition for contrasts |
-| params.msstats_remove_one_feat_prot | - | Remove single-feature proteins |
-| params.msstatslfq_removeFewMeasurements | - | Remove features with few measurements |
-| params.msstatslfq_feature_subset_protein | - | Feature subset for protein quantification |
-| params.msstatslfq_quant_summary_method | - | Quantification summary method |
-| params.msstats_threshold | - | Significance threshold |
+| Parameter                                | Default | Description                                            |
+| ---------------------------------------- | ------- | ------------------------------------------------------ |
+| ext.args                                 | ''      | Passed as last positional argument to `msstats_plfq.R` |
+| params.contrasts                         | -       | Contrast definitions for statistical testing           |
+| params.ref_condition                     | -       | Reference condition for contrasts                      |
+| params.msstats_remove_one_feat_prot      | -       | Remove single-feature proteins                         |
+| params.msstatslfq_removeFewMeasurements  | -       | Remove features with few measurements                  |
+| params.msstatslfq_feature_subset_protein | -       | Feature subset for protein quantification              |
+| params.msstatslfq_quant_summary_method   | -       | Quantification summary method                          |
+| params.msstats_threshold                 | -       | Significance threshold                                 |
 
 ## Container
 

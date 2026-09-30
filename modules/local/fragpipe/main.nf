@@ -34,7 +34,7 @@ process FRAGPIPE {
     def num_samples = mzml_list.size()
 
     """
-    
+
     #!/bin/bash
 
     echo "============================================================"

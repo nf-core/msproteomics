@@ -10,25 +10,25 @@ The output format is determined by `ext.args` flags (`--format 0`=mgf, `1`/`2`=m
 
 ## Inputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| meta | val(map) | Sample metadata |
-| raw | path | Thermo `.raw` file |
+| Channel | Type     | Description        |
+| ------- | -------- | ------------------ |
+| meta    | val(map) | Sample metadata    |
+| raw     | path     | Thermo `.raw` file |
 
 ## Outputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| spectra | tuple(val, path) | Converted spectra file (`*.mzML`, `*.mzML.gz`, `*.mgf`, `*.mgf.gz`, `*.parquet`, `*.parquet.gz`) |
-| versions | path | `versions.yml` with software versions |
-| versions_thermorawfileparser | topic: versions | ThermoRawFileParser version |
+| Channel                      | Type             | Description                                                                                      |
+| ---------------------------- | ---------------- | ------------------------------------------------------------------------------------------------ |
+| spectra                      | tuple(val, path) | Converted spectra file (`*.mzML`, `*.mzML.gz`, `*.mgf`, `*.mgf.gz`, `*.parquet`, `*.parquet.gz`) |
+| versions                     | path             | `versions.yml` with software versions                                                            |
+| versions_thermorawfileparser | topic: versions  | ThermoRawFileParser version                                                                      |
 
 ## Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| ext.args | '' | Command-line arguments for ThermoRawFileParser (controls format and compression) |
-| ext.prefix | `${meta.id}` | Output file prefix |
+| Parameter  | Default      | Description                                                                      |
+| ---------- | ------------ | -------------------------------------------------------------------------------- |
+| ext.args   | ''           | Command-line arguments for ThermoRawFileParser (controls format and compression) |
+| ext.prefix | `${meta.id}` | Output file prefix                                                               |
 
 ## Container
 

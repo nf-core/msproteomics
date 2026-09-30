@@ -36,7 +36,7 @@ process SAINTEXPRESS {
     // Input files must be in current directory: inter.dat, bait.dat, prey.dat
 
     """
-    
+
     export HOME=\$(pwd)
     mkdir -p ${prefix}
 

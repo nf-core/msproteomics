@@ -10,29 +10,29 @@ The validated file is passed through to downstream processes.
 
 ## Inputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| input_file | path | Samplesheet or SDRF file (`*.tsv`, `*.txt`, `*.csv`) |
-| is_sdrf | val(boolean) | Whether the input file is in SDRF format |
+| Channel             | Type         | Description                                                  |
+| ------------------- | ------------ | ------------------------------------------------------------ |
+| input_file          | path         | Samplesheet or SDRF file (`*.tsv`, `*.txt`, `*.csv`)         |
+| is_sdrf             | val(boolean) | Whether the input file is in SDRF format                     |
 | validate_ontologies | val(boolean) | Whether to validate ontologies (false skips SDRF validation) |
 
 ## Outputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| log | path | `*.log` validation log |
+| Channel      | Type | Description                              |
+| ------------ | ---- | ---------------------------------------- |
+| log          | path | `*.log` validation log                   |
 | checked_file | path | Pass-through of the validated input file |
-| versions | path | `versions.yml` with software versions |
+| versions     | path | `versions.yml` with software versions    |
 
 ## Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| ext.args | '' | Additional command-line arguments for `quantmsutilsc checksamplesheet` |
-| params.skip_ms_validation | false | Skip mass spectrometry validation |
-| params.skip_factor_validation | false | Skip factor validation |
-| params.skip_experimental_design_validation | false | Skip experimental design validation |
-| params.use_ols_cache_only | false | Use OLS cache only for ontology lookups |
+| Parameter                                  | Default | Description                                                            |
+| ------------------------------------------ | ------- | ---------------------------------------------------------------------- |
+| ext.args                                   | ''      | Additional command-line arguments for `quantmsutilsc checksamplesheet` |
+| params.skip_ms_validation                  | false   | Skip mass spectrometry validation                                      |
+| params.skip_factor_validation              | false   | Skip factor validation                                                 |
+| params.skip_experimental_design_validation | false   | Skip experimental design validation                                    |
+| params.use_ols_cache_only                  | false   | Use OLS cache only for ontology lookups                                |
 
 ## Container
 

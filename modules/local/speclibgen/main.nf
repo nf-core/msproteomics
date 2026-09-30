@@ -37,7 +37,7 @@ process SPECLIBGEN {
     def decoy_tag = task.ext.decoy_tag ?: 'rev_'
 
     """
-    
+
     export HOME=\$(pwd)
     mkdir -p ${prefix}
 

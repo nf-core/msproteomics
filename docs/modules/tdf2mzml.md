@@ -10,25 +10,25 @@ The original `.d` directory is preserved and emitted as an output alongside the 
 
 ## Inputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| meta | val(map) | Sample metadata (uses `meta.mzml_id` for tag) |
-| rawfile | path | Bruker `.d` raw file |
+| Channel | Type     | Description                                   |
+| ------- | -------- | --------------------------------------------- |
+| meta    | val(map) | Sample metadata (uses `meta.mzml_id` for tag) |
+| rawfile | path     | Bruker `.d` raw file                          |
 
 ## Outputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| mzmls_converted | tuple(val, path) | `*.mzML` converted file |
-| dotd_files | tuple(val, path) | `*.d` original file (preserved and renamed) |
-| versions | path | `versions.yml` with software versions |
-| log | path | `*.log` conversion log |
+| Channel         | Type             | Description                                 |
+| --------------- | ---------------- | ------------------------------------------- |
+| mzmls_converted | tuple(val, path) | `*.mzML` converted file                     |
+| dotd_files      | tuple(val, path) | `*.d` original file (preserved and renamed) |
+| versions        | path             | `versions.yml` with software versions       |
+| log             | path             | `*.log` conversion log                      |
 
 ## Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| ext.args | '' | Additional command-line arguments appended to `tdf2mzml.py -i` |
+| Parameter | Default | Description                                                    |
+| --------- | ------- | -------------------------------------------------------------- |
+| ext.args  | ''      | Additional command-line arguments appended to `tdf2mzml.py -i` |
 
 ## Container
 

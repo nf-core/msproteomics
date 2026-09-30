@@ -10,30 +10,30 @@ This module aggregates results from upstream pipeline stages into a comprehensiv
 
 ## Inputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| results | path | All result files staged into `results/` directory |
-| quantms_log | path | quantms log file |
+| Channel     | Type | Description                                       |
+| ----------- | ---- | ------------------------------------------------- |
+| results     | path | All result files staged into `results/` directory |
+| quantms_log | path | quantms log file                                  |
 
 ## Outputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| ch_pmultiqc_report | path | MultiQC HTML report (`*.html`) |
-| ch_pmultiqc_db | path | SQLite3 database with protein, PSM, and quantification data (`*.db`, optional) |
-| versions | path | pmultiqc version (`versions.yml`) |
-| data | path | MultiQC data directory (`*_data`) |
+| Channel            | Type | Description                                                                    |
+| ------------------ | ---- | ------------------------------------------------------------------------------ |
+| ch_pmultiqc_report | path | MultiQC HTML report (`*.html`)                                                 |
+| ch_pmultiqc_db     | path | SQLite3 database with protein, PSM, and quantification data (`*.db`, optional) |
+| versions           | path | pmultiqc version (`versions.yml`)                                              |
+| data               | path | MultiQC data directory (`*_data`)                                              |
 
 ## Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| ext.args | '' | Additional CLI arguments passed to the `multiqc` command |
-| params.enable_pmultiqc | - | Combined with `params.export_mztab` to control `--quantms_plugin` |
-| params.skip_table_plots | - | Controls `--disable_table` flag |
-| params.pmultiqc_idxml_skip | - | Controls `--ignored_idxml` flag |
-| params.contaminant_string | - | Sets `--contaminant_affix` for contaminant filtering |
-| params.quantification_method | - | Sets `--quantification_method` for report generation |
+| Parameter                    | Default | Description                                                       |
+| ---------------------------- | ------- | ----------------------------------------------------------------- |
+| ext.args                     | ''      | Additional CLI arguments passed to the `multiqc` command          |
+| params.enable_pmultiqc       | -       | Combined with `params.export_mztab` to control `--quantms_plugin` |
+| params.skip_table_plots      | -       | Controls `--disable_table` flag                                   |
+| params.pmultiqc_idxml_skip   | -       | Controls `--ignored_idxml` flag                                   |
+| params.contaminant_string    | -       | Sets `--contaminant_affix` for contaminant filtering              |
+| params.quantification_method | -       | Sets `--quantification_method` for report generation              |
 
 ## Container
 

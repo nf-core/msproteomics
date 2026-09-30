@@ -10,33 +10,33 @@ Used within the FRAGPIPE_EXPORT subworkflow for metaproteomics experiments requi
 
 ## Inputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| meta | val(map) | Sample metadata map |
-| project_dir | path | Directory containing FragPipe results for taxonomy analysis |
-| config_cli | val(string) | Metaproteomics parameters as CLI string (e.g., `--decoyTag rev_ --qvalue 0.01 --iterations 2`) |
-| fasta | path | Protein sequence database in FASTA format (shared resource) |
-| taxon_name_file | path | NCBI taxonomy `names.dmp` file (shared resource) |
-| taxon_node_file | path | NCBI taxonomy `nodes.dmp` file (shared resource) |
+| Channel         | Type        | Description                                                                                    |
+| --------------- | ----------- | ---------------------------------------------------------------------------------------------- |
+| meta            | val(map)    | Sample metadata map                                                                            |
+| project_dir     | path        | Directory containing FragPipe results for taxonomy analysis                                    |
+| config_cli      | val(string) | Metaproteomics parameters as CLI string (e.g., `--decoyTag rev_ --qvalue 0.01 --iterations 2`) |
+| fasta           | path        | Protein sequence database in FASTA format (shared resource)                                    |
+| taxon_name_file | path        | NCBI taxonomy `names.dmp` file (shared resource)                                               |
+| taxon_node_file | path        | NCBI taxonomy `nodes.dmp` file (shared resource)                                               |
 
 ## Outputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| results_dir | tuple(meta, path) | Directory containing metaproteomics results and log |
-| optimized_fasta | tuple(meta, path) | Optimized FASTA database filtered by taxonomic analysis (`*_optimized.fasta`, optional) |
-| taxonomy_results | tuple(meta, path) | Taxonomy analysis results (`*_taxonomy*.tsv`, optional) |
-| results | tuple(meta, path) | Metaproteomics analysis results (`*_metaproteomics*.tsv`, optional) |
-| versions_metaproteomics | tuple | Metaproteomics (FP-Meta) software version (topic channel) |
-| versions_fragpipe | tuple | FragPipe software version (topic channel) |
+| Channel                 | Type              | Description                                                                             |
+| ----------------------- | ----------------- | --------------------------------------------------------------------------------------- |
+| results_dir             | tuple(meta, path) | Directory containing metaproteomics results and log                                     |
+| optimized_fasta         | tuple(meta, path) | Optimized FASTA database filtered by taxonomic analysis (`*_optimized.fasta`, optional) |
+| taxonomy_results        | tuple(meta, path) | Taxonomy analysis results (`*_taxonomy*.tsv`, optional)                                 |
+| results                 | tuple(meta, path) | Metaproteomics analysis results (`*_metaproteomics*.tsv`, optional)                     |
+| versions_metaproteomics | tuple             | Metaproteomics (FP-Meta) software version (topic channel)                               |
+| versions_fragpipe       | tuple             | FragPipe software version (topic channel)                                               |
 
 ## Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| ext.args | '' | Additional CLI arguments appended to the FP-Meta DbOptimizer Java command |
-| ext.prefix | meta.id | Override for the output directory name |
-| ext.fragpipe_tools_dir | (auto-detected) | Override for the FragPipe tools directory path |
+| Parameter              | Default         | Description                                                               |
+| ---------------------- | --------------- | ------------------------------------------------------------------------- |
+| ext.args               | ''              | Additional CLI arguments appended to the FP-Meta DbOptimizer Java command |
+| ext.prefix             | meta.id         | Override for the output directory name                                    |
+| ext.fragpipe_tools_dir | (auto-detected) | Override for the FragPipe tools directory path                            |
 
 ## Container
 

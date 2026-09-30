@@ -10,28 +10,28 @@ Go runtime tuning parameters (GOMEMLIMIT, GOGC, GOMAXPROCS) are set for optimal 
 
 ## Inputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| meta | val(map) | Sample/experiment metadata |
-| fasta | path | Protein sequence database in FASTA format |
+| Channel | Type     | Description                               |
+| ------- | -------- | ----------------------------------------- |
+| meta    | val(map) | Sample/experiment metadata                |
+| fasta   | path     | Protein sequence database in FASTA format |
 
 ## Outputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| fasta | tuple(val, path) | `${prefix}_philosopher.fasta` database with decoys/contaminants added |
-| log | tuple(val, path) | `philosopher_database.log` command log |
-| versions_philosopher | topic: versions | Philosopher version |
-| versions_fragpipe | topic: versions | FragPipe version |
+| Channel              | Type             | Description                                                           |
+| -------------------- | ---------------- | --------------------------------------------------------------------- |
+| fasta                | tuple(val, path) | `${prefix}_philosopher.fasta` database with decoys/contaminants added |
+| log                  | tuple(val, path) | `philosopher_database.log` command log                                |
+| versions_philosopher | topic: versions  | Philosopher version                                                   |
+| versions_fragpipe    | topic: versions  | FragPipe version                                                      |
 
 ## Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| ext.args | '' | Additional command-line arguments for `philosopher database --custom` (only when decoys not present) |
-| ext.prefix | `${meta.id}` | Output file prefix |
-| ext.decoy_tag | `rev_` | Decoy protein prefix used for detection and generation |
-| ext.fragpipe_tools_dir | `/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools` | FragPipe tools directory for Philosopher binary discovery |
+| Parameter              | Default                                           | Description                                                                                          |
+| ---------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| ext.args               | ''                                                | Additional command-line arguments for `philosopher database --custom` (only when decoys not present) |
+| ext.prefix             | `${meta.id}`                                      | Output file prefix                                                                                   |
+| ext.decoy_tag          | `rev_`                                            | Decoy protein prefix used for detection and generation                                               |
+| ext.fragpipe_tools_dir | `/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools` | FragPipe tools directory for Philosopher binary discovery                                            |
 
 ## Container
 

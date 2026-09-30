@@ -36,7 +36,7 @@ process IONQUANT {
     def agree_license = task.ext.agree_fragpipe_license_agreement ?: false
 
     """
-    
+
     export HOME=\$(pwd)
     mkdir -p ${prefix}
 

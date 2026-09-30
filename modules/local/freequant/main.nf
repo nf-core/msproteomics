@@ -36,7 +36,7 @@ process FREEQUANT {
     // --raw: use raw files (for Thermo .raw)
 
     """
-    
+
     export HOME=\$(pwd)
     WORK_DIR=\$(pwd)
     mkdir -p ${prefix}

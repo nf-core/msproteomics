@@ -10,26 +10,26 @@ Used in the main DIA workflow for protein-level quantification after DIA-NN anal
 
 ## Inputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| report_path | path | DIA-NN main report TSV file (`report.tsv`) |
-| q | val | Precursor-level FDR threshold (q-value cutoff) |
-| pgq | val | Protein group-level FDR threshold (q-value cutoff) |
-| contaminant_pattern | val | Regex pattern to identify contaminant proteins (e.g., `Cont_`) |
+| Channel             | Type | Description                                                    |
+| ------------------- | ---- | -------------------------------------------------------------- |
+| report_path         | path | DIA-NN main report TSV file (`report.tsv`)                     |
+| q                   | val  | Precursor-level FDR threshold (q-value cutoff)                 |
+| pgq                 | val  | Protein group-level FDR threshold (q-value cutoff)             |
+| contaminant_pattern | val  | Regex pattern to identify contaminant proteins (e.g., `Cont_`) |
 
 ## Outputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
+| Channel                     | Type | Description                                                                   |
+| --------------------------- | ---- | ----------------------------------------------------------------------------- |
 | contaminants_removed_report | path | DIA-NN report with contaminant entries removed (`contaminants_removed_*.tsv`) |
-| maxlfq | path | MaxLFQ protein quantification matrix (`maxlfq.tsv`) |
-| versions | path | Software versions (`versions.yml`) for r-base and iq |
+| maxlfq                      | path | MaxLFQ protein quantification matrix (`maxlfq.tsv`)                           |
+| versions                    | path | Software versions (`versions.yml`) for r-base and iq                          |
 
 ## Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| (none) | - | Logic is in the R template `iq.r`; no ext.args used |
+| Parameter | Default | Description                                         |
+| --------- | ------- | --------------------------------------------------- |
+| (none)    | -       | Logic is in the R template `iq.r`; no ext.args used |
 
 ## Container
 

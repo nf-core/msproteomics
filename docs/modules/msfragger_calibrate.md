@@ -10,31 +10,31 @@ This is an AGGREGATE process that runs once with all samples collected together,
 
 ## Inputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| fasta | path | Protein sequence database (`*.fasta`) |
-| mzml_files | path | ALL mass spectrometry data files collected (`*.mzML`) |
-| params_file | path | MSFragger params file (native fragger.params format) |
+| Channel       | Type | Description                                                            |
+| ------------- | ---- | ---------------------------------------------------------------------- |
+| fasta         | path | Protein sequence database (`*.fasta`)                                  |
+| mzml_files    | path | ALL mass spectrometry data files collected (`*.mzML`)                  |
+| params_file   | path | MSFragger params file (native fragger.params format)                   |
 | msfragger_dir | path | Unzipped MSFragger tool directory (optional). Pass `[]` when not using |
 
 ## Outputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| calibrated_spectra | path | `.mzBIN_calibrated` files (or original copies if not calibrated) |
-| params | path | Updated `calibrated_fragger.params` with optimized tolerances, `check_spectral_files=0`, `calibrate_mass=0` |
-| license_agreement | path | License agreement file (`I_AGREE_FRAGPIPE_LICENSE_AGREEMENT`) |
-| versions_msfragger | tuple (topic: versions) | MSFragger version |
-| versions_fragpipe | tuple (topic: versions) | FragPipe version |
+| Channel            | Type                    | Description                                                                                                 |
+| ------------------ | ----------------------- | ----------------------------------------------------------------------------------------------------------- |
+| calibrated_spectra | path                    | `.mzBIN_calibrated` files (or original copies if not calibrated)                                            |
+| params             | path                    | Updated `calibrated_fragger.params` with optimized tolerances, `check_spectral_files=0`, `calibrate_mass=0` |
+| license_agreement  | path                    | License agreement file (`I_AGREE_FRAGPIPE_LICENSE_AGREEMENT`)                                               |
+| versions_msfragger | tuple (topic: versions) | MSFragger version                                                                                           |
+| versions_fragpipe  | tuple (topic: versions) | FragPipe version                                                                                            |
 
 ## Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| ext.args | '' | Additional CLI arguments appended to the MSFragger `--split1` command |
-| ext.java_xmx | (auto) | Override Java heap size |
-| ext.agree_fragpipe_license_agreement | (required) | Must be `true` to run |
-| ext.fragpipe_tools_dir | (default path) | Override FragPipe tools directory |
+| Parameter                            | Default        | Description                                                           |
+| ------------------------------------ | -------------- | --------------------------------------------------------------------- |
+| ext.args                             | ''             | Additional CLI arguments appended to the MSFragger `--split1` command |
+| ext.java_xmx                         | (auto)         | Override Java heap size                                               |
+| ext.agree_fragpipe_license_agreement | (required)     | Must be `true` to run                                                 |
+| ext.fragpipe_tools_dir               | (default path) | Override FragPipe tools directory                                     |
 
 ## Container
 

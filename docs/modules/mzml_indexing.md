@@ -10,24 +10,24 @@ This module is part of the file preparation stage in the pipeline.
 
 ## Inputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| meta | val(map) | Sample metadata map (uses `meta.mzml_id` for tagging) |
-| mzmlfile | path | Input mzML file (`*.mzML`) |
+| Channel  | Type     | Description                                           |
+| -------- | -------- | ----------------------------------------------------- |
+| meta     | val(map) | Sample metadata map (uses `meta.mzml_id` for tagging) |
+| mzmlfile | path     | Input mzML file (`*.mzML`)                            |
 
 ## Outputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| mzmls_indexed | tuple(val, path) | Indexed mzML file in `out/` directory |
-| versions | path | FileConverter version (`versions.yml`) |
-| log | path | Log file (`*.log`) |
+| Channel       | Type             | Description                            |
+| ------------- | ---------------- | -------------------------------------- |
+| mzmls_indexed | tuple(val, path) | Indexed mzML file in `out/` directory  |
+| versions      | path             | FileConverter version (`versions.yml`) |
+| log           | path             | Log file (`*.log`)                     |
 
 ## Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| ext.args | '' | Additional CLI arguments appended to `FileConverter` command |
+| Parameter | Default | Description                                                  |
+| --------- | ------- | ------------------------------------------------------------ |
+| ext.args  | ''      | Additional CLI arguments appended to `FileConverter` command |
 
 ## Container
 

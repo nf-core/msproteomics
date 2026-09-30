@@ -10,34 +10,34 @@ PTM-Shepherd is part of the FragPipe suite and uses multiple JAR dependencies in
 
 ## Inputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| meta | val(map) | Sample metadata map |
-| psm_dirs | path | Directories containing `psm.tsv` files from PHILOSOPHER_FILTER |
-| protxml | path | Combined protein inference file from PROTEINPROPHET (`*.prot.xml`) |
-| mzml_files | path | Mass spectrometry files (`*.mzML`, staged in `spectra/` directory) |
-| config_file | path | PTM-Shepherd configuration file (`shepherd.config`) |
-| fasta | path | Protein database FASTA (shared resource) |
+| Channel     | Type     | Description                                                        |
+| ----------- | -------- | ------------------------------------------------------------------ |
+| meta        | val(map) | Sample metadata map                                                |
+| psm_dirs    | path     | Directories containing `psm.tsv` files from PHILOSOPHER_FILTER     |
+| protxml     | path     | Combined protein inference file from PROTEINPROPHET (`*.prot.xml`) |
+| mzml_files  | path     | Mass spectrometry files (`*.mzML`, staged in `spectra/` directory) |
+| config_file | path     | PTM-Shepherd configuration file (`shepherd.config`)                |
+| fasta       | path     | Protein database FASTA (shared resource)                           |
 
 ## Outputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| results_dir | tuple(val, path) | Results directory containing all PTM-Shepherd output |
-| global_profile | tuple(val, path) | Global mass shift profile across all samples (`global.profile.tsv`, optional) |
-| global_modsummary | tuple(val, path) | Global modification summary with annotations (`global.modsummary.tsv`, optional) |
-| diagmine | tuple(val, path) | Diagnostic ion mining results (`*diagmine.tsv`, optional) |
-| localization | tuple(val, path) | PTM site localization results (`*localization.tsv`, optional) |
-| glycoprofile | tuple(val, path) | Glycoproteomics profile results (`*glycoprofile.tsv`, optional) |
-| versions_ptmshepherd | tuple (topic: versions) | PTM-Shepherd version |
-| versions_fragpipe | tuple (topic: versions) | FragPipe version |
+| Channel              | Type                    | Description                                                                      |
+| -------------------- | ----------------------- | -------------------------------------------------------------------------------- |
+| results_dir          | tuple(val, path)        | Results directory containing all PTM-Shepherd output                             |
+| global_profile       | tuple(val, path)        | Global mass shift profile across all samples (`global.profile.tsv`, optional)    |
+| global_modsummary    | tuple(val, path)        | Global modification summary with annotations (`global.modsummary.tsv`, optional) |
+| diagmine             | tuple(val, path)        | Diagnostic ion mining results (`*diagmine.tsv`, optional)                        |
+| localization         | tuple(val, path)        | PTM site localization results (`*localization.tsv`, optional)                    |
+| glycoprofile         | tuple(val, path)        | Glycoproteomics profile results (`*glycoprofile.tsv`, optional)                  |
+| versions_ptmshepherd | tuple (topic: versions) | PTM-Shepherd version                                                             |
+| versions_fragpipe    | tuple (topic: versions) | FragPipe version                                                                 |
 
 ## Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| ext.args | '' | Additional CLI arguments appended to PTM-Shepherd Java command after config file path |
-| ext.fragpipe_tools_dir | (default path) | Override FragPipe tools directory |
+| Parameter              | Default        | Description                                                                           |
+| ---------------------- | -------------- | ------------------------------------------------------------------------------------- |
+| ext.args               | ''             | Additional CLI arguments appended to PTM-Shepherd Java command after config file path |
+| ext.fragpipe_tools_dir | (default path) | Override FragPipe tools directory                                                     |
 
 ## Container
 

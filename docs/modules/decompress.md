@@ -10,23 +10,23 @@ Used within the FILE_PREPARATION subworkflow for handling compressed Bruker raw 
 
 ## Inputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| meta | val(map) | Sample metadata map (uses `meta.mzml_id`) |
-| compressed_file | path | Compressed archive file (`.tar.gz`, `.gz`, `.tar`, `.zip`) |
+| Channel         | Type     | Description                                                |
+| --------------- | -------- | ---------------------------------------------------------- |
+| meta            | val(map) | Sample metadata map (uses `meta.mzml_id`)                  |
+| compressed_file | path     | Compressed archive file (`.tar.gz`, `.gz`, `.tar`, `.zip`) |
 
 ## Outputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| decompressed_files | tuple(meta, path) | Decompressed `.d` directory |
-| versions | path | Software versions (`versions.yml`) for gunzip, tar, unzip |
-| log | path | Decompression log file |
+| Channel            | Type              | Description                                               |
+| ------------------ | ----------------- | --------------------------------------------------------- |
+| decompressed_files | tuple(meta, path) | Decompressed `.d` directory                               |
+| versions           | path              | Software versions (`versions.yml`) for gunzip, tar, unzip |
+| log                | path              | Decompression log file                                    |
 
 ## Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
+| Parameter  | Default      | Description                      |
+| ---------- | ------------ | -------------------------------- |
 | ext.prefix | meta.mzml_id | Override for the log file prefix |
 
 ## Container

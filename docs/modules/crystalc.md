@@ -10,30 +10,30 @@ Used within the FRAGPIPE_SEARCH subworkflow after MSFragger database search.
 
 ## Inputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| meta | val(map) | Sample metadata map |
-| pepxml_file | path | Search results in pepXML format from MSFragger (`*.pepXML`) |
-| mzml_file | path | Mass spectrometry data file for spectrum access (`*.mzML`, `*.mzXML`) |
-| config_file | path | Crystal-C parameters file with paths configured (`*.params`) |
-| fasta | path | Protein sequence database FASTA (shared resource) |
+| Channel     | Type     | Description                                                           |
+| ----------- | -------- | --------------------------------------------------------------------- |
+| meta        | val(map) | Sample metadata map                                                   |
+| pepxml_file | path     | Search results in pepXML format from MSFragger (`*.pepXML`)           |
+| mzml_file   | path     | Mass spectrometry data file for spectrum access (`*.mzML`, `*.mzXML`) |
+| config_file | path     | Crystal-C parameters file with paths configured (`*.params`)          |
+| fasta       | path     | Protein sequence database FASTA (shared resource)                     |
 
 ## Outputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| results_dir | tuple(meta, path) | Directory containing Crystal-C results and log |
-| pepxml_filtered | tuple(meta, path) | Filtered pepXML files with chimeric artifacts removed (`*_c.pepXML`) |
-| versions_crystalc | tuple | Crystal-C software version (topic channel) |
-| versions_fragpipe | tuple | FragPipe software version (topic channel) |
+| Channel           | Type              | Description                                                          |
+| ----------------- | ----------------- | -------------------------------------------------------------------- |
+| results_dir       | tuple(meta, path) | Directory containing Crystal-C results and log                       |
+| pepxml_filtered   | tuple(meta, path) | Filtered pepXML files with chimeric artifacts removed (`*_c.pepXML`) |
+| versions_crystalc | tuple             | Crystal-C software version (topic channel)                           |
+| versions_fragpipe | tuple             | FragPipe software version (topic channel)                            |
 
 ## Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| ext.args | '' | Additional CLI arguments appended to the `crystalc.Run` Java command |
-| ext.prefix | meta.id | Override for the output directory name |
-| ext.fragpipe_tools_dir | (auto-detected) | Override for the FragPipe tools directory path |
+| Parameter              | Default         | Description                                                          |
+| ---------------------- | --------------- | -------------------------------------------------------------------- |
+| ext.args               | ''              | Additional CLI arguments appended to the `crystalc.Run` Java command |
+| ext.prefix             | meta.id         | Override for the output directory name                               |
+| ext.fragpipe_tools_dir | (auto-detected) | Override for the FragPipe tools directory path                       |
 
 ## Container
 

@@ -30,7 +30,7 @@ process TMTINTEGRATOR {
     def mem = task.memory ? Math.max(1, task.memory.toGiga() - 2) : 30
     def tools_dir = task.ext.fragpipe_tools_dir ?: '/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools'
     """
-    
+
     export HOME=\$(pwd)
     mkdir -p ${prefix}
 

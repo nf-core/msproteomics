@@ -10,33 +10,33 @@ Used in the main `msproteomics.nf` workflow and the FRAGPIPE_WF subworkflow for 
 
 ## Inputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| meta | val(map) | Sample metadata map (e.g., `[ id:'experiment1' ]`) |
-| mzml_files | path | Mass spectrometry data files in mzML format |
-| fasta | path | Protein sequence database in FASTA format |
-| workflow_file | path | FragPipe `.workflow` configuration file |
-| data_type | val(string) | Data type: `DDA`, `DIA`, `GPF-DIA`, `DIA-Quant`, `DIA-Lib`, `DDA+` |
+| Channel       | Type        | Description                                                        |
+| ------------- | ----------- | ------------------------------------------------------------------ |
+| meta          | val(map)    | Sample metadata map (e.g., `[ id:'experiment1' ]`)                 |
+| mzml_files    | path        | Mass spectrometry data files in mzML format                        |
+| fasta         | path        | Protein sequence database in FASTA format                          |
+| workflow_file | path        | FragPipe `.workflow` configuration file                            |
+| data_type     | val(string) | Data type: `DDA`, `DIA`, `GPF-DIA`, `DIA-Quant`, `DIA-Lib`, `DDA+` |
 
 ## Outputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| results_dir | tuple(meta, path) | Complete FragPipe output directory |
-| proteins | tuple(meta, path) | Protein-level quantification results (`*/protein.tsv`) |
-| peptides | tuple(meta, path) | Peptide-level quantification results (`*/peptide.tsv`) |
-| psms | tuple(meta, path) | Peptide-spectrum match results (`*/psm.tsv`) |
-| ions | tuple(meta, path) | Ion reports (`*/ion.tsv`, optional) |
-| pepxml | tuple(meta, path) | pepXML search results (`*/*.pepXML`, optional) |
-| protxml | tuple(meta, path) | Combined ProtXML (`combined.prot.xml`, optional) |
-| versions_fragpipe | tuple | FragPipe software version (topic channel) |
+| Channel           | Type              | Description                                            |
+| ----------------- | ----------------- | ------------------------------------------------------ |
+| results_dir       | tuple(meta, path) | Complete FragPipe output directory                     |
+| proteins          | tuple(meta, path) | Protein-level quantification results (`*/protein.tsv`) |
+| peptides          | tuple(meta, path) | Peptide-level quantification results (`*/peptide.tsv`) |
+| psms              | tuple(meta, path) | Peptide-spectrum match results (`*/psm.tsv`)           |
+| ions              | tuple(meta, path) | Ion reports (`*/ion.tsv`, optional)                    |
+| pepxml            | tuple(meta, path) | pepXML search results (`*/*.pepXML`, optional)         |
+| protxml           | tuple(meta, path) | Combined ProtXML (`combined.prot.xml`, optional)       |
+| versions_fragpipe | tuple             | FragPipe software version (topic channel)              |
 
 ## Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| ext.args | '' | Additional CLI arguments appended to the `fragpipe --headless` command |
-| ext.prefix | meta.id | Override for the output directory name |
+| Parameter  | Default | Description                                                            |
+| ---------- | ------- | ---------------------------------------------------------------------- |
+| ext.args   | ''      | Additional CLI arguments appended to the `fragpipe --headless` command |
+| ext.prefix | meta.id | Override for the output directory name                                 |
 
 ## Container
 

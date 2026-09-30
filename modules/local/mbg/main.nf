@@ -53,7 +53,7 @@ process MBG {
     // --allowchimeric: allow chimeric spectra (true/false)
 
     """
-    
+
     export HOME=\$(pwd)
     mkdir -p ${prefix}
 
