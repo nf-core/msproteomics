@@ -10,30 +10,30 @@ The module sets `calibrate_mass = 0` in the params to prevent calibration during
 
 ## Inputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| meta | val(map) | Sample/experiment metadata map |
-| fasta | path | Protein sequence database (`*.fasta`) |
-| params_file | path | MSFragger params file (native fragger.params format) |
-| msfragger_dir | path | Unzipped MSFragger tool directory (optional). Pass `[]` when not using |
+| Channel       | Type     | Description                                                            |
+| ------------- | -------- | ---------------------------------------------------------------------- |
+| meta          | val(map) | Sample/experiment metadata map                                         |
+| fasta         | path     | Protein sequence database (`*.fasta`)                                  |
+| params_file   | path     | MSFragger params file (native fragger.params format)                   |
+| msfragger_dir | path     | Unzipped MSFragger tool directory (optional). Pass `[]` when not using |
 
 ## Outputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| indexed_fasta | tuple(val, path, path) | FASTA + co-located pepindex files (must stay together for MSFragger reuse) |
-| license_agreement | path | License agreement file (`I_AGREE_FRAGPIPE_LICENSE_AGREEMENT`) |
-| versions_msfragger | tuple (topic: versions) | MSFragger version |
-| versions_fragpipe | tuple (topic: versions) | FragPipe version |
+| Channel            | Type                    | Description                                                                |
+| ------------------ | ----------------------- | -------------------------------------------------------------------------- |
+| indexed_fasta      | tuple(val, path, path)  | FASTA + co-located pepindex files (must stay together for MSFragger reuse) |
+| license_agreement  | path                    | License agreement file (`I_AGREE_FRAGPIPE_LICENSE_AGREEMENT`)              |
+| versions_msfragger | tuple (topic: versions) | MSFragger version                                                          |
+| versions_fragpipe  | tuple (topic: versions) | FragPipe version                                                           |
 
 ## Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| ext.args | '' | Additional CLI arguments appended to the MSFragger digest command |
-| ext.java_xmx | (auto) | Override Java heap size |
-| ext.agree_fragpipe_license_agreement | (required) | Must be `true` to run |
-| ext.fragpipe_tools_dir | (default path) | Override FragPipe tools directory |
+| Parameter                            | Default        | Description                                                       |
+| ------------------------------------ | -------------- | ----------------------------------------------------------------- |
+| ext.args                             | ''             | Additional CLI arguments appended to the MSFragger digest command |
+| ext.java_xmx                         | (auto)         | Override Java heap size                                           |
+| ext.agree_fragpipe_license_agreement | (required)     | Must be `true` to run                                             |
+| ext.fragpipe_tools_dir               | (default path) | Override FragPipe tools directory                                 |
 
 ## Container
 

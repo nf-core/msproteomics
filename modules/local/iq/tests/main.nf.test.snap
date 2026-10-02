@@ -1,4 +1,19 @@
 {
+    "iq - no row passes protein-group FDR writes header-only maxlfq table": {
+        "content": [
+            [
+                "contaminants_removed_diann_report_pgq1.tsv:md5,3489113b40c13a6cbecc0784afa29dc9"
+            ],
+            [
+                "maxlfq.tsv:md5,0d94e8b1397d40a736a4d634a532efa8"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-09-29T21:16:05.534390404"
+    },
     "iq - stub": {
         "content": [
             [
@@ -8,10 +23,10 @@
                 "maxlfq.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
             ]
         ],
-        "timestamp": "2026-03-25T03:49:14.235592864",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.2"
-        }
+        },
+        "timestamp": "2026-03-25T03:49:14.235592864"
     }
 }

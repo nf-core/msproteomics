@@ -10,30 +10,30 @@ MSBooster is part of the FragPipe suite and fits in the pipeline between MSFragg
 
 ## Inputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| meta | val(map) | Sample metadata map |
-| pin_files | path | PIN files from MSFragger search (`*.pin`) |
-| mzml_files | path | Mass spectrometry data files (`*.mzML`) |
-| params_file | path | Full MSBooster params file (key=value format). Pass `[]` when not using |
-| fragger_params | path | MSFragger params file for modification definitions. Pass `[]` when not using |
-| has_ion_mobility | val(boolean) | Whether input data has ion mobility (e.g., Bruker timsTOF .d files) |
+| Channel          | Type         | Description                                                                  |
+| ---------------- | ------------ | ---------------------------------------------------------------------------- |
+| meta             | val(map)     | Sample metadata map                                                          |
+| pin_files        | path         | PIN files from MSFragger search (`*.pin`)                                    |
+| mzml_files       | path         | Mass spectrometry data files (`*.mzML`)                                      |
+| params_file      | path         | Full MSBooster params file (key=value format). Pass `[]` when not using      |
+| fragger_params   | path         | MSFragger params file for modification definitions. Pass `[]` when not using |
+| has_ion_mobility | val(boolean) | Whether input data has ion mobility (e.g., Bruker timsTOF .d files)          |
 
 ## Outputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| results_dir | tuple(val, path) | Results directory containing rescored PIN files and logs |
-| pin_edited | tuple(val, path) | Rescored PIN files with additional features (renamed from `*_edited.pin`) |
-| versions_msbooster | tuple (topic: versions) | MSBooster version |
-| versions_fragpipe | tuple (topic: versions) | FragPipe version |
+| Channel            | Type                    | Description                                                               |
+| ------------------ | ----------------------- | ------------------------------------------------------------------------- |
+| results_dir        | tuple(val, path)        | Results directory containing rescored PIN files and logs                  |
+| pin_edited         | tuple(val, path)        | Rescored PIN files with additional features (renamed from `*_edited.pin`) |
+| versions_msbooster | tuple (topic: versions) | MSBooster version                                                         |
+| versions_fragpipe  | tuple (topic: versions) | FragPipe version                                                          |
 
 ## Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| ext.args | '' | Additional CLI arguments appended to `java ... MainClass --paramsList` command |
-| ext.fragpipe_tools_dir | '/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools' | Override FragPipe tools directory path |
+| Parameter              | Default                                           | Description                                                                    |
+| ---------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------ |
+| ext.args               | ''                                                | Additional CLI arguments appended to `java ... MainClass --paramsList` command |
+| ext.fragpipe_tools_dir | '/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools' | Override FragPipe tools directory path                                         |
 
 ## Container
 

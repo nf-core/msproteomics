@@ -33,20 +33,13 @@
                     "fragpipe",
                     "24.0"
                 ]
-            ],
-            [
-                [
-                    "MERGE_SPLIT_SEARCH",
-                    "python",
-                    "3.14.3"
-                ]
             ]
         ],
-        "timestamp": "2026-03-31T19:40:18.291806691",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
-        }
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-09-29T17:21:41.154969394"
     },
     "merge_split_search - integration with mock data": {
         "content": [
@@ -55,12 +48,26 @@
             ],
             [
                 "test_sample.pin"
+            ],
+            [
+                [
+                    "MERGE_SPLIT_SEARCH",
+                    "msfragger",
+                    "4.4.1"
+                ]
+            ],
+            [
+                [
+                    "MERGE_SPLIT_SEARCH",
+                    "fragpipe",
+                    "24.0"
+                ]
             ]
         ],
-        "timestamp": "2026-03-28T02:00:27.846057288",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
-        }
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-09-29T17:26:24.352887732"
     }
 }

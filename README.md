@@ -37,12 +37,12 @@ Instrument-specific settings are applied via optional config files (`-c conf/ins
 The `--mode` parameter selects the analysis engine.
 FragPipe sub-modes are controlled with `--tmt_mode` for TMT workflows.
 
-| Mode | Sub-mode | Description | Engine |
-| --- | --- | --- | --- |
-| `diann` | -- | DIA quantitative proteomics (standard, phospho) | [DIA-NN](https://github.com/vdemichev/DiaNN) |
-| `fragpipe` | *(none)* | Generic FragPipe workflows, configured by [workflow files](https://github.com/Nesvilab/FragPipe/tree/develop/workflows) | [FragPipe](https://fragpipe.nesvilab.org/) |
-| `fragpipe` | `--tmt_mode labelcheck` | TMT labeling efficiency QC | [FragPipe](https://fragpipe.nesvilab.org/) |
-| `fragpipe` | `--tmt_mode quant` | TMT isobaric quantification | [FragPipe](https://fragpipe.nesvilab.org/) |
+| Mode       | Sub-mode                | Description                                                                                                             | Engine                                       |
+| ---------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| `diann`    | --                      | DIA quantitative proteomics (standard, phospho)                                                                         | [DIA-NN](https://github.com/vdemichev/DiaNN) |
+| `fragpipe` | _(none)_                | Generic FragPipe workflows, configured by [workflow files](https://github.com/Nesvilab/FragPipe/tree/develop/workflows) | [FragPipe](https://fragpipe.nesvilab.org/)   |
+| `fragpipe` | `--tmt_mode labelcheck` | TMT labeling efficiency QC                                                                                              | [FragPipe](https://fragpipe.nesvilab.org/)   |
+| `fragpipe` | `--tmt_mode quant`      | TMT isobaric quantification                                                                                             | [FragPipe](https://fragpipe.nesvilab.org/)   |
 
 DIA method variants (e.g., phospho) and instrument-specific settings are applied via `-c` config files.
 See [docs/usage.md](docs/usage.md) for full details.

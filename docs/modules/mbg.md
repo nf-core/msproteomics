@@ -10,32 +10,32 @@ Used within the FRAGPIPE_GLYCO subworkflow for glycoproteomics analysis.
 
 ## Inputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| meta | val(map) | Sample metadata map |
-| psm_file | path | PSM file from PHILOSOPHER_FILTER (`psm.tsv`) |
-| manifest_file | path | FragPipe manifest file listing input files (`*.fp-manifest`) |
-| config_cli | val(string) | MBG parameters as CLI string (e.g., `--maxq 0.01 --mztol 10`) |
-| residue_db | path | Glycan residues database file (shared resource) |
-| glycan_mod_db | path | Glycan modifications database file (shared resource) |
+| Channel       | Type        | Description                                                   |
+| ------------- | ----------- | ------------------------------------------------------------- |
+| meta          | val(map)    | Sample metadata map                                           |
+| psm_file      | path        | PSM file from PHILOSOPHER_FILTER (`psm.tsv`)                  |
+| manifest_file | path        | FragPipe manifest file listing input files (`*.fp-manifest`)  |
+| config_cli    | val(string) | MBG parameters as CLI string (e.g., `--maxq 0.01 --mztol 10`) |
+| residue_db    | path        | Glycan residues database file (shared resource)               |
+| glycan_mod_db | path        | Glycan modifications database file (shared resource)          |
 
 ## Outputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| results_dir | tuple(meta, path) | Directory containing MBG results and log |
-| results | tuple(meta, path) | MBG matching results (`*_mbg*.tsv`, optional) |
-| glycan_results | tuple(meta, path) | Glycan-level results (`*_glycan*.tsv`, optional) |
-| versions_mbg | tuple | MBG software version (topic channel) |
-| versions_fragpipe | tuple | FragPipe software version (topic channel) |
+| Channel           | Type              | Description                                      |
+| ----------------- | ----------------- | ------------------------------------------------ |
+| results_dir       | tuple(meta, path) | Directory containing MBG results and log         |
+| results           | tuple(meta, path) | MBG matching results (`*_mbg*.tsv`, optional)    |
+| glycan_results    | tuple(meta, path) | Glycan-level results (`*_glycan*.tsv`, optional) |
+| versions_mbg      | tuple             | MBG software version (topic channel)             |
+| versions_fragpipe | tuple             | FragPipe software version (topic channel)        |
 
 ## Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| ext.args | '' | Additional CLI arguments appended to the MBG Java command |
-| ext.prefix | meta.id | Override for the output directory name |
-| ext.fragpipe_tools_dir | (auto-detected) | Override for the FragPipe tools directory path |
+| Parameter              | Default         | Description                                               |
+| ---------------------- | --------------- | --------------------------------------------------------- |
+| ext.args               | ''              | Additional CLI arguments appended to the MBG Java command |
+| ext.prefix             | meta.id         | Override for the output directory name                    |
+| ext.fragpipe_tools_dir | (auto-detected) | Override for the FragPipe tools directory path            |
 
 ## Container
 

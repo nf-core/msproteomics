@@ -10,31 +10,31 @@ This module discovers the SAINTexpress binary from the FragPipe tools directory 
 
 ## Inputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| meta | val(map) | Sample/experiment metadata |
-| inter_file | path | Interaction file containing prey-bait spectral counts or intensities (`inter.dat`) |
-| bait_file | path | Bait definition file mapping samples to baits and controls (`bait.dat`) |
-| prey_file | path | Prey definition file with protein lengths (`prey.dat`) |
-| mode | val(string) | Scoring mode: `"spc"` for spectral count or `"int"` for intensity |
-| config_cli | val(string) | SAINTexpress parameters as CLI string (e.g., `-R 2 -L 4`) |
+| Channel    | Type        | Description                                                                        |
+| ---------- | ----------- | ---------------------------------------------------------------------------------- |
+| meta       | val(map)    | Sample/experiment metadata                                                         |
+| inter_file | path        | Interaction file containing prey-bait spectral counts or intensities (`inter.dat`) |
+| bait_file  | path        | Bait definition file mapping samples to baits and controls (`bait.dat`)            |
+| prey_file  | path        | Prey definition file with protein lengths (`prey.dat`)                             |
+| mode       | val(string) | Scoring mode: `"spc"` for spectral count or `"int"` for intensity                  |
+| config_cli | val(string) | SAINTexpress parameters as CLI string (e.g., `-R 2 -L 4`)                          |
 
 ## Outputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| results_dir | tuple(val, path) | Output directory `${prefix}` containing SAINTexpress results and log files |
-| results_list | tuple(val, path) | `${prefix}/list.txt` with interaction scores |
-| versions_saintexpress | topic: versions | SAINTexpress version |
-| versions_fragpipe | topic: versions | FragPipe version |
+| Channel               | Type             | Description                                                                |
+| --------------------- | ---------------- | -------------------------------------------------------------------------- |
+| results_dir           | tuple(val, path) | Output directory `${prefix}` containing SAINTexpress results and log files |
+| results_list          | tuple(val, path) | `${prefix}/list.txt` with interaction scores                               |
+| versions_saintexpress | topic: versions  | SAINTexpress version                                                       |
+| versions_fragpipe     | topic: versions  | FragPipe version                                                           |
 
 ## Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| ext.args | '' | Additional command-line arguments appended after `config_cli` |
-| ext.prefix | `${meta.id}` | Output directory name |
-| ext.fragpipe_tools_dir | `/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools` | FragPipe tools directory for binary discovery |
+| Parameter              | Default                                           | Description                                                   |
+| ---------------------- | ------------------------------------------------- | ------------------------------------------------------------- |
+| ext.args               | ''                                                | Additional command-line arguments appended after `config_cli` |
+| ext.prefix             | `${meta.id}`                                      | Output directory name                                         |
+| ext.fragpipe_tools_dir | `/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools` | FragPipe tools directory for binary discovery                 |
 
 ## Container
 

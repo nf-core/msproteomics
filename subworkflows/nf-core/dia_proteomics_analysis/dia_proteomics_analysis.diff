@@ -1,0 +1,50 @@
+Changes in component 'nf-core/dia_proteomics_analysis'
+Changes in 'dia_proteomics_analysis/main.nf':
+--- subworkflows/nf-core/dia_proteomics_analysis/main.nf
++++ subworkflows/nf-core/dia_proteomics_analysis/main.nf
+@@ -450,6 +450,8 @@
+     versions                = ch_versions
+     diann_report            = DIANN_FINALQUANTIFICATION.out.main_report
+     diann_report_parquet    = DIANN_FINALQUANTIFICATION.out.report_parquet
++    pg_matrix               = DIANN_FINALQUANTIFICATION.out.pg_matrix
++    diann_log               = DIANN_FINALQUANTIFICATION.out.log
+     mzml_statistics         = QUANTMSUTILS_MZMLSTATISTICS.out.ms_statistics
+     msstats_in              = QUANTMSUTILS_DIANN2MZTAB.out.out_msstats
+     out_triqler             = QUANTMSUTILS_DIANN2MZTAB.out.out_triqler
+
+Changes in 'dia_proteomics_analysis/meta.yml':
+--- subworkflows/nf-core/dia_proteomics_analysis/meta.yml
++++ subworkflows/nf-core/dia_proteomics_analysis/meta.yml
+@@ -147,6 +147,26 @@
+             type: file
+             description: Main DIA-NN report in Parquet format
+             pattern: "*.parquet"
++  - pg_matrix:
++      description: DIA-NN protein group matrix from the final quantification step
++      structure:
++        - meta:
++            type: map
++            description: Groovy Map containing experiment and search database information
++        - pg_matrix:
++            type: file
++            description: DIA-NN protein group quantification matrix
++            pattern: "*.pg_matrix.tsv"
++  - diann_log:
++      description: DIA-NN log from the final quantification step
++      structure:
++        - meta:
++            type: map
++            description: Groovy Map containing experiment and search database information
++        - log:
++            type: file
++            description: DIA-NN final quantification log
++            pattern: "*.log.txt"
+   - mzml_statistics:
+       description: Statistics extracted from mzML files
+       structure:
+
+'subworkflows/nf-core/dia_proteomics_analysis/nextflow.config' is unchanged
+'subworkflows/nf-core/dia_proteomics_analysis/tests/nextflow.config' is unchanged
+'subworkflows/nf-core/dia_proteomics_analysis/tests/main.nf.test.snap' is unchanged
+'subworkflows/nf-core/dia_proteomics_analysis/tests/main.nf.test' is unchanged
+************************************************************

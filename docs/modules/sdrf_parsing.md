@@ -10,25 +10,25 @@ When `params.convert_dotd` is enabled, it handles `.d` format extension conversi
 
 ## Inputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| sdrf | path | A valid SDRF file |
+| Channel | Type | Description       |
+| ------- | ---- | ----------------- |
+| sdrf    | path | A valid SDRF file |
 
 ## Outputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| ch_expdesign | path | `${sdrf.baseName}_openms_design.tsv` experimental design file in OpenMS format |
-| ch_sdrf_config_file | path | `${sdrf.baseName}_config.tsv` config file with search engine parameters |
-| log | path | `*.log` parsing log |
-| versions | path | `versions.yml` with software versions |
+| Channel             | Type | Description                                                                    |
+| ------------------- | ---- | ------------------------------------------------------------------------------ |
+| ch_expdesign        | path | `${sdrf.baseName}_openms_design.tsv` experimental design file in OpenMS format |
+| ch_sdrf_config_file | path | `${sdrf.baseName}_config.tsv` config file with search engine parameters        |
+| log                 | path | `*.log` parsing log                                                            |
+| versions            | path | `versions.yml` with software versions                                          |
 
 ## Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| ext.args | '' | Additional command-line arguments appended to `parse_sdrf convert-openms` |
-| params.convert_dotd | false | Enable `.d` format extension conversions to mzML |
+| Parameter           | Default | Description                                                               |
+| ------------------- | ------- | ------------------------------------------------------------------------- |
+| ext.args            | ''      | Additional command-line arguments appended to `parse_sdrf convert-openms` |
+| params.convert_dotd | false   | Enable `.d` format extension conversions to mzML                          |
 
 ## Container
 

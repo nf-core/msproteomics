@@ -26,9 +26,9 @@ workflow FRAGPIPE_HEADLESS_WF {
     ch_files                // channel: [ val(meta), path(spectra) ] - sample files
     ch_database             // channel: path(fasta) - FASTA database
     ch_workflow_file        // channel: path(workflow) - FragPipe .workflow file
-    ch_manifest_content     // channel: val(manifest_string) - TSV manifest content
+    ch_manifest_content     // channel: val(manifest_string) - manifest (filename\texperiment\tbioreplicate\tdata_type), authoritative when non-empty
     ch_annotation_content   // channel: val(annotation_string) - TMT annotation (experiment\tchannel\tsample_name), empty for LFQ
-    ch_file_experiment_map  // channel: val(map_string) - file-to-experiment mapping (filename\texperiment), empty for LFQ
+    ch_file_experiment_map  // channel: val(map_string) - file-to-experiment mapping (filename\texperiment), used only when the manifest is empty
     main:
 
     //

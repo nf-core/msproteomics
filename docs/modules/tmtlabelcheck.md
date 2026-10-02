@@ -11,31 +11,31 @@ Generates QC reports in HTML, Markdown, and TSV formats with pass/warn/fail thre
 
 ## Inputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| meta | val(map) | Sample/experiment metadata |
-| input_files | path | Per-sample result directories (psm mode) or combined_modified_peptide.tsv (ionquant mode) |
-| tmt_type | val(string) | TMT reagent type (TMT0, TMT2, TMT6, TMT10, TMT11, TMT16, TMT18, TMT35, TMTPRO) |
-| mode | val(string) | `'psm'` for per-sample PSM files, `'ionquant'` for combined_modified_peptide.tsv |
+| Channel     | Type        | Description                                                                               |
+| ----------- | ----------- | ----------------------------------------------------------------------------------------- |
+| meta        | val(map)    | Sample/experiment metadata                                                                |
+| input_files | path        | Per-sample result directories (psm mode) or combined_modified_peptide.tsv (ionquant mode) |
+| tmt_type    | val(string) | TMT reagent type (TMT0, TMT2, TMT6, TMT10, TMT11, TMT16, TMT18, TMT35, TMTPRO)            |
+| mode        | val(string) | `'psm'` for per-sample PSM files, `'ionquant'` for combined_modified_peptide.tsv          |
 
 ## Outputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| html_report | tuple(val, path) | `report.html` rich HTML report with color-coded labeling status |
-| md_report | tuple(val, path) | `report.md` Markdown report for documentation |
-| summary | tuple(val, path) | `labeling_summary.tsv` machine-readable summary |
-| per_sample | tuple(val, path) | `per_sample_efficiency.csv` per-sample efficiency data |
-| versions_python | topic: versions | Python version |
+| Channel         | Type             | Description                                                     |
+| --------------- | ---------------- | --------------------------------------------------------------- |
+| html_report     | tuple(val, path) | `report.html` rich HTML report with color-coded labeling status |
+| md_report       | tuple(val, path) | `report.md` Markdown report for documentation                   |
+| summary         | tuple(val, path) | `labeling_summary.tsv` machine-readable summary                 |
+| per_sample      | tuple(val, path) | `per_sample_efficiency.csv` per-sample efficiency data          |
+| versions_python | topic: versions  | Python version                                                  |
 
 ## Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| ext.args | '' | Additional command-line arguments for tmt_qc scripts |
-| ext.pass_threshold | 0.95 | Labeling efficiency pass threshold |
-| ext.warn_threshold | 0.85 | Labeling efficiency warning threshold |
-| ext.prob_threshold | 0.95 | PSM probability threshold for filtering |
+| Parameter          | Default | Description                                          |
+| ------------------ | ------- | ---------------------------------------------------- |
+| ext.args           | ''      | Additional command-line arguments for tmt_qc scripts |
+| ext.pass_threshold | 0.95    | Labeling efficiency pass threshold                   |
+| ext.warn_threshold | 0.85    | Labeling efficiency warning threshold                |
+| ext.prob_threshold | 0.95    | PSM probability threshold for filtering              |
 
 ## Container
 

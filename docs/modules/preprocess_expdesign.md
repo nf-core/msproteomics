@@ -10,17 +10,17 @@ It uses simple `sed`/`grep` commands with the quantms-utils container for enviro
 
 ## Inputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| design | path | Experimental design file in TSV format (`*.tsv` or `*.txt`) |
+| Channel | Type | Description                                                 |
+| ------- | ---- | ----------------------------------------------------------- |
+| design  | path | Experimental design file in TSV format (`*.tsv` or `*.txt`) |
 
 ## Outputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
+| Channel      | Type | Description                                                         |
+| ------------ | ---- | ------------------------------------------------------------------- |
 | ch_expdesign | path | Design file with `.raw` replaced by `.mzML` (`*_openms_design.tsv`) |
-| ch_config | path | Extracted configuration TSV (`*_config.tsv`) |
-| versions | path | sdrf-pipelines version (`versions.yml`) |
+| ch_config    | path | Extracted configuration TSV (`*_config.tsv`)                        |
+| versions     | path | sdrf-pipelines version (`versions.yml`)                             |
 
 ## Parameters
 

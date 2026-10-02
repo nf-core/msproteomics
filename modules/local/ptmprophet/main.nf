@@ -33,7 +33,7 @@ process PTMPROPHET {
     // PTMProphet uses UPPERCASE=value format for parameters
     // Common params: MINPROB=0.5, MAXTHREADS=1, STATIC, KEEPOLD, LABILEMODS, NOSTACK
     """
-    
+
     export HOME=\$(pwd)
     mkdir -p ${prefix}
 

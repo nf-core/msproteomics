@@ -842,6 +842,28 @@ def cpu_count() -> int:
     return os.cpu_count() or 1
 
 
+def require_msfragger_jar(msfragger_cmd: list) -> None:
+    """
+    Exit non-zero if a `java ... -jar <jar>` command has no jar or a missing jar.
+
+    Without this, an empty jar path lets java read the next argument (the
+    histogram TSV) as the jar and fail with a misleading "corrupt jarfile".
+
+    Args:
+        msfragger_cmd: Tokenised --msfragger_cmd
+    """
+    if "-jar" not in msfragger_cmd:
+        return
+    jar_index = msfragger_cmd.index("-jar") + 1
+    jar = msfragger_cmd[jar_index] if jar_index < len(msfragger_cmd) else ""
+    if not jar or not pathlib.Path(jar).is_file():
+        sys.exit(
+            f"ERROR: merge_split_search: MSFragger jar missing in --msfragger_cmd "
+            f"({' '.join(msfragger_cmd)!r}); got {jar!r}. Pass an existing "
+            f"MSFragger*.jar after -jar (run in the FragPipe container)."
+        )
+
+
 def parse_args() -> argparse.Namespace:
     """
     Parse command-line arguments.
@@ -961,8 +983,10 @@ def main() -> None:
     print("Step 2: Generating expect functions...", flush=True)
     import shlex
 
+    msfragger_cmd = shlex.split(args.msfragger_cmd)
+    require_msfragger_jar(msfragger_cmd)
     generate_expect_cmd = [
-        *shlex.split(args.msfragger_cmd),
+        *msfragger_cmd,
         "--generate_expect_functions",
         str(combined_histo.name),
     ]

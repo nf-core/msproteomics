@@ -12,7 +12,7 @@
 */
 
 include { PTMSHEPHERD } from '../../../modules/local/ptmshepherd/main'
-include { shouldRunTool; getToolArgs } from '../fragpipe_utils'
+include { shouldRunTool; getToolArgs } from '../utils_nfcore_msproteomics_pipeline'
 
 workflow FRAGPIPE_PTM {
     take:

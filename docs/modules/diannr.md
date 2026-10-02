@@ -10,32 +10,32 @@ The module uses an R template script (`diannr.r`) that receives parameters via N
 
 ## Inputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| report_path | path | DIA-NN main report TSV file |
-| q | val | Precursor-level FDR threshold (q-value cutoff) |
-| pgq | val | Protein group-level FDR threshold (q-value cutoff) |
-| contaminant_pattern | val | Regex pattern to identify contaminant proteins (e.g., `"Cont_"`) |
+| Channel             | Type | Description                                                      |
+| ------------------- | ---- | ---------------------------------------------------------------- |
+| report_path         | path | DIA-NN main report TSV file                                      |
+| q                   | val  | Precursor-level FDR threshold (q-value cutoff)                   |
+| pgq                 | val  | Protein group-level FDR threshold (q-value cutoff)               |
+| contaminant_pattern | val  | Regex pattern to identify contaminant proteins (e.g., `"Cont_"`) |
 
 ## Outputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| contaminants_removed_report | path | `contaminants_removed_*.tsv` DIA-NN report with contaminants removed |
-| precursors | path | `precursors.tsv` precursor-level quantification matrix |
-| peptides | path | `peptides.tsv` peptide-level quantification matrix |
-| peptides_maxlfq | path | `peptides_maxlfq.tsv` peptide-level MaxLFQ quantification matrix |
-| unique_genes | path | `unique_genes.tsv` gene-level unique peptide quantification matrix |
-| protein_groups_maxlfq | path | `protein_groups_maxlfq.tsv` protein group-level MaxLFQ quantification matrix |
-| versions | path | `versions.yml` with R-base and diann-rpackage versions |
+| Channel                     | Type | Description                                                                  |
+| --------------------------- | ---- | ---------------------------------------------------------------------------- |
+| contaminants_removed_report | path | `contaminants_removed_*.tsv` DIA-NN report with contaminants removed         |
+| precursors                  | path | `precursors.tsv` precursor-level quantification matrix                       |
+| peptides                    | path | `peptides.tsv` peptide-level quantification matrix                           |
+| peptides_maxlfq             | path | `peptides_maxlfq.tsv` peptide-level MaxLFQ quantification matrix             |
+| unique_genes                | path | `unique_genes.tsv` gene-level unique peptide quantification matrix           |
+| protein_groups_maxlfq       | path | `protein_groups_maxlfq.tsv` protein group-level MaxLFQ quantification matrix |
+| versions                    | path | `versions.yml` with R-base and diann-rpackage versions                       |
 
 ## Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| params.diann_maxlfq_q | - | Q-value threshold passed as the `q` input |
-| params.diann_maxlfq_pgq | - | Protein group q-value threshold passed as the `pgq` input |
-| params.contaminant_pattern | - | Contaminant pattern passed as the `contaminant_pattern` input |
+| Parameter                  | Default | Description                                                   |
+| -------------------------- | ------- | ------------------------------------------------------------- |
+| params.diann_maxlfq_q      | -       | Q-value threshold passed as the `q` input                     |
+| params.diann_maxlfq_pgq    | -       | Protein group q-value threshold passed as the `pgq` input     |
+| params.contaminant_pattern | -       | Contaminant pattern passed as the `contaminant_pattern` input |
 
 ## Container
 

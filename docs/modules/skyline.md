@@ -10,32 +10,32 @@ Memory is auto-calculated from `task.memory`.
 
 ## Inputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| meta | val(map) | Sample/experiment metadata |
-| results_dir | path | FragPipe output directory containing psm.tsv and library files |
-| mzml_files | path (stageAs `spectra/*`) | Mass spectrometry files for import (`*.mzML`, `*.mzXML`) |
-| speclib | path | Spectral library file (`*.speclib`, `*.sptxt`, `*.blib`) |
-| config_cli | val(string) | Skyline parameters as CLI string (modsMode, tolerances, etc.) |
-| skyline_path | val(string) | Path to Skyline executable (shared resource) |
+| Channel      | Type                       | Description                                                    |
+| ------------ | -------------------------- | -------------------------------------------------------------- |
+| meta         | val(map)                   | Sample/experiment metadata                                     |
+| results_dir  | path                       | FragPipe output directory containing psm.tsv and library files |
+| mzml_files   | path (stageAs `spectra/*`) | Mass spectrometry files for import (`*.mzML`, `*.mzXML`)       |
+| speclib      | path                       | Spectral library file (`*.speclib`, `*.sptxt`, `*.blib`)       |
+| config_cli   | val(string)                | Skyline parameters as CLI string (modsMode, tolerances, etc.)  |
+| skyline_path | val(string)                | Path to Skyline executable (shared resource)                   |
 
 ## Outputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| results_dir | tuple(val, path) | Output directory `${prefix}` containing Skyline output files |
-| skyline_document | tuple(val, path) | `${prefix}/skyline_files/fragpipe.sky` Skyline document (optional) |
-| reports | tuple(val, path) | `${prefix}/*.csv` quantification report files (optional) |
-| versions_skyline | topic: versions | Skyline version |
-| versions_fragpipe | topic: versions | FragPipe version |
+| Channel           | Type             | Description                                                        |
+| ----------------- | ---------------- | ------------------------------------------------------------------ |
+| results_dir       | tuple(val, path) | Output directory `${prefix}` containing Skyline output files       |
+| skyline_document  | tuple(val, path) | `${prefix}/skyline_files/fragpipe.sky` Skyline document (optional) |
+| reports           | tuple(val, path) | `${prefix}/*.csv` quantification report files (optional)           |
+| versions_skyline  | topic: versions  | Skyline version                                                    |
+| versions_fragpipe | topic: versions  | FragPipe version                                                   |
 
 ## Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| ext.args | '' | Additional command-line arguments for the Skyline Java wrapper |
-| ext.prefix | `${meta.id}` | Output directory name |
-| ext.fragpipe_tools_dir | `/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools` | FragPipe tools directory for JAR discovery |
+| Parameter              | Default                                           | Description                                                    |
+| ---------------------- | ------------------------------------------------- | -------------------------------------------------------------- |
+| ext.args               | ''                                                | Additional command-line arguments for the Skyline Java wrapper |
+| ext.prefix             | `${meta.id}`                                      | Output directory name                                          |
+| ext.fragpipe_tools_dir | `/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools` | FragPipe tools directory for JAR discovery                     |
 
 ## Container
 

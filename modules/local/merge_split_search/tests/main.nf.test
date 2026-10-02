@@ -56,9 +56,40 @@ nextflow_process {
                     process.out.pin,
                     process.out.license_agreement,
                     process.out.versions_msfragger,
-                    process.out.versions_fragpipe,
-                    process.out.versions_python
+                    process.out.versions_fragpipe
                 ).match() }
+            )
+        }
+    }
+
+    test("merge_split_search - missing MSFragger jar fails with a clear error") {
+        tag "stub"
+        config "./no_jar.config"
+
+        when {
+            process {
+                """
+                def pepxml_0 = file("\${workDir}/chunk_0_test_sample.pepXML")
+                def pin_0    = file("\${workDir}/chunk_0_test_sample.pin")
+                def histo_0  = file("\${workDir}/chunk_0_test_sample_scores_histogram.tsv")
+                def msf_params = file("\${workDir}/msfragger.params")
+                pepxml_0.text = "mock pepxml chunk 0"
+                pin_0.text    = "mock pin chunk 0"
+                histo_0.text  = "mock histo chunk 0"
+                msf_params.text = "output_report_topN = 1"
+
+                input[0] = channel.of([ [ id: 'test_sample' ], [ pepxml_0 ], [ pin_0 ], [ histo_0 ] ])
+                input[1] = 1
+                input[2] = msf_params
+                input[3] = []  // msfragger_dir (use auto-discovery -> nothing found)
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.failed },
+                { assert process.errorReport.contains('ERROR: MERGE_SPLIT_SEARCH: no MSFragger*.jar found') : process.errorReport }
             )
         }
     }
@@ -189,8 +220,7 @@ nextflow_process {
                     process.out.pepxml.collect { meta, f -> file(f).name },
                     process.out.pin.collect { meta, f -> file(f).name },
                     process.out.versions_msfragger,
-                    process.out.versions_fragpipe,
-                    process.out.versions_python
+                    process.out.versions_fragpipe
                 ).match() }
             )
         }

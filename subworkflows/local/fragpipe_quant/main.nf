@@ -22,7 +22,7 @@ include { TMTINTEGRATOR            } from '../../../modules/local/tmtintegrator/
 include { FREEQUANT                } from '../../../modules/local/freequant/main'
 include { PHILOSOPHER_LABELQUANT   } from '../../../modules/local/philosopher/labelquant/main'
 include { PHILOSOPHER_REPORT       } from '../../../modules/local/philosopher/report/main'
-include { shouldRunTool; getToolArgs; getToolModmasses; getToolReportArgs } from '../fragpipe_utils'
+include { shouldRunTool; getToolArgs; getToolModmasses; getToolReportArgs } from '../utils_nfcore_msproteomics_pipeline'
 
 workflow FRAGPIPE_QUANT {
     take:

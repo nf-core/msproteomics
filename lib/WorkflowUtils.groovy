@@ -81,9 +81,11 @@ class WorkflowUtils {
         if (organism && params.databases && params.databases[organism]?.database) {
             return [path: params.databases[organism].database, is_philosopher: false]
         }
+        def available = params.databases ? params.databases.keySet().join(', ') : 'none (--proteomes_ignore is set)'
         throw new RuntimeException(
-            "No database provided. Use --philosopher_database, --database, " +
-            "or ensure organism '${organism}' has a configured database."
+            "No protein database for organism '${organism}': pass --database <fasta> (or --philosopher_database), " +
+            "or set --organism to one with a UniProt reference proteome in conf/reference_proteomes.config. " +
+            "Available: ${available}"
         )
     }
 
@@ -102,11 +104,11 @@ class WorkflowUtils {
         if (resolved_db.is_philosopher) {
             ch_fasta = nextflow.Channel.empty()
             ch_prebuilt_db = nextflow.Channel
-                .fromPath(resolved_db.path, checkIfExists: true)
+                .fromPath(resolved_db.path, glob: false, checkIfExists: true)
                 .map { db -> [[id: "${organism}_philosopher_database"], db] }
         } else {
             ch_fasta = nextflow.Channel
-                .fromPath(resolved_db.path, checkIfExists: true)
+                .fromPath(resolved_db.path, glob: false, checkIfExists: true)
                 .map { db -> [[id: 'database'], db] }
             ch_prebuilt_db = nextflow.Channel.empty()
         }

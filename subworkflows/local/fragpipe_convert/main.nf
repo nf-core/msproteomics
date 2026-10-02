@@ -16,7 +16,7 @@
 include { THERMORAWFILEPARSER } from '../../../modules/nf-core/thermorawfileparser/main'
 include { DIAUMPIRE           } from '../../../modules/local/diaumpire/main'
 include { DIATRACER           } from '../../../modules/local/diatracer/main'
-include { shouldRunTool; getToolArgs } from '../fragpipe_utils'
+include { shouldRunTool; getToolArgs } from '../utils_nfcore_msproteomics_pipeline'
 
 workflow FRAGPIPE_CONVERT {
     take:

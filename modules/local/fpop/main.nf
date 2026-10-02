@@ -31,7 +31,7 @@ process FPOP {
     def secondary_arg = secondary_file.name != 'NO_FILE' ? secondary_file : ''
 
     """
-    
+
     export HOME=\$(pwd)
     mkdir -p ${prefix}
 

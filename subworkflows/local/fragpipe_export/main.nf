@@ -18,7 +18,7 @@ include { SKYLINE        } from '../../../modules/local/skyline/main'
 include { SAINTEXPRESS   } from '../../../modules/local/saintexpress/main'
 include { FPOP           } from '../../../modules/local/fpop/main'
 include { METAPROTEOMICS } from '../../../modules/local/metaproteomics/main'
-include { shouldRunTool; getToolArgs } from '../fragpipe_utils'
+include { shouldRunTool; getToolArgs } from '../utils_nfcore_msproteomics_pipeline'
 
 workflow FRAGPIPE_EXPORT {
     take:

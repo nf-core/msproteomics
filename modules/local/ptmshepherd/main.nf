@@ -34,7 +34,7 @@ process PTMSHEPHERD {
     def tools_dir = task.ext.fragpipe_tools_dir ?: '/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools'
 
     """
-    
+
     # Clean up files from previous attempts (Nextflow retries in same work dir,
     # and bash -C noclobber prevents overwriting existing files)
     rm -f .ptmshepherd_version .fragpipe_version shepherd.config 2>/dev/null || true

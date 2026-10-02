@@ -16,7 +16,7 @@
 include { PERCOLATOR     } from '../../../modules/local/percolator/main'
 include { PEPTIDEPROPHET } from '../../../modules/local/philosopher/peptideprophet/main'
 include { PTMPROPHET     } from '../../../modules/local/ptmprophet/main'
-include { shouldRunTool; getToolArgs } from '../fragpipe_utils'
+include { shouldRunTool; getToolArgs } from '../utils_nfcore_msproteomics_pipeline'
 
 workflow FRAGPIPE_VALIDATE {
     take:

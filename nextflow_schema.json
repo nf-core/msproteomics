@@ -26,7 +26,7 @@
                 "organism": {
                     "type": "string",
                     "default": "Homo sapiens",
-                    "description": "Organism name for SDRF generation (e.g., Homo sapiens, Mus musculus, Saccharomyces cerevisiae).",
+                    "description": "Organism name for SDRF generation and, when --database is not given, for selecting the UniProt reference proteome (e.g., Homo sapiens, Mus musculus, Saccharomyces cerevisiae).",
                     "fa_icon": "fas fa-dna"
                 },
                 "dissociation_method": {
@@ -122,7 +122,7 @@
                     "pattern": "^\\S+\\.(?:fasta|fa)$",
                     "description": "Path to a protein database FASTA file.",
                     "fa_icon": "fas fa-file",
-                    "help_text": "A protein FASTA file for database search. For DIA workflows, if not provided, the pipeline uses a reference proteome based on the organism parameter (human, mouse, or yeast). For FragPipe-based workflows (DDA LFQ, TMT), the pipeline auto-resolves the database from the organism parameter."
+                    "help_text": "A protein FASTA file for database search. Takes precedence over the reference proteome. If not provided, the pipeline downloads the UniProt reference proteome (Swiss-Prot reviewed + isoforms) for `--organism` from `conf/reference_proteomes.config`, and fails if the organism has no configured proteome."
                 },
                 "diann_speclib": {
                     "type": "string",
@@ -318,7 +318,6 @@
                 },
                 "diann_additional_analysis_args": {
                     "type": "string",
-                    "default": "",
                     "description": "Additional DIA-NN command-line arguments for the main analysis step.",
                     "help_text": "Any additional DIA-NN flags to pass during the main analysis. Appended to the command after all other arguments.",
                     "fa_icon": "fas fa-plus"
@@ -801,7 +800,7 @@
                 "proteomes_base": {
                     "type": "string",
                     "description": "Base URL for UniProt reference proteome FASTA downloads.",
-                    "default": null,
+                    "default": "https://rest.uniprot.org/uniprotkb/stream?format=fasta&includeIsoform=true&query=(reviewed:true)+AND+(proteome:",
                     "fa_icon": "fas fa-cloud-download-alt",
                     "hidden": true
                 },
@@ -809,7 +808,8 @@
                     "type": "boolean",
                     "description": "Do not load the reference proteomes config.",
                     "fa_icon": "fas fa-ban",
-                    "hidden": true
+                    "hidden": true,
+                    "help_text": "Do not load `conf/reference_proteomes.config`. No UniProt reference proteome is then available, so `--database` (or `--philosopher_database` for FragPipe modes) must be given."
                 }
             }
         },
@@ -981,32 +981,6 @@
                 "show_hidden": {
                     "type": "boolean",
                     "description": "Display hidden parameters in the help message (only works when --help or --help_full are provided)."
-                },
-                "max_cpus": {
-                    "type": "integer",
-                    "description": "Maximum number of CPUs that can be requested for any single job.",
-                    "default": 96,
-                    "fa_icon": "fas fa-microchip",
-                    "hidden": true,
-                    "help_text": "Use to set an upper-limit for the CPU requirement for each process. Should be an integer e.g. --max_cpus 16"
-                },
-                "max_memory": {
-                    "type": "string",
-                    "description": "Maximum amount of memory that can be requested for any single job.",
-                    "default": "760.GB",
-                    "fa_icon": "fas fa-memory",
-                    "hidden": true,
-                    "help_text": "Use to set an upper-limit for the memory requirement for each process. Should be a string in the format integer-unit e.g. --max_memory 128.GB",
-                    "pattern": "^\\d+(\\.\\d+)?\\.?\\s*(K|M|G|T)?B$"
-                },
-                "max_time": {
-                    "type": "string",
-                    "description": "Maximum amount of time that can be requested for any single job.",
-                    "default": "72.h",
-                    "fa_icon": "far fa-clock",
-                    "hidden": true,
-                    "help_text": "Use to set an upper-limit for the time requirement for each process. Should be a string in the format integer-unit e.g. --max_time 240.h",
-                    "pattern": "^(\\d+\\.?\\s*(s|m|h|d|day)\\s*)+$"
                 }
             }
         }

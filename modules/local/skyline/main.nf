@@ -43,7 +43,7 @@ process SKYLINE {
     // runSkylineQuant: run Skyline quantification
 
     """
-    
+
     export HOME=\$(pwd)
     mkdir -p ${prefix}/skyline_files
 

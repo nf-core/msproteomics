@@ -10,27 +10,27 @@ This module supports in-memory or low-memory processing modes and configurable M
 
 ## Inputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| meta | val(map) | Sample metadata map (uses `meta.mzml_id`) |
-| mzml_file | path | Input mzML file in profile mode (`*.mzML`) |
+| Channel   | Type     | Description                                |
+| --------- | -------- | ------------------------------------------ |
+| meta      | val(map) | Sample metadata map (uses `meta.mzml_id`)  |
+| mzml_file | path     | Input mzML file in profile mode (`*.mzML`) |
 
 ## Outputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| mzmls_picked | tuple(val, path) | Centroided mzML file (`*.mzML`) |
-| versions | path | PeakPickerHiRes version (`versions.yml`) |
-| log | path | Log file (`*.log`) |
+| Channel      | Type             | Description                              |
+| ------------ | ---------------- | ---------------------------------------- |
+| mzmls_picked | tuple(val, path) | Centroided mzML file (`*.mzML`)          |
+| versions     | path             | PeakPickerHiRes version (`versions.yml`) |
+| log          | path             | Log file (`*.log`)                       |
 
 ## Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| ext.args | '' | Additional CLI arguments appended to `PeakPickerHiRes` command |
-| params.peakpicking_inmemory | - | Processing mode: `inmemory` or `lowmemory` |
-| params.peakpicking_ms_levels | - | MS levels for peak picking (sets `-algorithm:ms_levels`) |
-| params.pp_debug | - | Debug level (sets `-debug`) |
+| Parameter                    | Default | Description                                                    |
+| ---------------------------- | ------- | -------------------------------------------------------------- |
+| ext.args                     | ''      | Additional CLI arguments appended to `PeakPickerHiRes` command |
+| params.peakpicking_inmemory  | -       | Processing mode: `inmemory` or `lowmemory`                     |
+| params.peakpicking_ms_levels | -       | MS levels for peak picking (sets `-algorithm:ms_levels`)       |
+| params.pp_debug              | -       | Debug level (sets `-debug`)                                    |
 
 ## Container
 

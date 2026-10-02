@@ -20,10 +20,37 @@
                 "protein_groups_maxlfq.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
             ]
         ],
-        "timestamp": "2026-03-25T03:48:08.484524001",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.2"
-        }
+        },
+        "timestamp": "2026-03-25T03:48:08.484524001"
+    },
+    "diannr - no row passes protein-group FDR writes header-only tables": {
+        "content": [
+            [
+                "contaminants_removed_diann_report_pgq1.tsv:md5,3489113b40c13a6cbecc0784afa29dc9"
+            ],
+            [
+                "precursors.tsv:md5,db82e1b1bf4e7d9b11aad2e562d1c926"
+            ],
+            [
+                "peptides.tsv:md5,db82e1b1bf4e7d9b11aad2e562d1c926"
+            ],
+            [
+                "peptides_maxlfq.tsv:md5,9b8334ab7a8184f51e23fa6900dfd1a6"
+            ],
+            [
+                "unique_genes.tsv:md5,db82e1b1bf4e7d9b11aad2e562d1c926"
+            ],
+            [
+                "protein_groups_maxlfq.tsv:md5,db82e1b1bf4e7d9b11aad2e562d1c926"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-09-29T20:52:26.0106975"
     }
 }

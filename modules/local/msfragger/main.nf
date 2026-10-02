@@ -53,7 +53,7 @@ process MSFRAGGER {
     def partial_flag = meta.chunk_id != null ? "--partial ${meta.chunk_id}" : ''
 
     """
-    
+
     export HOME=\$(pwd)
     mkdir -p ${prefix}
     export JAVA_OPTS="-Xmx${mem}G"

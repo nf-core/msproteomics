@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Fake `java` for modules/local/fragpipe_headless/tests/main.nf.test.
+# Stands in for FragPipe so the REAL script: block of FRAGPIPE_HEADLESS runs without the licensed image.
+#   --help     -> prints the FragPipe version banner parsed into versions.yml
+#   --headless -> copies the --manifest file to <workdir>/fragpipe-files.fp-manifest
+#                 (as FragPipe does) and touches the combined_*.tsv reports
+set -euo pipefail
+
+if [[ " $* " == *" --help "* ]]; then
+    echo "FragPipePlus v24.0"
+    exit 0
+fi
+
+manifest=""
+workdir=""
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --manifest) manifest="$2"; shift 2 ;;
+        --workdir)  workdir="$2";  shift 2 ;;
+        *) shift ;;
+    esac
+done
+
+[[ -n "${manifest}" && -n "${workdir}" ]] || { echo "fake java: --manifest and --workdir are required" >&2; exit 1; }
+
+mkdir -p "${workdir}"
+cp "${manifest}" "${workdir}/fragpipe-files.fp-manifest"
+touch "${workdir}/combined_protein.tsv" "${workdir}/combined_peptide.tsv" "${workdir}/combined_ion.tsv"

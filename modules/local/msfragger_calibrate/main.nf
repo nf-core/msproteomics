@@ -47,7 +47,7 @@ process MSFRAGGER_CALIBRATE {
     def mzml_input = mzml_files instanceof List ? mzml_files.join(' ') : mzml_files
 
     """
-    
+
     export HOME=\$(pwd)
     export JAVA_OPTS="-Xmx${mem}G"
 

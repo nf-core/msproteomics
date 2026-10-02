@@ -8,12 +8,19 @@
  * This produces results identical to running FragPipe from the GUI.
  *
  * Input:
- *   - raw_files:            All raw data files (.d, .raw, .mzML)
+ *   - raw_files:            All raw data files (.d, .mzML) staged into raw_files/
  *   - database:             FASTA database file
  *   - workflow_file:        FragPipe .workflow configuration file
- *   - manifest_content:     Tab-separated manifest content (filename\texperiment\tbioreplicate\tdata_type)
+ *   - manifest_content:     Manifest rows (file name\texperiment\tbioreplicate\tdata_type).
+ *                           Authoritative when non-empty; bioreplicate may be empty (fractions)
  *   - annotation_content:   TMT annotation content (experiment\tchannel\tsample_name), empty for LFQ
- *   - file_experiment_map:  File-to-experiment mapping (filename\texperiment), empty for LFQ
+ *   - file_experiment_map:  File-to-experiment mapping (file name\texperiment), used only when
+ *                           manifest_content is empty (bioreplicate 1, data type DDA)
+ *
+ * File names are matched exactly against the first column. The task fails if a staged
+ * .mzML/.d file has no row, a row names a file that is not staged, a file name is listed
+ * twice, a TMT file's experiment is not in annotation_content, or manifest_content and
+ * file_experiment_map are both empty.
  *
  * Output:
  *   - all_results:       All FragPipe output files
@@ -51,91 +58,45 @@ process FRAGPIPE_HEADLESS {
     def mem_gb = (task.memory.toGiga() * 0.9).intValue()
     def tools_dir = task.ext.fragpipe_tools_dir ?: '/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools'
     def lib_dir = tools_dir.replaceAll('/tools$', '/lib')
+    def annotation_b64 = annotation_content.toString().getBytes('UTF-8').encodeBase64().toString()
     """
     export JAVA_OPTS="-Xmx${mem_gb}G"
 
     mkdir -p results
 
-    ANNOTATION_CONTENT="${annotation_content}"
-    FILE_EXP_MAP="${file_experiment_map}"
+    ${fragpipeLookupScript(manifest_content, file_experiment_map)}
 
-    # Determine TMT mode
-    IS_MULTIPLEX=false
-    if [ -n "\${ANNOTATION_CONTENT}" ]; then
-        NUM_TMT_EXP=\$(echo "\${ANNOTATION_CONTENT}" | cut -f1 | sort -u | wc -l)
-        [ "\${NUM_TMT_EXP}" -gt 1 ] && IS_MULTIPLEX=true
-    fi
+    printf '%s' '${annotation_b64}' | base64 -d > input_annotation.tsv
 
-    if [ "\${IS_MULTIPLEX}" = true ]; then
+    if [ -s input_annotation.tsv ]; then
         #
-        # MULTI-PLEX TMT: Per-experiment subdirectories with annotation files.
-        # FragPipe auto-discovers *annotation.txt in each mzML's parent directory.
-        # Requires exactly 1 annotation file per directory (TmtiPanel.java:868-880).
+        # TMT: one subdirectory per plex (experiment) holding its mzML files and annotation.
+        # FragPipe auto-discovers *annotation.txt in each mzML's parent directory and
+        # requires exactly 1 annotation file per directory (TmtiPanel.java:868-880).
         #
-        EXPERIMENTS=\$(echo "\${ANNOTATION_CONTENT}" | cut -f1 | sort -u)
+        cut -f1 input_annotation.tsv | sort -u > tmt_experiments.txt
+        UNKNOWN=\$(awk -F'\\t' 'NR == FNR { plex[\$0] = 1; next } !(\$2 in plex) { print \$1 " -> " \$2 }' tmt_experiments.txt lookup.tsv)
+        if [ -n "\${UNKNOWN}" ]; then
+            echo "ERROR: FRAGPIPE_HEADLESS: \${LOOKUP_SOURCE} experiment(s) not in annotation_content: \${UNKNOWN}" >&2
+            exit 1
+        fi
 
-        # Create per-experiment subdirectories and move files
-        for EXP in \${EXPERIMENTS}; do
+        while IFS= read -r EXP; do
             mkdir -p "raw_files/\${EXP}"
+            # space-separated: channel sample_name
+            EXP="\${EXP}" awk -F'\\t' '\$1 == ENVIRON["EXP"] { print \$2" "\$3 }' input_annotation.tsv > "raw_files/\${EXP}/\${EXP}_annotation.txt"
+        done < tmt_experiments.txt
+
+        cut -f1,2 lookup.tsv | while IFS=\$'\\t' read -r fname EXP; do
+            cp -R "raw_files/\${fname}" "raw_files/\${EXP}/\${fname}"
         done
 
-        for f in raw_files/*.mzML raw_files/*.d; do
-            [ -e "\$f" ] || continue
-            fname=\$(basename "\$f")
-            # Look up experiment from file-experiment map
-            TARGET_EXP=\$(echo "\${FILE_EXP_MAP}" | grep -F "\${fname}" | head -1 | cut -f2)
-            if [ -n "\${TARGET_EXP}" ] && [ -d "raw_files/\${TARGET_EXP}" ]; then
-                cp "\$f" "raw_files/\${TARGET_EXP}/\${fname}"
-            fi
-        done
-
-        # Create per-experiment annotation files (space-separated: channel sample_name)
-        for EXP in \${EXPERIMENTS}; do
-            echo "\${ANNOTATION_CONTENT}" | awk -F'\\t' -v expname="\${EXP}" '\$1==expname {print \$2" "\$3}' > "raw_files/\${EXP}/\${EXP}_annotation.txt"
-        done
-
-        # Generate manifest pointing into subdirectories
-        >| manifest.fp-manifest
-        for EXP in \${EXPERIMENTS}; do
-            for f in raw_files/\${EXP}/*.mzML raw_files/\${EXP}/*.d; do
-                [ -e "\$f" ] || continue
-                fname=\$(basename "\$f")
-                [[ "\$fname" == *annotation.txt ]] && continue
-                echo -e "\$(pwd)/raw_files/\${EXP}/\${fname}\\t\${EXP}\\t1\\tDDA"
-            done
-        done >> manifest.fp-manifest
-
-    elif [ -n "\${ANNOTATION_CONTENT}" ]; then
-        #
-        # SINGLE-PLEX TMT: One annotation file in raw_files/ (no subdirs needed).
-        # All files from one experiment share the directory.
-        #
-        EXP=\$(echo "\${ANNOTATION_CONTENT}" | cut -f1 | sort -u | head -1)
-        echo "\${ANNOTATION_CONTENT}" | awk -F'\\t' '{print \$2" "\$3}' > "raw_files/\${EXP}_annotation.txt"
-
-        >| manifest.fp-manifest
-        for f in raw_files/*.mzML raw_files/*.d; do
-            [ -e "\$f" ] || continue
-            fname=\$(basename "\$f")
-            [[ "\$fname" == *annotation.txt ]] && continue
-            echo -e "\$(pwd)/raw_files/\${fname}\\t\${EXP}\\t1\\tDDA"
-        done >> manifest.fp-manifest
-
+        RAW_DIR="\$(pwd)/raw_files" awk -F'\\t' -v OFS='\\t' '{ print ENVIRON["RAW_DIR"] "/" \$2 "/" \$1, \$2, \$3, \$4 }' lookup.tsv > manifest.fp-manifest
     else
         #
-        # LFQ MODE: No annotation, flat directory.
+        # LFQ: flat directory.
         #
-        FILE_EXP_MAP_FOR_LFQ="${file_experiment_map}"
-        >| manifest.fp-manifest
-        for f in raw_files/*.mzML raw_files/*.d; do
-            [ -e "\$f" ] || continue
-            fname=\$(basename "\$f")
-            MATCHED_EXP=""
-            if echo "\${FILE_EXP_MAP_FOR_LFQ}" | grep -qF "\${fname}"; then
-                MATCHED_EXP=\$(echo "\${FILE_EXP_MAP_FOR_LFQ}" | grep -F "\${fname}" | head -1 | cut -f2)
-            fi
-            echo -e "\$(pwd)/raw_files/\${fname}\\t\${MATCHED_EXP:-experiment1}\\t1\\tDDA"
-        done >> manifest.fp-manifest
+        RAW_DIR="\$(pwd)/raw_files" awk -F'\\t' -v OFS='\\t' '{ print ENVIRON["RAW_DIR"] "/" \$1, \$2, \$3, \$4 }' lookup.tsv > manifest.fp-manifest
     fi
 
     # Update workflow file for container environment
@@ -192,6 +153,8 @@ process FRAGPIPE_HEADLESS {
 
     stub:
     """
+    ${fragpipeLookupScript(manifest_content, file_experiment_map)}
+
     mkdir -p results/sample1
     touch results/combined_protein.tsv
     touch results/combined_peptide.tsv
@@ -199,9 +162,93 @@ process FRAGPIPE_HEADLESS {
     touch results/sample1/psm.tsv
     touch results/sample1/protein.tsv
 
+    # Manifest and LFQ experiment annotation as FragPipe writes them into the work dir
+    # (ToolingUtils.generateLFQExperimentAnnotation); relative paths keep stub output deterministic
+    awk -F'\\t' -v OFS='\\t' '{ print "raw_files/" \$1, \$2, \$3, \$4 }' lookup.tsv > results/fragpipe-files.fp-manifest
+    awk -F'\\t' -v OFS='\\t' '
+        BEGIN { print "file", "sample", "sample_name", "condition", "replicate" }
+        {
+            sample = (\$3 == "") ? \$2 : \$2 "_" \$3
+            split(\$2, parts, "_")
+            print "raw_files/" \$1, sample, sample, parts[1], ((\$3 == "") ? 1 : \$3)
+        }
+    ' lookup.tsv > results/experiment_annotation.tsv
+
     cat <<-END_VERSIONS >| versions.yml
     "${task.process}":
         fragpipe: "24.0"
     END_VERSIONS
+    """
+}
+
+/*
+ * Bash shared by script: and stub: that writes lookup.tsv (file name, experiment,
+ * bioreplicate, data type; one row per staged .mzML/.d file) and sets LOOKUP_SOURCE.
+ * manifest_content is authoritative; file_experiment_map is the fallback.
+ * Values are base64-encoded so '$', backticks and quotes in them never expand in bash.
+ */
+def fragpipeLookupScript(manifest_content, file_experiment_map) {
+    def manifest_b64 = manifest_content.toString().getBytes('UTF-8').encodeBase64().toString()
+    def map_b64      = file_experiment_map.toString().getBytes('UTF-8').encodeBase64().toString()
+    return """
+    printf '%s' '${manifest_b64}' | base64 -d > input_manifest.tsv
+    printf '%s' '${map_b64}' | base64 -d > input_file_experiment_map.tsv
+
+    if [ -s input_manifest.tsv ]; then
+        LOOKUP_SOURCE=manifest_content
+        awk -F'\\t' -v OFS='\\t' '
+            NF == 0 { next }
+            NF != 4 || \$1 == "" || \$2 == "" || \$4 == "" {
+                print "ERROR: FRAGPIPE_HEADLESS: manifest_content line " NR " is not file<TAB>experiment<TAB>bioreplicate<TAB>data_type: " \$0 > "/dev/stderr"
+                bad = 1
+                next
+            }
+            { print }
+            END { exit bad }
+        ' input_manifest.tsv > lookup.tsv
+    elif [ -s input_file_experiment_map.tsv ]; then
+        LOOKUP_SOURCE=file_experiment_map
+        awk -F'\\t' -v OFS='\\t' '
+            NF == 0 { next }
+            NF != 2 || \$1 == "" || \$2 == "" {
+                print "ERROR: FRAGPIPE_HEADLESS: file_experiment_map line " NR " is not file<TAB>experiment: " \$0 > "/dev/stderr"
+                bad = 1
+                next
+            }
+            { print \$1, \$2, "1", "DDA" }
+            END { exit bad }
+        ' input_file_experiment_map.tsv > lookup.tsv
+    else
+        echo "ERROR: FRAGPIPE_HEADLESS: manifest_content and file_experiment_map are both empty" >&2
+        exit 1
+    fi
+
+    for f in raw_files/*.mzML raw_files/*.d; do
+        [ -e "\$f" ] || continue
+        basename "\$f"
+    done > staged_files.txt
+
+    if [ ! -s staged_files.txt ] || [ ! -s lookup.tsv ]; then
+        echo "ERROR: FRAGPIPE_HEADLESS: no staged .mzML/.d files or no \${LOOKUP_SOURCE} rows" >&2
+        exit 1
+    fi
+
+    DUPLICATES=\$(cut -f1 lookup.tsv | sort | uniq -d)
+    if [ -n "\${DUPLICATES}" ]; then
+        echo "ERROR: FRAGPIPE_HEADLESS: file name(s) listed more than once in \${LOOKUP_SOURCE}: \${DUPLICATES}" >&2
+        exit 1
+    fi
+
+    MISSING=\$(awk -F'\\t' 'NR == FNR { listed[\$1] = 1; next } !(\$0 in listed)' lookup.tsv staged_files.txt)
+    if [ -n "\${MISSING}" ]; then
+        echo "ERROR: FRAGPIPE_HEADLESS: no \${LOOKUP_SOURCE} row for staged file(s): \${MISSING}" >&2
+        exit 1
+    fi
+
+    UNSTAGED=\$(awk -F'\\t' 'NR == FNR { staged[\$0] = 1; next } !(\$1 in staged) { print \$1 }' staged_files.txt lookup.tsv)
+    if [ -n "\${UNSTAGED}" ]; then
+        echo "ERROR: FRAGPIPE_HEADLESS: \${LOOKUP_SOURCE} row(s) for file(s) not staged in raw_files/: \${UNSTAGED}" >&2
+        exit 1
+    fi
     """
 }

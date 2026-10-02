@@ -7,6 +7,7 @@
 # **FragPipe tools are licensed software. Uploading built images to Docker Hub, GitHub Container Registry, Quay.io, or any other public registry is a violation of the FragPipe license agreement.**
 
 **After building, store your image in:**
+
 - A **local Docker daemon** (default after `docker build`)
 - A **private container registry** (e.g., AWS ECR, private Docker Hub repo, Artifactory)
 
@@ -151,22 +152,22 @@ All FragPipe-based workflows (DDA LFQ, TMT Label Check, generic FragPipe) use th
 
 ## Tool Versions
 
-| Tool | Version | License |
-|------|---------|---------|
-| Java | 17 (openjdk-17, from base image) | GPL-2.0 |
-| MSFragger | 4.4.1 | Academic/Commercial |
-| IonQuant | 1.11.20 | Academic/Commercial |
-| DiaTracer | 2.2.1 | Academic/Commercial |
-| Philosopher | 5.1.3-RC9 | GPL-3.0 |
-| Percolator | 3.7.1 | Apache-2.0 |
-| MSBooster | 1.4.14 (academic) / 1.4.17 (commercial) | LGPL-3.0 |
-| PTMShepherd | 3.0.11 | Open Source |
-| TMT-Integrator | 6.1.3 | Open Source |
-| Crystal-C | 1.5.10 | Open Source |
-| DIA-Umpire | 2.3.3 | Open Source |
-| MBG | 0.3.6 | Open Source |
-| batmass-io | 1.36.5 (academic) / 1.36.6 (commercial) | Open Source |
-| DIA-NN | 1.8.1 | Free (bundled in FragPipe container) |
+| Tool           | Version                                 | License                              |
+| -------------- | --------------------------------------- | ------------------------------------ |
+| Java           | 17 (openjdk-17, from base image)        | GPL-2.0                              |
+| MSFragger      | 4.4.1                                   | Academic/Commercial                  |
+| IonQuant       | 1.11.20                                 | Academic/Commercial                  |
+| DiaTracer      | 2.2.1                                   | Academic/Commercial                  |
+| Philosopher    | 5.1.3-RC9                               | GPL-3.0                              |
+| Percolator     | 3.7.1                                   | Apache-2.0                           |
+| MSBooster      | 1.4.14 (academic) / 1.4.17 (commercial) | LGPL-3.0                             |
+| PTMShepherd    | 3.0.11                                  | Open Source                          |
+| TMT-Integrator | 6.1.3                                   | Open Source                          |
+| Crystal-C      | 1.5.10                                  | Open Source                          |
+| DIA-Umpire     | 2.3.3                                   | Open Source                          |
+| MBG            | 0.3.6                                   | Open Source                          |
+| batmass-io     | 1.36.5 (academic) / 1.36.6 (commercial) | Open Source                          |
+| DIA-NN         | 1.8.1                                   | Free (bundled in FragPipe container) |
 
 ## Architecture
 

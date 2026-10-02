@@ -12,7 +12,7 @@
 include { paramsSummaryMap       } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_msproteomics_pipeline'
+include { methodsDescriptionText; generateFragpipeManifest } from '../subworkflows/local/utils_nfcore_msproteomics_pipeline'
 
 // SDRF generation (bookkeeping only)
 include { GENERATE_SDRF_FROM_SAMPLESHEET } from '../modules/local/generate_sdrf_from_samplesheet/main'
@@ -20,9 +20,6 @@ include { GENERATE_SDRF_FROM_SAMPLESHEET } from '../modules/local/generate_sdrf_
 // FragPipe subworkflows
 include { FRAGPIPE_WF as FRAGPIPE_PIPELINE } from '../subworkflows/local/fragpipe/main'
 include { FRAGPIPE_HEADLESS_WF             } from '../subworkflows/local/fragpipe_headless_wf/main'
-
-// FragPipe utilities
-include { generateFragpipeManifest } from '../subworkflows/local/fragpipe_utils'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

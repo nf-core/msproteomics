@@ -10,23 +10,23 @@ Used at the entry point of the main workflow when the user provides a sampleshee
 
 ## Inputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| samplesheet | path | Input samplesheet CSV with columns: sample, spectra, condition (and optional label, fraction, replicate) |
-| params_json | val(string) | Pipeline parameters as JSON string containing experiment-level parameters |
+| Channel     | Type        | Description                                                                                              |
+| ----------- | ----------- | -------------------------------------------------------------------------------------------------------- |
+| samplesheet | path        | Input samplesheet CSV with columns: sample, spectra, condition (and optional label, fraction, replicate) |
+| params_json | val(string) | Pipeline parameters as JSON string containing experiment-level parameters                                |
 
 ## Outputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| sdrf | path | Generated SDRF-proteomics file (`*.sdrf.tsv`) |
-| versions | path | Software versions (`versions.yml`) |
+| Channel  | Type | Description                                   |
+| -------- | ---- | --------------------------------------------- |
+| sdrf     | path | Generated SDRF-proteomics file (`*.sdrf.tsv`) |
+| versions | path | Software versions (`versions.yml`)            |
 
 ## Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| ext.args | '' | Additional CLI arguments appended to the `generate_sdrf.py` command |
+| Parameter | Default | Description                                                         |
+| --------- | ------- | ------------------------------------------------------------------- |
+| ext.args  | ''      | Additional CLI arguments appended to the `generate_sdrf.py` command |
 
 ## Container
 

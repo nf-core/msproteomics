@@ -56,8 +56,8 @@ nextflow run nf-core/msproteomics \
     -profile docker
 ```
 
-Reference proteomes auto-resolve for common organisms (human, mouse, yeast) based on sample metadata.
-For other organisms, supply a FASTA database explicitly with `--database /path/to/database.fasta`.
+Without `--database`, the UniProt reference proteome for `--organism` (default `Homo sapiens`) is downloaded at runtime; see [Database Preparation](database_guide.md) for the eight supported organisms.
+For any other organism, supply a FASTA database explicitly with `--database /path/to/database.fasta`; otherwise the pipeline stops with an error.
 
 ## Step 4: Run a DDA LFQ Analysis
 

@@ -10,39 +10,39 @@ This module supports both params-file mode (FragPipe calling convention) and CLI
 
 ## Inputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| meta | val(map) | Sample metadata map (may include `chunk_id` for split mode) |
-| mzml_files | path | Mass spectrometry data files (`*.mzML`) |
-| fasta | path | Protein sequence database (`*.fasta`) |
-| params_file | path | MSFragger params file (native fragger.params format). Pass `[]` for CLI mode |
-| pepindex | path | Prebuilt pepindex files from MSFRAGGER_INDEX. Pass `[]` when not using |
-| msfragger_dir | path | Unzipped MSFragger tool directory (optional). Pass `[]` when not using |
+| Channel       | Type     | Description                                                                  |
+| ------------- | -------- | ---------------------------------------------------------------------------- |
+| meta          | val(map) | Sample metadata map (may include `chunk_id` for split mode)                  |
+| mzml_files    | path     | Mass spectrometry data files (`*.mzML`)                                      |
+| fasta         | path     | Protein sequence database (`*.fasta`)                                        |
+| params_file   | path     | MSFragger params file (native fragger.params format). Pass `[]` for CLI mode |
+| pepindex      | path     | Prebuilt pepindex files from MSFRAGGER_INDEX. Pass `[]` when not using       |
+| msfragger_dir | path     | Unzipped MSFragger tool directory (optional). Pass `[]` when not using       |
 
 ## Outputs
 
-| Channel | Type | Description |
-|---------|------|-------------|
-| pepxml | tuple(val, path) | PepXML search results (`*.pepXML`, optional) |
-| pin | tuple(val, path) | Percolator input files (`*.pin`, optional) |
-| tsv | tuple(val, path) | TSV outputs such as mass calibration results (optional) |
-| calibrated_mzml | tuple(val, path) | Calibrated mzML files (when write_calibrated_mzml=true, optional) |
-| uncalibrated_mzml | tuple(val, path) | Uncalibrated mzML for .d/.raw inputs (optional) |
-| results_dir | tuple(val, path) | Results directory containing all output files |
-| log | tuple(val, path) | Log files (optional) |
-| license_agreement | path | License agreement file (`I_AGREE_FRAGPIPE_LICENSE_AGREEMENT`) |
-| versions_msfragger | tuple (topic: versions) | MSFragger version |
-| versions_fragpipe | tuple (topic: versions) | FragPipe version |
+| Channel            | Type                    | Description                                                       |
+| ------------------ | ----------------------- | ----------------------------------------------------------------- |
+| pepxml             | tuple(val, path)        | PepXML search results (`*.pepXML`, optional)                      |
+| pin                | tuple(val, path)        | Percolator input files (`*.pin`, optional)                        |
+| tsv                | tuple(val, path)        | TSV outputs such as mass calibration results (optional)           |
+| calibrated_mzml    | tuple(val, path)        | Calibrated mzML files (when write_calibrated_mzml=true, optional) |
+| uncalibrated_mzml  | tuple(val, path)        | Uncalibrated mzML for .d/.raw inputs (optional)                   |
+| results_dir        | tuple(val, path)        | Results directory containing all output files                     |
+| log                | tuple(val, path)        | Log files (optional)                                              |
+| license_agreement  | path                    | License agreement file (`I_AGREE_FRAGPIPE_LICENSE_AGREEMENT`)     |
+| versions_msfragger | tuple (topic: versions) | MSFragger version                                                 |
+| versions_fragpipe  | tuple (topic: versions) | FragPipe version                                                  |
 
 ## Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| ext.args | '' | Additional CLI arguments appended to the MSFragger Java command |
-| ext.calibrate_mass | (not set) | Override calibrate_mass in params file (only when explicitly set) |
-| ext.write_calibrated_mzml | (not set) | Override write_calibrated_mzml (only when explicitly set) |
-| ext.java_xmx | (auto) | Override Java heap size |
-| ext.agree_fragpipe_license_agreement | (required) | Must be `true` to run |
+| Parameter                            | Default    | Description                                                       |
+| ------------------------------------ | ---------- | ----------------------------------------------------------------- |
+| ext.args                             | ''         | Additional CLI arguments appended to the MSFragger Java command   |
+| ext.calibrate_mass                   | (not set)  | Override calibrate_mass in params file (only when explicitly set) |
+| ext.write_calibrated_mzml            | (not set)  | Override write_calibrated_mzml (only when explicitly set)         |
+| ext.java_xmx                         | (auto)     | Override Java heap size                                           |
+| ext.agree_fragpipe_license_agreement | (required) | Must be `true` to run                                             |
 
 ## Container
 
