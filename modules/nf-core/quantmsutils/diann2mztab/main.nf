@@ -22,6 +22,9 @@ process QUANTMSUTILS_DIANN2MZTAB {
 
     script:
     def args = task.ext.args ?: ''
+    if (!exp_design) {
+        error "QUANTMSUTILS_DIANN2MZTAB (${meta.id}): no experimental design file was provided — an empty --exp_design makes the converter misparse its own arguments"
+    }
 
     """
     mkdir version
