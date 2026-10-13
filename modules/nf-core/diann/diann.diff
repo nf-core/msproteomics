@@ -14,12 +14,29 @@ Changes in 'diann/main.nf':
      tuple val(meta), path("${prefix}.speclib"), emit: final_speclib, optional: true
      tuple val(meta), path("${prefix}.tsv.skyline.speclib"), emit: skyline_speclib, optional: true
  
-@@ -103,6 +105,6 @@
+@@ -80,8 +82,14 @@
+         error "DIANN module does not support Conda. Please use Docker / Singularity / Podman instead."
+     }
+     prefix = task.ext.prefix ?: "${meta.id}" ?: "diann"
++    def args = task.ext.args ?: ''
++    def ms_input = [ms_files, ms_file_names].flatten().findAll { ms_file -> ms_file }.collect { ms_file -> "--f ${ms_file}" }.join(' ')
++    def lib_input = library && library != [] ? "--lib ${library}" : ''
+ 
+     """
++    # Command line the script block would run (stub tests assert on it)
++    echo "diann ${ms_input} ${lib_input} ${args}" > ${prefix}.stub_command.txt
++
+     # Library outputs
+     touch ${prefix}.predicted.speclib
+     touch ${prefix}.speclib
+@@ -102,7 +110,7 @@
+     touch ${prefix}.gg_matrix.tsv
      touch ${prefix}.unique_genes_matrix.tsv
  
-     # Common outputs
+-    # Common outputs
 -    touch ${prefix}.log
-+    touch ${prefix}.log.txt
++    # Common outputs: the log carries the settings line that DIA_PROTEOMICS_ANALYSIS parses
++    echo "[0:00] Averaged recommended settings for this experiment: Mass accuracy = 20ppm, MS1 accuracy = 10ppm, Scan window = 8" > ${prefix}.log.txt
      """
  }
 

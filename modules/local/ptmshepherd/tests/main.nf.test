@@ -5,52 +5,61 @@ nextflow_process {
     process "PTMSHEPHERD"
 
     tag "modules"
-    tag "modules_nfcore"
+    tag "modules_local"
     tag "ptmshepherd"
 
-    test("ptmshepherd - stub") {
+    test("ptmshepherd - stub - shepherd.config layout and rewritten group copies") {
         options "-stub"
         tag "stub"
 
         when {
             process {
                 """
-                def psm_dir = file("\${workDir}/sample1")
-                psm_dir.mkdirs()
-                def psm_file = file("\${workDir}/sample1/psm.tsv")
-                psm_file.text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
-                def protxml_file = file("\${workDir}/combined.prot.xml")
-                protxml_file.text = "<?xml version='1.0'?><protein_summary></protein_summary>"
-                def mzml_file = file("\${workDir}/test.mzML")
-                mzml_file.text = "mock"
-                def config_file = file("\${workDir}/ptms_input.config")
-                config_file.text = "histo_bindivs = 5000\\nhisto_smoothbins = 2\\nprecursor_tol = 0.01\\nspectra_ppmtol = 20\\nlocalization_background = 4\\noutput_extended = false"
-
-                def fasta_file = file("\${workDir}/test.fasta")
-                fasta_file.text = ">sp|P00000|TEST_HUMAN Test protein\\nMKWVTFISLLLFSSAYSRGVFRRDTHKSEIAHR"
+                // Two FragPipe groups: the blank group (staged as workdir-root) and 'control'
+                def root = file("\${workDir}/workdir-root")
+                root.mkdirs()
+                file("\${root}/psm.tsv").text = "Spectrum\\tPeptide\\nroot.1.1.2\\tPEPTIDEK\\n"
+                def control = file("\${workDir}/control")
+                control.mkdirs()
+                file("\${control}/psm.tsv").text = "Spectrum\\tPeptide\\nctrl.1.1.2\\tPEPTIDER\\n"
+                def mzml = file("\${workDir}/ctrl.mzML")
+                mzml.text = "mock"
+                // Property block as PARSEFRAGPIPEWORKFLOW writes it (sorted, run-time tokens)
+                def props = "glyco_residue_list = @TOOLS_DIR@/Glycan_Databases/glycan_residues.txt\\nrun_glyco_mode = true\\nthreads = @THREADS@\\n"
+                def fasta = file("\${workDir}/db.fasta")
+                fasta.text = ">sp|P1|A\\nPEPTIDEK\\n"
 
                 input[0] = channel.of([
-                    [ id: 'test_shepherd' ],
-                    [ psm_dir ],
-                    protxml_file,
-                    [ mzml_file ],
-                    config_file
+                    [ id: 'fragpipe' ],
+                    [ root, control ],
+                    [ ['workdir-root', 'dataset01'], ['control', 'control'] ],
+                    [ mzml ],
+                    props,
+                    []
                 ])
-                input[1] = channel.value(fasta_file)
+                input[1] = channel.value(fasta)
                 """
             }
         }
 
         then {
+            def config = path(process.out.config[0][1]).readLines()
             assertAll (
                 { assert process.success },
+                // createConfig(): database, dataset lines in group order, blank line, properties
+                { assert config[0] == 'database = db.fasta' },
+                { assert config[1] == 'dataset = dataset01 groups/workdir-root/psm.tsv spectra' },
+                { assert config[2] == 'dataset = control groups/control/psm.tsv spectra' },
+                { assert config[3] == '' },
+                { assert config[4] == 'glyco_residue_list = /fragpipe_bin/fragpipe-24.0/fragpipe-24.0/lib/../tools/Glycan_Databases/glycan_residues.txt' },
+                { assert config.any { line -> line ==~ /threads = [0-9]+/ } },
+                { assert process.out.psm_dirs[0][1].collect { d -> file(d).name }.sort() == ['control', 'workdir-root'] },
+                { assert process.out.glyco_masses.size() == 1 },
                 { assert snapshot(
+                    process.out.psm_dirs,
                     process.out.results_dir,
-                    process.out.global_profile,
-                    process.out.global_modsummary,
-                    process.out.diagmine,
-                    process.out.localization,
-                    process.out.glycoprofile,
+                    process.out.glyco_masses,
+                    process.out.config,
                     process.out.versions_ptmshepherd,
                     process.out.versions_fragpipe
                 ).match() }
@@ -58,67 +67,45 @@ nextflow_process {
         }
     }
 
-    test("ptmshepherd - integration with test data") {
-        tag "integration"
+    test("ptmshepherd - stub - custom annotation file is staged and named by the config") {
+        options "-stub"
+        tag "stub"
 
         when {
             process {
                 """
-                // Use real PSM data from test-datasets directly (PSMs reference
-                // tmt_erwinia_subset as the spectrum file basename)
-                def psm_dir = file("\${workDir}/sample1")
-                psm_dir.mkdirs()
-                def remote_psm = file("\${params.pipelines_testdata_base_path}/module_inputs/psm.tsv", checkIfExists: true)
-                def psm_file = file("\${workDir}/sample1/psm.tsv")
-                psm_file.text = remote_psm.text
-                def protxml_file = file("\${workDir}/combined.prot.xml")
-                protxml_file.text = "<?xml version='1.0'?><protein_summary></protein_summary>"
-                def mzml_file = file("\${params.pipelines_testdata_base_path}/spectra/tmt_erwinia_subset.mzML", checkIfExists: true)
-                def config_file = file("\${workDir}/ptms_input.config")
-                config_file.text = "histo_bindivs = 5000\\n" +
-                    "histo_smoothbins = 2\\n" +
-                    "precursor_tol = 0.01\\n" +
-                    "spectra_ppmtol = 20\\n" +
-                    "localization_background = 4\\n" +
-                    "output_extended = false\\n" +
-                    "mass_offsets = 0\\n" +
-                    "isotope_error = 0\\n" +
-                    "precursor_mass_units = 0\\n" +
-                    "run_glyco_mode = false\\n" +
-                    "cap_y_ions = 0\\n" +
-                    "oxonium_filtering = false\\n" +
-                    "msfragger_massdiff_to_varmod = 0\\n" +
-                    "annotation_tol = 0.01\\n" +
-                    "peakpicking_promRatio = 0.3\\n" +
-                    "peakpicking_width = 3.0"
+                def root = file("\${workDir}/workdir-root")
+                root.mkdirs()
+                file("\${root}/psm.tsv").text = "Spectrum\\tPeptide\\nroot.1.1.2\\tPEPTIDEK\\n"
+                def mzml = file("\${workDir}/ctrl.mzML")
+                mzml.text = "mock"
+                def annotation = file("\${workDir}/my_annotations.tsv")
+                annotation.text = "mass\\tname\\n79.966\\tPhospho\\n"
+                def fasta = file("\${workDir}/db.fasta")
+                fasta.text = ">sp|P1|A\\nPEPTIDEK\\n"
 
-                def fasta_file = file("\${params.pipelines_testdata_base_path}/databases/erwinia_carotovora.fasta", checkIfExists: true)
-
+                // annotation-custom=true, annotation_file=<path>: the parser writes the @ANNOTATION_FILE@ token
                 input[0] = channel.of([
-                    [ id: 'ptmshepherd_test' ],
-                    [ psm_dir ],
-                    protxml_file,
-                    [ mzml_file ],
-                    config_file
+                    [ id: 'fragpipe' ],
+                    [ root ],
+                    [ ['workdir-root', 'dataset01'] ],
+                    [ mzml ],
+                    "annotation_file = @ANNOTATION_FILE@\\nthreads = @THREADS@\\n",
+                    annotation
                 ])
-                input[1] = channel.value(fasta_file)
+                input[1] = channel.value(fasta)
                 """
             }
         }
 
         then {
+            def config = path(process.out.config[0][1]).readLines()
             assertAll (
                 { assert process.success },
-                // results_dir contains non-deterministic log (timestamps, memory)
-                { assert process.out.results_dir.size() > 0 },
-                // global_profile and global_modsummary have non-deterministic floating-point
-                // values (spectral similarity, localization) — verify existence and content
-                { assert process.out.global_profile.size() == 1 },
-                { assert process.out.global_modsummary.size() == 1 },
-                { assert path(process.out.global_profile[0][1]).text.contains('peak_apex') },
-                { assert path(process.out.global_modsummary[0][1]).text.contains('Modification') },
-                { assert process.out.versions_ptmshepherd.size() == 1 },
-                { assert process.out.versions_fragpipe.size() == 1 }
+                { assert config.contains('annotation_file = annotation/my_annotations.tsv') : config },
+                { assert !config.any { line -> line.contains('@ANNOTATION_FILE@') } : config },
+                { assert path(process.out.config[0][1]).parent.resolve('annotation/my_annotations.tsv').toFile().text.contains('Phospho') },
+                { assert snapshot(process.out.config).match() }
             )
         }
     }

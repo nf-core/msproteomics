@@ -1,0 +1,121 @@
+{
+    "philosopher_abacus - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        [
+                            "abacus.log:md5,a93235695bca3ef88901f68233748b64",
+                            "combined_protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "reprint.int.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "reprint.spc.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        "reprint.spc.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        "reprint.int.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "3": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        "combined_protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "4": [
+                    
+                ],
+                "5": [
+                    [
+                        "PHILOSOPHERABACUS",
+                        "philosopher",
+                        "5.1.3"
+                    ]
+                ],
+                "6": [
+                    [
+                        "PHILOSOPHERABACUS",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "combined_peptide": [
+                    
+                ],
+                "combined_protein": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        "combined_protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "reprint_int": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        "reprint.int.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "reprint_spc": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        "reprint.spc.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "results_dir": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        [
+                            "abacus.log:md5,a93235695bca3ef88901f68233748b64",
+                            "combined_protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "reprint.int.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "reprint.spc.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ],
+                "versions_fragpipe": [
+                    [
+                        "PHILOSOPHERABACUS",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "versions_philosopher": [
+                    [
+                        "PHILOSOPHERABACUS",
+                        "philosopher",
+                        "5.1.3"
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-05T18:55:33.231551546"
+    }
+}

@@ -15,20 +15,43 @@ nextflow_process {
         when {
             process {
                 """
-                def pepxml_file = file("\${workDir}/test.pep.xml")
-                pepxml_file.text = "<?xml version='1.0'?><msms_pipeline_analysis></msms_pipeline_analysis>"
-                // PTMProphet CLI config (e.g., "MINPROB=0.5 STATIC KEEPOLD")
-                def config_cli = "MINPROB=0.5 STATIC KEEPOLD"
+                ['interact-s1_rank2.pep.xml', 's1.mzML'].each { n -> file("\${workDir}/\${n}").text = 'mock' }
+                input[0] = channel.of([[ id: 's1' ], file("\${workDir}/interact-s1_rank2.pep.xml"), [file("\${workDir}/s1.mzML")], ['s1.mzML'],
+                    'NOSTACK KEEPOLD STATIC FRAGPPMTOL=10 EM=1 NIONS=b M:15.9949 MAXTHREADS=8 MINPROB=0.5'])
+                """
+            }
+        }
 
-                input[0] = channel.of([[ id: 'test_sample' ], pepxml_file, config_cli])
+        then {
+            def lines = new File(process.out.results_dir.get(0).get(1), 'ptmprophet.log').readLines()
+            def line = lines[1]
+            assertAll (
+                { assert process.success },
+                // spectra staged with the pepXML; base_name pointed at them (RewritePepxml, CmdPeptideProphet.java:426-451)
+                { assert lines[0] == 'java -cp /fragpipe_bin/fragpipe-24.0/fragpipe-24.0/lib/* org.nesvilab.fragpipe.util.RewritePepxml {CWD}/interact-s1_rank2.pep.xml {CWD}/s1.mzML' : lines[0] },
+                // CmdPtmProphet.java:111-122: MAXTHREADS= dropped, MAXTHREADS=1 last, then input and .mod.pep.xml output
+                { assert line == '/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools/PTMProphet/PTMProphetParser-6.3.2 NOSTACK KEEPOLD STATIC FRAGPPMTOL=10 EM=1 NIONS=b M:15.9949 MINPROB=0.5 MAXTHREADS=1 interact-s1_rank2.pep.xml interact-s1_rank2.mod.pep.xml' : line },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+
+    test("ptmprophet - stub rejects a non .pep.xml input") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                file("\${workDir}/s1.pepXML").text = 'mock'
+                input[0] = channel.of([[ id: 's1' ], file("\${workDir}/s1.pepXML"), [], ['s1.mzML'], 'KEEPOLD'])
                 """
             }
         }
 
         then {
             assertAll (
-                { assert process.success },
-                { assert snapshot(process.out.results_dir, process.out.mod_pepxml, process.out.versions_ptmprophet, process.out.versions_fragpipe).match() }
+                { assert process.failed }
             )
         }
     }
@@ -78,7 +101,9 @@ nextflow_process {
                     '</msms_pipeline_analysis>'
                 def config_cli = "MINPROB=0.5 STATIC KEEPOLD"
 
-                input[0] = channel.of([[ id: 'ptmprophet_test' ], pepxml_file, config_cli])
+                def mzml_file = file("\${workDir}/test_sample.mzML")
+                mzml_file.text = '<?xml version="1.0"?><mzML/>'
+                input[0] = channel.of([[ id: 'ptmprophet_test' ], pepxml_file, [mzml_file], ['test_sample.mzML'], config_cli])
                 """
             }
         }

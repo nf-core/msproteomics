@@ -1,111 +1,71 @@
 //
-// Raw file conversion and mzml indexing
+// Decompression, raw file conversion, mzML indexing and optional peak picking for DIA-NN
 //
 
 include { THERMORAWFILEPARSER } from '../../../modules/nf-core/thermorawfileparser/main'
 include { TDF2MZML            } from '../../../modules/local/tdf2mzml/main'
 include { DECOMPRESS          } from '../../../modules/local/decompress/main'
-include { MZML_INDEXING       } from '../../../modules/local/mzml_indexing/main'
-include { OPENMS_PEAK_PICKER  } from '../../../modules/local/openms_peak_picker/main'
+include { MZMLINDEXING } from '../../../modules/local/mzmlindexing/main'
+include { OPENMSPEAKPICKER } from '../../../modules/local/openmspeakpicker/main'
 
 workflow FILE_PREPARATION {
     take:
-    ch_rawfiles            // channel: [ val(meta), raw/mzml/d.tar ]
+    ch_rawfiles            // channel: [ val(meta), .raw | .mzML | .d | .dia, optionally .gz/.tar/.tar.gz/.zip ]
 
     main:
-    ch_versions   = Channel.empty()
-    ch_results    = Channel.empty()
-    ch_mqc_data   = Channel.empty()
-
-
-    // Divide the compressed files
+    // Decompress archives: X.mzML.gz -> X.mzML, X.raw.gz -> X.raw, X.d.tar.gz -> X.d
     ch_rawfiles
-    .branch {
-        dottar: hasExtension(it[1], '.tar')
-        dotzip: hasExtension(it[1], '.zip')
-        gz: hasExtension(it[1], '.gz')
-        uncompressed: true
-    }.set { ch_branched_input }
-
-    compressed_files = ch_branched_input.dottar.mix(ch_branched_input.dotzip, ch_branched_input.gz)
-    DECOMPRESS(compressed_files)
-    ch_versions = ch_versions.mix(DECOMPRESS.out.versions)
-    ch_rawfiles = ch_branched_input.uncompressed.mix(DECOMPRESS.out.decompressed_files)
-
-    //
-    // Divide mzml files
-    ch_rawfiles
-    .branch {
-        raw: hasExtension(it[1], '.raw')
-        mzML: hasExtension(it[1], '.mzML')
-        dotd: hasExtension(it[1], '.d')
-        dia: hasExtension(it[1], '.dia')
-        unsupported: true
-    }.set { ch_branched_input }
-
-    // Warn about unsupported file formats
-    ch_branched_input.unsupported
-        .collect()
-        .subscribe { files ->
-            if (files.size() > 0) {
-                log.warn "=" * 80
-                log.warn "WARNING: ${files.size()} file(s) with unsupported format(s) detected and will be SKIPPED from processing:"
-                files.each { meta, file ->
-                    log.warn "  - ${file}"
-                }
-                log.warn "\nSupported formats: .raw, .mzML, .d (Bruker), .dia"
-                log.warn "Compressed variants (.gz, .tar, .tar.gz, .zip) are also supported."
-                log.warn "=" * 80
-            }
+        .branch { _meta, ms_file ->
+            compressed: ['.tar', '.zip', '.gz'].any { ext -> hasExtension(ms_file, ext) }
+            uncompressed: true
         }
+        .set { ch_compression }
 
-    // Note: we used to always index mzMLs if not already indexed but due to
-    //  either a bug or limitation in nextflow
-    //  peeking into a remote file consumes a lot of RAM
-    //  See https://github.com/bigbio/quantms/issues/61
-    //  This is now done in the search engines themselves if they need it.
-    //  This means users should pre-index to save time and space, especially
-    //  when re-running.
+    DECOMPRESS(ch_compression.compressed)
+    ch_ms_files = ch_compression.uncompressed.mix(DECOMPRESS.out.decompressed_files)
 
+    ch_ms_files
+        .branch { _meta, ms_file ->
+            raw: hasExtension(ms_file, '.raw')
+            mzml: hasExtension(ms_file, '.mzML')
+            dotd: hasExtension(ms_file, '.d')
+            dia: hasExtension(ms_file, '.dia')
+            unsupported: true
+        }
+        .set { ch_by_format }
+
+    ch_by_format.unsupported.map { _meta, ms_file ->
+        error("Unsupported mass spectrometry file for DIA-NN: ${ms_file}. Supported formats: .raw, .mzML, .d (Bruker), .dia, optionally compressed (.gz, .tar, .tar.gz, .zip)")
+    }
+
+    // Indexing is done here when requested; search engines index on demand otherwise
+    // (peeking into remote files costs a lot of RAM, see https://github.com/bigbio/quantms/issues/61).
     if (params.reindex_mzml) {
-        MZML_INDEXING( ch_branched_input.mzML )
-        ch_versions = ch_versions.mix(MZML_INDEXING.out.versions)
-        ch_results  = ch_results.mix(MZML_INDEXING.out.mzmls_indexed)
+        MZMLINDEXING(ch_by_format.mzml)
+        ch_mzml = MZMLINDEXING.out.mzmls_indexed
     } else {
-        ch_results = ch_results.mix(ch_branched_input.mzML)
+        ch_mzml = ch_by_format.mzml
     }
 
-    THERMORAWFILEPARSER( ch_branched_input.raw )
-    ch_versions = ch_versions.mix(THERMORAWFILEPARSER.out.versions_thermorawfileparser)
-    ch_results  = ch_results.mix(THERMORAWFILEPARSER.out.spectra)
+    THERMORAWFILEPARSER(ch_by_format.raw)
+    ch_mzml = ch_mzml.mix(THERMORAWFILEPARSER.out.spectra)
 
-    ch_results.map{ it -> [it[0], it[1]] }.set{ indexed_mzml_bundle }
-
-    // Convert .d files to mzML
-    if (params.convert_dotd) {
-        TDF2MZML( ch_branched_input.dotd )
-        ch_versions = ch_versions.mix(TDF2MZML.out.versions)
-        ch_results = indexed_mzml_bundle.mix(TDF2MZML.out.mzmls_converted)
-    } else {
-        ch_results = indexed_mzml_bundle.mix(ch_branched_input.dotd)
-    }
-
-    // Pass through .dia files without conversion (DIA-NN handles them natively)
-    // Note: .dia files bypass peak picking as they are only used with DIA-NN
-    ch_results = ch_results.mix(ch_branched_input.dia)
-
+    // Peak picking applies to the mzML files only; .d and .dia files pass through.
     if (params.openms_peakpicking) {
-        // If the peak picker is enabled, it will over-write not bypass the .d files
-        OPENMS_PEAK_PICKER (
-            indexed_mzml_bundle
-        )
+        OPENMSPEAKPICKER(ch_mzml)
+        ch_mzml = OPENMSPEAKPICKER.out.mzmls_picked
+    }
 
-        ch_results = OPENMS_PEAK_PICKER.out.mzmls_picked
+    if (params.convert_dotd) {
+        TDF2MZML(ch_by_format.dotd)
+        ch_dotd = TDF2MZML.out.mzmls_converted
+    } else {
+        ch_dotd = ch_by_format.dotd
     }
 
     emit:
-    results         = ch_results        // channel: [val(mzml_id), indexedmzml|.d.tar]
-    versions        = ch_versions       // channel: [ *.versions.yml ]
+    results = ch_mzml.mix(ch_dotd, ch_by_format.dia) // channel: [ val(meta), .mzML | .d | .dia ]
+    versions = channel.empty()  // channel: empty - every module reports its version on the 'versions' topic
 }
 
 //

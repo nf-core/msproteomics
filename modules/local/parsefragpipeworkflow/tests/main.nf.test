@@ -1,0 +1,479 @@
+nextflow_process {
+
+    name "Test Process PARSEFRAGPIPEWORKFLOW"
+    script "../main.nf"
+    process "PARSEFRAGPIPEWORKFLOW"
+    config "./nextflow.config"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "parse_fragpipe_workflow"
+
+    test("parse_fragpipe_workflow - stub") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def workflow_file = file("\${workDir}/test.workflow")
+                workflow_file.text = '''
+msfragger.calibrate_mass = 2
+msfragger.precursor_mass_lower = -20
+msfragger.precursor_mass_upper = 20
+msfragger.run-msfragger = true
+ionquant.mbr = 1
+ionquant.maxlfq = 1
+ionquant.run-ionquant = true
+quantitation.run-label-free-quant = true
+msfragger.table.var-mods = 15.9949,M,true,3
+phi-report.filter = --sequential --prot 0.01 --picked
+phi-report.run-report = true
+percolator.run-percolator = true
+protein-prophet.run-protein-prophet = true
+database.decoy-tag = rev_
+'''.trim()
+
+                input[0] = channel.of([[ id: 'test_experiment' ], workflow_file, ['DDA']])
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(
+                    process.out.tool_configs_json,
+                    process.out.msfragger_config,
+                    process.out.ionquant_config,
+                    process.out.msbooster_config,
+                    process.out.percolator_config,
+                    process.out.phi_report_config,
+                    process.out.peptideprophet_config,
+                    process.out.proteinprophet_config,
+                    process.out.database_config,
+                    process.out.tmtintegrator_config,
+                    process.out.all_configs
+                ).match() }
+            )
+        }
+    }
+
+    // A parser failure must fail the task (no shebang bypassing -euo pipefail, no touch fallbacks)
+    test("parse_fragpipe_workflow - stub unreadable workflow fails the task") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def workflow_dir = file("\${workDir}/not_a_file.workflow")
+                workflow_dir.mkdirs()
+                input[0] = channel.of([[ id: 'bad' ], workflow_dir, ['DDA']])
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.failed },
+                { assert (process.stdout + process.stderr).any { line -> line.contains('IsADirectoryError') } : "the parser's own error must fail the task" }
+            )
+        }
+    }
+
+    test("parse_fragpipe_workflow - integration with real workflow file") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                def workflow_file = file("\${workDir}/fragpipe.workflow")
+                workflow_file.text = '''
+# FragPipe workflow file
+msfragger.calibrate_mass = 2
+msfragger.precursor_mass_lower = -20
+msfragger.precursor_mass_upper = 20
+msfragger.precursor_mass_units = 1
+msfragger.fragment_mass_tolerance = 20
+msfragger.fragment_mass_units = 1
+msfragger.num_enzyme_termini = 2
+msfragger.search_enzyme_name_1 = stricttrypsin
+msfragger.search_enzyme_cut_1 = KR
+msfragger.allowed_missed_cleavage_1 = 2
+msfragger.output_format = pepXML_pin
+msfragger.run-msfragger = true
+ionquant.mbr = 1
+ionquant.maxlfq = 1
+ionquant.requantify = 1
+ionquant.mztol = 10
+ionquant.rttol = 0.4
+ionquant.normalization = 1
+ionquant.minisotopes = 2
+ionquant.minscans = 3
+ionquant.ionfdr = 0.01
+ionquant.proteinfdr = 1
+ionquant.peptidefdr = 1
+ionquant.run-ionquant = true
+quantitation.run-label-free-quant = true
+msfragger.table.var-mods = 15.9949,M,true,3
+msbooster.predict-rt = true
+msbooster.predict-spectra = true
+msbooster.run-msbooster = true
+percolator.run-percolator = true
+percolator.cmd-opts = --trainFDR 0.01 --testFDR 0.01
+phi-report.filter = --sequential --prot 0.01 --picked --razor
+phi-report.run-report = true
+phi-report.print-decoys = false
+phi-report.remove-contaminants = true
+peptide-prophet.run-peptide-prophet = false
+peptide-prophet.cmd-opts = --decoyprobs --ppm --accmass --nonparam --expectscore
+protein-prophet.run-protein-prophet = true
+protein-prophet.cmd-opts = --maxppmdiff 2000000
+database.decoy-tag = rev_
+tmtintegrator.run-tmtintegrator = false
+'''.trim()
+
+                input[0] = channel.of([[ id: 'test_experiment' ], workflow_file, ['DDA']])
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(
+                    process.out.tool_configs_json,
+                    process.out.msfragger_config,
+                    process.out.ionquant_config,
+                    process.out.msbooster_config,
+                    process.out.percolator_config,
+                    process.out.phi_report_config,
+                    process.out.peptideprophet_config,
+                    process.out.proteinprophet_config,
+                    process.out.database_config,
+                    process.out.tmtintegrator_config,
+                    process.out.all_configs
+                ).match() }
+            )
+        }
+    }
+
+    test("parse_fragpipe_workflow - non-default decoy tag is the single source") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                def workflow_file = file("\${workDir}/decoy.workflow")
+                workflow_file.text = '''
+msfragger.run-msfragger = true
+percolator.run-percolator = true
+phi-report.filter = --sequential --prot 0.01
+phi-report.run-report = true
+protein-prophet.run-protein-prophet = true
+database.decoy-tag = DECOY_
+'''.trim()
+
+                input[0] = channel.of([[ id: 'decoy_experiment' ], workflow_file, ['DDA']])
+                """
+            }
+        }
+
+        then {
+            def configs = new groovy.json.JsonSlurper().parse(file(process.out.tool_configs_json.get(0).get(1)))
+            assertAll (
+                { assert process.success },
+                { assert configs.database.decoy_tag == 'DECOY_' },
+                { assert path(process.out.msfragger_config.get(0).get(1)).readLines().contains('decoy_prefix = DECOY_\t\t\t# Prefix of the decoy protein entries. Used for parameter optimization only.') },
+                { assert snapshot(process.out.tool_configs_json, process.out.msfragger_config).match() }
+            )
+        }
+    }
+
+    test("parse_fragpipe_workflow - empty decoy tag fails like FragPipe") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                def workflow_file = file("\${workDir}/empty_decoy.workflow")
+                workflow_file.text = '''
+msfragger.run-msfragger = true
+database.decoy-tag =
+'''.trim()
+
+                input[0] = channel.of([[ id: 'empty_decoy' ], workflow_file, ['DDA']])
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.failed },
+                { assert (process.stdout + process.stderr).join('\n').contains('database.decoy-tag is empty') },
+                // FragPipe's own message (FragpipeRun.java:1444-1447, headless without the HTML)
+                { assert (process.stdout + process.stderr).join('\n').contains('Decoy protein prefix is empty. Please fix it in Database tab.') }
+            )
+        }
+    }
+
+    test("parse_fragpipe_workflow - absent decoy tag uses FragPipe default rev_") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                // No database.decoy-tag key: FragPipe keeps its UI default (Bundle.properties:44 decoy.tag=rev_)
+                def workflow_file = file("\${workDir}/no_decoy_key.workflow")
+                workflow_file.text = \'\'\'
+msfragger.run-msfragger = true
+percolator.run-percolator = true
+\'\'\'.trim()
+
+                input[0] = channel.of([[ id: 'no_decoy_key' ], workflow_file, ['DDA']])
+                """
+            }
+        }
+
+        then {
+            def configs = new groovy.json.JsonSlurper().parse(file(process.out.tool_configs_json.get(0).get(1)))
+            assertAll (
+                { assert process.success },
+                { assert configs.database.decoy_tag == 'rev_' },
+                { assert path(process.out.msfragger_config.get(0).get(1)).readLines().contains('decoy_prefix = rev_\t\t\t# Prefix of the decoy protein entries. Used for parameter optimization only.') },
+                { assert snapshot(process.out.tool_configs_json, process.out.msfragger_config).match() }
+            )
+        }
+    }
+
+    test("parse_fragpipe_workflow - speclibgen psm.tsv conversion flags") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                // CmdSpecLibGen.java:165-167: --decoy_prefix/--labile_mods/--max_glycan_q only with convert-psm
+                def workflow_file = file("\${workDir}/speclib.workflow")
+                workflow_file.text = \'\'\'
+speclibgen.run-speclibgen = true
+speclibgen.convert-psm = true
+speclibgen.easypqp.labile_mode = N-glyco+HexNAc
+speclibgen.easypqp.extras.max_glycan_qval = 0.01
+database.decoy-tag = DECOY_
+\'\'\'.trim()
+
+                input[0] = channel.of([[ id: 'speclib' ], workflow_file, ['DDA']])
+                """
+            }
+        }
+
+        then {
+            def configs = new groovy.json.JsonSlurper().parse(file(process.out.tool_configs_json.get(0).get(1)))
+            assertAll (
+                { assert process.success },
+                { assert configs.speclibgen.args.contains("--decoy_prefix DECOY_ --labile_mods nglyc+ --max_glycan_q 0.01'") },
+                { assert snapshot(process.out.tool_configs_json).match() }
+            )
+        }
+    }
+
+    test("parse_fragpipe_workflow - stub reads the workflow decoy tag") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def workflow_file = file("\${workDir}/stub_decoy.workflow")
+                workflow_file.text = \'\'\'
+percolator.run-percolator = true
+database.decoy-tag = DECOY_
+\'\'\'.trim()
+
+                input[0] = channel.of([[ id: 'stub_decoy' ], workflow_file, ['DDA']])
+                """
+            }
+        }
+
+        then {
+            def configs = new groovy.json.JsonSlurper().parse(file(process.out.tool_configs_json.get(0).get(1)))
+            assertAll (
+                { assert process.success },
+                { assert configs.database.decoy_tag == 'DECOY_' },
+                { assert snapshot(process.out.tool_configs_json, process.out.database_config).match() }
+            )
+        }
+    }
+
+    // RC-20: the split-database slice count is the workflow's msfragger.misc.slice-db
+    // (TabMsfragger.getNumDbSlices -> CmdMsfragger.configure numSlices, FragpipeRun.java:1470);
+    // without the key FragPipe keeps the spinner's reset value 1 (TabMsfragger.java:2095).
+    test("parse_fragpipe_workflow - stub msfragger.misc.slice-db is the slice count") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def split = file("\${workDir}/split.workflow")
+                split.text = "msfragger.run-msfragger=true\\nmsfragger.misc.slice-db=3\\n"
+                def plain = file("\${workDir}/plain.workflow")
+                plain.text = "msfragger.run-msfragger=true\\n"
+                input[0] = channel.of([[ id: 'split' ], split, ['DDA']], [[ id: 'plain' ], plain, ['DDA']])
+                """
+            }
+        }
+
+        then {
+            def slices = process.out.tool_configs_json.collectEntries { meta, json ->
+                [meta.id, new groovy.json.JsonSlurper().parse(file(json)).msfragger.num_slices]
+            }
+            assertAll (
+                { assert process.success },
+                { assert slices == [split: 3, plain: 1] : slices },
+                { assert snapshot(slices).match() }
+            )
+        }
+    }
+
+    // FragPipe adjusts tools to the manifest data types (TabWorkflow.java:1476-1513): with DIA or DDA+
+    // files PeptideProphet is disabled, Percolator is selected and output_format becomes pepXML_pin
+    // (PepProphPanel.java:102-107, PercolatorPanel.java:101-106); Crystal-C (without DIA-Umpire or
+    // diaTracer) and TMT-Integrator are disabled. DDA-only keeps the workflow as written.
+    test("parse_fragpipe_workflow - stub manifest data types switch PeptideProphet to Percolator") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def wf = file("${baseDir}/tests/fixtures/fragger_params/orig_glyco-N-HCD/fragpipe.workflow", checkIfExists: true)
+                def tmt = file("\${workDir}/tmt.workflow")
+                tmt.text = "msfragger.run-msfragger=true\\nmsfragger.table.var-mods=15.9949,M,true,3\\ntmtintegrator.run-tmtintegrator=true\\ncrystalc.run-crystalc=true\\ndiaumpire.run-diaumpire=true\\n"
+                input[0] = channel.of(
+                    [[ id: 'dda' ], wf, ['DDA']],
+                    [[ id: 'dia' ], wf, ['DDA', 'DIA']],
+                    [[ id: 'ddaplus' ], wf, ['DDA+']],
+                    [[ id: 'tmt_dda' ], tmt, ['DDA']],
+                    [[ id: 'tmt_ddaplus' ], tmt, ['DDA+']]
+                )
+                """
+            }
+        }
+
+        then {
+            def runs = process.out.tool_configs_json.collectEntries { meta, json ->
+                def c = new groovy.json.JsonSlurper().parse(file(json))
+                [meta.id, ['peptideprophet', 'percolator', 'crystalc', 'tmtintegrator', 'diaumpire'].collectEntries { t -> [t, c[t]?.run] }]
+            }
+            def formats = process.out.msfragger_config.collectEntries { meta, params ->
+                [meta.id, file(params).readLines().find { line -> line.startsWith('output_format') }.split('\t')[0]]
+            }
+            assertAll (
+                { assert process.success },
+                { assert runs.dda.peptideprophet && !runs.dda.percolator : runs },
+                { assert !runs.dia.peptideprophet && runs.dia.percolator : runs },
+                { assert !runs.ddaplus.peptideprophet && runs.ddaplus.percolator : runs },
+                { assert formats == [dda: 'output_format = tsv_pepXML', dia: 'output_format = pepXML_pin', ddaplus: 'output_format = pepXML_pin', tmt_dda: formats.tmt_dda, tmt_ddaplus: formats.tmt_ddaplus] : formats },
+                { assert runs.tmt_dda.tmtintegrator && runs.tmt_dda.crystalc && !runs.tmt_dda.diaumpire : runs },
+                { assert !runs.tmt_ddaplus.tmtintegrator && !runs.tmt_ddaplus.crystalc && !runs.tmt_ddaplus.diaumpire : runs },
+                { assert snapshot(runs, formats).match() }
+            )
+        }
+    }
+
+    // CmdMsfragger.java:345: DIA files without DIA-Umpire/diaTracer and output_report_topN_dia1 > 1 stop a split search
+    test("parse_fragpipe_workflow - stub split database rejects DIA multiple rank reporting") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def wf = file("\${workDir}/split.workflow")
+                wf.text = "msfragger.run-msfragger=true\\nmsfragger.misc.slice-db=2\\nmsfragger.calibrate_mass=2\\nmsfragger.output_report_topN_dia1=5\\n"
+                input[0] = channel.of([[ id: 'split' ], wf, ['DDA', 'DIA']])
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.failed },
+                { assert (process.stdout + process.stderr).join('\n').contains('not compatible with multiple rank reporting') }
+            )
+        }
+    }
+
+    // CmdMsfragger.java:345-350: with DIA-Umpire the pseudo spectra are DDA, so output_report_topN > 1 stops a split search
+    test("parse_fragpipe_workflow - stub split database rejects DIA-Umpire pseudo spectra with multiple ranks") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def wf = file("\${workDir}/split.workflow")
+                wf.text = "msfragger.run-msfragger=true\\nmsfragger.misc.slice-db=2\\nmsfragger.calibrate_mass=2\\nmsfragger.output_report_topN_dia1=5\\nmsfragger.output_report_topN=2\\ndiaumpire.run-diaumpire=true\\n"
+                input[0] = channel.of([[ id: 'split' ], wf, ['DIA']])
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.failed },
+                { assert (process.stdout + process.stderr).join('\n').contains('not compatible with multiple rank reporting') }
+            )
+        }
+    }
+
+    // CmdMsfragger.java:345-350: with DIA-Umpire output_report_topN_dia1 does not matter; calibrate_mass per params set reaches tool_configs
+    test("parse_fragpipe_workflow - stub split database accepts DIA-Umpire with one DDA rank") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def wf = file("\${workDir}/split.workflow")
+                wf.text = "msfragger.run-msfragger=true\\nmsfragger.misc.slice-db=2\\nmsfragger.calibrate_mass=2\\nmsfragger.output_report_topN_dia1=5\\nmsfragger.output_report_topN=1\\ndiaumpire.run-diaumpire=true\\n"
+                input[0] = channel.of([[ id: 'split' ], wf, ['DIA']])
+                """
+            }
+        }
+
+        then {
+            def cal = process.out.tool_configs_json.collect { meta, json -> new groovy.json.JsonSlurper().parse(file(json)).msfragger.calibrate_mass }
+            assertAll (
+                { assert process.success },
+                { assert cal == [[DDA: '2', DIA: '2', 'GPF-DIA': '2', 'DDA+': '2']] : cal },
+                { assert snapshot(cal).match() }
+            )
+        }
+    }
+
+    // CmdMsfragger.java:339-342: the base (DDA) params localize mass shifts, whatever the data types
+    test("parse_fragpipe_workflow - stub split database rejects localize mass shift") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def wf = file("\${workDir}/split.workflow")
+                wf.text = "msfragger.run-msfragger=true\\nmsfragger.misc.slice-db=2\\nmsfragger.calibrate_mass=2\\nmsfragger.localize_delta_mass=true\\n"
+                input[0] = channel.of([[ id: 'split' ], wf, ['DIA']])
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.failed },
+                { assert (process.stdout + process.stderr).join('\n').contains('incompatible with localize mass shift') }
+            )
+        }
+    }
+}

@@ -1,0 +1,99 @@
+name: "philosopherlabelquant"
+description: Extract TMT/isobaric reporter ion intensities from mzML spectra using Philosopher labelquant
+keywords:
+  - proteomics
+  - TMT
+  - isobaric
+  - labeling
+  - quantification
+  - reporter ion
+tools:
+  - philosopher:
+      description: "Philosopher labelquant extracts TMT/isobaric reporter ion intensities from
+
+        mzML spectra and writes them into the Philosopher .meta/ workspace. This is
+
+        the Philosopher-based alternative to IonQuant's isobaric extraction mode
+
+        (intensity_extraction_tool=1 in FragPipe).
+
+        "
+      homepage: https://philosopher.nesvilab.org/
+      documentation: https://github.com/Nesvilab/philosopher/wiki
+      tool_dev_url: https://github.com/Nesvilab/philosopher
+      doi: 10.1038/s41592-020-0912-y
+      licence:
+        - GPL-3.0
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample information
+    - results_dir:
+        type: directory
+        description: Directory containing psm.tsv and .meta/ workspace from PHILOSOPHERFILTER or FREEQUANT
+    - lcms_files:
+        type: file
+        description: LC-MS files (mzML or RAW) of one FragPipe group, staged into lcms_files/
+        pattern: "*.{mzML,mzml,raw,RAW}"
+    - annotation:
+        type: file
+        description: <group>_annotation.txt ("channel sample" lines, labelquantAnnotationText via WRITETEXTFILE), staged into lcms_files/
+        pattern: "*_annotation.txt"
+    - config_cli:
+        type: string
+        description: CLI flags for philosopher labelquant (--tol, --level, --minprob, --purity, --removelow, --plex)
+    - brand:
+        type: string
+        description: Label type in lower case, passed as --brand
+output:
+  results_dir:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - ${prefix}:
+          type: directory
+          description: Directory containing results with TMT intensities in .meta/ workspace
+  versions_philosopher:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - philosopher:
+          type: string
+          description: The name of the tool
+      - fragpipeToolVersions().philosopher:
+          type: string
+          description: The Philosopher version bundled with FragPipe
+  versions_fragpipe:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - fragpipe:
+          type: string
+          description: The name of the tool
+      - cat .fragpipe_version:
+          type: eval
+          description: The expression to obtain the FragPipe version
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - philosopher:
+          type: string
+          description: The name of the tool
+      - fragpipeToolVersions().philosopher:
+          type: string
+          description: The Philosopher version bundled with FragPipe
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - fragpipe:
+          type: string
+          description: The name of the tool
+      - cat .fragpipe_version:
+          type: eval
+          description: The expression to obtain the FragPipe version
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

@@ -2,91 +2,80 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     FRAGPIPE_HEADLESS_WF SUBWORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Runs FragPipe in headless mode (all-in-one process).
-    Pre-converts .raw files to .mzML via ThermoRawFileParser, prepares the
-    database with decoys via Philosopher, then passes all spectra files to
-    FRAGPIPE_HEADLESS as a single batch.
+    Runs FragPipe in headless mode (all-in-one process) on the LC-MS files as given
+    (FragPipe reads .raw natively), after FragPipe's database decoy check.
 
     Modules:
-    - THERMORAWFILEPARSER (RAW to mzML)
-    - PHILOSOPHER_DATABASE (decoy generation — required because FragPipe headless
-      hard-fails if FASTA has no decoys, unlike GUI mode which prompts the user)
-    - FRAGPIPE_HEADLESS (all-in-one FragPipe headless execution)
+    - PARSEFRAGPIPEWORKFLOW (workflow decoy tag and tool run flags)
+    - FRAGPIPE_DATABASE (CHECKDBCONFIG, plus PHILOSOPHERDATABASE with --add_philosopher_decoy / --add_philosopher_contaminants;
+      FragPipe headless hard-fails if the FASTA decoys do not match the workflow decoy tag)
+    - FRAGPIPEHEADLESS (all-in-one FragPipe headless execution)
 
-    Execution: Conversion is per-sample parallel; headless is a single aggregate process
+    Execution: a single aggregate process
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { THERMORAWFILEPARSER } from '../../../modules/nf-core/thermorawfileparser/main'
-include { PHILOSOPHER_DATABASE } from '../../../modules/local/philosopher/database/main'
-include { FRAGPIPE_HEADLESS   } from '../../../modules/local/fragpipe_headless/main'
+include { PARSEFRAGPIPEWORKFLOW } from '../../../modules/local/parsefragpipeworkflow/main'
+include { FRAGPIPE_DATABASE   } from '../fragpipe_database/main'
+include { FRAGPIPEHEADLESS } from '../../../modules/local/fragpipeheadless/main'
 
 workflow FRAGPIPE_HEADLESS_WF {
     take:
     ch_files                // channel: [ val(meta), path(spectra) ] - sample files
-    ch_database             // channel: path(fasta) - FASTA database
+    ch_fasta                // channel: [ val(meta), path(fasta) ] - FASTA to update with decoys and contaminants (empty unless --add_philosopher_decoy / --add_philosopher_contaminants)
+    ch_database             // channel: [ val(meta), path(fasta) ] - FASTA searched as given (empty when ch_fasta is used)
     ch_workflow_file        // channel: path(workflow) - FragPipe .workflow file
-    ch_manifest_content     // channel: val(manifest_string) - manifest (filename\texperiment\tbioreplicate\tdata_type), authoritative when non-empty
-    ch_annotation_content   // channel: val(annotation_string) - TMT annotation (experiment\tchannel\tsample_name), empty for LFQ
-    ch_file_experiment_map  // channel: val(map_string) - file-to-experiment mapping (filename\texperiment), used only when the manifest is empty
+    ch_manifest_rows        // channel: val([[filename, experiment, bioreplicate, data_type, group], ...]) - value channel, one row per LC-MS file
+    ch_annotation_rows      // channel: val([[group, channel, sample_name], ...]) - value channel, TMT annotation, [] for LFQ
     main:
 
     //
-    // Branch input files by extension: .raw files need conversion, others pass through
-    //
-    ch_branched = ch_files
-        .branch {
-            _meta, file ->
-            raw:   file.name.toLowerCase().endsWith('.raw')
-            ready: true  // .mzML, .d, .mzXML pass through
-        }
-
-    //
-    // STEP 1: Convert RAW files to mzML using ThermoRawFileParser
-    //
-    THERMORAWFILEPARSER(ch_branched.raw)
-
-    //
-    // STEP 2: Combine converted mzML with already-ready files
-    //
-    ch_all_spectra = THERMORAWFILEPARSER.out.spectra
-        .mix(ch_branched.ready)
-
-    //
-    // STEP 3: Prepare database with decoys via Philosopher
-    // FragPipe headless hard-fails if no decoys are present (FragpipeRun.java:2724-2727).
-    // PHILOSOPHER_DATABASE handles both cases: adds decoys if missing, annotates if present.
+    // STEP 1: FragPipe's database decoy check (FragpipeRun.checkDbConfig) so the run stops here, before the
+    // headless process, wherever FragPipe headless would stop.
     // Must run as a separate process (not inside headless script) to avoid Fusion mount corruption.
+    // The decoy tag and run flags come from the same .workflow FragPipe headless reads.
     //
-    ch_db_with_meta = ch_database.map { db -> [[id: db.baseName], db] }
-    PHILOSOPHER_DATABASE(ch_db_with_meta)
-    ch_prepared_db = PHILOSOPHER_DATABASE.out.fasta.map { _meta, db -> db }
+    // Data types of the manifest files: FragPipe adjusts the tools to them (TabWorkflow.adjustToolsBasedOnDataTypes)
+    ch_data_types = ch_files
+        .map { meta, _spectra -> meta.data_type }
+        .unique()
+        .toSortedList()
+    PARSEFRAGPIPEWORKFLOW(
+        ch_workflow_file
+            .map { wf -> [[id: wf.baseName], wf] }
+            .combine(ch_data_types.map { data_types -> [data_types] })
+    )
+    ch_tool_configs = PARSEFRAGPIPEWORKFLOW.out.tool_configs_json
+        .map { _meta, json_file -> json_file }
+        .splitText()
+        .collect()
+        .map { lines -> lines.join('') }
+
+    FRAGPIPE_DATABASE(ch_fasta, ch_database, ch_tool_configs)
+    ch_prepared_db = FRAGPIPE_DATABASE.out.fasta_path
 
     //
-    // STEP 4: Collect all files (strip meta) into a single list for headless mode
+    // STEP 2: Collect all files (strip meta) into a single list for headless mode
     //
-    ch_collected_files = ch_all_spectra
+    ch_collected_files = ch_files
         .map { _meta, file -> file }
         .collect()
 
     //
-    // STEP 5: Run FragPipe headless
+    // STEP 3: Run FragPipe headless
     //
-    FRAGPIPE_HEADLESS(
+    FRAGPIPEHEADLESS(
         ch_collected_files,
         ch_prepared_db,
-        ch_workflow_file,
-        ch_manifest_content,
-        ch_annotation_content,
-        ch_file_experiment_map
+        ch_workflow_file.map { wf -> wf.text },
+        ch_manifest_rows,
+        ch_annotation_rows
     )
 
     emit:
-    all_results      = FRAGPIPE_HEADLESS.out.all_results      // path: results/**
-    combined_protein = FRAGPIPE_HEADLESS.out.combined_protein  // path: combined_protein.tsv
-    combined_peptide = FRAGPIPE_HEADLESS.out.combined_peptide  // path: combined_peptide.tsv
-    combined_ion     = FRAGPIPE_HEADLESS.out.combined_ion      // path: combined_ion.tsv
-    versions         = THERMORAWFILEPARSER.out.versions_thermorawfileparser
-        .mix(PHILOSOPHER_DATABASE.out.versions_philosopher)
-        .mix(FRAGPIPE_HEADLESS.out.versions)
+    all_results      = FRAGPIPEHEADLESS.out.all_results      // path: results/**
+    combined_protein = FRAGPIPEHEADLESS.out.combined_protein  // path: combined_protein.tsv
+    combined_peptide = FRAGPIPEHEADLESS.out.combined_peptide  // path: combined_peptide.tsv
+    combined_ion     = FRAGPIPEHEADLESS.out.combined_ion      // path: combined_ion.tsv
+    versions         = FRAGPIPEHEADLESS.out.versions
 }

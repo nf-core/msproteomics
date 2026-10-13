@@ -1,0 +1,81 @@
+name: "writesubmzml"
+description: FragPipe "Write sub mzML" - write the scans of an LC-MS file that no confident PSM explains into <stem>_sub.mzML, for FragPipe's second pass
+keywords:
+  - proteomics
+  - mass spectrometry
+  - fragpipe
+  - mzml
+  - two-pass search
+tools:
+  - fragpipe:
+      description: |
+        FragPipe's org.nesvilab.fragpipe.util.WriteSubMzml, run by CmdWriteSubMzml when
+        tab-run.write_sub_mzml=true. It removes the MS2 scans whose PSM probability in psm.tsv is
+        above the threshold and writes the remaining scans, with MSFragger's calibrated peaks from
+        the .mzBIN_all file, as <stem>_sub.mzML.
+      homepage: "https://fragpipe.nesvilab.org/"
+      tool_dev_url: "https://github.com/Nesvilab/FragPipe"
+      licence: ["GPL-3.0-or-later"]
+
+input:
+  - - meta:
+        type: map
+        description: Metadata of the LC-MS file (meta.group is its FragPipe group)
+    - lcms:
+        type: file
+        description: The LC-MS file as given to FragPipe
+        pattern: "*.{mzML,mzXML,raw}"
+    - mzbin_all:
+        type: file
+        description: MSFragger's <stem>.mzBIN_all of the file (write_mzbin_all = 1)
+        pattern: "*.mzBIN_all"
+    - psm:
+        type: file
+        description: psm.tsv of the file's group, from the final Philosopher report
+        pattern: "psm.tsv"
+    - prob_threshold:
+        type: string
+        description: tab-run.sub_mzml_prob_threshold of the workflow
+output:
+  sub_mzml:
+    - - meta:
+          type: map
+          description: Metadata of the LC-MS file
+      - "*_sub.mzML":
+          type: file
+          description: Scans not explained by a PSM above the threshold
+          pattern: "*_sub.mzML"
+  log:
+    - - meta:
+          type: map
+          description: Metadata of the LC-MS file
+      - "write_sub_mzml.log":
+          type: file
+          description: The command line followed by the tool output
+          pattern: "write_sub_mzml.log"
+  versions_fragpipe:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - fragpipe:
+          type: string
+          description: The tool name
+      - cat .fragpipe_version:
+          type: string
+          description: The FragPipe version
+
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - fragpipe:
+          type: string
+          description: The name of the tool
+      - "cat .fragpipe_version":
+          type: eval
+          description: The FragPipe version of the tools directory
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

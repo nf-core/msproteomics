@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
 name: "fragpipe_headless_wf"
-description: All-in-one FragPipe headless execution with automatic RAW-to-mzML conversion and decoy database preparation
+description: All-in-one FragPipe headless execution on the LC-MS files as given, after FragPipe's database decoy check
 keywords:
   - proteomics
   - fragpipe
@@ -9,45 +9,44 @@ keywords:
   - tmt
   - label-free
 components:
-  - thermorawfileparser
-  - philosopher/database
-  - fragpipe_headless
+  - philosopherdatabase
+  - checkdbconfig
+  - fragpipeheadless
+  - fragpipe_database
+  - parsefragpipeworkflow
 input:
   - ch_files:
       type: channel
       description: |
-        Sample spectra files in RAW, mzML, or Bruker .d format.
-        RAW files are automatically converted to mzML via ThermoRawFileParser.
+        LC-MS files as FragPipe reads them (.raw, .mzML, .mzXML, .mgf, .mzBIN, Bruker .d).
         Structure: [ val(meta), path(spectra) ]
+  - ch_fasta:
+      type: channel
+      description: |
+        FASTA to update with FragPipe's "Add decoys" (decoys + contaminants) before the run;
+        empty unless --add_philosopher_decoy / --add_philosopher_contaminants.
+        Structure: [ val(meta), path(fasta) ]
   - ch_database:
       type: channel
       description: |
-        Protein FASTA database. Decoys are added automatically via Philosopher
-        because FragPipe headless hard-fails if no decoy sequences are present.
-        Structure: path(fasta)
+        FASTA searched as given (FragPipe database.db-path); FragPipe headless hard-fails
+        when it holds no decoys with the workflow decoy tag. Empty when ch_fasta is used.
+        Structure: [ val(meta), path(fasta) ]
   - ch_workflow_file:
       type: channel
       description: |
         FragPipe .workflow configuration file defining the analysis pipeline.
         Structure: path(workflow)
-  - ch_manifest_content:
+  - ch_manifest_rows:
       type: channel
       description: |
-        TSV-formatted manifest content mapping spectra files to experiments
-        (file name, experiment, bioreplicate, data_type; no header). Authoritative when non-empty.
-        Structure: val(manifest_string)
-  - ch_annotation_content:
+        Value channel, one row per LC-MS file.
+        Structure: val([[filename, experiment, bioreplicate, data_type, group], ...])
+  - ch_annotation_rows:
       type: channel
       description: |
-        TMT annotation content (experiment, channel, sample_name columns).
-        Pass empty string for LFQ workflows.
-        Structure: val(annotation_string)
-  - ch_file_experiment_map:
-      type: channel
-      description: |
-        File-to-experiment mapping (file name, experiment columns).
-        Used only when ch_manifest_content is empty; pass an empty string otherwise.
-        Structure: val(map_string)
+        Value channel, TMT annotation, [] for LFQ.
+        Structure: val([[group, channel, sample_name], ...])
 output:
   - all_results:
       type: directory
@@ -70,10 +69,10 @@ output:
         Combined ion-level quantification across all samples.
         Structure: path(combined_ion.tsv)
   - versions:
-      type: file
+      type: channel
       description: |
-        File containing software versions for all tools used.
-        Structure: [ path(versions.yml) ]
+        Software versions (topic tuples).
+        Structure: [ val(process), val(tool), val(version) ]
 authors:
   - "@dongzehe"
 maintainers:

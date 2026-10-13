@@ -1,18 +1,34 @@
 repository_type: pipeline
 
-nf_core_version: 3.5.2
+nf_core_version: 4.1.0
 
 lint:
-  # FragPipe modules use a commercial Docker image (fragpipe/fragpipe:24.0)
+  # FragPipe modules use the licensed FragPipe image given with --fragpipe_container
   # which does not have public conda/biocontainers equivalents
   modules_config: false
   # nf-fragpipe submodule has its own structure
   files_exist:
     - conf/modules.config
+    # Test profiles live in conf/tests/ (test_dia, test_dda_lfq, test_tmt, test_tmtq); the `test`
+    # profile only sets nf-test resources. No iGenomes: proteomes come from --database.
+    - conf/test.config
+    - conf/test_full.config
+    - conf/igenomes.config
+    - conf/igenomes_ignored.config
   files_unchanged: false
-  # Skip container checks for local modules using commercial FragPipe image
+  # Skip container checks for local modules that run in the FragPipe image
   nextflow_config:
     - config_defaults
+
+# DIA-NN stays at 1.8.1 (user decision): `nf-core modules update` leaves diann at this sha
+# (nf_core/components/update.py, config_entry handling: a str entry is the sha to update to).
+# module_version lint ignores this pin (nf_core/modules/lint/module_version.py:45-50), so it keeps its warning.
+update:
+  https://github.com/nf-core/modules.git:
+    nf-core:
+      diann: c246b66faacda1eeff12cc46b0944b8fc466179c
+      # Newer utils_nfschema_plugin needs nf-schema 3.0.0 (Nextflow >=26.04); the pipeline pins nf-schema 2.5.1
+      utils_nfschema_plugin: fdc08b8b1ae74f56686ce21f7ea11ad11990ce57
 
 template:
   org: nf-core
@@ -20,6 +36,8 @@ template:
   description: Mass spectrometry proteomics preprocessing (DIA, DDA LFQ, TMT)
   author: Dongze He
   version: 1.0.0dev
-  force: true
-  outdir: msproteomics
+  force: false
+  skip_features:
+    - igenomes
+  outdir: .
   is_nfcore: true

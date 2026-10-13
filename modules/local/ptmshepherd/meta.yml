@@ -22,77 +22,104 @@ tools:
 input:
   - - meta:
         type: map
-        description: Groovy Map containing sample information
+        description: Aggregate metadata map
     - psm_dirs:
         type: directory
-        description: Directories containing psm.tsv files from Philosopher filter
-    - protxml:
-        type: file
-        description: Combined protein inference file from ProteinProphet
-        pattern: "*.prot.xml"
+        description: One directory per FragPipe group (named meta.id of the group) with psm.tsv
+    - datasets:
+        type: list
+        description: "[directory name, dataset name] per group in FragPipe's order; dataset01 for the blank group"
     - mzml_files:
         type: file
-        description: Mass spectrometry files for intensity extraction
-        pattern: "*.{mzML,mzXML}"
-    - config_file:
+        description: LC-MS files of all groups
+    - config_text:
+        type: string
+        description: shepherd.config property block from PARSEFRAGPIPEWORKFLOW (@THREADS@, @TOOLS_DIR@ and @ANNOTATION_FILE@ tokens)
+    - annotation_file:
         type: file
-        description: PTM-Shepherd configuration file (shepherd.config)
-        pattern: "*.config"
+        description: Custom annotation file of ptmshepherd.annotation_file, staged as annotation/<name> and named by the config's annotation_file line; empty list when the value is a keyword (unimod, common)
+        pattern: "*"
+  - fasta:
+      type: file
+      description: Searched protein database
 
 output:
+  psm_dirs:
+    - - meta:
+          type: map
+          description: Aggregate metadata map
+      - "groups/*":
+          type: directory
+          description: Copies of the group directories with PTM-Shepherd's psm.tsv
   results_dir:
     - - meta:
           type: map
-          description: Groovy Map containing sample information
-      - "${prefix}":
+          description: Aggregate metadata map
+      - "ptm-shepherd-output":
           type: directory
-          description: Directory containing PTM-Shepherd results and log files
-          pattern: "${prefix}"
-  global_profile:
+          description: All PTM-Shepherd output
+  glyco_masses:
     - - meta:
           type: map
-          description: Groovy Map containing sample information
-      - "${prefix}/global.profile.tsv":
+          description: Aggregate metadata map
+      - "ptm-shepherd-output/glyco_masses_list.txt":
           type: file
-          description: Global mass shift profile across all samples
-          pattern: "global.profile.tsv"
-  global_modsummary:
+          description: Glycan masses for AppendFile (glycan assignment only)
+  config:
     - - meta:
           type: map
-          description: Groovy Map containing sample information
-      - "${prefix}/global.modsummary.tsv":
+          description: Aggregate metadata map
+      - "shepherd.config":
           type: file
-          description: Global modification summary with annotations
-          pattern: "global.modsummary.tsv"
-  diagmine:
+          description: Config PTM-Shepherd ran with
+  log:
     - - meta:
           type: map
-          description: Groovy Map containing sample information
-      - "${prefix}/*diagmine.tsv":
+          description: Aggregate metadata map
+      - "ptmshepherd.log":
           type: file
-          description: Diagnostic ion mining results
-          pattern: "*diagmine.tsv"
-  localization:
-    - - meta:
-          type: map
-          description: Groovy Map containing sample information
-      - "${prefix}/*localization.tsv":
-          type: file
-          description: PTM site localization results
-          pattern: "*localization.tsv"
-  glycoprofile:
-    - - meta:
-          type: map
-          description: Groovy Map containing sample information
-      - "${prefix}/*glycoprofile.tsv":
-          type: file
-          description: Glycoproteomics profile results
-          pattern: "*glycoprofile.tsv"
+          description: PTM-Shepherd command and output
+  versions_ptmshepherd:
+    - - ${task.process}:
+          type: string
+          description: Process name
+      - ptmshepherd:
+          type: string
+          description: Tool name
+      - fragpipeToolVersions().ptmshepherd:
+          type: string
+          description: Version of PTM-Shepherd bundled with FragPipe
+  versions_fragpipe:
+    - - ${task.process}:
+          type: string
+          description: Process name
+      - fragpipe:
+          type: string
+          description: Tool name
+      - cat .fragpipe_version:
+          type: eval
+          description: Version of FragPipe
+
+topics:
   versions:
-    - versions.yml:
-        type: file
-        description: File containing software versions
-        pattern: "versions.yml"
+    - - ${task.process}:
+          type: string
+          description: Process name
+      - ptmshepherd:
+          type: string
+          description: Tool name
+      - fragpipeToolVersions().ptmshepherd:
+          type: string
+          description: Version of PTM-Shepherd bundled with FragPipe
+    - - ${task.process}:
+          type: string
+          description: Process name
+      - fragpipe:
+          type: string
+          description: Tool name
+      - cat .fragpipe_version:
+          type: eval
+          description: Version of FragPipe
 
 authors:
   - "@dongzehe"

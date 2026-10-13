@@ -29,14 +29,12 @@
                 
             ],
             [
-                
-            ],
-            [
                 [
                     {
                         "id": "test_sample"
                     },
                     [
+                        "fragger.params:md5,1782cf2903880519e383dd4ee3b250cf",
                         "msfragger.log:md5,d41d8cd98f00b204e9800998ecf8427e",
                         "sample.pepXML:md5,d41d8cd98f00b204e9800998ecf8427e",
                         "sample.pin:md5,d41d8cd98f00b204e9800998ecf8427e",
@@ -70,11 +68,11 @@
                 ]
             ]
         ],
-        "timestamp": "2026-03-31T19:40:49.798682785",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
-        }
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-07T22:52:27.770857172"
     },
     "msfragger - local TMT subset": {
         "content": [
@@ -87,12 +85,48 @@
                     "msfragger",
                     "4.4.1"
                 ]
+            ],
+            [
+                [
+                    "MSFRAGGER",
+                    "fragpipe",
+                    "24.0"
+                ]
             ]
         ],
-        "timestamp": "2026-03-28T02:00:57.560740625",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
-        }
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-05T02:56:38.940864203"
+    },
+    "msfragger - stub DIA params write ranked pepXMLs": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_dia"
+                    },
+                    [
+                        "sample_dia_rank1.pepXML:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_dia_rank2.pepXML:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_dia_rank3.pepXML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_dia"
+                    },
+                    "sample_dia.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-05T02:01:18.23141342"
     }
 }

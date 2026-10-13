@@ -1,0 +1,38 @@
+// No Conda package exists for tdf2mzml (the image bundles Bruker's libtimsdata.so; not on Bioconda or PyPI):
+// under a conda/mamba profile the task stops with a clear message before any tool runs.
+nextflow_process {
+
+    name "Test Process TDF2MZML under the conda profile"
+    script "../main.nf"
+    process "TDF2MZML"
+    profile "conda"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "tdf2mzml"
+
+    test("tdf2mzml - conda profile stops with a clear error") {
+        tag "stub"
+
+        when {
+            process {
+                """
+                def raw_file = file("\${workDir}/sample.d")
+                raw_file.mkdirs()
+
+                input[0] = channel.of([
+                    [ id: 'test' ],
+                    raw_file
+                ])
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.failed },
+                { assert (process.stdout + process.stderr).any { line -> line.contains('TDF2MZML does not support Conda. Use Docker, Singularity or Podman instead.') } : (process.stdout + process.stderr).join('\n') }
+            )
+        }
+    }
+}

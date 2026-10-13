@@ -1,0 +1,57 @@
+// Golden differential test: MSFRAGGER in the second pass of Write sub mzML vs FragPipe 24.0 (golden set
+// PXD001468/Basic-Search_submzml_secondpass): the _sub.mzML input has its _percolator.weights next to it,
+// so FragPipe adds --no-ptm-score-in-pin (CmdMsfragger.java:612-630; meta.no_ptm_score_in_pin from subMzmlWeights,
+// checked on this golden input dir in subworkflows/local/utils_nfcore_msproteomics_pipeline/tests/golden_secondpass.nf.test).
+// Run: FRAGPIPE_CONTAINER=<licensed image> GOLDEN_ROOT=<golden root> nf-test test modules/local/msfragger/tests/golden_secondpass.nf.test
+nextflow_process {
+
+    name "Golden MSFRAGGER (Write sub mzML second pass) vs FragPipe 24.0"
+    script "../main.nf"
+    process "MSFRAGGER"
+    config "./golden_secondpass.config"
+
+    tag "golden"
+    tag "msfragger"
+
+    test("PXD001468 Basic-Search_submzml_secondpass - --no-ptm-score-in-pin, PIN and PSMs identical to FragPipe") {
+
+        when {
+            params {
+                golden_set = "${System.getenv('GOLDEN_ROOT')}/PXD001468/Basic-Search_submzml_secondpass"
+            }
+            process {
+                """
+                assert System.getenv('GOLDEN_ROOT') : 'set GOLDEN_ROOT to the golden data root'
+                def g = { String rel -> file("\${params.golden_set}/files/\${rel}", checkIfExists: true) }
+                def stem = 'b1906_293T_proteinID_01A_QE3_122212_sub'
+                def params_text = g.call('work/fragger.params').text
+                assert params_text.readLines().contains('write_mzbin_all = 0')
+                input[0] = channel.of([
+                    [ id: stem, data_type: 'DDA', group: 'b1906_01A_1', no_ptm_score_in_pin: true ],
+                    g.call("input/\${stem}.mzML"),
+                    'fragger.params',
+                    params_text,
+                    g.call('db/human_canonical_2026_03_decoys_contam.fasta')
+                ])
+                """
+            }
+        }
+
+        then {
+            def stem     = 'b1906_293T_proteinID_01A_QE3_122212_sub'
+            def golden   = new File("${params.golden_set}/files/work/b1906_01A_1")
+            def manifest = new groovy.json.JsonSlurper().parse(new File("${params.golden_set}/manifest.json"))
+            def outDir   = new File(process.out.results_dir[0][1].toString())
+            def queries  = { File f -> f.text.substring(f.text.indexOf('<spectrum_query')) }
+            def argv     = new File(outDir, 'msfragger.log').readLines()[0]
+            assertAll(
+                { assert process.success },
+                { assert manifest.steps.find { s -> s.cmd_name == 'MSFragger' }.argv[-1] == '--no-ptm-score-in-pin' },
+                { assert argv ==~ /java -Duser\.home=\S+ -jar -Dfile\.encoding=UTF-8 -Xmx28G \S+\/MSFragger-4\.4\.1\/MSFragger-(?:[A-Za-z]+-)?4\.4\.1\.jar \S+\/fragger\.params --license <license> ${stem}\.mzML --no-ptm-score-in-pin/ : argv },
+                { assert new File(outDir, "${stem}.pin").bytes == new File(golden, "${stem}.pin").bytes },
+                { assert queries(new File(outDir, "${stem}.pepXML")) == queries(new File(golden, "${stem}.pepXML")) },
+                { assert snapshot(process.out.versions_msfragger, process.out.versions_fragpipe).match() }
+            )
+        }
+    }
+}

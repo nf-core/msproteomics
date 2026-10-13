@@ -5,7 +5,7 @@ Perform label-free quantification using Philosopher's `freequant` command.
 ## Description
 
 FreeQuant extracts ion intensity information from mass spectrometry data files to quantify peptide and protein abundances.
-It initializes a Philosopher workspace in the results directory, runs FreeQuant with the provided CLI config, and preserves the `.meta/` workspace for downstream PHILOSOPHER_REPORT.
+It initializes a Philosopher workspace in the results directory, runs FreeQuant with the provided CLI config, and preserves the `.meta/` workspace for downstream PHILOSOPHERREPORT.
 Used within the FRAGPIPE_QUANT subworkflow as an alternative to IonQuant for label-free quantification.
 
 ## Inputs
@@ -13,7 +13,7 @@ Used within the FRAGPIPE_QUANT subworkflow as an alternative to IonQuant for lab
 | Channel     | Type        | Description                                                     |
 | ----------- | ----------- | --------------------------------------------------------------- |
 | meta        | val(map)    | Sample metadata map                                             |
-| results_dir | path        | Directory containing `psm.tsv` from PHILOSOPHER_FILTER          |
+| results_dir | path        | Directory containing `psm.tsv` from PHILOSOPHERFILTER           |
 | mzml_dir    | path        | Directory containing mass spectrometry files (mzML or RAW)      |
 | config_cli  | val(string) | FreeQuant parameters as CLI string (e.g., `--ptw 0.4 --tol 10`) |
 
@@ -36,7 +36,7 @@ Used within the FRAGPIPE_QUANT subworkflow as an alternative to IonQuant for lab
 
 ## Container
 
-`docker.io/fcyucn/fragpipe:24.0`
+The licensed FragPipe image given with `--fragpipe_container`.
 
 ## Usage
 

@@ -44,7 +44,7 @@ nextflow_process {
         when {
             process {
                 """
-                input[0] = file("\${projectDir}/modules/local/diannr/tests/diann_report_pgq1.tsv", checkIfExists: true)
+                input[0] = file("\${projectDir}/modules/local/iq/tests/diann_report_pgq1.tsv", checkIfExists: true)
                 input[1] = 0.01
                 input[2] = 0.05
                 input[3] = "contaminant_"
@@ -71,7 +71,7 @@ nextflow_process {
             process {
                 """
                 def report_file = file("\${workDir}/diann_report.tsv")
-                report_file.text = file("\${projectDir}/modules/local/diannr/tests/diann_report_pgq1.tsv", checkIfExists: true).readLines()[0] + "\\n"
+                report_file.text = file("\${projectDir}/modules/local/iq/tests/diann_report_pgq1.tsv", checkIfExists: true).readLines()[0] + "\\n"
 
                 input[0] = report_file
                 input[1] = 0.01

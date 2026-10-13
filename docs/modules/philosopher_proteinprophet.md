@@ -36,11 +36,11 @@ It produces `combined.prot.xml` and passes through the input pepXML files for do
 
 ## Container
 
-`docker.io/fcyucn/fragpipe:24.0`
+The licensed FragPipe image given with `--fragpipe_container`.
 
 ## Usage
 
-Used in the `FRAGPIPE_INFERENCE` subworkflow (`subworkflows/local/fragpipe_inference/main.nf`) for aggregate protein inference across all samples before per-sample PHILOSOPHER_FILTER.
+Used in the `FRAGPIPE_INFERENCE` subworkflow (`subworkflows/local/fragpipe_inference/main.nf`) for aggregate protein inference across all samples before per-sample PHILOSOPHERFILTER.
 
 ## References
 

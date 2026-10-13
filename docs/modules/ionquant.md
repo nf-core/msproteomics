@@ -10,15 +10,15 @@ Used within the FRAGPIPE_QUANT subworkflow and the TMT Label Check workflow for 
 
 ## Inputs
 
-| Channel         | Type        | Description                                                                   |
-| --------------- | ----------- | ----------------------------------------------------------------------------- |
-| meta            | val(map)    | Sample metadata map                                                           |
-| psm_dirs        | path        | PHILOSOPHER_FILTER output directories (named by sample, containing `psm.tsv`) |
-| spec_files      | path        | Spectral files (`*.mzML` or `*.raw`) staged in `spectra/` subdirectory        |
-| annotation_file | path        | TMT annotation file (2-column or 6-column TSV; pass `[]` if not applicable)   |
-| config_cli      | val(string) | IonQuant parameters as CLI string (e.g., `--mbr 1 --maxlfq 1`)                |
-| modmasses       | val(string) | Comma-separated modification masses for `--modlist` (empty = skip)            |
-| ionquant_dir    | path        | Unzipped IonQuant tool directory (optional, pass `[]` when not using)         |
+| Channel         | Type        | Description                                                                  |
+| --------------- | ----------- | ---------------------------------------------------------------------------- |
+| meta            | val(map)    | Sample metadata map                                                          |
+| psm_dirs        | path        | PHILOSOPHERFILTER output directories (named by sample, containing `psm.tsv`) |
+| spec_files      | path        | Spectral files (`*.mzML` or `*.raw`) staged in `spectra/` subdirectory       |
+| annotation_file | path        | TMT annotation file (2-column or 6-column TSV; pass `[]` if not applicable)  |
+| config_cli      | val(string) | IonQuant parameters as CLI string (e.g., `--mbr 1 --maxlfq 1`)               |
+| modmasses       | val(string) | Comma-separated modification masses for `--modlist` (empty = skip)           |
+| ionquant_dir    | path        | Unzipped IonQuant tool directory (optional, pass `[]` when not using)        |
 
 ## Outputs
 

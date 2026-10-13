@@ -1,0 +1,184 @@
+// DIANNFRAGPIPE runs FragPipe 24.0's bundled DIA-NN (tools/diann/1.8.2_beta_8/linux/diann-1.8.1.8,
+// Diann.java:56-58) with CmdDiann's argv (FP = FragPipe-GUI/src/main/java/org/nesvilab/fragpipe/,
+// FP/cmd/CmdDiann.java:313-399):
+//   diann --lib library.tsv --threads N --verbose 1 --out dia-quant-output/report.tsv --qvalue q
+//         [--reanalyse] [--matrix-spec-q q] --matrix-qvalue q --matrices (--relaxed-prot-inf --fasta F | --no-prot-inf)
+//         --smart-profiling <quantification strategy> [--individual-mass-acc --individual-windows]
+//         [--report-lib-info] [plexDIA flags] [extra options] --cfg <wd>/filelist_diann.txt--
+// The default config is PARSEFRAGPIPEWORKFLOW's diann entry for the bundled DIA_SpecLib_Quant workflow.
+
+nextflow_process {
+
+    name "Test Process DIANNFRAGPIPE"
+    script "../main.nf"
+    process "DIANNFRAGPIPE"
+
+    tag "modules"
+    tag "modules_local"
+    tag "diann_fragpipe"
+
+    test("diann_fragpipe - stub - DIA_SpecLib_Quant settings") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def library = file("\${workDir}/library.tsv")
+                library.text = "PrecursorMz\\n"
+                def dia1 = file("\${workDir}/dia_run1.mzML")
+                dia1.text = "<mzML/>"
+                def psm = file("\${workDir}/psm.tsv")
+                psm.text = "Spectrum\\n"
+                def peptide = file("\${workDir}/peptide.tsv")
+                peptide.text = "Peptide\\n"
+                def protein = file("\${workDir}/protein.tsv")
+                protein.text = "Protein\\n"
+                def manifest = file("\${workDir}/fragpipe-files.fp-manifest")
+                manifest.text = "/data/dia_run1.mzML\\t\\t\\tDIA"
+                def fasta = file("\${workDir}/db.fasta")
+                fasta.text = ">P1\\nPEPTIDEK\\n"
+                def config = [
+                    run: true, args: '--qvalue 0.01 --matrix-qvalue 0.01 --matrices', config_type: 'cli',
+                    args_post: '--smart-profiling --peak-center --no-ifs-removal --report-lib-info',
+                    qvalue: '0.01', run_specific_protein_qvalue: false, redo_protein_inference: false,
+                    generate_msstats: true, library: '', run_plex: false, light: '', medium: '', heavy: '',
+                    mod_tag: '', min_site_prob: '0.75', report_levels: 'peptide;modified-peptide'
+                ]
+                input[0] = channel.of([[ id: 'fragpipe' ], library, [ dia1 ], psm, peptide, protein, manifest, groovy.json.JsonOutput.toJson(config)])
+                input[1] = fasta
+                """
+            }
+        }
+
+        then {
+            def argv = path(process.out.argv.get(0).get(1)).readLines()
+            def wd = argv.last() - '/filelist_diann.txt--'
+            assertAll(
+                { assert process.success },
+                { assert argv[4] ==~ /[1-9][0-9]*/ },
+                { assert argv == [
+                    '/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools/diann/1.8.2_beta_8/linux/diann-1.8.1.8',
+                    '--lib', 'library.tsv', '--threads', argv[4], '--verbose', '1', '--out', 'dia-quant-output/report.tsv',
+                    '--qvalue', '0.01', '--matrix-qvalue', '0.01', '--matrices', '--no-prot-inf',
+                    '--smart-profiling', '--peak-center', '--no-ifs-removal', '--report-lib-info',
+                    '--cfg', "${wd}/filelist_diann.txt--".toString()
+                ] },
+                { assert path(process.out.filelist.get(0).get(1)).readLines() == ["--f ${wd}/dia_run1.mzML".toString()] },
+                { assert snapshot(
+                    process.out.report,
+                    process.out.pr_matrix,
+                    process.out.pg_matrix,
+                    process.out.speclib,
+                    process.out.msstats,
+                    process.out.versions_diann,
+                    process.out.versions_fragpipe
+                ).match() }
+            )
+        }
+    }
+
+    test("diann_fragpipe - stub - MBR, run-specific q, redo protein inference, unrelated runs, plexDIA") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def library = file("\${workDir}/library.tsv")
+                library.text = "PrecursorMz\\n"
+                def dia1 = file("\${workDir}/dia_run1.mzML")
+                dia1.text = "<mzML/>"
+                def psm = file("\${workDir}/psm.tsv")
+                psm.text = "Spectrum\\n"
+                def peptide = file("\${workDir}/peptide.tsv")
+                peptide.text = "Peptide\\n"
+                def protein = file("\${workDir}/protein.tsv")
+                protein.text = "Protein\\n"
+                def manifest = file("\${workDir}/fragpipe-files.fp-manifest")
+                manifest.text = "/data/dia_run1.mzML\\t\\t\\tDIA"
+                def fasta = file("\${workDir}/db.fasta")
+                fasta.text = ">P1\\nPEPTIDEK\\n"
+                // args/args_post as the parser emits them for these panel values (CmdDiann.java:333-387,
+                // getPlexDiannFlags :623-671)
+                def config = [
+                    run: true, args: '--qvalue 0.02 --reanalyse --matrix-spec-q 0.02 --matrix-qvalue 0.02 --matrices', config_type: 'cli',
+                    args_post: '--smart-profiling --peak-center --individual-mass-acc --individual-windows --fixed-mod label,0,K,label --channels label,L,K,0.0;label,H,K,8.0142 --peak-translation --original-mods --int-removal 0',
+                    qvalue: '0.02', run_specific_protein_qvalue: true, redo_protein_inference: true,
+                    generate_msstats: false, library: '', run_plex: true, light: 'K0', medium: '', heavy: 'K8.0142',
+                    mod_tag: 'STY:79.9663', min_site_prob: '0.75', report_levels: 'peptide;modified-peptide;multi-site;single-site'
+                ]
+                input[0] = channel.of([[ id: 'fragpipe' ], library, [ dia1 ], psm, peptide, protein, manifest, groovy.json.JsonOutput.toJson(config)])
+                input[1] = fasta
+                """
+            }
+        }
+
+        then {
+            def argv = path(process.out.argv.get(0).get(1)).readLines()
+            def wd = argv.last() - '/filelist_diann.txt--'
+            assertAll(
+                { assert process.success },
+                // plexDIA reads PlexDiaHelper's library_2.tsv (CmdDiann.java:319-320)
+                { assert argv[1..2] == ['--lib', 'library_2.tsv'] },
+                { assert argv[9..argv.size() - 1] == [
+                    '--qvalue', '0.02', '--reanalyse', '--matrix-spec-q', '0.02', '--matrix-qvalue', '0.02', '--matrices',
+                    '--relaxed-prot-inf', '--fasta', "${wd}/db.fasta".toString(),
+                    '--smart-profiling', '--peak-center', '--individual-mass-acc', '--individual-windows',
+                    '--fixed-mod', 'label,0,K,label', '--channels', 'label,L,K,0.0;label,H,K,8.0142', '--peak-translation', '--original-mods',
+                    '--int-removal', '0',
+                    '--cfg', "${wd}/filelist_diann.txt--".toString()
+                ] },
+                // MSstats conversion is off with plexDIA (CmdDiann.java:490)
+                { assert process.out.msstats.isEmpty() },
+                { assert snapshot(process.out.report, process.out.versions_diann).match() }
+            )
+        }
+    }
+    test("diann_fragpipe - stub - external spectral library") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def library = file("\${workDir}/predicted.speclib")
+                library.text = "speclib"
+                def dia1 = file("\${workDir}/dia_run1.mzML")
+                dia1.text = "<mzML/>"
+                def psm = file("\${workDir}/psm.tsv")
+                psm.text = "Spectrum\\n"
+                def peptide = file("\${workDir}/peptide.tsv")
+                peptide.text = "Peptide\\n"
+                def protein = file("\${workDir}/protein.tsv")
+                protein.text = "Protein\\n"
+                def manifest = file("\${workDir}/fragpipe-files.fp-manifest")
+                manifest.text = "/data/dia_run1.mzML\\t\\t\\tDIA"
+                def fasta = file("\${workDir}/db.fasta")
+                fasta.text = ">P1\\nPEPTIDEK\\n"
+                // diann.library set: --lib <library>, no --report-lib-info (CmdDiann.java:137-140, :317-318)
+                def config = [
+                    run: true, args: '--qvalue 0.01 --matrix-qvalue 0.01 --matrices', config_type: 'cli',
+                    args_post: '--smart-profiling --peak-center --no-ifs-removal',
+                    qvalue: '0.01', run_specific_protein_qvalue: false, redo_protein_inference: false,
+                    generate_msstats: false, library: '/data/predicted.speclib', run_plex: false, light: '', medium: '', heavy: '',
+                    mod_tag: '', min_site_prob: '0.75', report_levels: 'peptide;modified-peptide'
+                ]
+                input[0] = channel.of([[ id: 'fragpipe' ], library, [ dia1 ], psm, peptide, protein, manifest, groovy.json.JsonOutput.toJson(config)])
+                input[1] = fasta
+                """
+            }
+        }
+
+        then {
+            def argv = path(process.out.argv.get(0).get(1)).readLines()
+            def wd = argv.last() - '/filelist_diann.txt--'
+            assertAll(
+                { assert process.success },
+                { assert argv[1..2] == ['--lib', "${wd}/library_input/predicted.speclib".toString()] },
+                { assert process.out.msstats.isEmpty() },
+                { assert snapshot(process.out.report, process.out.versions_diann).match() }
+            )
+        }
+    }
+}

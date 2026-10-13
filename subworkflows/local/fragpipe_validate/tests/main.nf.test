@@ -8,181 +8,163 @@ nextflow_workflow {
     tag "subworkflows"
     tag "subworkflows_local"
     tag "fragpipe_validate"
+    tag "percolator"
+    tag "peptideprophet"
+    tag "ptmprophet"
 
-    test("fragpipe_validate - stub with percolator") {
+    test("fragpipe_validate - stub percolator with MSBooster PIN and PTMProphet per rank") {
         options "-stub"
         tag "stub"
 
         when {
             workflow {
                 """
-                def pin_file = file("\${workDir}/test.pin")
-                pin_file.text = "SpecId\\tLabel\\tScanNr\\ntest_1_1\\t1\\t1"
-                def pepxml_file = file("\${workDir}/test.pepXML")
-                pepxml_file.text = "<?xml version='1.0'?><msms_pipeline_analysis></msms_pipeline_analysis>"
-                def mzml_file = file("\${workDir}/test.mzML")
-                mzml_file.text = "<?xml version='1.0'?><mzML></mzML>"
-                def fasta_file = file("\${workDir}/test.fasta")
-                fasta_file.text = ">PROT1\\nPEPTIDEK"
-
-                // Tool configs: only percolator enabled
+                ['s1.pin', 's1_edited.pin', 's1_rank1.pepXML', 's1_rank2.pepXML', 's1.mzML', 'db.fasta'].each { n -> file("\${workDir}/\${n}").text = 'mock' }
+                def meta = [ id: 's1', group: 'A', experiment: 'A', bioreplicate: null, data_type: 'DDA+' ]
                 def tool_configs = [
-                    percolator:     [run: true, args: '--only-psms --no-terminate --post-processing-tdc'],
-                    peptideprophet: [run: false, args: ''],
-                    ptmprophet:     [run: false, args: '']
+                    database:       [run: true, decoy_tag: 'rev_'],
+                    msfragger:      [run: true, has_calibrated_mzml: false],
+                    msbooster:      [run: true],
+                    percolator:     [run: true, args: '--only-psms', min_prob: '0.7', keep_tsv_files: false],
+                    peptideprophet: [run: false],
+                    ptmprophet:     [run: true, args: 'KEEPOLD STY:79.966331 MINPROB=0.5'],
+                    crystalc:       [run: false],
+                    metaproteomics: [run: false]
                 ]
-
-                input[0] = channel.of([[ id: 'test_validate' ], pin_file])
-                input[1] = channel.of([[ id: 'test_validate' ], pepxml_file])
-                input[2] = channel.of([[ id: 'test_validate' ], mzml_file])
-                input[3] = fasta_file
-                input[4] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
-                input[5] = []                  // ch_peptideprophet_config (not used)
-                input[6] = channel.value('DDA')
+                input[0] = channel.of([meta, file("\${workDir}/s1.pin")])
+                input[1] = channel.of([meta, file("\${workDir}/s1_edited.pin")])
+                input[2] = channel.of([meta, [file("\${workDir}/s1_rank2.pepXML"), file("\${workDir}/s1_rank1.pepXML")]])
+                input[3] = channel.of([meta, file("\${workDir}/s1.mzML")])
+                input[4] = channel.empty()
+                input[5] = channel.empty()
+                input[6] = file("\${workDir}/db.fasta")
+                input[7] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
                 """
             }
         }
 
         then {
+            def names = { ch -> ch.collect { item -> [item[1]].flatten().collect { f -> new File(f.toString()).name } } }
             assertAll(
                 { assert workflow.success },
-                { assert snapshot(
-                    workflow.out.pepxml,
-                    workflow.out.target_psms,
-                    workflow.out.decoy_psms,
-                    workflow.out.mod_pepxml,
-                    workflow.out.results_dir
-                ).match() }
+                // CmdPercolator.java:71-101: one interact file per rank, in rank order
+                { assert names(workflow.out.pepxml) == [['interact-s1_rank1.pep.xml', 'interact-s1_rank2.pep.xml']] },
+                // CmdPtmProphet.java:107-124: one PTMProphet per interact file, regrouped per LC-MS file
+                { assert names(workflow.out.mod_pepxml) == [['interact-s1_rank1.mod.pep.xml', 'interact-s1_rank2.mod.pep.xml']] },
+                // pepxml_group mixes the validated and PTMProphet pepXMLs (mix order is arbitrary): sorted by file name
+                { assert snapshot(workflow.out.pepxml, workflow.out.pepxml_group.sort { item -> new File(item[1][0].toString()).name }, workflow.out.mod_pepxml).match() }
             )
         }
     }
 
-    test("fragpipe_validate - stub with peptideprophet") {
+    test("fragpipe_validate - stub combined PeptideProphet per group in FragPipe order") {
         options "-stub"
         tag "stub"
 
         when {
             workflow {
                 """
-                def pin_file = file("\${workDir}/test.pin")
-                pin_file.text = "SpecId\\tLabel\\tScanNr\\ntest_1_1\\t1\\t1"
-                def pepxml_file = file("\${workDir}/test.pepXML")
-                pepxml_file.text = "<?xml version='1.0'?><msms_pipeline_analysis></msms_pipeline_analysis>"
-                def mzml_file = file("\${workDir}/test.mzML")
-                mzml_file.text = "<?xml version='1.0'?><mzML></mzML>"
-                def fasta_file = file("\${workDir}/test.fasta")
-                fasta_file.text = ">PROT1\\nPEPTIDEK"
-
-                // Tool configs: only peptideprophet enabled
+                ['b.pepXML', 'a.pepXML', 'c.pepXML', 'a.mzML', 'b.mzML', 'c.mzML', 'b.pin', 'a.pin', 'c.pin', 'db.fasta'].each { n -> file("\${workDir}/\${n}").text = 'mock' }
+                def m = { id, group -> [ id: id, group: group, experiment: group, bioreplicate: null, data_type: 'DDA' ] }
                 def tool_configs = [
-                    percolator:     [run: false, args: ''],
-                    peptideprophet: [run: true, args: '--nonparam --expectscore'],
-                    ptmprophet:     [run: false, args: '']
+                    database:       [run: true, decoy_tag: 'rev_'],
+                    msfragger:      [run: true, has_calibrated_mzml: false],
+                    percolator:     [run: false],
+                    peptideprophet: [run: true, args: '--nonparam', combine: true],
+                    ptmprophet:     [run: false]
                 ]
-
-                input[0] = channel.of([[ id: 'test_validate_pp' ], pin_file])
-                input[1] = channel.of([[ id: 'test_validate_pp' ], pepxml_file])
-                input[2] = channel.of([[ id: 'test_validate_pp' ], mzml_file])
-                input[3] = fasta_file
-                input[4] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
-                input[5] = []                  // ch_peptideprophet_config (not used)
-                input[6] = channel.value('DDA')
+                input[0] = channel.of('b', 'a', 'c').map { id -> [m.call(id, id == 'c' ? 'G2' : 'G1'), file("\${workDir}/\${id}.pin")] }
+                input[1] = channel.of('b', 'a', 'c').map { id -> [m.call(id, id == 'c' ? 'G2' : 'G1'), file("\${workDir}/\${id}.pin")] }
+                input[2] = channel.of('b', 'a', 'c').map { id -> [m.call(id, id == 'c' ? 'G2' : 'G1'), file("\${workDir}/\${id}.pepXML")] }
+                input[3] = channel.of('b', 'a', 'c').map { id -> [m.call(id, id == 'c' ? 'G2' : 'G1'), file("\${workDir}/\${id}.mzML")] }
+                input[4] = channel.empty()
+                input[5] = channel.empty()
+                input[6] = file("\${workDir}/db.fasta")
+                input[7] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
                 """
             }
         }
 
         then {
+            def g1 = workflow.out.pepxml.find { item -> item[0].group == 'G1' }
+            def log_lines = new File(new File([g1[1]].flatten()[0].toString()).parentFile, 'peptideprophet.log').readLines()
             assertAll(
                 { assert workflow.success },
-                { assert snapshot(
-                    workflow.out.pepxml,
-                    workflow.out.target_psms,
-                    workflow.out.decoy_psms,
-                    workflow.out.mod_pepxml,
-                    workflow.out.results_dir
-                ).match() }
+                { assert workflow.out.pepxml.size() == 2 },
+                // CmdPeptideProphet.java:302-336: one --combine run per group in its group dir, files in InputLcmsFile order
+                { assert log_lines[0].endsWith('--combine a.pepXML b.pepXML') : log_lines[0] },
+                { assert log_lines[1].endsWith('RewritePepxml {CWD}/G1/interact.pep.xml {CWD}/a.mzML {CWD}/b.mzML') : log_lines[1] },
+                { assert snapshot(workflow.out.pepxml).match() }
             )
         }
     }
 
-    test("fragpipe_validate - stub with percolator and ptmprophet") {
+    test("fragpipe_validate - stub per-file PeptideProphet writes the uncalibrated mzML path for .d") {
         options "-stub"
         tag "stub"
 
         when {
             workflow {
                 """
-                def pin_file = file("\${workDir}/test.pin")
-                pin_file.text = "SpecId\\tLabel\\tScanNr\\ntest_1_1\\t1\\t1"
-                def pepxml_file = file("\${workDir}/test.pepXML")
-                pepxml_file.text = "<?xml version='1.0'?><msms_pipeline_analysis></msms_pipeline_analysis>"
-                def mzml_file = file("\${workDir}/test.mzML")
-                mzml_file.text = "<?xml version='1.0'?><mzML></mzML>"
-                def fasta_file = file("\${workDir}/test.fasta")
-                fasta_file.text = ">PROT1\\nPEPTIDEK"
-
-                // Tool configs: percolator + ptmprophet enabled
+                ['s1.pepXML', 's1.pin', 's1_uncalibrated.mzML', 'db.fasta'].each { n -> file("\${workDir}/\${n}").text = 'mock' }
+                file("\${workDir}/s1.d").mkdirs()
+                def meta = [ id: 's1', group: '', experiment: null, bioreplicate: null, data_type: 'DDA' ]
                 def tool_configs = [
-                    percolator:     [run: true, args: '--only-psms --no-terminate'],
-                    peptideprophet: [run: false, args: ''],
-                    ptmprophet:     [run: true, args: 'MINPROB=0.5']
+                    database:       [run: true, decoy_tag: 'rev_'],
+                    msfragger:      [run: true, has_calibrated_mzml: false],
+                    percolator:     [run: false],
+                    peptideprophet: [run: true, args: '--nonparam', combine: false],
+                    ptmprophet:     [run: false]
                 ]
-
-                input[0] = channel.of([[ id: 'test_validate_ptm' ], pin_file])
-                input[1] = channel.of([[ id: 'test_validate_ptm' ], pepxml_file])
-                input[2] = channel.of([[ id: 'test_validate_ptm' ], mzml_file])
-                input[3] = fasta_file
-                input[4] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
-                input[5] = []                  // ch_peptideprophet_config (not used)
-                input[6] = channel.value('DDA')
+                input[0] = channel.of([meta, file("\${workDir}/s1.pin")])
+                input[1] = channel.of([meta, file("\${workDir}/s1.pin")])
+                input[2] = channel.of([meta, file("\${workDir}/s1.pepXML")])
+                input[3] = channel.of([meta, file("\${workDir}/s1.d")])
+                input[4] = channel.empty()
+                input[5] = channel.of([meta, file("\${workDir}/s1_uncalibrated.mzML")])
+                input[6] = file("\${workDir}/db.fasta")
+                input[7] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
                 """
             }
         }
 
         then {
+            def log_lines = new File(new File([workflow.out.pepxml[0][1]].flatten()[0].toString()).parentFile, 'peptideprophet.log').readLines()
             assertAll(
                 { assert workflow.success },
-                { assert snapshot(
-                    workflow.out.pepxml,
-                    workflow.out.target_psms,
-                    workflow.out.decoy_psms,
-                    workflow.out.mod_pepxml,
-                    workflow.out.results_dir
-                ).match() }
+                // CmdPeptideProphet.java:442-447: .d -> <stem>_uncalibrated.mzML
+                { assert log_lines[1].endsWith('RewritePepxml {CWD}/interact-s1.pep.xml {CWD}/s1_uncalibrated.mzML') : log_lines[1] },
+                { assert snapshot(workflow.out.pepxml).match() }
             )
         }
     }
 
-    test("fragpipe_validate - stub passthrough") {
+    // MSFragger output_format tsv_pepXML writes no PIN (FragPipe's PeptideProphet workflows, e.g. glyco-N-LFQ):
+    // Percolator does not run, so its joins must not ask every searched file for a PIN
+    test("fragpipe_validate - stub per-file PeptideProphet when MSFragger writes no PIN") {
         options "-stub"
         tag "stub"
 
         when {
             workflow {
                 """
-                def pin_file = file("\${workDir}/test.pin")
-                pin_file.text = "SpecId\\tLabel\\tScanNr\\ntest_1_1\\t1\\t1"
-                def pepxml_file = file("\${workDir}/test.pepXML")
-                pepxml_file.text = "<?xml version='1.0'?><msms_pipeline_analysis></msms_pipeline_analysis>"
-                def mzml_file = file("\${workDir}/test.mzML")
-                mzml_file.text = "<?xml version='1.0'?><mzML></mzML>"
-                def fasta_file = file("\${workDir}/test.fasta")
-                fasta_file.text = ">PROT1\\nPEPTIDEK"
-
-                // Tool configs: no validation tools enabled (passthrough)
+                ['a.pepXML', 'b.pepXML', 'a.mzML', 'b.mzML', 'db.fasta'].each { n -> file("\${workDir}/\${n}").text = 'mock' }
+                def m = { id -> [ id: id, group: id.toUpperCase(), experiment: id.toUpperCase(), bioreplicate: null, data_type: 'DDA' ] }
                 def tool_configs = [
-                    percolator:     [run: false, args: ''],
-                    peptideprophet: [run: false, args: ''],
-                    ptmprophet:     [run: false, args: '']
+                    database:       [run: true, decoy_tag: 'rev_'],
+                    msfragger:      [run: true, has_calibrated_mzml: false],
+                    percolator:     [run: false],
+                    peptideprophet: [run: true, args: '--nonparam', combine: false],
+                    ptmprophet:     [run: false]
                 ]
-
-                input[0] = channel.of([[ id: 'test_passthrough' ], pin_file])
-                input[1] = channel.of([[ id: 'test_passthrough' ], pepxml_file])
-                input[2] = channel.of([[ id: 'test_passthrough' ], mzml_file])
-                input[3] = fasta_file
-                input[4] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
-                input[5] = []                  // ch_peptideprophet_config (not used)
-                input[6] = channel.value('DDA')
+                input[0] = channel.empty()
+                input[1] = channel.empty()
+                input[2] = channel.of('a', 'b').map { id -> [m.call(id), file("\${workDir}/\${id}.pepXML")] }
+                input[3] = channel.of('a', 'b').map { id -> [m.call(id), file("\${workDir}/\${id}.mzML")] }
+                input[4] = channel.empty()
+                input[5] = channel.empty()
+                input[6] = file("\${workDir}/db.fasta")
+                input[7] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
                 """
             }
         }
@@ -190,13 +172,8 @@ nextflow_workflow {
         then {
             assertAll(
                 { assert workflow.success },
-                { assert snapshot(
-                    workflow.out.pepxml,
-                    workflow.out.target_psms,
-                    workflow.out.decoy_psms,
-                    workflow.out.mod_pepxml,
-                    workflow.out.results_dir
-                ).match() }
+                { assert workflow.out.pepxml.size() == 2 },
+                { assert snapshot(workflow.out.pepxml).match() }
             )
         }
     }

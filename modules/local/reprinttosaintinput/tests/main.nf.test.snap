@@ -1,0 +1,58 @@
+{
+    "reprint_to_saint_input - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "saintexpress-spc"
+                    },
+                    [
+                        "bait.dat:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "inter.dat:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "prey.dat:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ],
+                    "spc"
+                ]
+            ],
+            [
+                
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-07T05:46:01.70601992"
+    },
+    "reprint_to_saint_input - int table to inter, bait and prey.dat": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "saintexpress-int"
+                    },
+                    [
+                        "bait.dat:md5,7c415bfa70d219e84a11f5ec289cf9c1",
+                        "inter.dat:md5,79debfa40351220774b3117985ebda36",
+                        "prey.dat:md5,ce1123c65eb158de52d1ef6082ce901c"
+                    ],
+                    "int"
+                ]
+            ],
+            [
+                
+            ],
+            [
+                [
+                    "REPRINTTOSAINTINPUT",
+                    "python"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-08T18:04:59.038969837"
+    }
+}

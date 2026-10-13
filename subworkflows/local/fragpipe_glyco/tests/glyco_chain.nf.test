@@ -1,0 +1,138 @@
+// FragPipe 24.0 golden comparison of the glyco chain, real tools in the FragPipe image.
+//
+// Reference: two FragPipe 24.0 headless runs of the bundled glyco-N-LFQ workflow (mbg.run-mbg=true)
+// on PXD030670 SALIVA-1.raw (saliva) and CANCER-3.raw (cancer), per-file MSFragger:
+//   GOLDEN_ROOT PXD030670/glyco-N-LFQ-report_perfile - the same run with glycan assignment, LFQ and SAINT off: its group dirs hold
+//                           the Philosopher Report psm.tsv that PTM-Shepherd reads (FragPipe rewrites
+//                           psm.tsv in place with PTM-S, MBG and IonQuant, so the full run has no copy)
+//   PXD030670/glyco-N-LFQ-MBG_perfile - the full run (work dir)
+//   its files/input - directory with the real (not symlinked) .raw files
+//   FRAGPIPE_CONTAINER    - the FragPipe image the reference ran in
+// The chain gets FragPipe's own Report output, database and workflow, and must reproduce
+// psm.tsv, ptm-shepherd-output/, modmasses_ionquant.txt and IonQuant's combined tables.
+// File-path columns/lines are compared after replacing each side's work dir with WORKDIR.
+
+nextflow_workflow {
+
+    name "Test FRAGPIPE_GLYCO + FRAGPIPE_QUANT against FragPipe 24.0"
+    script "./glyco_chain.nf"
+    workflow "GLYCO_CHAIN"
+    config "./glyco_chain.config"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "fragpipe_glyco"
+    tag "integration"
+    tag "golden"
+
+    test("glyco chain - glyco-N-LFQ + MBG reproduces FragPipe 24.0") {
+
+        setup {
+            run("PARSEFRAGPIPEWORKFLOW") {
+                script "../../../../modules/local/parsefragpipeworkflow/main.nf"
+                process {
+                    """
+                    input[0] = channel.of([ [ id: 'glyco' ], file((System.getenv('GOLDEN_ROOT') + '/PXD030670/glyco-N-LFQ-MBG_perfile/files/work') + '/fragpipe.workflow', checkIfExists: true), ['DDA'] ])
+                    """
+                }
+            }
+        }
+
+        when {
+            workflow {
+                """
+                def report = (System.getenv('GOLDEN_ROOT') + '/PXD030670/glyco-N-LFQ-report_perfile/files/work')
+                def spectra = (System.getenv('GOLDEN_ROOT') + '/PXD030670/glyco-N-LFQ-MBG_perfile/files/input')
+                def wf = new Properties()
+                file((System.getenv('GOLDEN_ROOT') + '/PXD030670/glyco-N-LFQ-MBG_perfile/files/work') + '/fragpipe.workflow').withReader { r -> wf.load(r) }
+                // the run's database, in the golden set's db/ (the recorded database.db-path is the FragPipe run's own dir)
+                def fasta = file((System.getenv('GOLDEN_ROOT') + '/PXD030670/glyco-N-LFQ-MBG_perfile/files/db/') + new File(wf.getProperty('database.db-path')).name, checkIfExists: true)
+                // file-table order and groups of fragpipe-files.fp-manifest (TabWorkflow.manifestSave)
+                def lcms = file((System.getenv('GOLDEN_ROOT') + '/PXD030670/glyco-N-LFQ-MBG_perfile/files/work') + '/fragpipe-files.fp-manifest').readLines().collect { line ->
+                    def cols = line.split('\\t', -1)
+                    def name = new File(cols[0]).name
+                    [[id: name.replaceAll(/\\.raw\$/, ''), group: cols[1], experiment: cols[1], bioreplicate: cols[2] ?: null, data_type: cols[3]],
+                     file("\${spectra}/\${name}", checkIfExists: true)]
+                }
+                def groups = lcms.collect { item -> item[0].group }.unique()
+                input[0] = channel.fromList(groups.collect { g -> [[id: g, group: g], file("\${report}/\${g}", checkIfExists: true)] })
+                input[1] = channel.fromList(lcms)
+                input[2] = channel.value(fasta)
+                // the parser's tool configs; PTM-Shepherd runs for profiling or glycan assignment (FragpipeRun.java:2095)
+                input[3] = PARSEFRAGPIPEWORKFLOW.out.tool_configs_json.map { _m, json -> json.text }
+                """
+            }
+        }
+
+        then {
+            // The FragPipe input is not bit-reproducible: Philosopher filter/report give different
+            // PSM "Qvalue" values and, rarely, a different PSM set between runs on the same
+            // interact.pep.xml (lfq vs lfqmbg here: 704 Qvalues and one SALIVA-1 PSM differ). The
+            // chain gets the Report output of a third run, so the comparison
+            //   - ignores the Qvalue column (inherited from the input, not computed by the chain),
+            //   - leaves out the PSMs whose presence differs between that input and the PSMs
+            //     FragPipe's PTM-Shepherd saw (ptm-shepherd-output/<group>_unfiltered_psm.tsv),
+            //   - in IonQuant's combined tables allows only Spectral Count columns to differ, on at
+            //     most as many rows as there are such PSMs.
+            // Everything else must be identical, after replacing each side's work dir with WORKDIR.
+            def ref = new File((System.getenv('GOLDEN_ROOT') + '/PXD030670/glyco-N-LFQ-MBG_perfile/files/work'))
+            def reportWd = new File((System.getenv('GOLDEN_ROOT') + '/PXD030670/glyco-N-LFQ-report_perfile/files/work'))
+            def norm = { String t, List<File> wds -> wds.inject(t) { acc, wd -> acc.replace(wd.canonicalPath, 'WORKDIR').replace(wd.path, 'WORKDIR') } }
+            def table = { File f, List<File> wds ->
+                def lines = norm(f.text, wds).readLines()
+                [lines[0].split('\t', -1) as List, lines.drop(1).collect { l -> l.split('\t', -1) as List }]
+            }
+            def diffs = []
+            def inputDiffSpectra = [] as Set
+            workflow.out.psm_dirs.each { meta, dir ->
+                def g = meta.group
+                def mineInput = new File(reportWd, "${g}/psm.tsv").readLines().drop(1).collect { l -> l.split('\t')[0] } as Set
+                def fpInput = new File(ref, "ptm-shepherd-output/${g}_unfiltered_psm.tsv").readLines().drop(1).collect { l -> l.split('\t')[0] } as Set
+                def only = (mineInput - fpInput) + (fpInput - mineInput)
+                inputDiffSpectra.addAll(only)
+                // FragPipe's psm.tsv is the one IonQuant rewrote last (FragpipeRun.java:2477)
+                def d = new File(new File(workflow.out.ionquant_dir[0][1].toString()), g)
+                def (h1, a) = table(new File(d, 'psm.tsv'), [d.parentFile.parentFile, reportWd])
+                def (h2, b) = table(new File(ref, "${g}/psm.tsv"), [ref])
+                if (h1 != h2) { diffs << "${g}/psm.tsv header differs"; return }
+                def q = h1.indexOf('Qvalue')
+                def strip = { List rows -> rows.findAll { r -> !(r[0] in only) }.collect { r -> r.withIndex().findAll { v, i -> i != q }*.getAt(0) } }
+                if (strip.call(a) != strip.call(b)) { diffs << "${g}/psm.tsv differs beyond Qvalue / input PSM set (${only})" }
+            }
+            def ptms = new File(workflow.out.ptm_results[0][1].toString())
+            new File(ref, 'ptm-shepherd-output').eachFileRecurse(groovy.io.FileType.FILES) { f ->
+                def rel = f.path - "${ref.path}/ptm-shepherd-output/"
+                def mine = new File(ptms, rel)
+                if (!mine.exists()) { diffs << "missing ptm-shepherd-output/${rel}"; return }
+                if (norm(mine.text, [ptms.parentFile, reportWd]) == norm(f.text, [ref])) { return }
+                // files that copy the input PSM table (or list its PSMs) may differ only in those PSMs/Qvalue
+                // a PSM appears as <run>.<scan>.<scan>.<charge> (psm.tsv) or <run>.<scan>.<scan> without zero padding
+                def forms = inputDiffSpectra.collectMany { sp -> def c = sp.toString().tokenize('.'); [sp.toString(), "${c[0..-4].join('.')}.${c[-3].toInteger()}.${c[-2].toInteger()}\t".toString()] }
+                def keep = { String l -> !forms.any { fm -> l.contains(fm) } }
+                def m = mine.readLines().findAll(keep)
+                def r = f.readLines().findAll(keep)
+                if (rel.endsWith('_unfiltered_psm.tsv')) {
+                    def q = m[0].split('\t', -1).toList().indexOf('Qvalue')
+                    m = m.collect { l -> def c = l.split('\t', -1).toList(); c.remove(q); c.join('\t') }
+                    r = r.collect { l -> def c = l.split('\t', -1).toList(); c.remove(q); c.join('\t') }
+                }
+                if (m != r) { diffs << "ptm-shepherd-output/${rel} differs beyond the input PSM set" }
+            }
+            def iq = new File(workflow.out.ionquant_dir[0][1].toString())
+            if (new File(iq.parentFile, 'modmasses_ionquant.txt').text != new File(ref, 'modmasses_ionquant.txt').text) { diffs << 'modmasses_ionquant.txt differs' }
+            ref.listFiles().findAll { f -> f.name ==~ /combined_.*\.tsv/ }.each { f ->
+                def (h1, a) = table(new File(iq, f.name), [iq.parentFile, reportWd])
+                def (h2, b) = table(f, [ref])
+                if (h1 != h2 || a.size() != b.size()) { diffs << "${f.name} header or row count differs"; return }
+                def bad = [a, b].transpose().findAll { x, y -> x != y }
+                def nonCount = bad.findAll { x, y -> (0..<h1.size()).any { i -> x[i] != y[i] && !h1[i].endsWith('Spectral Count') } }
+                if (nonCount || bad.size() > inputDiffSpectra.size()) { diffs << "${f.name}: ${bad.size()} rows differ, ${nonCount.size()} outside Spectral Count columns" }
+            }
+            assertAll(
+                { assert workflow.success },
+                { assert inputDiffSpectra.size() <= 2 : "input PSM sets differ too much: ${inputDiffSpectra}" },
+                { assert diffs.isEmpty() : diffs.join('\n') }
+            )
+        }
+    }
+}

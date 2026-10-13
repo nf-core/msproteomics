@@ -9,9 +9,6 @@ require(MSstats)
 require(tibble)
 require(data.table)
 
-# TODO: Functions shared between msstats_plfq and msstats_tmt should be merge in msstats_utils.R
-# Please functions syncronized between the three scripts until the code can be merged.
-
 ### Begining Functions section
 
 #' Inizialize the TMT and LFQ parameters
@@ -155,7 +152,6 @@ get_missing_in_condition <- function(processedData) {
 char_to_boolean <- c("true"=TRUE, "false"=FALSE)
 usage <- "Rscript msstats_plfq.R input.csv [list of contrasts or 'pairwise'] [default control condition or ''] ..."
 
-#TODO rewrite mzTab in next version
 args <- initialize_msstats(usage = usage)
 
 removeOneFeatProts <- args[4]

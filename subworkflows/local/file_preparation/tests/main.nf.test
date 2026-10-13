@@ -19,7 +19,7 @@ nextflow_workflow {
                 def mzml = file("\${workDir}/sample.mzML")
                 mzml.text = "mock"
 
-                input[0] = channel.of([ [ id:'sample1', mzml_id:'sample1' ], mzml ])
+                input[0] = channel.of([ [ id:'sample1' ], mzml ])
                 """
             }
         }
@@ -42,7 +42,7 @@ nextflow_workflow {
                 def raw = file("\${workDir}/sample.raw")
                 raw.text = "mock"
 
-                input[0] = channel.of([ [ id:'sample1', mzml_id:'sample1' ], raw ])
+                input[0] = channel.of([ [ id:'sample1' ], raw ])
                 """
             }
         }
@@ -51,6 +51,71 @@ nextflow_workflow {
             assertAll(
                 { assert workflow.success },
                 { assert snapshot(workflow.out.results).match() }
+            )
+        }
+    }
+
+    // G1.16: peak picking must not drop .d / .dia inputs. G1.15: compressed mzML is decompressed.
+    test("file_preparation - stub peak picking keeps .d and .dia, decompresses .mzML.gz") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            params {
+                openms_peakpicking = true
+            }
+            workflow {
+                """
+                def mzml = file("\${workDir}/s1.mzML")
+                mzml.text = "mock"
+                def mzml_gz = file("\${workDir}/s2.mzML.gz")
+                mzml_gz.text = "mock"
+                def dotd = file("\${workDir}/s3.d")
+                dotd.mkdirs()
+                def dia = file("\${workDir}/s4.dia")
+                dia.text = "mock"
+
+                input[0] = channel.of(
+                    [ [ id:'s1' ], mzml ],
+                    [ [ id:'s2' ], mzml_gz ],
+                    [ [ id:'s3' ], dotd ],
+                    [ [ id:'s4' ], dia ]
+                )
+                """
+            }
+        }
+
+        then {
+            def results = workflow.out.results.collect { item -> [item[0].id, file(item[1]).name] }.sort { item -> item[0] }
+            assertAll(
+                { assert workflow.success },
+                { assert results == [['s1', 's1.mzML'], ['s2', 's2.mzML'], ['s3', 's3.d'], ['s4', 's4.dia']] : "${results}" },
+                { assert workflow.trace.tasks().findAll { task -> task.name.contains('OPENMSPEAKPICKER') }.size() == 2 },
+                { assert snapshot(results).match() }
+            )
+        }
+    }
+
+    // RC-15: an unsupported LC-MS file stops the run instead of being skipped with a warning
+    test("file_preparation - stub unsupported file fails") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            workflow {
+                """
+                def mgf = file("\${workDir}/sample.mgf")
+                mgf.text = "mock"
+
+                input[0] = channel.of([ [ id:'sample1', mzml_id:'sample1' ], mgf ])
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.failed },
+                { assert (workflow.stdout + workflow.stderr).any { line -> line.contains('Unsupported mass spectrometry file for DIA-NN') } }
             )
         }
     }

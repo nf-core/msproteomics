@@ -1,0 +1,35 @@
+nextflow_process {
+
+    name "Test Process GENERATESDRFFROMSAMPLESHEET"
+    script "../main.nf"
+    process "GENERATESDRFFROMSAMPLESHEET"
+
+    tag "modules"
+    tag "modules_nfcore"
+    tag "generate_sdrf_from_samplesheet"
+
+    test("generate_sdrf_from_samplesheet - stub") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            process {
+                """
+                def samplesheet = file("\${workDir}/samplesheet.csv")
+                samplesheet.text = "sample,file\\ntest,test.raw"
+
+                input[0] = samplesheet
+                input[1] = '{"organism": "Homo sapiens"}'
+                input[2] = file("\${projectDir}/tests/fixtures/iproteomes/organisms.fasta")
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert snapshot(process.out.sdrf).match() }
+            )
+        }
+    }
+}

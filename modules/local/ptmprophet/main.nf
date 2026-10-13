@@ -1,21 +1,22 @@
+include { ptmProphetCommand; shellQuote; fragpipeToolVersions } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
+
 process PTMPROPHET {
     tag "${meta.id}"
     label 'process_medium'
 
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'docker://fcyucn/fragpipe:24.0' :
-        'docker.io/fcyucn/fragpipe:24.0' }"
-
     input:
-    // PTMProphet performs PTM site localization
-    // pepxml: search results with PTMs
-    // config_cli: PTMProphet parameters as CLI string (coupled with sample inputs)
-    tuple val(meta), path(pepxml_file), val(config_cli)
+    // pepxml_file: ONE validated interact pepXML; ranked lists are split by the caller
+    //   (CmdPtmProphet.java:107-124 runs one PTMProphet per pepXML)
+    // ptmprophet_cli: PtmProphetPanel.getCmdLineOpts(), "--" style already translated
+    //   (parse_fragpipe_workflow.py generate_ptmprophet_config)
+    // spectra: the LC-MS files the pepXML refers to (searched file + MSFragger mzML), lcms_names: the
+    //   names FragPipe writes as base_name; RewritePepxml points base_name at the staged copies
+    tuple val(meta), path(pepxml_file, stageAs: 'input/*'), path(spectra), val(lcms_names), val(ptmprophet_cli)
 
     output:
-    tuple val(meta), path("${prefix}")                          , emit: results_dir
-    tuple val(meta), path("${prefix}/*.mod.pep.xml")            , emit: mod_pepxml
-    tuple val("${task.process}"), val('ptmprophet'), eval("cat .ptmprophet_version"), emit: versions_ptmprophet, topic: versions
+    tuple val(meta), path("${prefix}")                 , emit: results_dir
+    tuple val(meta), path("${prefix}/*.mod.pep.xml")   , emit: mod_pepxml
+    tuple val("${task.process}"), val('ptmprophet'), val(fragpipeToolVersions().ptmprophet), emit: versions_ptmprophet, topic: versions
     tuple val("${task.process}"), val('fragpipe'), eval("cat .fragpipe_version"), emit: versions_fragpipe, topic: versions
 
     when:
@@ -24,63 +25,37 @@ process PTMPROPHET {
     script:
     def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id}"
-    def decoy_tag = task.ext.decoy_tag ?: 'rev_'
-    def basename = pepxml_file.baseName
-    // Replace .pep with .mod.pep in output filename
-    def output_file = basename.replaceAll(/\.pep$/, '') + ".mod.pep.xml"
-    def tools_dir = task.ext.fragpipe_tools_dir ?: '/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools'
-
-    // PTMProphet uses UPPERCASE=value format for parameters
-    // Common params: MINPROB=0.5, MAXTHREADS=1, STATIC, KEEPOLD, LABILEMODS, NOSTACK
+    def cmds = ptmProphetCommand(pepxml_file, ptmprophet_cli, args, task)
     """
-
     export HOME=\$(pwd)
     mkdir -p ${prefix}
+    [ -x ${shellQuote(cmds.argv[0])} ] || { echo "ERROR: ${cmds.argv[0]} not found (the FragPipe tools directory set in nextflow.config)" >&2; exit 1; }
+    printf '%s\\n' ${shellQuote(cmds.fragpipe_version)} > .fragpipe_version
 
-    TOOLS_DIR="${tools_dir}"
+    # Not a FragPipe step: FragPipe runs PTMProphet alone in the group dir that holds the pepXML (CmdPtmProphet.java:107-127).
+    # PTMProphet reads scans from <base_name>.mzML and fails without it ("cannot read scan in data file"); the
+    # input pepXML's base_name names another task's work dir, so RewritePepxml (argv as CmdPeptideProphet.java:426-451)
+    # points it at this task's staged spectra. Only base_name changes: the golden mod.pep.xml matches either way.
+    cp -L input/${shellQuote(cmds.input)} .
+    rewrite_cmd=(java -Duser.home="\$PWD" -cp ${shellQuote(cmds.fragpipe_lib + '/*')} org.nesvilab.fragpipe.util.RewritePepxml "\$PWD"/${shellQuote(cmds.input)} ${[lcms_names].flatten().collect { n -> '"$PWD"/' + shellQuote(n) }.join(' ')})
+    printf '%s\\n' "\${rewrite_cmd[*]}" > ${prefix}/ptmprophet.log
+    "\${rewrite_cmd[@]}" 2>&1 | tee -a ${prefix}/ptmprophet.log
 
-    PTMPROPHET_SRC=\$(find "\$TOOLS_DIR" -path '*/PTMProphet/PTMProphetParser*' -type f 2>/dev/null | head -1 || true)
-    PTMPROPHET="\$(pwd)/PTMProphetParser"
-    cp "\$PTMPROPHET_SRC" "\$PTMPROPHET"
-    chmod +x "\$PTMPROPHET"
-    # Version capture
-    _ver=\$(ls "\$TOOLS_DIR"/PTMProphet/PTMProphetParser-* 2>/dev/null | grep -oP 'Parser-\\K[\\d.]+' | head -1 || true)
+    # PTMProphet in the pepXML directory, argv as CmdPtmProphet.java:111-122
+    ptm_cmd=(${cmds.argv.collect { token -> shellQuote(token) }.join(' ')})
+    printf '%s\\n' "\${ptm_cmd[*]}" >> ${prefix}/ptmprophet.log
+    "\${ptm_cmd[@]}" 2>&1 | tee -a ${prefix}/ptmprophet.log
 
-    echo "\$_ver" > .ptmprophet_version
-    _fp_ver=\$(echo "\$TOOLS_DIR" | grep -oP 'fragpipe-\\K[0-9]+\\.[0-9]+[0-9.]*' | head -1 || true)
-
-    echo "\$_fp_ver" > .fragpipe_version
-
-    # Copy input pepxml to output directory (PTMProphet writes output alongside input)
-    cp ${pepxml_file} "${prefix}/"
-
-    # FragPipe always sets MAXTHREADS=1 (CmdPtmProphet.java:118-119) because PTMProphet
-    # is run as many parallel instances (one per pepXML). Using MAXTHREADS>1 within a single
-    # PTMProphet instance provides minimal benefit and can cause thread contention.
-    # Nextflow handles parallelism at the process level instead.
-    # Strip any existing MAXTHREADS= from config_cli to avoid duplication
-    CLEAN_CLI=\$(echo "${config_cli}" | sed 's/MAXTHREADS=[0-9]*//g' | tr -s ' ')
-    PTMPROPHET_CMD="\$PTMPROPHET MAXTHREADS=1 \$CLEAN_CLI ${args} ${prefix}/${pepxml_file.name} ${prefix}/${output_file}"
-    printf '%s\\n' "\$PTMPROPHET_CMD" > "${prefix}/ptmprophet.log"
-    \$PTMPROPHET MAXTHREADS=1 \$CLEAN_CLI ${args} "${prefix}/${pepxml_file.name}" "${prefix}/${output_file}" 2>&1 | tee -a "${prefix}/ptmprophet.log"
-
-    # Clean up copied input file
-    rm -f "${prefix}/${pepxml_file.name}"
-
+    mv ${shellQuote(cmds.output)} ${prefix}/
     """
 
     stub:
     prefix = task.ext.prefix ?: "${meta.id}"
-    def basename = pepxml_file.baseName
-    def output_file = basename.replaceAll(/\.pep$/, '') + ".mod.pep.xml"
+    def cmds = ptmProphetCommand(pepxml_file, ptmprophet_cli, task.ext.args ?: '', task)
     """
     mkdir -p ${prefix}
-    touch ${prefix}/${output_file}
-    touch ${prefix}/ptmprophet.log
-    TOOLS_DIR="${task.ext.fragpipe_tools_dir ?: '/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools'}"
-    _fp_ver=\$(echo "\$TOOLS_DIR" | grep -oP 'fragpipe-\\K[0-9]+\\.[0-9]+[0-9.]*' | head -1 || true)
-    echo "\$_fp_ver" > .ptmprophet_version
-    echo "\$_fp_ver" > .fragpipe_version
-
+    touch ${prefix}/${cmds.output}
+    printf '%s\\n' ${shellQuote((['java', '-cp', cmds.fragpipe_lib + '/*', 'org.nesvilab.fragpipe.util.RewritePepxml', '{CWD}/' + cmds.input] + [lcms_names].flatten().collect { n -> '{CWD}/' + n }).join(' '))} ${shellQuote(cmds.argv.join(' '))} > ${prefix}/ptmprophet.log
+    printf '%s\\n' ${shellQuote(cmds.fragpipe_version)} > .fragpipe_version
     """
 }

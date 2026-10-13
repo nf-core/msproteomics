@@ -1,0 +1,159 @@
+name: "philosopherfilter"
+description: Filter and report proteomics results using Philosopher
+keywords:
+  - proteomics
+  - FDR
+  - filter
+  - report
+  - PSM
+  - peptide
+  - protein
+tools:
+  - philosopher:
+      description: "Philosopher filter and report commands perform FDR filtering and
+
+        generate result reports (PSM, peptide, protein) from pepXML/protXML files.
+
+        "
+      homepage: https://philosopher.nesvilab.org/
+      documentation: https://github.com/Nesvilab/philosopher/wiki
+      tool_dev_url: https://github.com/Nesvilab/philosopher
+      doi: 10.1038/s41592-020-0912-y
+      licence:
+        - GPL-3.0
+input:
+  - - meta:
+        type: map
+        description: Group information; meta.group required
+    - pepxml_files:
+        type: file
+        description: The group's pepXMLs (interact and .mod)
+    - protxml:
+        type: file
+        description: combined.prot.xml, or [] when not used
+    - first_group_meta:
+        type: directory
+        description: .meta workspace of the first group, [] for the first group
+    - first_group:
+        type: string
+        description: Name of FragPipe's first group
+    - filter_cli:
+        type: string
+        description: Filter options after FragPipe's rewrite
+    - dont_use_protxml:
+        type: boolean
+        description: Filter without protXML
+    - report_cli:
+        type: string
+        description: Report flags
+  - fasta:
+      type: file
+      description: Protein sequence database (FASTA) with decoys
+      pattern: "*.{fasta,fas,fa}"
+  - decoy_tag:
+      type: string
+      description: Decoy protein prefix from workflow database.decoy-tag
+output:
+  results_files:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - ${prefix}/*:
+          type: file
+          description: "Result files of the group (the directory holding them, with the .meta/ workspace,
+
+            is the group's results directory: use the files' parent)
+
+            "
+          pattern: ${prefix}/*
+  workspace:
+    - - meta:
+          type: map
+          description: Group information
+      - ${prefix}/.meta:
+          type: directory
+          description: Philosopher workspace (db.bin, protxml.bin, razor.bin) for later groups and Abacus
+  psms:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - ${prefix}/psm.tsv:
+          type: file
+          description: PSM-level results
+          pattern: psm.tsv
+  peptides:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - ${prefix}/peptide.tsv:
+          type: file
+          description: Peptide-level results
+          pattern: peptide.tsv
+  proteins:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - ${prefix}/protein.tsv:
+          type: file
+          description: Protein-level results
+          pattern: protein.tsv
+  ions:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - ${prefix}/ion.tsv:
+          type: file
+          description: Ion-level results (optional)
+          pattern: ion.tsv
+  log:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - ${prefix}/philosopher_filter.log:
+          type: file
+          description: Philosopher filter/report log
+          pattern: philosopher_filter.log
+  versions_philosopher:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - philosopher:
+          type: string
+          description: The name of the tool
+      - fragpipeToolVersions().philosopher:
+          type: string
+          description: The Philosopher version bundled with FragPipe
+  versions_fragpipe:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - fragpipe:
+          type: string
+          description: The name of the tool
+      - cat .fragpipe_version:
+          type: eval
+          description: The expression to obtain the FragPipe version
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - philosopher:
+          type: string
+          description: The name of the tool
+      - fragpipeToolVersions().philosopher:
+          type: string
+          description: The Philosopher version bundled with FragPipe
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - fragpipe:
+          type: string
+          description: The name of the tool
+      - cat .fragpipe_version:
+          type: eval
+          description: The expression to obtain the FragPipe version
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

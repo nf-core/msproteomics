@@ -1,0 +1,40 @@
+{
+    "philosopher_labelquant - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "g1",
+                        "group": "g1"
+                    },
+                    [
+                        [
+                            "psm.bin:md5,17404a596cbd0d1e6c7d23fcd845ab82"
+                        ],
+                        "g1_annotation.txt:md5,f774977ae45696eb32c1c762c0eb2e55",
+                        "psm.tsv:md5,17404a596cbd0d1e6c7d23fcd845ab82"
+                    ]
+                ]
+            ],
+            [
+                [
+                    "PHILOSOPHERLABELQUANT",
+                    "philosopher",
+                    "5.1.3"
+                ]
+            ],
+            [
+                [
+                    "PHILOSOPHERLABELQUANT",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-07T22:03:35.003251152"
+    }
+}

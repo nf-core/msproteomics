@@ -16,27 +16,57 @@ input:
       type: file
       description: DIA-NN main report TSV file
       pattern: "report.tsv"
+      ontologies: []
   - q:
-      type: value
+      type: float
       description: Precursor-level FDR threshold (q-value cutoff)
   - pgq:
-      type: value
+      type: float
       description: Protein group-level FDR threshold (q-value cutoff)
   - contaminant_pattern:
-      type: value
+      type: string
       description: Regex pattern to identify contaminant proteins (e.g. "Cont_")
 output:
-  - contaminants_removed_report:
-      type: file
-      description: DIA-NN report with contaminant entries removed
-      pattern: "contaminants_removed_*.tsv"
-  - maxlfq:
-      type: file
-      description: MaxLFQ protein quantification matrix
-      pattern: "maxlfq.tsv"
-  - versions:
-      type: file
-      description: File containing software versions
-      pattern: "versions.yml"
+  contaminants_removed_report:
+    - "contaminants_removed_*.tsv":
+        type: file
+        description: DIA-NN report with contaminant entries removed
+        pattern: "contaminants_removed_*.tsv"
+        ontologies: []
+  maxlfq:
+    - "maxlfq.tsv":
+        type: file
+        description: MaxLFQ protein quantification matrix
+        pattern: "maxlfq.tsv"
+        ontologies: []
+  versions:
+    - "versions.yml":
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies: []
+
+topics:
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies: []
+
 authors:
   - "@dongzehe"
+containers:
+  conda:
+    linux/amd64:
+      lock_file: modules/local/iq/.conda-lock/linux_amd64-bd-2434db545350cb42_1.txt
+  docker:
+    linux/amd64:
+      name: community.wave.seqera.io/library/r-iq_r-readr:2434db545350cb42
+      build_id: bd-2434db545350cb42_1
+      scan_id: sc-1e94202cc2edb3c7_1
+  singularity:
+    linux/amd64:
+      name: oras://community.wave.seqera.io/library/r-iq_r-readr:3342ca6f01c0884f
+      build_id: bd-3342ca6f01c0884f_1
+      https: https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/ed/ed074b4541efbe9f6ccf072705df59ae1e3e962e46e66d4b8275c4f5bfe3645f/data

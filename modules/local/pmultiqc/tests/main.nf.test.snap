@@ -1,22 +1,61 @@
 {
     "pmultiqc - stub": {
         "content": [
-            [
-                "multiqc_report.html:md5,d41d8cd98f00b204e9800998ecf8427e"
-            ],
-            [
-                
-            ],
-            [
-                [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "experiment"
+                        },
+                        "multiqc_report.html:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
                     
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "experiment"
+                        },
+                        [
+                            "multiqc.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ],
+                "3": [
+                    "versions.yml:md5,c27dabc84b9190b01a7b0012e40ec5f7"
+                ],
+                "data": [
+                    [
+                        {
+                            "id": "experiment"
+                        },
+                        [
+                            "multiqc.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ],
+                "db": [
+                    
+                ],
+                "report": [
+                    [
+                        {
+                            "id": "experiment"
+                        },
+                        "multiqc_report.html:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,c27dabc84b9190b01a7b0012e40ec5f7"
                 ]
-            ]
+            }
         ],
-        "timestamp": "2026-03-25T03:51:22.833404026",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
-        }
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-08T14:30:42.624477475"
     }
 }

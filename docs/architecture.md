@@ -3,7 +3,9 @@
 ## Pipeline Overview
 
 nf-core/msproteomics is a Nextflow-based mass spectrometry proteomics pipeline that supports multiple analysis modes.
-The entry point (`main.nf`) routes execution to the appropriate workflow based on two parameters: `--mode` and `--tmt_mode`.
+The entry point (`main.nf`) follows the nf-core template: `PIPELINE_INITIALISATION` (parameter validation against `nextflow_schema.json`, `--help`, `--version`), then `NFCORE_MSPROTEOMICS`, then `PIPELINE_COMPLETION` (summary, email, hooks).
+`NFCORE_MSPROTEOMICS` routes execution to the appropriate workflow based on `--mode` and `--tmt_mode`, collects software versions into `pipeline_info/nf_core_msproteomics_software_mqc_versions.yml` and runs MultiQC.
+Each mode workflow parses the samplesheet with nf-schema (`assets/schema_input.json`).
 
 ```
 --mode diann                              → DIA Workflow (DIA-NN)
@@ -35,9 +37,9 @@ DIA_PROTEOMICS_ANALYSIS ───── DIA-NN library generation + quantificati
   │
   ├──► MSstats (optional) ──── differential abundance analysis
   │
-  ├──► DIANNR ─────────────── R-based post-processing and QC
+  ├──► IQ / MaxLFQ ────────── protein-level quantification via MaxLFQ algorithm
   │
-  └──► IQ / MaxLFQ ────────── protein-level quantification via MaxLFQ algorithm
+  └──► PMULTIQC (optional) ─── proteomics QC report
 ```
 
 **FILE_PREPARATION** converts vendor-specific raw files (Thermo `.raw`, Bruker `.d`) to open-format mzML.
@@ -48,8 +50,6 @@ An existing spectral library can be provided via `--diann_speclib` to skip libra
 
 **MSstats** performs differential abundance testing when an experimental design with conditions is provided.
 Skipped when `--skip_post_msstats` is set.
-
-**DIANNR** runs R-based post-processing on the DIA-NN report, applying quality filters and generating summary tables.
 
 **IQ** applies the MaxLFQ algorithm to produce protein-level quantification from precursor intensities.
 
@@ -64,7 +64,7 @@ Input CSV
   ├── GENERATE_SDRF ──────── bookkeeping
   │
   ▼
-FRAGPIPE_CONVERT ─────────── RAW → mzML (ThermoRawFileParser)
+FRAGPIPE_CONVERT ─────────── optional DIA-Umpire / diaTracer (LC-MS files searched as given)
   │                           Optional: DIA-Umpire / DIA-Tracer preprocessing
   │
   │     FRAGPIPE_DATABASE ─── Philosopher: add decoys + contaminants to FASTA
@@ -90,17 +90,16 @@ FRAGPIPE_INFERENCE ───────── ProteinProphet protein-level infe
   │
   ├──► FRAGPIPE_GLYCO ────── Glycoproteomics: MSFragger-Glyco / O-Pair
   │
-  └──► FRAGPIPE_EXPORT ───── Skyline, SAINTexpress, FPOP, Metaproteomics
+  └──► FRAGPIPE_EXPORT ───── FPOP, Metaproteomics; SAINTexpress (optional post-run, downstream/)
 ```
 
-The first step parses the `.workflow` configuration file (`PARSE_FRAGPIPE_WORKFLOW`) to determine which tools are enabled and extract their parameters.
+The first step parses the `.workflow` configuration file (`PARSEFRAGPIPEWORKFLOW`) to determine which tools are enabled and extract their parameters.
 Only enabled tools actually execute -- the workflow dynamically adapts to whatever the `.workflow` file specifies.
 
-**FRAGPIPE_DATABASE** runs Philosopher to append decoy sequences and common contaminants to the protein FASTA database.
-If a prebuilt database is provided, this step is skipped.
+**FRAGPIPE_DATABASE** checks the database decoys the way FragPipe headless does (`CHECKDBCONFIG`); the FASTA is searched as given.
+With `--add_philosopher_decoy` / `--add_philosopher_contaminants` it first runs FragPipe's database update (`philosopher database --custom <fasta> [--nodecoys] [--contam --contamprefix]`).
 
-**FRAGPIPE_CONVERT** converts Thermo `.raw` files to mzML using ThermoRawFileParser.
-For DIA data, optional DIA-Umpire or DIA-Tracer preprocessing runs after conversion.
+**FRAGPIPE_CONVERT** runs the optional DIA preprocessing (DIA-Umpire, diaTracer); LC-MS files are not converted, because MSFragger reads `.raw`, `.mzML`, `.mzXML`, `.mgf`, `.mzBIN` and Bruker `.d` natively, as in FragPipe.
 
 **FRAGPIPE_SEARCH** runs MSFragger for database searching with native mass calibration.
 MSBooster can optionally rescore PSMs using deep learning predictions, and CrystalC removes chimeric spectrum artifacts.
@@ -116,7 +115,7 @@ PTMProphet can optionally localize modification sites.
 - **FRAGPIPE_PTM** -- PTMShepherd for open search PTM summarization and localization
 - **FRAGPIPE_SPECLIB** -- spectral library generation for DIA or targeted methods
 - **FRAGPIPE_GLYCO** -- MSFragger-Glyco (N-linked) and O-Pair (O-linked) glycoproteomics
-- **FRAGPIPE_EXPORT** -- export results to Skyline, SAINTexpress, or other downstream tools
+- **FRAGPIPE_EXPORT** -- export results to FPOP or metaproteomics analysis, and the optional post-run SAINTexpress (FragPipe's Downstream-tab action, written to `downstream/saintexpress/`) (Skyline is not supported: FragPipe 24.0 refuses to run it on Linux, where it finds no Skyline installation)
 
 ## FragPipe Headless Mode
 
@@ -128,10 +127,10 @@ Input CSV
   ▼
 THERMORAWFILEPARSER ────── RAW → mzML conversion (per-sample, parallel)
   │
-  │   PHILOSOPHER_DATABASE ── decoy generation (required for headless)
+  │   PHILOSOPHERDATABASE ── decoy generation (required for headless)
   │       │
   ▼       ▼
-FRAGPIPE_HEADLESS ─────── all-in-one FragPipe execution
+FRAGPIPEHEADLESS ─────── all-in-one FragPipe execution
                             (single process, all tools run sequentially)
 ```
 
@@ -176,7 +175,7 @@ FRAGPIPE_INFERENCE ───────── ProteinProphet + Philosopher Filt
 FRAGPIPE_QUANT ───────────── IonQuant (aggregate PSMs)
   │
   ▼
-TMT_LABELCHECK_ANALYZE ───── labeling efficiency report (HTML + TSV)
+TMTLABELCHECKANALYZE ───── labeling efficiency report (HTML + TSV)
 ```
 
 The key difference from a standard search is that TMT is configured as a **variable** modification (not fixed).
@@ -214,7 +213,7 @@ nextflow.config                        ← root params, profiles, plugins (alway
   │
   ├── conf/modules.config              ← per-module ext.args, publishDir, resource overrides
   │
-  ├── conf/reference_proteomes.config  ← pre-built organism databases (human, mouse, yeast)
+  ├── conf/iproteomes.config           ← iProteomes: reference FASTAs and hosted indices (--proteome; skipped with --iproteomes_ignore)
   │
   ├── conf/instruments/*.config        ← instrument-specific overlays (loaded via -c flag)
   │     e.g., thermo_ascend, bruker_flex

@@ -1,5 +1,5 @@
 {
-    "fragpipe_inference - stub single sample": {
+    "fragpipe_inference - stub two groups: ProteinProphet, chained filters, iProphet and Abacus": {
         "content": [
             [
                 [
@@ -12,22 +12,19 @@
             [
                 [
                     {
-                        "id": "single",
-                        "group": "single"
+                        "id": "G1",
+                        "group": "G1",
+                        "report_after_quant": false,
+                        "export_matched_fragments": false
                     },
-                    [
-                        "peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "philosopher_filter.log:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                    ]
-                ]
-            ],
-            [
+                    "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
                 [
                     {
-                        "id": "single",
-                        "group": "single"
+                        "id": "G2",
+                        "group": "G2",
+                        "report_after_quant": false,
+                        "export_matched_fragments": false
                     },
                     "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
@@ -35,189 +32,44 @@
             [
                 [
                     {
-                        "id": "single",
-                        "group": "single"
+                        "id": "fragpipe"
                     },
-                    "peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    "reprint.spc.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
             ],
             [
                 [
                     {
-                        "id": "single",
-                        "group": "single"
+                        "id": "fragpipe"
                     },
-                    "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                
-            ],
-            [
-                [
-                    {
-                        "id": "single",
-                        "group": "single"
-                    },
-                    "single.pep.xml:md5,dd1aab2497ba8d2a8be1e78e0bc016de"
+                    "combined.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
             ]
         ],
-        "timestamp": "2026-03-25T03:55:07.989308599",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
-        }
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-07T00:14:35.84857804"
     },
-    "fragpipe_inference - stub with proteinprophet and filter": {
+    "fragpipe_inference - stub single group without ProteinProphet": {
         "content": [
             [
                 [
                     {
-                        "id": "combined"
-                    },
-                    "combined.prot.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "sample1",
-                        "group": "sample1"
-                    },
-                    [
-                        "peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "philosopher_filter.log:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                    ]
-                ],
-                [
-                    {
-                        "id": "sample2",
-                        "group": "sample2"
-                    },
-                    [
-                        "peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "philosopher_filter.log:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                    ]
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "sample1",
-                        "group": "sample1"
-                    },
-                    "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ],
-                [
-                    {
-                        "id": "sample2",
-                        "group": "sample2"
+                        "id": "workdir-root",
+                        "group": "",
+                        "report_after_quant": false,
+                        "export_matched_fragments": false
                     },
                     "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
-            ],
-            [
-                [
-                    {
-                        "id": "sample1",
-                        "group": "sample1"
-                    },
-                    "peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ],
-                [
-                    {
-                        "id": "sample2",
-                        "group": "sample2"
-                    },
-                    "peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "sample1",
-                        "group": "sample1"
-                    },
-                    "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ],
-                [
-                    {
-                        "id": "sample2",
-                        "group": "sample2"
-                    },
-                    "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                
-            ],
-            [
-                [
-                    {
-                        "id": "sample1",
-                        "group": "sample1"
-                    },
-                    "sample1.pep.xml:md5,dd1aab2497ba8d2a8be1e78e0bc016de"
-                ],
-                [
-                    {
-                        "id": "sample2",
-                        "group": "sample2"
-                    },
-                    "sample2.pep.xml:md5,dd1aab2497ba8d2a8be1e78e0bc016de"
-                ]
             ]
         ],
-        "timestamp": "2026-03-25T03:55:01.035288714",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
-        }
-    },
-    "fragpipe_inference - stub proteinprophet only": {
-        "content": [
-            [
-                [
-                    {
-                        "id": "aggregate"
-                    },
-                    "combined.prot.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                
-            ],
-            [
-                
-            ],
-            [
-                
-            ],
-            [
-                
-            ],
-            [
-                
-            ],
-            [
-                [
-                    {
-                        "id": "test_pp_only",
-                        "group": "test_pp_only"
-                    },
-                    "test.pep.xml:md5,dd1aab2497ba8d2a8be1e78e0bc016de"
-                ]
-            ]
-        ],
-        "timestamp": "2026-03-25T03:55:14.406005158",
-        "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
-        }
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-07T00:14:44.342261182"
     }
 }

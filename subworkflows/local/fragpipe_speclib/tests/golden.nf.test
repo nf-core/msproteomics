@@ -1,0 +1,216 @@
+// Golden test: SPECLIBGEN + DIANNFRAGPIPE outputs vs FragPipe 24.0's own DIA_SpecLib_Quant runs,
+// captured under params.golden_root (bin/golden_capture.py). Inputs are FragPipe's own psm.tsv,
+// peptide.tsv, protein.tsv, interact-*_rank<N>.pep.xml, the LC-MS files, the database and the
+// workflow file of each run; the LC-MS table is FragPipe's fragpipe-files.fp-manifest.
+// Comparison: raw bytes after
+// replacing the run's directories by <WORK>, <LCMS>, <DB> (FragPipe writes absolute paths; Nextflow
+// stages into task dirs); report.log.txt without its date line, [m:ss] prefixes and the host's Logical CPU cores
+// line (bin/golden_compare.py DIANN_LOG rule; Batch hosts have other core counts); PDFs skipped
+// (/CreationDate). Two orders depend on the machine, not on FragPipe's settings (measured in FragPipe determinism runs): FragReporter's run columns follow the
+// HashMap order of the absolute run paths (golden columns are put into that order for our paths, then
+// bytes), and library.tsv's AverageExperimentalRetentionTime is np.nanmean over alignment files in
+// directory-listing order (1e-15 relative; every other column exact).
+
+nextflow_workflow {
+
+    name "Test Subworkflow FRAGPIPE_SPECLIB - golden FragPipe 24.0 DIA_SpecLib_Quant"
+    script "../main.nf"
+    workflow "FRAGPIPE_SPECLIB"
+    config "./golden.config"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "fragpipe_speclib"
+    tag "golden"
+
+    def golden_root = System.getenv('GOLDEN_ROOT')
+
+    // Golden run and the database SpecLibGen read; FragPipe's run directories come from its manifest.json "roots"
+    def runs = [
+        dia_cptac_subset: [
+            dir: 'dia_cptac_subset/DIA_SpecLib_Quant_perfile', db: 'human_sp_subset_decoys.fasta'
+        ],
+        ccRCC_DIA_tutorial: [
+            dir: 'ccRCC_DIA_tutorial/DIA_SpecLib_Quant_perfile', db: '2023-10-03-decoys-reviewed-contam-UP000005640.fas'
+        ]
+    ]
+
+    ['dia_cptac_subset', 'ccRCC_DIA_tutorial'].each { name ->
+        test("fragpipe_speclib - golden - ${name}") {
+
+            when {
+                params {
+                    golden_run = runs[name]
+                }
+                workflow {
+                    """
+                    assert ${golden_root != null} : 'set GOLDEN_ROOT to the golden data root'
+                    def run = params.golden_run
+                    def g = "${golden_root}/\${run.dir}/files"
+                    def work = "\${g}/work"
+                    // tool settings from FragPipe's own copy of the workflow
+                    def out = file("\${workDir}/parsed")
+                    def proc = ['python3', "\${baseDir}/modules/local/parsefragpipeworkflow/resources/usr/bin/parse_fragpipe_workflow.py",
+                                '--workflow', "\${work}/fragpipe.workflow", '--data-types', file("\${work}/fragpipe-files.fp-manifest").readLines().findAll { l -> l.trim() }.collect { l -> l.split('\\t', -1)[3] }.unique().sort().join(','), '--outdir', out.toString(), '--output-json'].execute()
+                    proc.waitForProcessOutput(System.out, System.err)
+                    assert proc.exitValue() == 0
+                    def configs = file("\${out}/tool_configs.json").text
+                    // LC-MS table = FragPipe's manifest (path, experiment, bioreplicate, data type), files from the golden input dir
+                    def files = file("\${work}/fragpipe-files.fp-manifest").readLines().findAll { line -> line.trim() }.collect { line ->
+                        def cols = (line.split('\\t', -1) as List) + ['', '', '']
+                        def f = file("\${g}/input/\${new File(cols[0]).name}", checkIfExists: true)
+                        [[id: f.baseName, group: '', experiment: cols[1] ?: null, bioreplicate: cols[2] ? cols[2] as Integer : null, data_type: cols[3]], f]
+                    }
+                    def manifest = file("\${workDir}/fragpipe-files.fp-manifest")
+                    manifest.text = files.collect { item ->
+                        [item[1].toString(), item[0].experiment ?: '', item[0].bioreplicate ?: '', item[0].data_type].join('\\t')
+                    }.join('\\n')
+                    def group = [id: 'workdir-root', group: '']
+                    def pepxmls = files.collect { item ->
+                        [item[0], file("\${work}/interact-\${item[0].id}_rank*.pep.xml").sort { p -> p.name }]
+                    }
+                    input[0]  = channel.of([group, file("\${work}/psm.tsv", checkIfExists: true)])
+                    input[1]  = channel.of([group, file("\${work}/peptide.tsv", checkIfExists: true)])
+                    input[2]  = channel.of([group, file("\${work}/protein.tsv", checkIfExists: true)])
+                    input[3]  = channel.fromList(pepxmls)
+                    input[4]  = channel.fromList(files)
+                    input[5]  = channel.empty()
+                    input[6]  = channel.fromList(files)
+                    input[7]  = channel.value(manifest)
+                    input[8]  = channel.value(file("\${g}/db/\${run.db}", checkIfExists: true))
+                    input[9]  = channel.value(configs)
+                    input[10] = [id: 'fragpipe']
+                    """
+                }
+            }
+
+            then {
+                def run = runs[name]
+                def g = "${golden_root}/${run.dir}/files"
+                def roots = new groovy.json.JsonSlurper().parse(new File("${golden_root}/${run.dir}/manifest.json")).roots
+                def speclib_wd = new File(workflow.out.library_tsv.get(0).get(1).toString()).parentFile
+                def diann_wd = new File(workflow.out.diann_report.get(0).get(1).toString()).parentFile.parentFile
+                // longest prefix first
+                def expected_paths = [[roots['{WORKDIR}'], '<WORK>'], [roots['{LCMS_DIR}'], '<LCMS>'], [roots['{DB_DIR}'], '<DB>']]
+                // DIA-NN's LC-MS directory: the task dir, or the short /tmp link a long work dir gets
+                // (diannInputDirLines); the outputs name the runs under it. The LC-MS files are staged in the
+                // task dir, which is also the work dir, so each staged LC-MS file maps to <LCMS>/<name>
+                def diann_lcms = new File(new File(diann_wd, 'filelist_diann.txt').readLines()[0].replaceFirst(/^--f /, '')).parent
+                def lcms_names = new File("${g}/input").list().toList()
+                def actual_paths = ([
+                    [diann_lcms, diann_lcms == diann_wd.toString() ? '<WORK>' : '<LCMS>']] +
+                    lcms_names.collectMany { n -> [["${diann_wd}/${n}", "<LCMS>/${n}"], ["${speclib_wd}/${n}", "<LCMS>/${n}"], ["${diann_lcms}/${n}", "<LCMS>/${n}"]] } + [
+                    ["${speclib_wd}/${run.db}", "<DB>/${run.db}"], ["${diann_wd}/${run.db}", "<DB>/${run.db}"],
+                    ["${g}/work", '<WORK>'], ["${g}/input", '<LCMS>'], ["${g}/db", '<DB>'],
+                    // gen_con_spec_lib.py resolves symlinks (resolve_mapped) into the golden dir's real path
+                    [new File("${g}/work").canonicalPath, '<WORK>'], [new File("${g}/input").canonicalPath, '<LCMS>'], [new File("${g}/db").canonicalPath, '<DB>'],
+                    [diann_wd.toString(), '<WORK>'], [speclib_wd.toString(), '<WORK>']
+                ]).sort { a, b -> b[0].length() <=> a[0].length() }
+                def normalise = { File f, List prefixes, String rel ->
+                    def text = f.getText('ISO-8859-1')
+                    prefixes.each { p -> text = text.replace(p[0].toString(), p[1].toString()) }
+                    if (rel.endsWith('report.log.txt')) {
+                        text = text.readLines().findAll { line -> !line.startsWith('Current date and time:') && !line.startsWith('Logical CPU cores:') }
+                            .collect { line -> line.replaceFirst(/^\[\d+:\d{2}\] /, '') }.join('\n')
+                    }
+                    text
+                }
+                // abundance_*.tsv: FragReporter keys its run columns by absolute run path in a java.util.HashMap,
+                // so the column order is the HashMap bucket order of the path strings (measured: the golden
+                // header is exactly that order for FragPipe's paths, ours for the task paths). The paths are
+                // machine-specific, so the golden run columns are put into the HashMap order of our paths,
+                // then the files must be byte-identical.
+                def hashmap_order = { List<String> keys, Closure insertion_rank ->
+                    def capacity = 16
+                    while (keys.size() > capacity * 0.75) {
+                        capacity *= 2
+                    }
+                    keys.withIndex().sort { x, y ->
+                        def hx = x[0].hashCode()
+                        def hy = y[0].hashCode()
+                        ((hx ^ (hx >>> 16)) & (capacity - 1)) <=> ((hy ^ (hy >>> 16)) & (capacity - 1)) ?: insertion_rank.call(x[0]) <=> insertion_rank.call(y[0])
+                    }.collect { pair -> pair[0] }
+                }
+                // runs sharing a HashMap bucket keep insertion order = FragPipe's filelist_diann.txt order
+                def filelist_order = new File("${g}/work/filelist_diann.txt").readLines().findAll { l -> l.trim() }.collect { l -> new File(l.split(' ', 2)[1]).name }
+                def reorder_runs = { String expected_text, String actual_text, String actual_lcms ->
+                    def rows = expected_text.split('\n', -1).collect { line -> line.split('\t', -1) as List }
+                    def header = rows[0]
+                    def run_cols = (0..<header.size()).toList().findAll { i -> header[i].startsWith('<LCMS>/') }
+                    def names = run_cols.collect { i -> header[i] - '<LCMS>/' }
+                    def target = hashmap_order.call(names.collect { n -> "${actual_lcms}/${n}".toString() }, { String path -> filelist_order.indexOf(new File(path).name) }).collect { p -> p.substring(actual_lcms.length() + 1) }
+                    def perm = target.collect { n -> run_cols[names.indexOf(n)] }
+                    rows.collect { row ->
+                        def out = new ArrayList(row)
+                        run_cols.eachWithIndex { col, k -> if (col < row.size()) { out[col] = row[perm[k]] } }
+                        out.join('\t')
+                    }.join('\n')
+                }
+                // library.tsv: AverageExperimentalRetentionTime is a mean over easypqp_rt_alignment_*.alignment_pkl
+                // in Path.glob order (gen_con_spec_lib.py:384-401), i.e. directory listing order, so the last
+                // bits differ between file systems; every other column must be identical.
+                def library_equal = { String a, String b ->
+                    def ra = a.split('\n', -1)
+                    def rb = b.split('\n', -1)
+                    if (ra.size() != rb.size() || ra[0] != rb[0]) {
+                        return false
+                    }
+                    def col = ra[0].split('\t', -1).toList().indexOf('AverageExperimentalRetentionTime')
+                    (1..<ra.size()).every { n ->
+                        def x = ra[n].split('\t', -1)
+                        def y = rb[n].split('\t', -1)
+                        x.size() == y.size() && (0..<x.size()).every { i ->
+                            x[i] == y[i] || (i == col && x[i] && y[i] &&
+                                Math.abs(x[i].toDouble() - y[i].toDouble()) <= 1e-15 * Math.abs(x[i].toDouble()))
+                        }
+                    }
+                }
+                def equal = { String rel, String a, String b ->
+                    if (rel == 'library.tsv') {
+                        return library_equal.call(a, b)
+                    }
+                    if (rel.startsWith('dia-quant-output/abundance_')) {
+                        return reorder_runs.call(a, b, diann_lcms.toString()) == b
+                    }
+                    a == b
+                }
+                def compared = [
+                    [speclib_wd, ['library.tsv', 'easypqp_rt_reference_run.tsv', 'filelist_speclibgen.txt', 'filelist_easypqp_library.txt', 'easypqp_files/cmds.txt']],
+                    [diann_wd, ['experiment_annotation.tsv', 'filelist_diann.txt'] +
+                        new File("${g}/work/dia-quant-output").list().sort().collect { f -> "dia-quant-output/${f}".toString() }]
+                ]
+                def results = compared.collectMany { pair ->
+                    pair[1].collect { rel ->
+                        // experiment_annotation.tsv is written by WRITE_DIANN_EXPERIMENT_ANNOTATION, not in DIA-NN's task dir
+                        def actual = pair[0] == diann_wd && rel == 'experiment_annotation.tsv' ? new File(workflow.out.diann_experiment_annotation.get(0).get(1).toString()) : new File(pair[0], rel)
+                        def expected = new File("${g}/work/${rel}")
+                        def status = !actual.exists() ? 'MISSING'
+                            : equal.call(rel, normalise.call(expected, expected_paths, rel), normalise.call(actual, actual_paths, rel)) ? 'MATCH' : 'DIFF'
+                        "${status}\t${rel}".toString()
+                    }
+                }
+                // argv of both tools equals FragPipe's (manifest steps SpecLibGen and DIA-Quant: run DIA-NN);
+                // only run-specific directories are replaced, nothing else is normalised
+                def golden_steps = new groovy.json.JsonSlurper().parse(new File("${golden_root}/${run.dir}/manifest.json")).steps
+                def argv_of = { String cmd_name, File dir, String file ->
+                    def expected = golden_steps.find { st -> st.cmd_name == cmd_name }.argv.collect { t ->
+                        t.replaceAll(/\{INPUT:([^}]+)\}/) { all, fname -> "<DB>/${fname}" }.replace('{WORKDIR}', '<WORK>').replace('{FRAGPIPE}', '<FP>')
+                    }
+                    def tokens = new File(dir, file).readLines()
+                    // FragPipe install root (fragpipe*) of the module's tool paths (<root>/tools/..., fragpipeTools()), as bin/golden_step_check.py fragpipe_root
+                    def fp = tokens.findResult { t -> def m = t =~ /(?i)^(\/[^\s:]*\/fragpipe[^\/\s:]*)\/(?:tools|lib)\//; m.find() ? m.group(1) : null }
+                    def actual = tokens.collect { t ->
+                        t.replace("${dir}/${run.db}", "<DB>/${run.db}").replace(dir.toString(), '<WORK>').replace(fp, '<FP>')
+                    }
+                    expected == actual ? "MATCH\targv ${cmd_name}".toString() : "DIFF\targv ${cmd_name}\n  FragPipe: ${expected}\n  module:   ${actual}".toString()
+                }
+                results += [argv_of.call('SpecLibGen', speclib_wd, 'speclibgen_argv.txt'), argv_of.call('DIA-Quant: run DIA-NN', diann_wd, 'diann_argv.txt')]
+                println(results.join('\n'))
+                assertAll(
+                    { assert workflow.success },
+                    { assert results.findAll { line -> !line.startsWith('MATCH') } == [] }
+                )
+            }
+        }
+    }
+}

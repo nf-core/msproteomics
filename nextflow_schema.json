@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://raw.githubusercontent.com/nf-core/msproteomics/master/nextflow_schema.json",
+    "$id": "https://raw.githubusercontent.com/nf-core/msproteomics/main/nextflow_schema.json",
     "title": "nf-core/msproteomics pipeline parameters",
     "description": "Mass spectrometry proteomics preprocessing (DIA, DDA LFQ, TMT)",
     "type": "object",
@@ -19,15 +19,15 @@
                     "schema": "assets/schema_input.json",
                     "mimetype": "text/csv",
                     "pattern": "^\\S+\\.csv$",
-                    "description": "Path to comma-separated samplesheet CSV with columns: sample, spectra (optional: condition, label, fraction).",
+                    "description": "Path to comma-separated samplesheet CSV with columns: sample, spectra (optional: condition, label, fraction, experiment, bioreplicate).",
                     "help_text": "Provide a simple CSV samplesheet with per-sample data. Experiment-level parameters (enzyme, modifications, mass tolerances) are set in nextflow.config. See [usage docs](https://nf-co.re/msproteomics/usage#input) for format details.",
                     "fa_icon": "fas fa-file-csv"
                 },
                 "organism": {
                     "type": "string",
-                    "default": "Homo sapiens",
-                    "description": "Organism name for SDRF generation and, when --database is not given, for selecting the UniProt reference proteome (e.g., Homo sapiens, Mus musculus, Saccharomyces cerevisiae).",
-                    "fa_icon": "fas fa-dna"
+                    "description": "Organism name for SDRF generation (e.g., Homo sapiens, Mus musculus, Saccharomyces cerevisiae).",
+                    "fa_icon": "fas fa-dna",
+                    "help_text": "Default: the organism of --proteome, else guessed from the UniProt OS= headers of the searched FASTA as FragPipe does, else 'not available'. Only the SDRF bookkeeping uses it: the protein database is --database or --proteome."
                 },
                 "dissociation_method": {
                     "type": "string",
@@ -53,39 +53,6 @@
                     "type": "string",
                     "description": "MultiQC report title. Printed as page header, used for filename if not otherwise specified.",
                     "fa_icon": "fas fa-file-signature"
-                },
-                "config_file": {
-                    "type": "string",
-                    "format": "file-path",
-                    "description": "Path to a custom Nextflow config file to override pipeline defaults.",
-                    "help_text": "When provided, this config file is loaded instead of the mode-specific config. For advanced use only -- most users should use the --mode parameter and per-parameter overrides instead.",
-                    "fa_icon": "fas fa-file-code"
-                },
-                "acquisition_method": {
-                    "type": "string",
-                    "default": "dia",
-                    "enum": ["dia", "dda"],
-                    "description": "Data acquisition method for SDRF generation.",
-                    "fa_icon": "fas fa-satellite-dish"
-                },
-                "labelling_type": {
-                    "type": "string",
-                    "default": "label free sample",
-                    "description": "Labelling type for SDRF generation (e.g., label free sample, TMT).",
-                    "fa_icon": "fas fa-tags"
-                },
-                "fragment_method": {
-                    "type": "string",
-                    "default": "HCD",
-                    "enum": ["HCD", "CID", "ETD", "EThcD"],
-                    "description": "Fragment method for SDRF generation.",
-                    "fa_icon": "fas fa-bolt"
-                },
-                "is_phospho_data": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Flag indicating phosphoproteomics data (adds enrichment metadata to SDRF).",
-                    "fa_icon": "fas fa-atom"
                 }
             }
         },
@@ -106,6 +73,7 @@
                 "tmt_mode": {
                     "type": "string",
                     "description": "TMT analysis mode (fragpipe only): 'labelcheck' or 'quant'.",
+                    "enum": ["labelcheck", "quant"],
                     "fa_icon": "fas fa-tags",
                     "help_text": "Only used when --mode fragpipe. Controls the TMT analysis workflow: 'labelcheck' for labeling efficiency QC, 'quant' for TMT quantification. When not set, the pipeline runs a DDA LFQ workflow by default."
                 }
@@ -122,24 +90,31 @@
                     "pattern": "^\\S+\\.(?:fasta|fa)$",
                     "description": "Path to a protein database FASTA file.",
                     "fa_icon": "fas fa-file",
-                    "help_text": "A protein FASTA file for database search. Takes precedence over the reference proteome. If not provided, the pipeline downloads the UniProt reference proteome (Swiss-Prot reviewed + isoforms) for `--organism` from `conf/reference_proteomes.config`, and fails if the organism has no configured proteome."
+                    "help_text": "A protein FASTA file for database search. Without it, --proteome selects an iProteome (its FASTA is searched; see docs/usage.md, iProteomes). In FragPipe mode it is searched as given, as FragPipe headless searches the workflow database.db-path: it must already contain decoys tagged with the workflow database.decoy-tag (40-60 % of the entries), or the run stops like FragPipe does. Set --add_philosopher_decoy and/or --add_philosopher_contaminants to update it with Philosopher first."
                 },
                 "diann_speclib": {
                     "type": "string",
                     "format": "file-path",
                     "exists": true,
-                    "pattern": "^\\S+\\.speclib$",
-                    "description": "Pre-built DIA-NN spectral library (.speclib) to skip in-silico library generation.",
+                    "pattern": "^\\S+\\.(speclib|tsv|csv|xls|txt)$",
+                    "description": "Pre-built DIA-NN spectral library (.speclib, or a .tsv/.csv/.xls/.txt table library) to skip in-silico library generation.",
                     "fa_icon": "fas fa-file",
-                    "help_text": "If a spectral library has already been generated by DIA-NN, provide it here along with the FASTA to skip the library generation step.",
+                    "help_text": "Skips QUANTMSUTILS_DIANNCFG and DIANN_INSILICOLIBRARYGENERATION: the library is passed to DIA-NN with --lib for the preliminary analysis. DIA-NN 1.8.1 (the pipeline's image) reads the compact .speclib format and tab/comma-separated table libraries (.tsv, .xls, .txt, .csv); .parquet libraries need DIA-NN 1.9 or later. The FASTA (--database) is still required for protein inference. Without it, the --proteome library is used when the run's digest/modification settings equal the ones it was built with; otherwise the pipeline builds the library.",
                     "hidden": false
                 },
-                "philosopher_database": {
-                    "type": "string",
-                    "format": "file-path",
-                    "description": "Path to a pre-built Philosopher database FASTA (with decoys and contaminants).",
-                    "fa_icon": "fas fa-database",
-                    "help_text": "A FASTA file already processed by Philosopher (containing decoy sequences and contaminants). If provided, the pipeline skips the PHILOSOPHER_DATABASE step. If not provided, the pipeline auto-resolves the database from the organism parameter."
+                "add_philosopher_decoy": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Add rev_ decoys to --database with Philosopher before a FragPipe search.",
+                    "fa_icon": "fas fa-random",
+                    "help_text": "Runs FragPipe's database update, philosopher database --custom <fasta> (CmdDatabaseUpdate). Without it (and without --add_philosopher_contaminants) the FASTA is searched as given, as FragPipe headless does, and must already hold decoys."
+                },
+                "add_philosopher_contaminants": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Add cRAP contaminants to --database with Philosopher before a FragPipe search.",
+                    "fa_icon": "fas fa-biohazard",
+                    "help_text": "Adds --contam --contamprefix to philosopher database --custom <fasta>; without --add_philosopher_decoy also --nodecoys."
                 },
                 "diann_empirical_assembly_lib": {
                     "type": "string",
@@ -181,7 +156,7 @@
                     "type": "string",
                     "default": "Oxidation (M)",
                     "description": "Variable modifications in Unimod name format, e.g. 'Oxidation (M)'.",
-                    "help_text": "DIA-NN --var-mod flag. Default is Oxidation of Methionine. Format: 'Name (Site)' using Unimod modification names. See https://www.unimod.org/modifications_list.php for valid names. Common examples: 'Oxidation (M)', 'Acetyl (Protein N-term)', 'Phospho (STY)'.",
+                    "help_text": "DIA-NN --var-mod flag. Default is Oxidation of Methionine. Format: 'Name (Site)' using Unimod modification names. See https://www.unimod.org/modifications_list.php for valid names. Separate several modifications with commas, one residue per entry. Common examples: 'Oxidation (M)', 'Acetyl (Protein N-term)', 'Oxidation (M),Phospho (S),Phospho (T),Phospho (Y)'.",
                     "fa_icon": "fas fa-unlock"
                 },
                 "max_mods": {
@@ -360,30 +335,6 @@
                     "help_text": "Any additional DIA-NN flags to pass during library generation. Appended to the command after all other arguments.",
                     "fa_icon": "fas fa-plus"
                 },
-                "peptide_fdr": {
-                    "type": "number",
-                    "default": 0.01,
-                    "minimum": 0,
-                    "maximum": 1,
-                    "description": "Peptide-level FDR threshold.",
-                    "fa_icon": "fas fa-filter"
-                },
-                "protein_fdr": {
-                    "type": "number",
-                    "default": 0.01,
-                    "minimum": 0,
-                    "maximum": 1,
-                    "description": "Protein-level FDR threshold.",
-                    "fa_icon": "fas fa-filter"
-                },
-                "psm_fdr": {
-                    "type": "number",
-                    "default": 0.01,
-                    "minimum": 0,
-                    "maximum": 1,
-                    "description": "PSM-level FDR threshold.",
-                    "fa_icon": "fas fa-filter"
-                },
                 "protein_level_fdr_cutoff": {
                     "type": "number",
                     "default": 0.01,
@@ -400,7 +351,7 @@
                 },
                 "precursor_mass_tolerance": {
                     "type": "number",
-                    "default": 20,
+                    "default": 5,
                     "description": "Precursor mass tolerance for database search.",
                     "fa_icon": "fas fa-crosshairs"
                 },
@@ -413,7 +364,7 @@
                 },
                 "fragment_mass_tolerance": {
                     "type": "number",
-                    "default": 20,
+                    "default": 18,
                     "description": "Fragment ion mass tolerance for database search.",
                     "fa_icon": "fas fa-crosshairs"
                 },
@@ -474,6 +425,13 @@
                     "fa_icon": "fas fa-exchange-alt",
                     "help_text": "Controls how MSFragger search is executed:\n- pipeline: Modular Nextflow-orchestrated execution with per-sample parallelization.\n- headless: Run FragPipe headless in a single process, producing results identical to the FragPipe GUI."
                 },
+                "fragpipe_threads": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Thread count of the FragPipe run (FragPipe headless --threads).",
+                    "fa_icon": "fas fa-microchip",
+                    "help_text": "Overrides workflow.threads of the workflow file. MSBooster's RT loess output depends on its thread count, so a workflow that runs MSBooster needs workflow.threads or this parameter; MSBooster's numThreads is exactly this value."
+                },
                 "fragpipe_workflow": {
                     "type": "string",
                     "format": "file-path",
@@ -483,77 +441,30 @@
                 },
                 "fragpipe_container": {
                     "type": "string",
-                    "description": "Docker/Singularity image containing licensed FragPipe tools (MSFragger, IonQuant, DiaTracer).",
+                    "description": "Licensed FragPipe image that runs every FragPipe tool (required for --mode fragpipe with a container engine).",
                     "fa_icon": "fab fa-docker",
-                    "help_text": "Commercial FragPipe modules require a container with licensed JARs. Provide the full image path (e.g., 'your-registry/fragpipe:24.0'). Open-source modules use the default fcyucn/fragpipe:24.0 image."
+                    "help_text": "FragPipe runs all of its tools from one distribution, so every FragPipe module (MSFragger, IonQuant, diaTracer, Philosopher, Percolator, MSBooster, TMT-Integrator, ...) uses this one image. Give the full image path including the registry, e.g. 'docker.io/<org>/fragpipe:24.0'. There is no default image."
                 },
-                "tmt_annotation": {
+                "metaproteomics_names_dmp": {
                     "type": "string",
                     "format": "file-path",
-                    "description": "Path to a TMT annotation file mapping channels to sample names.",
-                    "fa_icon": "fas fa-tags",
-                    "help_text": "Required for TMT quantification workflows. Maps TMT channels to sample names."
+                    "exists": true,
+                    "description": "NCBI taxonomy names.dmp for FragPipe Metaproteomics. Default: FragPipe's tools/metaproteomics/names.dmp.",
+                    "fa_icon": "fas fa-sitemap"
                 },
-                "msfragger_num_slices": {
-                    "type": "integer",
-                    "default": 1,
-                    "minimum": 1,
-                    "maximum": 16,
-                    "description": "Number of database slices for split MSFragger search. 1 = no split (default).",
-                    "fa_icon": "fas fa-cut",
-                    "help_text": "Controls split-database search for MSFragger. When set to 1 (default), MSFragger searches the full database. When >1, the FASTA database is split into N chunks and searched in parallel. Useful for very large databases where the fragment index exceeds available memory."
-                },
-                "decoy_tag": {
+                "metaproteomics_nodes_dmp": {
                     "type": "string",
-                    "default": "rev_",
-                    "description": "Decoy protein tag prefix used by FragPipe/Philosopher.",
-                    "fa_icon": "fas fa-tag",
-                    "hidden": true
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "NCBI taxonomy nodes.dmp for FragPipe Metaproteomics. Default: FragPipe's tools/metaproteomics/nodes.dmp.",
+                    "fa_icon": "fas fa-sitemap"
                 },
                 "tmt_type": {
                     "type": "string",
-                    "description": "TMT plex type: TMT6, TMT10, TMT11, TMT16, TMT18, TMTPRO.",
-                    "enum": ["TMT6", "TMT10", "TMT11", "TMT16", "TMT18", "TMTPRO"],
+                    "description": "TMT plex type: TMT6, TMT10, TMT11, TMT16, TMT18, TMT35, TMTPRO.",
+                    "enum": ["TMT6", "TMT10", "TMT11", "TMT16", "TMT18", "TMT35", "TMTPRO"],
                     "fa_icon": "fas fa-tags",
                     "help_text": "Specifies the TMT plex type for TMT workflows. The pipeline auto-selects the appropriate label check workflow file based on this value."
-                }
-            }
-        },
-        "sdrf_validation_options": {
-            "title": "SDRF validation options",
-            "type": "object",
-            "description": "Parameters controlling SDRF input validation.",
-            "fa_icon": "fas fa-check-double",
-            "properties": {
-                "validate_ontologies": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Validate SDRF ontology terms against the Ontology Lookup Service.",
-                    "fa_icon": "fas fa-spell-check"
-                },
-                "skip_ms_validation": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Skip mass spectrometry file validation in SDRF check.",
-                    "fa_icon": "fas fa-forward"
-                },
-                "skip_factor_validation": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Skip factor value validation in SDRF check.",
-                    "fa_icon": "fas fa-forward"
-                },
-                "skip_experimental_design_validation": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Skip experimental design validation in SDRF check.",
-                    "fa_icon": "fas fa-forward"
-                },
-                "use_ols_cache_only": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Use only the local OLS cache for ontology validation (no network calls).",
-                    "fa_icon": "fas fa-database"
                 }
             }
         },
@@ -563,19 +474,6 @@
             "description": "Parameters controlling raw file conversion and preparation.",
             "fa_icon": "fas fa-file-import",
             "properties": {
-                "local_input_type": {
-                    "type": "string",
-                    "default": "mzML",
-                    "description": "Expected input file type for local files.",
-                    "fa_icon": "fas fa-file",
-                    "hidden": true
-                },
-                "id_only": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Run identification only (skip quantification).",
-                    "fa_icon": "fas fa-id-card"
-                },
                 "reindex_mzml": {
                     "type": "boolean",
                     "default": true,
@@ -605,66 +503,12 @@
                     "description": "MS levels to apply peak picking to (e.g. '1 2').",
                     "fa_icon": "fas fa-layer-group"
                 },
-                "mzml_features": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Extract features from mzML files for QC.",
-                    "fa_icon": "fas fa-chart-bar"
-                },
                 "pp_debug": {
                     "type": "integer",
                     "default": 0,
                     "minimum": 0,
                     "description": "Debug level for OpenMS PeakPickerHiRes.",
                     "fa_icon": "fas fa-bug",
-                    "hidden": true
-                }
-            }
-        },
-        "decoy_options": {
-            "title": "Decoy database options",
-            "type": "object",
-            "description": "Parameters for decoy sequence generation (DIA workflows).",
-            "fa_icon": "fas fa-random",
-            "properties": {
-                "add_decoys": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Add decoy sequences to the protein database.",
-                    "fa_icon": "fas fa-plus-circle"
-                },
-                "decoy_string": {
-                    "type": "string",
-                    "default": "DECOY_",
-                    "description": "Prefix or suffix string for decoy protein identifiers.",
-                    "fa_icon": "fas fa-tag"
-                },
-                "decoy_string_position": {
-                    "type": "string",
-                    "default": "prefix",
-                    "enum": ["prefix", "suffix"],
-                    "description": "Position of the decoy string in protein identifiers.",
-                    "fa_icon": "fas fa-arrows-alt-h"
-                },
-                "decoy_method": {
-                    "type": "string",
-                    "default": "reverse",
-                    "enum": ["reverse", "shuffle"],
-                    "description": "Method for generating decoy sequences.",
-                    "fa_icon": "fas fa-undo"
-                },
-                "shuffle_max_attempts": {
-                    "type": "integer",
-                    "default": 30,
-                    "description": "Maximum attempts for shuffle decoy generation.",
-                    "fa_icon": "fas fa-redo",
-                    "hidden": true
-                },
-                "shuffle_sequence_identity_threshold": {
-                    "type": "number",
-                    "default": 0.5,
-                    "description": "Maximum sequence identity allowed between target and decoy.",
-                    "fa_icon": "fas fa-percentage",
                     "hidden": true
                 }
             }
@@ -727,12 +571,6 @@
             "description": "Parameters for MSstats statistical analysis.",
             "fa_icon": "fas fa-calculator",
             "properties": {
-                "enable_msstats": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Enable MSstats statistical analysis.",
-                    "fa_icon": "fas fa-toggle-on"
-                },
                 "msstats_remove_one_feat_prot": {
                     "type": "boolean",
                     "default": true,
@@ -786,30 +624,38 @@
             }
         },
         "reference_proteome_options": {
-            "title": "Reference proteome options",
+            "title": "iProteomes",
             "type": "object",
             "fa_icon": "fas fa-dna",
-            "description": "UniProt reference proteome options for the workflow.",
+            "description": "Versioned reference proteomes with hosted DIA-NN libraries and FragPipe databases.",
+            "help_text": "Modelled on nf-core iGenomes. --proteome selects an entry of conf/iproteomes.config; --iproteomes_base is the root of the store and has no default. Priority: --database / --diann_speclib > the iProteome > built in the pipeline (DIA-NN in-silico library; FragPipe decoys and contaminants only with --add_philosopher_decoy / --add_philosopher_contaminants). An iProteome that declares an index whose path is empty or missing stops the run; a hosted DIA-NN library whose build settings differ from the run's stops it too.",
             "properties": {
-                "genome": {
+                "proteome": {
                     "type": "string",
-                    "description": "Organism name for reference proteome lookup.",
-                    "fa_icon": "fas fa-book",
-                    "hidden": true
+                    "description": "iProteome key (e.g. human_uniprot_reviewed_2026_03): protein FASTA and hosted indices from --iproteomes_base.",
+                    "help_text": "Keys are the entries of conf/iproteomes.config. Used when --database (and --diann_speclib) are not set.",
+                    "fa_icon": "fas fa-dna"
                 },
-                "proteomes_base": {
+                "iproteomes_base": {
                     "type": "string",
-                    "description": "Base URL for UniProt reference proteome FASTA downloads.",
-                    "default": "https://rest.uniprot.org/uniprotkb/stream?format=fasta&includeIsoform=true&query=(reviewed:true)+AND+(proteome:",
-                    "fa_icon": "fas fa-cloud-download-alt",
-                    "hidden": true
+                    "format": "directory-path",
+                    "description": "Root directory of the iProteomes store; required with --proteome.",
+                    "help_text": "Entry paths in conf/iproteomes.config are relative to it.",
+                    "fa_icon": "fas fa-folder-open"
                 },
-                "proteomes_ignore": {
+                "iproteomes_ignore": {
                     "type": "boolean",
-                    "description": "Do not load the reference proteomes config.",
+                    "default": false,
+                    "description": "Do not load the iProteomes config.",
                     "fa_icon": "fas fa-ban",
-                    "hidden": true,
-                    "help_text": "Do not load `conf/reference_proteomes.config`. No UniProt reference proteome is then available, so `--database` (or `--philosopher_database` for FragPipe modes) must be given."
+                    "hidden": true
+                },
+                "save_reference": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Publish the DIA-NN library and FragPipe database built by the pipeline to <outdir>/proteome/.",
+                    "help_text": "Only references built in the run exist: not the hosted ones, not those of --diann_speclib or a --database searched as given.",
+                    "fa_icon": "fas fa-save"
                 }
             }
         },
@@ -819,10 +665,10 @@
             "description": "Internal parameters. Not intended for direct user configuration.",
             "fa_icon": "fas fa-cogs",
             "properties": {
-                "test_mode": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Enable test mode with reduced resources (internal).",
+                "golden_root": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "description": "Root of the golden FragPipe data sets used by the golden nf-tests (internal).",
                     "hidden": true
                 }
             }
@@ -925,13 +771,6 @@
                     "fa_icon": "fas fa-palette",
                     "hidden": true
                 },
-                "hook_url": {
-                    "type": "string",
-                    "description": "Incoming hook URL for messaging service",
-                    "fa_icon": "fas fa-people-group",
-                    "help_text": "Incoming hook URL for messaging service. Currently, MS Teams and Slack are supported.",
-                    "hidden": true
-                },
                 "multiqc_config": {
                     "type": "string",
                     "format": "file-path",
@@ -961,7 +800,7 @@
                     "type": "string",
                     "fa_icon": "far fa-check-circle",
                     "description": "Base URL or local path to location of pipeline test dataset files",
-                    "default": "https://raw.githubusercontent.com/nf-core/test-datasets/",
+                    "default": "https://raw.githubusercontent.com/an-altosian/test-datasets/refs/heads/msproteomics",
                     "hidden": true
                 },
                 "trace_report_suffix": {
@@ -1002,13 +841,7 @@
             "$ref": "#/$defs/fragpipe_options"
         },
         {
-            "$ref": "#/$defs/sdrf_validation_options"
-        },
-        {
             "$ref": "#/$defs/file_preparation_options"
-        },
-        {
-            "$ref": "#/$defs/decoy_options"
         },
         {
             "$ref": "#/$defs/reporting_options"
@@ -1020,13 +853,13 @@
             "$ref": "#/$defs/reference_proteome_options"
         },
         {
-            "$ref": "#/$defs/internal_options"
-        },
-        {
             "$ref": "#/$defs/institutional_config_options"
         },
         {
             "$ref": "#/$defs/generic_options"
+        },
+        {
+            "$ref": "#/$defs/internal_options"
         }
     ]
 }

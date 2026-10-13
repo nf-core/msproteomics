@@ -18,6 +18,7 @@ It supports both PSM-level (`--only-psms`) and peptide-level output modes and au
 | mzml_file      | path        | Mass spectrometry data file (for perc2pepxml path, `*.mzML`)                        |
 | percolator_cli | val(string) | CLI flags for Percolator (e.g., `--only-psms --no-terminate --post-processing-tdc`) |
 | data_type      | val(string) | `'DDA'` or `'DIA'` - affects pepXML output format                                   |
+| decoy_tag      | val(string) | Decoy protein prefix from the workflow `database.decoy-tag` (via `getDecoyTag()`)   |
 
 ## Outputs
 
@@ -36,12 +37,11 @@ It supports both PSM-level (`--only-psms`) and peptide-level output modes and au
 | ---------------------- | -------------- | ----------------------------------------------------------------------------------- |
 | ext.args               | ''             | Additional CLI arguments appended to both Percolator and pepXML conversion commands |
 | ext.min_prob           | 0.5            | Minimum probability for pepXML conversion                                           |
-| ext.decoy_tag          | (default)      | Sets `--protein-decoy-pattern` for Percolator                                       |
 | ext.fragpipe_tools_dir | (default path) | Override FragPipe tools directory                                                   |
 
 ## Container
 
-`docker.io/fcyucn/fragpipe:24.0`
+The licensed FragPipe image given with `--fragpipe_container`.
 
 ## Usage
 

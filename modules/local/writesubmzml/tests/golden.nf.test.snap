@@ -1,0 +1,18 @@
+{
+    "PXD001468 Basic-Search_submzml - .mzBIN_all, argv and _sub.mzML reproduce FragPipe": {
+        "content": [
+            [
+                [
+                    "WRITESUBMZML",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-10T21:00:53.910299458",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

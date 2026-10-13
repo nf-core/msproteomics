@@ -16,16 +16,29 @@ All workflow types produce the following:
 <summary>Output files</summary>
 
 - `pipeline_info/`
-  - `execution_report.html`: Nextflow execution report with resource usage statistics.
-  - `execution_timeline.html`: Timeline of task execution.
-  - `execution_trace.txt`: Tab-separated trace of all tasks with resource metrics.
-  - `pipeline_dag.dot` / `pipeline_dag.svg`: Pipeline DAG visualization.
-  - `software_versions.yml`: Versions of all software used in the run.
-  - `params.json`: Parameters used for the pipeline run.
+  - `execution_report_<timestamp>.html`: Nextflow execution report with resource usage statistics.
+  - `execution_timeline_<timestamp>.html`: Timeline of task execution.
+  - `execution_trace_<timestamp>.txt`: Tab-separated trace of all tasks with resource metrics.
+  - `pipeline_dag_<timestamp>.html`: Pipeline DAG visualization.
+  - `nf_core_msproteomics_software_mqc_versions.yml`: Versions of all software used in the run.
+  - `params_<timestamp>.json`: Parameters used for the pipeline run.
 
 </details>
 
 [Nextflow](https://www.nextflow.io/docs/latest/tracing.html) provides detailed execution reports for troubleshooting and reproducibility.
+
+### MultiQC Report
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `multiqc/`
+  - `multiqc_report.html`: Software versions, parameter summary and methods description of the run.
+  - `multiqc_data/`: Parsed statistics from pipeline tools.
+
+</details>
+
+[MultiQC](http://multiqc.info) aggregates QC metrics from multiple tools into a single interactive HTML report.
 
 ## DIA Workflow Output
 
@@ -38,13 +51,14 @@ DIA variants (e.g., phospho) are applied via `-c conf/variants/*.config` files.
 <summary>Output files</summary>
 
 - `diann/`
-  - `report.tsv`: Main DIA-NN output report with precursor-level quantification across all samples.
-  - `report.stats.tsv`: Summary statistics (identifications, data completeness).
-  - `report.pg_matrix.tsv`: Protein group-level quantification matrix.
-  - `report.pr_matrix.tsv`: Precursor-level quantification matrix.
-  - `report.gg_matrix.tsv`: Gene group-level quantification matrix.
-  - `report.unique_genes_matrix.tsv`: Unique gene quantification matrix.
-  - `*.speclib`: Spectral library generated or used by DIA-NN.
+  - `preliminary_analysis/`, `empirical_library/`, `individual_analysis/`: Outputs of the DIA-NN steps (spectral libraries, per-file `.quant` files, logs).
+  - `diann_quantification/diann_report.tsv` (and `.parquet`): Main DIA-NN report with precursor-level quantification across all samples.
+  - `diann_quantification/diann_report.stats.tsv`: Summary statistics (identifications, data completeness).
+  - `diann_quantification/diann_report.pg_matrix.tsv`, `.pr_matrix.tsv`, `.gg_matrix.tsv`, `.unique_genes_matrix.tsv`: Protein group, precursor, gene group and unique gene matrices.
+- `quantmsutils/`
+  - `mztab/`: mzTab, MSstats and Triqler inputs converted from the DIA-NN report.
+  - `mzml_statistics/`: Per-file mzML statistics (parquet).
+- `pmultiqc/`: Proteomics QC report (`--enable_pmultiqc`).
 
 </details>
 
@@ -69,25 +83,12 @@ DIA variants (e.g., phospho) are applied via `-c conf/variants/*.config` files.
 <summary>Output files</summary>
 
 - `iq/`
-  - `protein_maxlfq.tsv`: Protein-level MaxLFQ intensities.
-  - `protein_maxlfq_log2.tsv`: Log2-transformed MaxLFQ intensities.
+  - `maxlfq.tsv`: Protein-level MaxLFQ intensities.
+  - `contaminants_removed_*.tsv`: DIA-NN report without contaminant proteins (when `--contaminant_pattern` is set).
 
 </details>
 
 [IQ](https://github.com/tvpham/iq) implements the MaxLFQ algorithm for label-free protein quantification.
-
-### MultiQC Report
-
-<details markdown="1">
-<summary>Output files</summary>
-
-- `multiqc/`
-  - `multiqc_report.html`: Aggregated QC report across all samples.
-  - `multiqc_data/`: Parsed statistics from pipeline tools.
-
-</details>
-
-[MultiQC](http://multiqc.info) aggregates QC metrics from multiple tools into a single interactive HTML report.
 
 ### Interpreting DIA Results
 
@@ -240,8 +241,51 @@ Output may include any combination of:
 - Spectral library files
 - MSstats-compatible output
 
+Pipeline mode (`--fragpipe_mode pipeline`) and the TMT label check also write FragPipe's run-folder files to `fragpipe/`, as FragPipe does in its work directory:
+
+- `fragpipe-files.fp-manifest`: The LC-MS files with experiment, bioreplicate and data type.
+- `fragpipe.workflow`: FragPipe's saved UI state for the run (every UI key with its default, run values and the tool-version header), written by FragPipe's own load and save code (`assets/fragpipe_ui_state/FragpipeUiState`, `FRAGPIPESAVEWORKFLOW`).
+- `sdrf.tsv`: FragPipe's SDRF template (`workflow.misc.save-sdrf=true`, the default), written from the MSFragger keys of `fragpipe.workflow`. The fragment tolerance is FragPipe's first `New fragment_mass_tolerance` in the MSFragger output, read in manifest order as in FragPipe's per-file search.
+- With `tab-run.write_sub_mzml=true` (FragPipe's first pass of a two-pass search):
+  - `<run>_sub.mzML`: the scans of each LC-MS file that no PSM above `tab-run.sub_mzml_prob_threshold` explains, with MSFragger's calibrated peaks (`WRITESUBMZML`, FragPipe's WriteSubMzml).
+  - `fragpipe-second-pass.workflow`: the run's `fragpipe.workflow` rewritten for the second pass (Percolator on, no mass calibration, MSFragger's optimized values from its output, FragPipe's `databases` folder, empty decoy tag and workdir), as FragPipe's finalizer writes it.
+  - `fragpipe-files-second-pass.fp-manifest`: the manifest of the `fragpipe/<run>_sub.mzML` files.
+  - `<group>/<run>_percolator.weights`: Percolator's feature weights, where the second pass finds them next to `<run>_sub.mzML` (FragPipe keeps them in its work dir's group folder).
+
+Optional post-run steps that FragPipe runs from its Downstream tab, not as part of its run, are written under `downstream/`:
+
+- `downstream/saintexpress/`: SAINTexpress (`saintexpress.run-saint-express=true`), one `saintexpress-<mode>/` per mode (`spc`, `int`) with the `inter/bait/prey.dat` inputs and SAINTexpress's `list.txt`, or `skipped_mode.txt` with FragPipe's error when the mode's `reprint.<mode>.tsv` is missing.
+
 The exact output structure depends on which tools are enabled in the `.workflow` file.
 Refer to the [FragPipe documentation](https://fragpipe.nesvilab.org/docs/tutorial_fragpipe_outputs.html) for details on each output type.
+
+### Spectral Library (SpecLibGen)
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `speclib/`
+  - `easypqp_rt_reference_run.tsv`: EasyPQP reference-run retention times (automatic RT calibration).
+  - `library.tsv`: Spectral library written by FragPipe's `gen_con_spec_lib.py` (EasyPQP library post-processed by `easypqp_lib_export('Spectronaut')`); this is the DIA-NN input.
+  - `easypqp_files/`: `cmds.txt` with the FragPipe-SpecLib commands and the RT/IM alignment PDFs.
+  - `filelist_speclibgen.txt`, `filelist_easypqp_library.txt`: Spectra and EasyPQP input lists.
+  - `speclibgen_argv.txt`: The `gen_con_spec_lib.py` command, one argument per line.
+  - `irt.tsv` / `im.tsv`, `*_temp-psm.tsv`: Calibration references and per-run PSM splits; with `speclibgen.keep-intermediate-files=true` also `*.psmpkl`, `*.peakpkl`, `*_run_peaks.tsv` and `easypqp_lib_openswath.tsv`.
+
+</details>
+
+### DIA-NN Quantification (FragPipe mode)
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `dia_quant/`
+  - `dia-quant-output/`: FragPipe's DIA-NN output directory: `report.tsv` (with propagated protein and gene information), `report.pr_matrix.tsv`, `report.pg_matrix.tsv`, `report.gg_matrix.tsv`, `report.unique_genes_matrix.tsv`, `report.stats.tsv`, `report-tsv.speclib` (DIA-NN's library, used by Skyline), `msstats.csv` (with `diann.generate-msstats=true`) and the FragReporter tables of the levels set in the workflow.
+  - `experiment_annotation.tsv`: FragPipe's experiment annotation of the DIA runs.
+  - `filelist_diann.txt`: DIA-NN inputs, largest first.
+  - `diann_argv.txt`: The DIA-NN command, one argument per line.
+
+</details>
 
 ## Downstream Analysis
 

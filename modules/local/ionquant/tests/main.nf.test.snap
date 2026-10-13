@@ -1,36 +1,74 @@
 {
-    "ionquant - stub with config file": {
+    "ionquant - stub blank group is read from the work-dir root without --multidir": {
+        "content": [
+            [
+                "flag\tvalue",
+                "--psm\tpsm.tsv",
+                "--specdir\t<wd>"
+            ],
+            "ionquant.IonQuant --perform-ms1quant 0 --perform-isoquant 1 --isotol 20.0 --isolevel 2 --isotype TMT-2 --ionmobility 0 --site-reports 0 --msstats 0 --annotation <wd>/psm.tsv=<wd>/_annotation.txt --minexps 1 --mbr 0 --filelist filelist_ionquant.txt --modlist modmasses_ionquant.txt",
+            [
+                "126 _126",
+                "127N _127N"
+            ],
+            [
+                [
+                    {
+                        "id": "fragpipe"
+                    },
+                    "experiment_annotation.tsv:md5,2f8dec5842c4c7c39afefca1cf6f96d1"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-08T19:48:46.978288147"
+    },
+    "ionquant - stub empty mod mass list and no modlist": {
         "content": [
             [
                 [
-                    {
-                        "id": "test_quant"
-                    },
-                    [
-                        "combined_ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "combined_modified_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "combined_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "combined_protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "test_quant_ionquant.log:md5,d41d8cd98f00b204e9800998ecf8427e"
-                    ]
-                ]
-            ],
-            [
+                    "IONQUANT",
+                    "ionquant",
+                    "24.0"
+                ],
                 [
-                    {
-                        "id": "test_quant"
-                    },
-                    "ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    "IONQUANT",
+                    "ionquant",
+                    "24.0"
                 ]
-            ],
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-05T14:45:23.685731413"
+    },
+    "ionquant - stub named groups, modmasses and experiment annotation": {
+        "content": [
             [
-                [
-                    {
-                        "id": "test_quant"
-                    },
-                    "combined_ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
+                "flag\tvalue",
+                "--psm\tcontrol_1/psm.tsv",
+                "--psm\ttreated_1/psm.tsv",
+                "--specdir\t<wd>"
+            ],
+            "ionquant.IonQuant --perform-ms1quant 1 --perform-isoquant 0 --isotol 20.0 --isolevel 2 --isotype tmt10 --ionmobility 0 --site-reports 1 --msstats 1 --minexps 1 --mbr 1 --maxlfq 0 --requantify 1 --mztol 10 --imtol 0.05 --rttol 0.4 --minscans 3 --writeindex 0 --uniqueness 0 --multidir . --filelist filelist_ionquant.txt --modlist modmasses_ionquant.txt",
+            [
+                "combined_ion.tsv",
+                "combined_modified_peptide.tsv",
+                "combined_peptide.tsv",
+                "combined_protein.tsv",
+                "control_1",
+                "filelist_ionquant.txt",
+                "ion.tsv",
+                "ionquant.log",
+                "modmasses_ionquant.txt",
+                "reprint.int.tsv",
+                "reprint.spc.tsv",
+                "treated_1"
             ],
             [
                 [
@@ -45,32 +83,7 @@
                     {
                         "id": "test_quant"
                     },
-                    "combined_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "test_quant"
-                    },
-                    "combined_modified_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                
-            ],
-            [
-                [
-                    {
-                        "id": "test_quant"
-                    },
-                    [
-                        "combined_ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "combined_modified_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "combined_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "combined_protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                    ]
+                    "experiment_annotation.tsv:md5,037cf513b53003178750391c9d8d8648"
                 ]
             ],
             [
@@ -91,10 +104,10 @@
                 ]
             ]
         ],
-        "timestamp": "2026-03-31T19:39:47.043584067",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
-        }
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-08T19:48:33.939420132"
     }
 }

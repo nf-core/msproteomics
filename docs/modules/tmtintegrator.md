@@ -13,7 +13,7 @@ The module generates abundance and ratio tables and handles annotation format co
 | Channel          | Type                             | Description                                                                              |
 | ---------------- | -------------------------------- | ---------------------------------------------------------------------------------------- |
 | meta             | val(map)                         | Sample/experiment metadata                                                               |
-| psm_dirs         | path (stageAs `input_results/*`) | Per-sample directories containing psm.tsv and protein.tsv from PHILOSOPHER_FILTER        |
+| psm_dirs         | path (stageAs `input_results/*`) | Per-sample directories containing psm.tsv and protein.tsv from PHILOSOPHERFILTER         |
 | annotation_files | path                             | TMT annotation file (2-column IonQuant format or 6-column TMTIntegrator format)          |
 | config_file      | path                             | TMT-Integrator YAML configuration file (ref_tag, min_pep_prob, prot_norm, groupby, etc.) |
 
@@ -39,11 +39,11 @@ The module generates abundance and ratio tables and handles annotation format co
 
 ## Container
 
-`docker.io/fcyucn/fragpipe:24.0`
+The licensed FragPipe image given with `--fragpipe_container`.
 
 ## Usage
 
-Used in the `FRAGPIPE_QUANT` subworkflow (`subworkflows/local/fragpipe_quant/main.nf`) for TMT isobaric labeling quantification after PHILOSOPHER_LABELQUANT and PHILOSOPHER_REPORT have generated per-sample results with reporter ion intensities.
+Used in the `FRAGPIPE_QUANT` subworkflow (`subworkflows/local/fragpipe_quant/main.nf`) for TMT isobaric labeling quantification after PHILOSOPHERLABELQUANT and PHILOSOPHERREPORT have generated per-sample results with reporter ion intensities.
 
 ## References
 

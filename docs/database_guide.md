@@ -3,55 +3,12 @@
 ## Overview
 
 Protein identification in mass spectrometry proteomics requires a FASTA database of protein sequences to search spectra against.
-The nf-core/msproteomics pipeline supports both pre-built reference proteomes and custom user-provided databases.
-When `--database` is not given, the UniProt reference proteome for `--organism` is downloaded automatically at runtime; a custom database supplied via `--database` always takes precedence.
+Every run takes its database from `--database`, as FragPipe headless always searches the workflow's `database.db-path`.
+Without `--database`, `--proteome` selects an iProteome from a versioned reference store (see [iProteomes](usage.md#iproteomes)).
 
-## Pre-Built Reference Proteomes
+## Providing the Database
 
-The pipeline includes pre-built reference proteomes for eight commonly studied organisms.
-These databases contain Swiss-Prot reviewed proteins with isoforms, fetched from the [UniProt REST API](https://www.uniprot.org/help/api).
-
-| Organism                   | Common Name | UniProt Proteome ID | Taxon ID |
-| -------------------------- | ----------- | ------------------- | -------- |
-| _Homo sapiens_             | Human       | UP000005640         | 9606     |
-| _Mus musculus_             | Mouse       | UP000000589         | 10090    |
-| _Rattus norvegicus_        | Rat         | UP000002494         | 10116    |
-| _Saccharomyces cerevisiae_ | Yeast       | UP000002311         | 559292   |
-| _Danio rerio_              | Zebrafish   | UP000000437         | 7955     |
-| _Drosophila melanogaster_  | Fruit fly   | UP000000803         | 7227     |
-| _Caenorhabditis elegans_   | Roundworm   | UP000001940         | 6239     |
-| _Escherichia coli_ (K-12)  | E. coli     | UP000000625         | 83333    |
-
-### How pre-built databases are selected
-
-The reference proteome is selected by the `--organism` parameter (default `Homo sapiens`), not by the samplesheet.
-The aliases `human`/`hs`, `mouse`/`mm` and `yeast`/`sc` map to _Homo sapiens_, _Mus musculus_ and _Saccharomyces cerevisiae_.
-Any other organism must be given exactly as in the table above (e.g. `--organism 'Danio rerio'`).
-When `--database` is not given, the pipeline downloads the FASTA for that organism from UniProt at runtime.
-
-Resolution order:
-
-| Priority | Source                                                                         |
-| -------- | ------------------------------------------------------------------------------ |
-| 1        | `--philosopher_database` (FragPipe mode only)                                  |
-| 2        | `--database`                                                                   |
-| 3        | `params.databases[<organism>].database` from `conf/reference_proteomes.config` |
-
-If none applies (an organism outside the table and no `--database`), the pipeline stops before any task runs with `No protein database for organism '<organism>': pass --database <fasta> ...`, listing the available organisms.
-
-### Configuration
-
-Pre-built proteome URLs are defined in `conf/reference_proteomes.config` as the `params.databases` map, following the nf-core iGenomes pattern (`params.genomes` / `conf/igenomes.config`).
-It is loaded unless `--proteomes_ignore` is set; with `--proteomes_ignore`, `params.databases` is empty and `--database` is required.
-Each entry is `--proteomes_base` followed by the proteome ID and `)`, which gives the UniProt REST API endpoint:
-
-```
-https://rest.uniprot.org/uniprotkb/stream?format=fasta&includeIsoform=true&query=(reviewed:true)+AND+(proteome:<PROTEOME_ID>)
-```
-
-## Using a Custom Database
-
-To use a custom FASTA database instead of a pre-built reference proteome, provide the path with `--database`:
+Provide the FASTA path with `--database`:
 
 ```bash
 nextflow run main.nf --database /path/to/custom.fasta --input samplesheet.csv --outdir results
@@ -111,9 +68,10 @@ nextflow run main.nf --mode diann --database database_with_contaminants.fasta --
 ## Decoy Sequences
 
 Decoy sequences (typically reversed protein sequences) are required for target-decoy FDR estimation.
-Users do **not** need to add decoys manually for either pipeline mode.
 
-- **FragPipe mode**: Decoy sequences (reversed, with `rev_` prefix) are generated automatically by Philosopher's database command.
+- **FragPipe mode**: the FASTA is searched as given, so it must already hold decoys whose protein IDs start with the workflow's `database.decoy-tag` (usually `rev_`).
+  Like FragPipe headless (`FragpipeRun.checkDbConfig`), the run stops when the decoys are 0 %, 100 % or outside 40-60 % of the entries.
+  To add decoys and contaminants first, set `--add_philosopher_decoy` / `--add_philosopher_contaminants`: the pipeline then runs FragPipe's database update, `philosopher database --custom <fasta> [--nodecoys] [--contam --contamprefix]`, which writes `rev_` decoys.
 - **DIA-NN mode**: Decoy sequences are generated internally by DIA-NN during analysis.
 
 ## Best Practices
@@ -132,7 +90,7 @@ Users do **not** need to add decoys manually for either pipeline mode.
 ## Organism Name Resolution
 
 The pipeline recognizes common organism name formats and normalizes them automatically.
-This mapping is handled by `WorkflowUtils.convertOrganismToStandardName()`.
+This mapping is handled by `convertOrganismToStandardName()` in `subworkflows/local/utils_nfcore_msproteomics_pipeline/main.nf`.
 
 The following aliases are currently supported:
 

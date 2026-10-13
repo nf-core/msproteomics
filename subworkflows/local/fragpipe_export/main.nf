@@ -5,136 +5,147 @@
     Export and specialized analysis modules.
 
     Modules:
-    - SKYLINE (create Skyline documents)
     - SAINTEXPRESS (AP-MS scoring for protein-protein interactions)
     - FPOP (Fast Photochemical Oxidation of Proteins analysis)
+    - FPOPCOADAPTR (FPOP Modifications column in psm.tsv)
     - METAPROTEOMICS (taxonomic assignment and analysis)
 
     Execution: Aggregate
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { SKYLINE        } from '../../../modules/local/skyline/main'
+include { REPRINTTOSAINTINPUT } from '../../../modules/local/reprinttosaintinput/main'
 include { SAINTEXPRESS   } from '../../../modules/local/saintexpress/main'
 include { FPOP           } from '../../../modules/local/fpop/main'
+include { FPOPCOADAPTR } from '../../../modules/local/fpopcoadaptr/main'
 include { METAPROTEOMICS } from '../../../modules/local/metaproteomics/main'
-include { shouldRunTool; getToolArgs } from '../utils_nfcore_msproteomics_pipeline'
+include { shouldRunTool; getToolArgs; getDecoyTag; requireToolField; fpopCoadaptrSource } from '../utils_nfcore_msproteomics_pipeline/fragpipe_utils'
 
 workflow FRAGPIPE_EXPORT {
     take:
-    ch_results_dir   // channel: [ val(meta), path(results_dir) ] - PHILOSOPHER_FILTER output
-    ch_mzml          // channel: [ val(meta), path(mzml) ] - mzML files
-    ch_speclib       // channel: [ val(meta), path(speclib) ] - spectral library (optional)
     ch_fasta         // channel: path(fasta) - value channel for database
-    ch_taxon_files   // channel: tuple path(names.dmp), path(nodes.dmp) - for metaproteomics
-    ch_saint_files   // channel: tuple path(inter), path(bait), path(prey) - for SAINT
+    ch_psm_tables    // channel: [ val(source), val(layout), [ path(dir), ... ] ] - psm.tsv tables per fpopCoadaptrSource (FPOP coADAPTr)
+    ch_diann_report  // channel: [ val(meta), path(dia-quant-output/report.tsv) ] - DIA-NN report (FPOP coADAPTr DIA mode)
+    ch_fpop_inputs   // channel: [ path(modpep_tsv) or [], path(tmt-report) or [], path(tmt-report-unmod) or [] ] - FPOP Quant
+    ch_meta_files    // channel: [ path(file), ... ] - MSFragger .pin + Percolator *_psms.tsv (Metaproteomics)
+    ch_taxon_files   // channel: [ path(names.dmp) or [], path(nodes.dmp) or [] ] - Metaproteomics taxonomy
+    ch_saint_files   // channel: [ val(mode), path(reprint.<mode>.tsv) ] - REPRINT tables of the work dir, for SAINT
     ch_tool_configs  // channel: val(tool_configs_map) - parsed JSON config
     aggregate_meta   // val(meta) for aggregate outputs
 
     main:
 
-    //
-    // SKYLINE (create Skyline documents, aggregate)
-    //
-    // Wrap collected lists in an outer list to prevent .combine() from flattening
-    // empty lists ([] + configs would produce [configs] instead of [[], configs]).
-    ch_all_results = ch_results_dir
-        .map { meta, dir -> dir }
-        .collect(sort: true)
-        .map { items -> [items] }
-
-    ch_all_mzml = ch_mzml
-        .map { meta, mzml -> mzml }
-        .collect(sort: true)
-        .map { items -> [items] }
-
-    // Speclib is optional — use a sentinel file so combine() always emits a 4-element
-    // tuple. Plain [] gets flattened by combine(), collapsing the tuple and causing
-    // a MissingMethodException in downstream filter/map closures.
-    ch_speclib_path = ch_speclib
-        .map { meta, lib -> lib }
-        .ifEmpty(file('NO_SPECLIB'))
-
-    ch_for_skyline = ch_all_results
-        .combine(ch_all_mzml)
-        .combine(ch_speclib_path)
-        .combine(ch_tool_configs)
-        .filter { results_wrapped, mzml_wrapped, speclib, configs -> shouldRunTool(configs, 'skyline') }
-        .map { results_wrapped, mzml_wrapped, speclib, configs ->
-            def args = getToolArgs(configs, 'skyline')
-            [aggregate_meta, results_wrapped, mzml_wrapped, speclib, args]
-        }
-
-    // Skyline path - would be provided by external config in real usage
-    SKYLINE(ch_for_skyline, 'skyline')
+    // Decoy tag (workflow database.decoy-tag) - single source for every decoy-aware tool
+    ch_decoy_tag = ch_tool_configs.map { configs -> getDecoyTag(configs) }
 
     //
-    // SAINTEXPRESS (AP-MS scoring, aggregate)
+    // SAINTEXPRESS: FragPipe's Downstream run over both modes (TabDownstream.java:137-145) when the workflow
+    // sets saintexpress.run-saint-express=true (user decision, parity review Appendix C). Each mode reads the
+    // work dir's reprint.<mode>.tsv, whoever wrote it (Abacus --reprint or IonQuant). A missing table makes
+    // CmdSaintExpress.configure log an error and return false, and only that mode is skipped
+    // (CmdSaintExpress.java:72-79):
+    //     log.error("Input file " + inputPath.toAbsolutePath() + " is not accessible.");
+    // REPRINTTOSAINTINPUT writes the inter/bait/prey.dat inputs (CmdSaintExpress.reprintTsvToSaintInput), or the
+    // message (task dir = work dir) to saintexpress-<mode>/skipped_mode.txt; it is also logged here.
     //
     ch_for_saintexpress = ch_saint_files
+        .toList()
+        .map { items -> [items] }
         .combine(ch_tool_configs)
-        .filter { inter, bait, prey, configs -> shouldRunTool(configs, 'saintexpress') }
-        .map { inter, bait, prey, configs ->
-            def args = getToolArgs(configs, 'saintexpress')
-            def mode = args.contains('--mode int') ? 'int' : 'spc'
-            [aggregate_meta, inter, bait, prey, mode, args]
+        .filter { _items, configs -> shouldRunTool(configs, 'saintexpress') }
+        .map { items, configs ->
+            log.info("SAINTexpress runs as an optional post-run step: FragPipe's Downstream-tab action, not part of FragPipe's run (results in downstream/saintexpress/)")
+            [items, configs]
+        }
+        .flatMap { items, configs ->
+            ['spc', 'int'].collect { mode ->
+                def found = items.findAll { item -> item[0] == mode }
+                if (found.size() > 1) {
+                    error("SAINTexpress: more than one reprint.${mode}.tsv for the work dir: ${found.collect { item -> item[1] }}")
+                }
+                if (found && found[0][1].name != "reprint.${mode}.tsv") {
+                    error("SAINTexpress: ${mode} mode reads reprint.${mode}.tsv (CmdSaintExpress.java:59), got ${found[0][1].name}")
+                }
+                [aggregate_meta + [id: "saintexpress-${mode}".toString()], found ? found[0][1] : [], mode,
+                 getToolArgs(configs, 'saintexpress'), requireToolField(configs, 'saintexpress', 'cmd_opts')]
+            }
         }
 
-    SAINTEXPRESS(ch_for_saintexpress)
+    REPRINTTOSAINTINPUT(ch_for_saintexpress.map { meta, reprint_tsv, mode, _saint_cli, _cmd_opts -> [meta, reprint_tsv, mode] })
+
+    SAINTEXPRESS(
+        REPRINTTOSAINTINPUT.out.saint_input
+            .join(ch_for_saintexpress.map { meta, _reprint_tsv, _mode, saint_cli, cmd_opts -> [meta, saint_cli, cmd_opts] })
+    )
+
+    // FragPipe's error for a skipped mode, also in the Nextflow log
+    ch_saint_skipped = REPRINTTOSAINTINPUT.out.skipped
+        .map { meta, skipped ->
+            log.error(skipped.text.trim())
+            [meta, skipped]
+        }
 
     //
-    // FPOP (Fast Photochemical Oxidation analysis, aggregate)
+    // FPOP Quant (aggregate, CmdFpopQuant.java): after IonQuant / TMT-Integrator
     //
-    ch_peptide_files = ch_results_dir
-        .map { meta, dir -> dir.resolve('combined_modified_peptide.tsv') }
-        .collect(sort: true)
-        .filter { files -> files.size() > 0 }
-        .map { files -> files.first() }
-
-    ch_for_fpop = ch_peptide_files
-        .combine(ch_tool_configs)
-        .filter { peptide_file, configs -> shouldRunTool(configs, 'fpop') }
-        .map { peptide_file, configs ->
-            def args = getToolArgs(configs, 'fpop')
-            [aggregate_meta, peptide_file, file('NO_FILE'), args]
+    ch_for_fpop = ch_tool_configs
+        .filter { configs -> shouldRunTool(configs, 'fpop') }
+        .combine(ch_fpop_inputs)
+        .map { configs, modpep, tmt_report, tmt_report_unmod ->
+            [aggregate_meta, modpep, tmt_report, tmt_report_unmod, getToolArgs(configs, 'fpop')]
         }
 
     FPOP(ch_for_fpop)
 
     //
-    // METAPROTEOMICS (taxonomic analysis, aggregate)
+    // FPOP coADAPTr (aggregate, CmdFPOPcoadaptr.java): FPOP Modifications column in every
+    // final psm.tsv; runs only when there are results (FragpipeRun.java:2163)
     //
-    // Use first() without ifEmpty() - if ch_results_dir is empty, the channel
-    // stays empty and combine() correctly produces nothing (skipping metaproteomics).
-    ch_project_dir = ch_results_dir
-        .map { meta, dir -> dir }
-        .first()
+    ch_coadaptr_tables = ch_psm_tables
+        .mix(ch_diann_report.map { _meta, report -> ['diann', 'diann', [report.parent]] })
 
-    ch_taxon_names = ch_taxon_files.map { names, nodes -> names }
-    ch_taxon_nodes = ch_taxon_files.map { names, nodes -> nodes }
-
-    ch_for_metaproteomics = ch_project_dir
-        .combine(ch_tool_configs)
-        .filter { project, configs -> shouldRunTool(configs, 'metaproteomics') }
-        .map { project, configs ->
-            def args = getToolArgs(configs, 'metaproteomics')
-            [aggregate_meta, project, args]
+    // meta.fpop_source picks the publish path of the edited tables (conf/modules.config): the
+    // path of the task whose unedited tables they replace
+    ch_for_fpop_coadaptr = ch_tool_configs
+        .filter { configs -> shouldRunTool(configs, 'fpop_coadaptr') }
+        .combine(ch_coadaptr_tables)
+        .filter { configs, source, _layout, _dirs -> source == fpopCoadaptrSource(configs) }
+        .map { configs, source, layout, dirs ->
+            [aggregate_meta + [fpop_source: source], dirs, layout, getToolArgs(configs, 'fpop_coadaptr')]
         }
 
-    METAPROTEOMICS(ch_for_metaproteomics, ch_fasta, ch_taxon_names, ch_taxon_nodes)
+    FPOPCOADAPTR(ch_for_fpop_coadaptr)
+
+    //
+    // METAPROTEOMICS (aggregate, CmdMetaproteomics.java): one FP-Meta run over the whole
+    // work dir, right after Percolator (FragpipeRun.java:2458)
+    //
+    ch_for_metaproteomics = ch_tool_configs
+        .filter { configs -> shouldRunTool(configs, 'metaproteomics') }
+        .combine(ch_meta_files.map { files -> [files] })
+        .map { configs, files -> [aggregate_meta, files, getToolArgs(configs, 'metaproteomics')] }
+
+    METAPROTEOMICS(
+        ch_for_metaproteomics,
+        ch_fasta,
+        ch_taxon_files.map { names, _nodes -> names },
+        ch_taxon_files.map { _names, nodes -> nodes },
+        ch_decoy_tag
+    )
 
     emit:
-    skyline_doc      = SKYLINE.out.skyline_document            // channel: [ val(meta), path(fragpipe.sky) ]
-    skyline_reports  = SKYLINE.out.reports                     // channel: [ val(meta), path(*.csv) ]
     saint_results    = SAINTEXPRESS.out.results_list           // channel: [ val(meta), path(list.txt) ]
+    saint_skipped    = ch_saint_skipped                        // channel: [ val(meta), path(skipped_mode.txt) ] - modes FragPipe skips for a missing reprint table
     fpop_results     = FPOP.out.results_dir                    // channel: [ val(meta), path(results_dir) ]
+    fpop_psms        = FPOPCOADAPTR.out.psms                  // channel: [ val(meta), path(psm.tsv) ]
+    fpop_diann_report = FPOPCOADAPTR.out.diann_report         // channel: [ val(meta), path(report.tsv) ]
     taxonomy_results = METAPROTEOMICS.out.results_dir          // channel: [ val(meta), path(results_dir) ]
-    versions         = SKYLINE.out.versions_skyline
-        .mix(SKYLINE.out.versions_fragpipe)
-        .mix(SAINTEXPRESS.out.versions_saintexpress)
+    versions         = SAINTEXPRESS.out.versions_saintexpress
+        .mix(REPRINTTOSAINTINPUT.out.versions_python)
         .mix(SAINTEXPRESS.out.versions_fragpipe)
         .mix(FPOP.out.versions_fpop)
         .mix(FPOP.out.versions_fragpipe)
+        .mix(FPOPCOADAPTR.out.versions_fragpipe)
         .mix(METAPROTEOMICS.out.versions_metaproteomics)
         .mix(METAPROTEOMICS.out.versions_fragpipe)
 }

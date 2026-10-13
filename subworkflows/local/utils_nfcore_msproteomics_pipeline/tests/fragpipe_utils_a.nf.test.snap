@@ -1,0 +1,127 @@
+{
+    "msboosterParamsText - staged spectral library names spectraPredFile, RTPredFile and IMPredFile": {
+        "content": [
+            "numThreads = 1\nDiaNN = d\nuseRT = true\nuseIM = false\nfragger = {TASK_DIR}/f.params\nfindBestImModel = false\nspectraPredFile = {TASK_DIR}/spectral_library/my_library.tsv\nRTPredFile = {TASK_DIR}/spectral_library/my_library.tsv\nIMPredFile = {TASK_DIR}/spectral_library/my_library.tsv\nunimodObo = u\nmzmlDirectory = {TASK_DIR} \npinPepXMLDirectory = a.pin\n"
+        ],
+        "timestamp": "2026-10-11T23:22:45.192365094",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "writeSubMzmlArgv - named group, FragPipe argv order": {
+        "content": [
+            {
+                "argv": [
+                    "java",
+                    "-Duser.home={TASK_DIR}",
+                    "-Xmx8G",
+                    "-Dlibs.bruker.dir=/fp/fragpipe-24.0/tools/MSFragger-4.4.1/ext/bruker",
+                    "-Dlibs.thermo.dir=/fp/fragpipe-24.0/tools/MSFragger-4.4.1/ext/thermo",
+                    "-cp",
+                    "{FRAGPIPE_HASHSET_CP}",
+                    "org.nesvilab.fragpipe.util.WriteSubMzml",
+                    "{TASK_DIR}/lcms/A01.mzML",
+                    "{TASK_DIR}/A01/psm.tsv",
+                    "{TASK_DIR}/A01_sub.mzML",
+                    "0.5",
+                    "1"
+                ],
+                "classpath_words": [
+                    "/fp/fragpipe-24.0/tools/batmass-io-1.36.6.jar",
+                    "/fp/fragpipe-24.0/lib/*"
+                ],
+                "group_dir": "A01",
+                "psm": "A01/psm.tsv",
+                "sub_mzml": "A01_sub.mzML"
+            }
+        ],
+        "timestamp": "2026-10-10T20:35:30.575069266",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "fragpipeTools - FragPipe 24.0 names under the tools directory": {
+        "content": [
+            {
+                "tools_dir": "/fp/fragpipe-24.0/tools",
+                "argv_tools_dir": "/fp/fragpipe-24.0/lib/../tools",
+                "fragpipe_root": "/fp/fragpipe-24.0",
+                "fragpipe_version": "24.0",
+                "fragpipe_lib": "/fp/fragpipe-24.0/lib",
+                "fragpipe_jar": "/fp/fragpipe-24.0/lib/fragpipe-24.0.jar",
+                "license": "/fp/fragpipe-24.0/license.dat",
+                "databases_dir": "/fp/fragpipe-24.0/databases",
+                "msfragger_jar": "{MSFRAGGER_JAR}",
+                "msfragger_version": "4.4.1",
+                "thermo_dir": "{MSFRAGGER_DIR}/ext/thermo",
+                "bruker_dir": "{MSFRAGGER_DIR}/ext/bruker",
+                "ionquant_jar": "{IONQUANT_JAR}",
+                "ionquant_version": "1.11.20",
+                "diatracer_jar": "{DIATRACER_JAR}",
+                "diatracer_version": "2.2.1",
+                "jfreechart_jar": "/fp/fragpipe-24.0/tools/jfreechart-1.5.3.jar",
+                "batmass_io_jar": "{BATMASS_IO_JAR}",
+                "grppr_jar": "/fp/fragpipe-24.0/tools/grppr-0.3.23.jar",
+                "crystalc_jar": "/fp/fragpipe-24.0/tools/original-crystalc-1.5.10.jar",
+                "crystalc_version": "1.5.10",
+                "diaumpire_jar": "/fp/fragpipe-24.0/tools/DIA_Umpire_SE-2.3.3.jar",
+                "diaumpire_version": "2.3.3",
+                "mbg_jar": "/fp/fragpipe-24.0/tools/MBG-0.3.6.jar",
+                "mbg_version": "0.3.6",
+                "msbooster_jar": "{MSBOOSTER_JAR}",
+                "msbooster_version": "1.4.17",
+                "diann": "/fp/fragpipe-24.0/tools/diann/1.8.2_beta_8/linux/diann-1.8.1.8",
+                "diann_so_dir": "/fp/fragpipe-24.0/tools/diann_so",
+                "unimod_obo": "/fp/fragpipe-24.0/tools/unimod.obo",
+                "glycan_residues": "/fp/fragpipe-24.0/tools/Glycan_Databases/glycan_residues.txt",
+                "glycan_mods": "/fp/fragpipe-24.0/tools/Glycan_Databases/glycan_mods.txt",
+                "fragreporter_jar": "/fp/fragpipe-24.0/tools/FragReporter-1.1.2.jar",
+                "fragannotator_jar": "/fp/fragpipe-24.0/tools/FP-PDV/FragAnnotator-1.0.0.jar",
+                "fpmeta_jar": "/fp/fragpipe-24.0/tools/metaproteomics/FP-Meta-1.0.1.jar",
+                "fpmeta_version": "1.0.1",
+                "taxon_names": "/fp/fragpipe-24.0/tools/metaproteomics/names.dmp",
+                "taxon_nodes": "/fp/fragpipe-24.0/tools/metaproteomics/nodes.dmp",
+                "fpop_script": "/fp/fragpipe-24.0/tools/fpop/FragPipe_FPOP_Analysis.py",
+                "philosopher": "/fp/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9"
+            }
+        ],
+        "timestamp": "2026-10-10T20:37:19.780326074",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "diannArgv - diann.cmd-opts stays one argv element after the post flags": {
+        "content": [
+            {
+                "head": [
+                    "diann",
+                    "--lib",
+                    "library.tsv",
+                    "--threads",
+                    "2",
+                    "--verbose",
+                    "1",
+                    "--out",
+                    "dia-quant-output/report.tsv",
+                    "--qvalue",
+                    "0.01",
+                    "--no-prot-inf",
+                    "--smart-profiling",
+                    "--mod 280.1899,280.1899"
+                ],
+                "tail": [
+                    "--cfg",
+                    "{TASK_DIR}/filelist_diann.txt--"
+                ]
+            }
+        ],
+        "timestamp": "2026-10-11T23:24:34.695814666",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

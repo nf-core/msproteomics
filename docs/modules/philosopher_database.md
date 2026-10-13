@@ -1,48 +1,38 @@
-# PHILOSOPHER_DATABASE
+# PHILOSOPHERDATABASE
 
-Prepares a protein database with decoy sequences and common contaminants using Philosopher.
+FragPipe's database update (`CmdDatabaseUpdate`), run only with `--add_philosopher_decoy` / `--add_philosopher_contaminants`.
 
 ## Description
 
-This module uses the Philosopher `database` command to add reversed decoy sequences and common contaminant proteins to a FASTA database for proteomics analysis.
-It detects whether the input FASTA already contains decoy entries (by searching for the decoy tag prefix) to avoid double-decoys: if decoys exist, it uses `--annotate`; if not, it uses `--custom` to add decoys and contaminants.
-Go runtime tuning parameters (GOMEMLIMIT, GOGC, GOMAXPROCS) are set for optimal performance.
+FragPipe headless searches the workflow's `database.db-path` as given, so by default the pipeline does not run this module.
+With `--add_philosopher_decoy` / `--add_philosopher_contaminants` it runs FragPipe's "Add decoys" argv, `philosopher database --custom <fasta> [--nodecoys] [--contam --contamprefix]` (`CmdDatabaseUpdate.java:44-53`), inside a Philosopher workspace.
+There is no `--prefix`, so Philosopher writes its default `rev_` decoys; `CHECKDBCONFIG` then rejects the database when the workflow decoy tag is not `rev_`, as FragPipe does.
+With `--custom`, Philosopher adds the cRAP contaminants without a `contam_` prefix (that tag only applies to proteome-ID downloads).
 
 ## Inputs
 
-| Channel | Type     | Description                               |
-| ------- | -------- | ----------------------------------------- |
-| meta    | val(map) | Sample/experiment metadata                |
-| fasta   | path     | Protein sequence database in FASTA format |
+| Channel | Type     | Description               |
+| ------- | -------- | ------------------------- |
+| meta    | val(map) | Database metadata         |
+| fasta   | path     | Target protein FASTA file |
 
 ## Outputs
 
 | Channel              | Type             | Description                                                           |
 | -------------------- | ---------------- | --------------------------------------------------------------------- |
 | fasta                | tuple(val, path) | `${prefix}_philosopher.fasta` database with decoys/contaminants added |
-| log                  | tuple(val, path) | `philosopher_database.log` command log                                |
+| log                  | tuple(val, path) | `philosopher_database.log`: command line, then the tool output        |
 | versions_philosopher | topic: versions  | Philosopher version                                                   |
 | versions_fragpipe    | topic: versions  | FragPipe version                                                      |
 
 ## Parameters
 
-| Parameter              | Default                                           | Description                                                                                          |
-| ---------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| ext.args               | ''                                                | Additional command-line arguments for `philosopher database --custom` (only when decoys not present) |
-| ext.prefix             | `${meta.id}`                                      | Output file prefix                                                                                   |
-| ext.decoy_tag          | `rev_`                                            | Decoy protein prefix used for detection and generation                                               |
-| ext.fragpipe_tools_dir | `/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools` | FragPipe tools directory for Philosopher binary discovery                                            |
+| Parameter              | Default (`conf/modules.config`)                               | Description                                               |
+| ---------------------- | ------------------------------------------------------------- | --------------------------------------------------------- |
+| ext.args               | from the two params (`--nodecoys`, `--contam --contamprefix`) | Arguments after `database --custom <fasta>`               |
+| ext.prefix             | `${meta.id}`                                                  | Output file prefix                                        |
+| ext.fragpipe_tools_dir | `/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools`             | FragPipe tools directory for Philosopher binary discovery |
 
 ## Container
 
-`docker.io/fcyucn/fragpipe:24.0`
-
-## Usage
-
-Used in the `FRAGPIPE_DATABASE` subworkflow (`subworkflows/local/fragpipe_database/main.nf`) as the first step in all FragPipe-based workflows (TMT Label Check, DDA LFQ) to prepare the protein database for downstream search and filtering.
-
-## References
-
-- [Philosopher](https://philosopher.nesvilab.org/)
-- [Philosopher wiki](https://github.com/Nesvilab/philosopher/wiki)
-- [Publication](https://doi.org/10.1038/s41592-020-0912-y)
+The licensed FragPipe image given with `--fragpipe_container`.

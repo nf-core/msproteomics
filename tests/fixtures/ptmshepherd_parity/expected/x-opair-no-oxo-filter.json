@@ -1,0 +1,20 @@
+{
+    "shepherd_config": null,
+    "pairscans": ["HCD", "ETD", "false", "false"],
+    "opair": [
+        "-b 20.0",
+        "-c 20.0",
+        "-g HexNAc(1),HexNAc(1)Hex(1),HexNAc(1)NeuAc(1),HexNAc(2)Hex(1),HexNAc(1)Hex(1)NeuAc(1),HexNAc(2)Hex(2),HexNAc(2)Hex(1)NeuAc(1),HexNAc(1)Hex(1)NeuAc(2),HexNAc(2)Hex(2)NeuAc(1),HexNAc(2)Hex(2)Fuc(1)NeuAc(1),HexNAc(2)Hex(2)NeuAc(2),HexNAc(2)Hex(2)Fuc(1)NeuAc(2)",
+        "-x @TOOLS_DIR@/Glycan_Databases/glycan_residues.txt",
+        "-y @TOOLS_DIR@/Glycan_Databases/glycan_mods.txt",
+        "-n 4",
+        "-z ",
+        "-t @THREADS@",
+        "-i 0",
+        "-j 2",
+        "-r @FILELIST@",
+        "-s @PSM@",
+        "-o @OUTDIR@"
+    ],
+    "mbg": null
+}

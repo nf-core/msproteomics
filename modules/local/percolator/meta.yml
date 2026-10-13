@@ -24,30 +24,50 @@ tools:
 input:
   - - meta:
         type: map
-        description: Groovy Map containing sample information
-    - pin_file:
+        description: Sample information; meta.data_type (FragPipe data type) is required
+    - pin:
         type: file
-        description: Percolator input file from MSFragger/MSBooster
-        pattern: "*.pin"
+        description: MSFragger PIN <stem>.pin (read by PercolatorOutputToPepXML)
+    - edited_pin:
+        type: file
+        description: MSBooster <stem>_edited.pin, or [] when MSBooster did not run
     - pepxml_files:
         type: file
-        description: Original pepXML file(s) from MSFragger (used by perc2pepxml converter)
-        pattern: "*.pepXML"
-    - mzml_file:
+        description: MSFragger pepXML(s), ranked list for DDA+/DIA
+    - spectra:
         type: file
-        description: Original mzML file (used by perc2pepxml for base_name in output pepXML)
-        pattern: "*.mzML"
+        description: Searched LC-MS file
+    - msfragger_mzml:
+        type: file
+        description: MSFragger _calibrated/_uncalibrated mzML, or []
+    - has_calibrated_mzml:
+        type: boolean
+        description: msfragger.write_calibrated_mzml with calibrate_mass > 0
     - percolator_cli:
         type: string
-        description: |
-          CLI flags for Percolator (e.g., "--only-psms --no-terminate --post-processing-tdc
-          --trainFDR 0.01 --testFDR 0.01"). Passed from PARSE_FRAGPIPE_WORKFLOW.
-  - - data_type:
+        description: percolator.cmd-opts
+    - min_prob:
         type: string
-        description: |
-          Data type identifier ('DDA' or 'DIA'). Affects perc2pepxml output format.
-          Auto-overridden to 'DIA' when ranked pepXMLs are detected (DDA+ ion mobility).
-
+        description: percolator.min-prob as FragPipe prints it
+    - keep_target_tsv:
+        type: boolean
+        description: Keep the target PSM TSV
+    - keep_decoy_tsv:
+        type: boolean
+        description: Keep the decoy PSM TSV
+    - has_crystalc:
+        type: boolean
+        description: Crystal-C ran (_c basename)
+    - write_weights:
+        type: boolean
+        description: Write sub mzML is on; Percolator saves <stripped>_percolator.weights (CmdPercolator.java:180-183)
+    - init_weights:
+        type: file
+        description: Second pass of Write sub mzML, the first pass's weights of the _sub.mzML input ([] when none; CmdPercolator.java:185-201)
+        pattern: "*_percolator.weights"
+  - decoy_tag:
+      type: string
+      description: Decoy protein prefix from the workflow's database.decoy-tag
 output:
   results_dir:
     - - meta:
@@ -80,11 +100,55 @@ output:
           type: file
           description: Decoy PSMs from Percolator
           pattern: "*_decoy_psms.tsv"
+  weights:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "*_percolator.weights":
+          type: file
+          description: Percolator feature weights for FragPipe's second pass (Write sub mzML)
+          pattern: "*_percolator.weights"
+  versions_percolator:
+    - - ${task.process}:
+          type: string
+          description: Process name
+      - percolator:
+          type: string
+          description: Tool name
+      - fragpipeToolVersions().percolator:
+          type: string
+          description: Version of Percolator bundled with FragPipe
+  versions_fragpipe:
+    - - ${task.process}:
+          type: string
+          description: Process name
+      - fragpipe:
+          type: string
+          description: Tool name
+      - cat .fragpipe_version:
+          type: eval
+          description: Version of FragPipe
+
+topics:
   versions:
-    - versions.yml:
-        type: file
-        description: File containing software versions
-        pattern: "versions.yml"
+    - - ${task.process}:
+          type: string
+          description: Process name
+      - percolator:
+          type: string
+          description: Tool name
+      - fragpipeToolVersions().percolator:
+          type: string
+          description: Version of Percolator bundled with FragPipe
+    - - ${task.process}:
+          type: string
+          description: Process name
+      - fragpipe:
+          type: string
+          description: Tool name
+      - cat .fragpipe_version:
+          type: eval
+          description: Version of FragPipe
 
 authors:
   - "@dongzehe"

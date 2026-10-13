@@ -28,10 +28,11 @@ input:
         type: file
         description: DIA mass spectrometry data file
         pattern: "*.{mzML,mzXML,raw}"
-    - config_file:
-        type: file
-        description: DIA-Umpire parameters file
-        pattern: "*.params"
+    - umpire_params:
+        type: string
+        description: |
+          umpire-se.params text from PARSEFRAGPIPEWORKFLOW (FragPipe's diaumpire_se.params template
+          with the workflow values) with the line "Thread = THREADS"; Thread is set to task.cpus.
 
 output:
   results_dir:
@@ -74,11 +75,47 @@ output:
           type: file
           description: Pseudo-spectra in MGF format
           pattern: "*_Q*.mgf"
+  versions_diaumpire:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - diaumpire:
+          type: string
+          description: The name of the tool
+      - "cat .diaumpire_version":
+          type: eval
+          description: The DIA-Umpire version recorded from the FragPipe tools directory
+  versions_fragpipe:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - fragpipe:
+          type: string
+          description: The name of the tool
+      - "cat .fragpipe_version":
+          type: eval
+          description: The FragPipe version of the tools directory
+
+topics:
   versions:
-    - versions.yml:
-        type: file
-        description: File containing software versions
-        pattern: "versions.yml"
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - diaumpire:
+          type: string
+          description: The name of the tool
+      - "cat .diaumpire_version":
+          type: eval
+          description: The DIA-Umpire version recorded from the FragPipe tools directory
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - fragpipe:
+          type: string
+          description: The name of the tool
+      - "cat .fragpipe_version":
+          type: eval
+          description: The FragPipe version of the tools directory
 
 authors:
   - "@dongzehe"

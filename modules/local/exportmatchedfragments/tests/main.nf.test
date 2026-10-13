@@ -1,0 +1,130 @@
+nextflow_process {
+
+    name "Test Process EXPORTMATCHEDFRAGMENTS"
+    script "../main.nf"
+    process "EXPORTMATCHEDFRAGMENTS"
+
+    tag "modules"
+    tag "modules_local"
+    tag "export_matched_fragments"
+
+    test("export_matched_fragments - stub, named groups get FragPipe work-dir layout") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def header = 'Spectrum\\tSpectrum File\\tPeptide\\tCharge\\tAssigned Modifications'
+                def groups = ['A', 'B'].collect { name ->
+                    def dir = file("\${workDir}/\${name}")
+                    dir.mkdirs()
+                    file("\${dir}/psm.tsv").text = header + '\\n' + "s_\${name}.00010.00010.2\\tx\\tPEPTIDEK\\t2\\t\\n"
+                    file("\${dir}/protein.tsv").text = 'Protein\\n'
+                    dir
+                }
+                def spectra = ['s_A.mzML', 's_B.mzML'].collect { name ->
+                    def f = file("\${workDir}/\${name}")
+                    f.text = ''
+                    f
+                }
+                def manifest = file("\${workDir}/manifest.tsv")
+                manifest.text = '../spectra/s_A.mzML\\tA\\t\\tDDA\\n../spectra/s_B.mzML\\tB\\t\\tDDA\\n'
+                input[0] = [ [ id: 'fragpipe' ], groups, spectra, [] ]
+                input[1] = manifest
+                input[2] = ''
+                input[3] = [false, false, ['fragpipe/A/psm.tsv', 'fragpipe/B/psm.tsv']]
+                """
+            }
+        }
+
+        then {
+            def dirs = process.out.results_dirs[0][1].collect { dir -> new File(dir.toString()) }
+            def headers = dirs.collectEntries { dir -> [dir.name, new File(dir, 'psm.tsv').readLines()[0]] }
+            assertAll(
+                { assert process.success },
+                { assert headers.keySet() == ['A', 'B'] as Set },
+                { assert headers.values().every { header -> header.endsWith('\tions\tion_mz\tion_int') } },
+                { assert dirs.every { dir -> new File(dir, 'protein.tsv').exists() } },
+                { assert snapshot(process.out.results_dirs, process.out.psms, process.out.versions_fragannotator).match() }
+            )
+        }
+    }
+
+    test("export_matched_fragments - stub, blank group is exported from the work-dir root") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def dir = file("\${workDir}/workdir-root")
+                dir.mkdirs()
+                file("\${dir}/psm.tsv").text = 'Spectrum\\tPeptide\\nq.00001.00001.2\\tPEPTIDEK\\n'
+                def umpire = file("\${workDir}/q_Q1.mzML")
+                umpire.text = ''
+                def manifest = file("\${workDir}/manifest.tsv")
+                manifest.text = '../spectra/q.mzML\\t\\t\\tDIA\\n'
+                input[0] = [ [ id: 'fragpipe' ], [dir], [], [umpire] ]
+                input[1] = manifest
+                input[2] = 'workdir-root'
+                input[3] = [true, false, ['fragpipe/psm.tsv']]
+                """
+            }
+        }
+
+        then {
+            def out_dir = new File(process.out.results_dirs[0][1].toString())
+            def work = new File(process.out.results_dirs[0][1].toString()).parentFile.parentFile
+            assertAll(
+                { assert process.success },
+                { assert out_dir.name == 'workdir-root' },
+                { assert new File(out_dir, 'psm.tsv').readLines()[0] == 'Spectrum\tPeptide\tions\tion_mz\tion_int' },
+                { assert new File(work, 'fragpipe/psm.tsv').exists() },
+                { assert new File(work, 'fragpipe/umpire-se.params').exists() },
+                { assert new File(work, 'fragpipe/q_Q1.mzML').exists() },
+                { assert new File(work, 'fragpipe/fragpipe-files.fp-manifest').text == '../spectra/q.mzML\t\t\tDIA\n' },
+                { assert snapshot(process.out.results_dirs, process.out.psms).match() }
+            )
+        }
+    }
+
+    test("export_matched_fragments - stub, groups found as FragPipe's manifest names them") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                // FragPipe groups: experiment 'Ctrl-A' -> 'Ctrl_A', blank experiment with bioreplicate 2 -> 'exp_2'.
+                // The manifest's blank experiment makes the jar read only the work-dir root psm.tsv
+                // (ResultProcessor.goThroughFolder, inner_defined_empty_exp), which does not exist:
+                // neither group is exported, as with FragAnnotator on FragPipe's manifest.
+                def groups = ['Ctrl_A', 'exp_2'].collect { name ->
+                    def dir = file("\${workDir}/\${name}")
+                    dir.mkdirs()
+                    file("\${dir}/psm.tsv").text = 'Spectrum\\tPeptide\\n' + "\${name}.00001.00001.2\\tPEPTIDEK\\n"
+                    dir
+                }
+                def manifest = file("\${workDir}/manifest.tsv")
+                manifest.text = '../spectra/a.mzML\\tCtrl_A\\t\\tDDA\\n../spectra/b.mzML\\t\\t2\\tDDA'
+                input[0] = [ [ id: 'fragpipe' ], groups, [], [] ]
+                input[1] = manifest
+                input[2] = ''
+                input[3] = [false, false, ['fragpipe/psm.tsv']]
+                """
+            }
+        }
+
+        then {
+            def headers = process.out.results_dirs[0][1].collectEntries { dir -> [new File(dir.toString()).name, new File(dir.toString(), 'psm.tsv').readLines()[0]] }
+            def work = new File(process.out.results_dirs[0][1][0].toString()).parentFile.parentFile
+            assertAll(
+                { assert process.success },
+                { assert headers == ['Ctrl_A': 'Spectrum\tPeptide', 'exp_2': 'Spectrum\tPeptide'] },
+                { assert new File(work, 'fragpipe/fragpipe.workflow').text == 'speclibgen.run-speclibgen=false\n' },
+                { assert snapshot(process.out.results_dirs).match() }
+            )
+        }
+    }
+}

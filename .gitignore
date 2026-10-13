@@ -6,7 +6,6 @@ results/
 testing/
 testing*
 *.pyc
-null/
 test-datasets/
 .nf-test/
 .nf-test.log
@@ -18,3 +17,11 @@ CLAUDE.md
 docs/plans/
 docs/failures/
 docs/knowledge_graph.md
+
+# FragPipe/MSFragger/IonQuant license files - never commit
+license.dat
+**/license.dat
+*.lic
+licenses/
+null/
+.lineage/

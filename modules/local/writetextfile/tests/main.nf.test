@@ -1,0 +1,83 @@
+nextflow_process {
+
+    name "Test Process WRITETEXTFILE"
+    script "../main.nf"
+    process "WRITETEXTFILE"
+
+    tag "modules"
+    tag "modules_local"
+    tag "write_text_file"
+
+    // tabs, a trailing newline, $, backticks, backslashes and quotes come out unchanged (quoted here-doc)
+    [['stub', true], ['integration', false]].each { kind, stub ->
+        test("write_text_file - ${kind} body with tabs, \$, backticks and a trailing newline") {
+            if (stub) { options "-stub" }
+            tag kind
+
+            when {
+                process {
+                    """
+                    input[0] = channel.of([[ id: 'A' ], 'A_annotation.txt', 'a\\tb \$HOME `date` \\\\n \\'q\\' "dq"\\n\\n  indented\\tx\\n'])
+                    """
+                }
+            }
+
+            then {
+                def out = new File(process.out.file[0][1].toString())
+                assertAll(
+                    { assert process.success },
+                    { assert out.name == 'A_annotation.txt' },
+                    { assert out.bytes == 'a\tb $HOME `date` \\n \'q\' "dq"\n\n  indented\tx\n'.getBytes('UTF-8') : out.text },
+                    // a stub run evaluates the version on the host: only its format is pinned, the tool name is snapshotted
+                    { assert process.out.versions_coreutils.every { entry -> entry[2] ==~ /^\d+\.\d+(\.\d+)?$/ } : process.out.versions_coreutils },
+                    { assert (stub ? snapshot(process.out.file, process.out.versions_coreutils.collect { entry -> entry.take(2) }) : snapshot(process.out)).match() }
+                )
+            }
+        }
+
+        test("write_text_file - ${kind} body without a final newline and an empty body") {
+            if (stub) { options "-stub" }
+            tag kind
+
+            when {
+                process {
+                    """
+                    input[0] = channel.of([[ id: 'n' ], 'no_newline.txt', 'x\\ty'], [[ id: 'e' ], 'empty.txt', ''])
+                    """
+                }
+            }
+
+            then {
+                def files = process.out.file.collectEntries { item -> [item[0].id, new File(item[1].toString())] }
+                assertAll(
+                    { assert process.success },
+                    { assert files.n.text == 'x\ty' },
+                    { assert files.e.length() == 0 },
+                    // a stub run evaluates the version on the host: only its format is pinned, the tool name is snapshotted
+                    { assert process.out.versions_coreutils.every { entry -> entry[2] ==~ /^\d+\.\d+(\.\d+)?$/ } : process.out.versions_coreutils },
+                    { assert (stub ? snapshot(process.out.file, process.out.versions_coreutils.collect { entry -> entry.take(2) }) : snapshot(process.out)).match() }
+                )
+            }
+        }
+    }
+
+    test("write_text_file - stub body with the delimiter line fails") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                input[0] = channel.of([[ id: 'd' ], 'bad.txt', 'a\\nWRITE_TEXT_FILE_END\\nb\\n'])
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.failed },
+                { assert (process.stdout + process.stderr).any { line -> line.contains('contains the here-doc delimiter line') } || (workflow.stdout + workflow.stderr).any { line -> line.contains('contains the here-doc delimiter line') } }
+            )
+        }
+    }
+}

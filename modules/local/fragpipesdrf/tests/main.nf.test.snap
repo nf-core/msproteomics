@@ -1,0 +1,58 @@
+{
+    "fragpipe_sdrf - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_sdrf"
+                    },
+                    "sdrf.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    "FRAGPIPESDRF",
+                    "python"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-08T16:25:49.007318687"
+    },
+    "fragpipe_sdrf - lfq and tmt inline inputs": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_lfq"
+                    },
+                    "sdrf.tsv:md5,103b24e48cd08925c2c3703478679c71"
+                ],
+                [
+                    {
+                        "id": "test_tmt"
+                    },
+                    "sdrf.tsv:md5,0d4723c1671d6197fcb90bafa972714b"
+                ]
+            ],
+            [
+                [
+                    "FRAGPIPESDRF",
+                    "python"
+                ],
+                [
+                    "FRAGPIPESDRF",
+                    "python"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-09T01:15:56.737889443"
+    }
+}

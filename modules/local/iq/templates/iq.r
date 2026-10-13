@@ -1,9 +1,7 @@
 #!/usr/bin/env Rscript
 
-# if diann doesn't exist, install it
-if (!requireNamespace("iq", quietly = TRUE)) {
-    install.packages('iq', dependencies = TRUE, repos='http://cran.rstudio.com/')
-}
+# The iq R package is in the container (modules/local/iq/environment.yml);
+# library() fails the task when it is missing.
 
 library(iq)
 library(readr)
@@ -24,7 +22,7 @@ df <- read_tsv(report)
 if (nrow(df) == 0) {
     stop(paste0("ERROR: IQ: DIA-NN report '", report, "' has no rows; DIA-NN identified nothing"))
 }
-if (contaminant_pattern != "" && !is.null(contaminant_pattern)) {
+if (contaminant_pattern != "") {
     # Remove contaminant proteins
     df <- df[!grepl(contaminant_pattern, df\$Genes),]
     report <- paste0("contaminants_removed_", report)

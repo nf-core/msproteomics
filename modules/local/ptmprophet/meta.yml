@@ -21,15 +21,20 @@ tools:
 input:
   - - meta:
         type: map
-        description: Groovy Map containing sample information
+        description: Sample information
     - pepxml_file:
         type: file
-        description: PepXML file containing peptide search results with PTMs
-        pattern: "*.pep.xml"
-    - config_cli:
+        description: One validated interact .pep.xml
+    - spectra:
+        type: file
+        description: The LC-MS files the pepXML refers to (the searched file and MSFragger's mzML); RewritePepxml points base_name at these staged copies
+        pattern: "*.{mzML,mzXML,raw,d}"
+    - lcms_names:
         type: string
-        description: PTMProphet parameters as CLI string (e.g., MINPROB=0.5 STATIC KEEPOLD)
-
+        description: The names FragPipe writes as base_name in the pepXML
+    - ptmprophet_cli:
+        type: string
+        description: PtmProphetPanel.getCmdLineOpts() options, "--" style already translated by parse_fragpipe_workflow.py
 output:
   results_dir:
     - - meta:
@@ -47,11 +52,47 @@ output:
           type: file
           description: Modified pepXML with PTM site localization probabilities
           pattern: "*.mod.pep.xml"
+  versions_ptmprophet:
+    - - ${task.process}:
+          type: string
+          description: Process name
+      - ptmprophet:
+          type: string
+          description: Tool name
+      - fragpipeToolVersions().ptmprophet:
+          type: string
+          description: Version of PTMProphet bundled with FragPipe
+  versions_fragpipe:
+    - - ${task.process}:
+          type: string
+          description: Process name
+      - fragpipe:
+          type: string
+          description: Tool name
+      - cat .fragpipe_version:
+          type: eval
+          description: Version of FragPipe
+
+topics:
   versions:
-    - versions.yml:
-        type: file
-        description: File containing software versions
-        pattern: "versions.yml"
+    - - ${task.process}:
+          type: string
+          description: Process name
+      - ptmprophet:
+          type: string
+          description: Tool name
+      - fragpipeToolVersions().ptmprophet:
+          type: string
+          description: Version of PTMProphet bundled with FragPipe
+    - - ${task.process}:
+          type: string
+          description: Process name
+      - fragpipe:
+          type: string
+          description: Tool name
+      - cat .fragpipe_version:
+          type: eval
+          description: Version of FragPipe
 
 authors:
   - "@dongzehe"

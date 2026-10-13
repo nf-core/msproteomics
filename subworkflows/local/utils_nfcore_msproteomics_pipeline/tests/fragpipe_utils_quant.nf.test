@@ -1,0 +1,199 @@
+// Unit tests for the quantification helpers in fragpipe_utils.nf: experiment_annotation.tsv
+// (ToolingUtils.java:222-334), MSstatsTMT_annotation.csv (CmdTmtIntegrator.java:105-140),
+// IonQuant --ionmobility (TabWorkflow.java:521-538) and mod masses (FragpipeRun.java:1885).
+
+nextflow_function {
+
+    name "Test Functions fragpipe_utils quantification"
+    script "../fragpipe_utils.nf"
+
+    tag "subworkflows"
+    tag "fragpipe_utils"
+    tag "stub"
+
+    // Golden FragPipe 24.0 run (TMT-labelcheck-304, C02 and D02 as experiments): work/experiment_annotation.tsv
+    test("lfqExperimentAnnotationLines - experiments as in the golden FragPipe run") {
+        function "lfqExperimentAnnotationLines"
+        when {
+            function {
+                """
+                input[0] = [
+                    [[experiment: 'D02', bioreplicate: null, data_type: 'DDA'], file('/in/X_D02s012.mzML')],
+                    [[experiment: 'C02', bioreplicate: null, data_type: 'DDA'], file('/in/X_C02s011.mzML')]
+                ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == ['file\tsample\tsample_name\tcondition\treplicate', '/in/X_C02s011.mzML\tC02\tC02\tC02\t1', '/in/X_D02s012.mzML\tD02\tD02\tD02\t1'] },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    test("lfqExperimentAnnotationLines - bioreplicate and condition from the first '_' part") {
+        function "lfqExperimentAnnotationLines"
+        when {
+            function {
+                """
+                input[0] = [
+                    [[experiment: 'ctrl_a', bioreplicate: 2, data_type: 'DDA'], file('/in/r1.mzML')],
+                    [[experiment: 'Treat-1', bioreplicate: null, data_type: 'DDA'], file('/in/r2.mzML')]
+                ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == ['file\tsample\tsample_name\tcondition\treplicate', '/in/r2.mzML\tTreat_1\tTreat_1\tTreat\t1', '/in/r1.mzML\tctrl_a_2\tctrl_a_2\tctrl\t2'] }
+            )
+        }
+    }
+
+    // One group "": sample names are file base names minus the common prefix, split on "_"
+    test("lfqExperimentAnnotationLines - no groups: names parsed from the file names") {
+        function "lfqExperimentAnnotationLines"
+        when {
+            function {
+                """
+                input[0] = [
+                    [[experiment: null, bioreplicate: null, data_type: 'DDA'], file('/in/run_A_1.mzML')],
+                    [[experiment: null, bioreplicate: null, data_type: 'DDA'], file('/in/run_B_x.mzML')],
+                    [[experiment: null, bioreplicate: null, data_type: 'DDA'], file('/in/run_C_d_3.mzML')],
+                    [[experiment: null, bioreplicate: null, data_type: 'DDA'], file('/in/run_D.mzML')]
+                ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == [
+                    'file\tsample\tsample_name\tcondition\treplicate',
+                    '/in/run_A_1.mzML\t/in/run_A_1.mzML\tA_1\tA\t1',
+                    '/in/run_B_x.mzML\t/in/run_B_x.mzML\tB_x\tx\t1',
+                    '/in/run_C_d_3.mzML\t/in/run_C_d_3.mzML\tC_d_3\tC_d\t3',
+                    '/in/run_D.mzML\t/in/run_D.mzML\tD\tD\t1'
+                ] }
+            )
+        }
+    }
+
+    test("lfqExperimentAnnotationLines - only DIA files when any DIA exists, no GPF-DIA/DIA-Lib") {
+        function "lfqExperimentAnnotationLines"
+        when {
+            function {
+                """
+                input[0] = [
+                    [[experiment: 'a', bioreplicate: null, data_type: 'DDA'], file('/in/dda.mzML')],
+                    [[experiment: 'a', bioreplicate: null, data_type: 'DIA'], file('/in/dia.mzML')],
+                    [[experiment: 'a', bioreplicate: null, data_type: 'DIA-Lib'], file('/in/lib.mzML')],
+                    [[experiment: 'a', bioreplicate: null, data_type: 'DIA-Quant'], file('/in/quant.mzML')]
+                ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == ['file\tsample\tsample_name\tcondition\treplicate', '/in/dia.mzML\ta\ta\ta\t1', '/in/quant.mzML\ta\ta\ta\t1'] }
+            )
+        }
+    }
+
+    test("isobaricExperimentAnnotationLines - condition and replicate from the sample name, NA skipped") {
+        function "isobaricExperimentAnnotationLines"
+        when {
+            function {
+                """
+                input[0] = [
+                    'plex\tchannel\tsample\tsample_name\tcondition\treplicate',
+                    'p2\t126\texp1_126\texp1_126\tc\t1',
+                    'p2\t127N\tNA\tNA\tc\t1',
+                    'p2\t127C\tBridge\tBridge\tc\t1',
+                    'p2\t128N\ta_b_3\ta_b_3\tc\t1',
+                    'p2\t128C\ta_b_c\ta_b_c\tc\t1',
+                    'p2\t129N\tx_y\tx_y\tc\t1',
+                    '\t126\t_126\t_126\t_126\t1'
+                ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == [
+                    'plex\tchannel\tsample\tsample_name\tcondition\treplicate',
+                    '\t126\t_126\t_126\t\t126',
+                    'p2\t126\texp1_126\texp1_126\texp1\t126',
+                    'p2\t127C\tBridge\tBridge\tBridge\t1',
+                    'p2\t128N\ta_b_3\ta_b_3\tb\t3',
+                    'p2\t128C\ta_b_c\ta_b_c\tc\t1',
+                    'p2\t129N\tx_y\tx_y\ty\t1'
+                ] },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    test("msstatsTmtAnnotationLines - one row per channel and group file, fraction counts files") {
+        function "msstatsTmtAnnotationLines"
+        when {
+            function {
+                """
+                input[0] = ['plex\tchannel\tsample\tsample_name\tcondition\treplicate', 'g1\t126\ts_A\ts_A\tc\t1', 'g1\t127N\tNA\tNA\tc\t1', 'g1\t127C\tBridge\tBridge\tc\t1']
+                input[1] = [[[group: 'g1'], file('/in/f1.mzML')], [[group: 'g1'], file('/in/f2.raw')], [[group: 'g2'], file('/in/f3.mzML')]]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == [
+                    'Run,Fraction,TechRepMixture,Mixture,Channel,BioReplicate,Condition',
+                    'f1,1,1,g1,126,s_A,A', 'f2,2,1,g1,126,s_A,A',
+                    'f1,1,1,g1,127C,Bridge,', 'f2,2,1,g1,127C,Bridge,'
+                ] }
+            )
+        }
+    }
+
+    test("ionquantInputDataTypeArgs - .d gives 1, .raw gives 0, mzML keeps the IM-MS button") {
+        function "ionquantInputDataTypeArgs"
+        when {
+            function {
+                """
+                input[0] = '--isotype tmt10 --ionmobility 0 --site-reports 1'
+                input[1] = [[[:], file('/in/a.mzML')], [[:], file('/in/b.d')]]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == '--isotype tmt10 --ionmobility 1 --site-reports 1' }
+            )
+        }
+    }
+
+    test("getToolModmasses - null mod masses (O-Pair) give no modlist") {
+        function "getToolModmasses"
+        when {
+            function {
+                """
+                input[0] = '{"ionquant": {"run": true, "modmasses": null}, "ionquant_ms1": {"run": true, "modmasses": []}}'
+                input[1] = 'ionquant'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == false }
+            )
+        }
+    }
+}

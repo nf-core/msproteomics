@@ -1,0 +1,7 @@
+sample,spectra,condition,experiment,bioreplicate
+sample11,https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/11/PXD024427/20170612_QEP8_JaBA_SA_LT01_V1_LC12_8_2FX2D1mS123fM2_sample11.raw,IDHmut,IDHmut,1
+sample12,https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/11/PXD024427/20170612_QEP8_JaBA_SA_LT01_V1_LC12_8_2FX2D1mS123fM2_sample12.raw,IDHmut,IDHmut,2
+sample13,https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/11/PXD024427/20170612_QEP8_JaBA_SA_LT01_V1_LC12_8_2FX2D1mS123fM2_sample13.raw,IDHmut,IDHmut,3
+sample03,https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/11/PXD024427/20170612_QEP8_JaBA_SA_LT01_V1_LC12_8_2FX2D1mS123fM2_sample03.raw,IDHwt,IDHwt,4
+sample06,https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/11/PXD024427/20170612_QEP8_JaBA_SA_LT01_V1_LC12_8_2FX2D1mS123fM2_sample06.raw,IDHwt,IDHwt,5
+sample09,https://ftp.pride.ebi.ac.uk/pride/data/archive/2022/11/PXD024427/20170612_QEP8_JaBA_SA_LT01_V1_LC12_8_2FX2D1mS123fM2_sample09.raw,IDHwt,IDHwt,6

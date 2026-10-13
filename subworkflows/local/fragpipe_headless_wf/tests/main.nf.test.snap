@@ -1,15 +1,51 @@
 {
+    "fragpipe_headless_wf - stub workflow decoy tag reaches the decoy check": {
+        "content": [
+            [
+                "combined_protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ],
+            [
+                "combined_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ],
+            [
+                "combined_ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-05T14:45:11.652359216"
+    },
+    "fragpipe_headless_wf - stub workflow decoy tag reaches database preparation": {
+        "content": [
+            [
+                "combined_protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ],
+            [
+                "combined_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ],
+            [
+                "combined_ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-04T23:03:47.593888173"
+    },
     "erwinia_headless_result_names": {
         "content": [
             [
                 
             ]
         ],
-        "timestamp": "2026-03-25T18:36:10.868197652",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.2"
-        }
+        },
+        "timestamp": "2026-03-25T18:36:10.868197652"
     },
     "fragpipe_headless_wf - stub with RAW input": {
         "content": [
@@ -18,8 +54,6 @@
                     "combined_ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
                     "combined_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
                     "combined_protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                    "experiment_annotation.tsv:md5,06327882b6286afe11a95dd992652b86",
-                    "fragpipe-files.fp-manifest:md5,2a1def4e29fed5625a78459589607e67",
                     "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
                     "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
@@ -34,10 +68,10 @@
                 "combined_ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
             ]
         ],
-        "timestamp": "2026-09-29T00:00:00.000000000",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.2"
-        }
+        },
+        "timestamp": "2026-03-31T18:32:04.260052282"
     }
 }

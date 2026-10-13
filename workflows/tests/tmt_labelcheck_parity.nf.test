@@ -1,0 +1,122 @@
+// FragPipe 24.0 parity acceptance test for MSPROTEOMICS_TMT_LABELCHECK.
+// Written test-first against FragPipe behaviour; passing since the RC-03 fix
+// of the FragPipe parity review.
+//
+// FragPipe source root (FP): FragPipe-GUI/src/main/java/org/nesvilab/fragpipe/
+//
+// Snapshots record workflow.out plus the sorted names of all succeeded tasks
+// (process + tag), which fixes the per-group / per-file task layout.
+
+nextflow_workflow {
+
+    name "Test Workflow MSPROTEOMICS_TMT_LABELCHECK - FragPipe parity"
+    script "../tmt_labelcheck.nf"
+    workflow "MSPROTEOMICS_TMT_LABELCHECK"
+
+    tag "workflows"
+    tag "msproteomics_tmt_labelcheck"
+    tag "parity"
+
+    // RC-03: FP/FragpipeRun.java:1258-1262 builds sharedLcmsFilesAll from the unique LC-MS file
+    // table (one InputLcmsFile per file), so a per-channel samplesheet (one row per TMT channel)
+    // still yields exactly one MSFragger search input per raw file.
+    test("RC-03 TMT per-channel samplesheet - one MSFRAGGER task per raw file") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/tmt_per_channel_two_plex.csv").text.replace('${FIXTURES}', fixtures)
+                input    = ss.toString()
+                database = "${fixtures}/test.fasta"
+                tmt_type = 'TMT10'
+                // nf-test's default profile (conf/test.config) sets fragpipe_workflow to LFQ-MBR.workflow,
+                // which the label check would run instead of the TMT-labelcheck-229 workflow it selects
+                fragpipe_workflow = null
+                outdir   = "$outputDir"
+            }
+        }
+
+        then {
+            def msfragger_tasks = workflow.trace.tasks().findAll { it.name ==~ /.*:MSFRAGGER \(.*\)$/ }.collect { it.name }
+            assertAll(
+                { assert workflow.success },
+                { assert msfragger_tasks.size() == 2 : "expected one MSFRAGGER task per raw file (2), got ${msfragger_tasks.size()}: ${msfragger_tasks}" },
+                // FP/FragpipeRun.java:582-587 saves sdrf.tsv when workflow.misc.save-sdrf=true (default on, FP/tabs/TabRun.java:429-430;
+                // assets/TMT-labelcheck-229.workflow omits the key)
+                { assert new File("${outputDir}/fragpipe/sdrf.tsv").exists() },
+                { assert snapshot(workflow.out, workflow.trace.succeeded().collect { task -> task.name }.sort()).match() }
+            )
+        }
+    }
+
+    // FP/FragpipeRun.java:582-587: no sdrf.tsv when workflow.misc.save-sdrf=false
+    test("save-sdrf=false - the label check writes no sdrf.tsv") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/tmt_per_channel_two_plex.csv").text.replace('${FIXTURES}', fixtures)
+                def wf = new File("${outputDir}/no_sdrf.workflow")
+                wf.text = new File("${baseDir}/assets/TMT-labelcheck-229.workflow").text + "\nworkflow.misc.save-sdrf=false\n"
+                input             = ss.toString()
+                database          = "${fixtures}/test.fasta"
+                tmt_type          = 'TMT10'
+                fragpipe_workflow = wf.toString()
+                outdir            = "$outputDir"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert !new File("${outputDir}/fragpipe/sdrf.tsv").exists() },
+                { assert workflow.trace.tasks().findAll { task -> task.name.contains(':FRAGPIPESDRF') }.isEmpty() }
+            )
+        }
+    }
+
+    // Write sub mzML in the label check: WriteSubMzml per LC-MS file (FragpipeRun.java:2388-2404, :2489) and the
+    // finalizer's second-pass workflow and manifest (FragpipeRun.java:589-700), written from the run's
+    // fragpipe.workflow and fragpipe-files.fp-manifest (FragpipeRun.java:371-375) as in every FragPipe run
+    test("Write sub mzML - label check writes _sub.mzML and the second-pass files to fragpipe/") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/tmt_per_channel_two_plex.csv").text.replace('${FIXTURES}', fixtures)
+                def wf = new File("${outputDir}/labelcheck_submzml.workflow")
+                wf.text = new File("${baseDir}/assets/TMT-labelcheck-229.workflow").text + 'tab-run.write_sub_mzml=true\n'
+                input    = ss.toString()
+                database = "${fixtures}/test.fasta"
+                tmt_type = 'TMT10'
+                fragpipe_workflow = wf.toString()
+                outdir   = "$outputDir"
+            }
+        }
+
+        then {
+            def out = new File("${outputDir}/fragpipe")
+            def subs = out.listFiles().findAll { f -> f.name.endsWith('_sub.mzML') }.collect { f -> f.name }.sort()
+            def second = new File(out, 'fragpipe-files-second-pass.fp-manifest').readLines()
+            assertAll(
+                { assert workflow.success },
+                { assert subs.size() == 2 : subs },
+                { assert second.size() == 2 && second.every { line -> line.startsWith(out.canonicalPath + '/') && line.split('\t')[0].endsWith('_sub.mzML') } : second },
+                { assert new File(out, 'fragpipe-second-pass.workflow').exists() },
+                { assert snapshot(subs, second.collect { line -> line.replace(out.canonicalPath, '<fragpipe>') }).match() }
+            )
+        }
+    }
+}

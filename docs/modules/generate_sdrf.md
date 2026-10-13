@@ -1,10 +1,10 @@
-# GENERATE_SDRF_FROM_SAMPLESHEET
+# GENERATESDRFFROMSAMPLESHEET
 
 Convert a samplesheet CSV to SDRF (Sample and Data Relationship Format) TSV.
 
 ## Description
 
-GENERATE_SDRF_FROM_SAMPLESHEET converts a simple CSV samplesheet into an SDRF-proteomics TSV file using the `generate_sdrf.py` script.
+GENERATESDRFFROMSAMPLESHEET converts a simple CSV samplesheet into an SDRF-proteomics TSV file using the `generate_sdrf.py` script.
 It takes pipeline parameters as a JSON string to populate SDRF columns including organism, enzyme, modifications, and other experiment-level metadata.
 Used at the entry point of the main workflow when the user provides a samplesheet instead of a pre-built SDRF file.
 
@@ -30,7 +30,7 @@ Used at the entry point of the main workflow when the user provides a sampleshee
 
 ## Container
 
-`biocontainers/python:3.12`
+`community.wave.seqera.io/library/python:3.12.13--27a817c2c0890658`
 
 ## Usage
 

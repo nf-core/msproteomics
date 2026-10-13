@@ -1,0 +1,162 @@
+{
+    "write_text_file - stub body without a final newline and an empty body": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "e"
+                    },
+                    "empty.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                [
+                    {
+                        "id": "n"
+                    },
+                    "no_newline.txt:md5,bc074af9f01c71b96398a40467fa2fd8"
+                ]
+            ],
+            [
+                [
+                    "WRITETEXTFILE",
+                    "coreutils"
+                ],
+                [
+                    "WRITETEXTFILE",
+                    "coreutils"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-07T22:04:26.07778334"
+    },
+    "write_text_file - integration body with tabs, $, backticks and a trailing newline": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "A"
+                        },
+                        "A_annotation.txt:md5,eb3e5b2a5181b214e21b0b0bec02a91a"
+                    ]
+                ],
+                "1": [
+                    [
+                        "WRITETEXTFILE",
+                        "coreutils",
+                        "8.30"
+                    ]
+                ],
+                "file": [
+                    [
+                        {
+                            "id": "A"
+                        },
+                        "A_annotation.txt:md5,eb3e5b2a5181b214e21b0b0bec02a91a"
+                    ]
+                ],
+                "versions_coreutils": [
+                    [
+                        "WRITETEXTFILE",
+                        "coreutils",
+                        "8.30"
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-07T16:14:53.067472566"
+    },
+    "write_text_file - integration body without a final newline and an empty body": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "e"
+                        },
+                        "empty.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ],
+                    [
+                        {
+                            "id": "n"
+                        },
+                        "no_newline.txt:md5,bc074af9f01c71b96398a40467fa2fd8"
+                    ]
+                ],
+                "1": [
+                    [
+                        "WRITETEXTFILE",
+                        "coreutils",
+                        "8.30"
+                    ],
+                    [
+                        "WRITETEXTFILE",
+                        "coreutils",
+                        "8.30"
+                    ]
+                ],
+                "file": [
+                    [
+                        {
+                            "id": "e"
+                        },
+                        "empty.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ],
+                    [
+                        {
+                            "id": "n"
+                        },
+                        "no_newline.txt:md5,bc074af9f01c71b96398a40467fa2fd8"
+                    ]
+                ],
+                "versions_coreutils": [
+                    [
+                        "WRITETEXTFILE",
+                        "coreutils",
+                        "8.30"
+                    ],
+                    [
+                        "WRITETEXTFILE",
+                        "coreutils",
+                        "8.30"
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-07T16:15:00.218964434"
+    },
+    "write_text_file - stub body with tabs, $, backticks and a trailing newline": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "A"
+                    },
+                    "A_annotation.txt:md5,eb3e5b2a5181b214e21b0b0bec02a91a"
+                ]
+            ],
+            [
+                [
+                    "WRITETEXTFILE",
+                    "coreutils"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-07T22:04:21.070359936"
+    }
+}

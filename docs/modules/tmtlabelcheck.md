@@ -1,4 +1,4 @@
-# TMT_LABELCHECK_ANALYZE
+# TMTLABELCHECKANALYZE
 
 Analyzes TMT labeling efficiency from PSM data with per-peptide site-level calculation.
 

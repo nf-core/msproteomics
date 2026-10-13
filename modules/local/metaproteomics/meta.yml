@@ -21,68 +21,81 @@ tools:
       licence: ["Academic"]
 
 input:
-  - - meta:
+  - - "meta":
         type: map
-        description: Groovy Map containing sample information
-    - project_dir:
-        type: directory
-        description: Directory containing FragPipe results for taxonomy analysis
-    - config_cli:
-        type: string
-        description: |
-          Metaproteomics parameters as CLI string
-          (e.g., --decoyTag rev_ --qvalue 0.01 --iterations 2)
-  - - fasta:
+        description: "Groovy Map containing sample information"
+    - "project_files":
         type: file
-        description: Protein sequence database in FASTA format
-        pattern: "*.{fasta,fas,fa}"
-  - - taxon_name_file:
-        type: file
-        description: NCBI taxonomy names.dmp file
-        pattern: "names.dmp"
-  - - taxon_node_file:
-        type: file
-        description: NCBI taxonomy nodes.dmp file
-        pattern: "nodes.dmp"
-
+        description: "Every MSFragger <run>.pin and Percolator <run>_percolator_{target,decoy}_psms.tsv, staged flat like FragPipe's work dir (FP-Meta walks it 2 levels deep)"
+        pattern: "*.{pin,tsv}"
+    - "config_cli":
+        type: map
+        description: "DbOptimizer values (qvalue, deltaHyperscore, minPeptCntPerProt, minUniqPeptCntPerProt, minUniqPeptCnt, hostName, iterations, cmdLineOpts) from parse_fragpipe_workflow.py"
+  - "fasta":
+      type: file
+      description: "Database FASTA file (shared resource)"
+      pattern: "*.{fasta,fas,fa}"
+  - "taxon_name_file":
+      type: file
+      description: "NCBI names.dmp; [] = FragPipe's tools/metaproteomics/names.dmp"
+      pattern: "*.dmp"
+  - "taxon_node_file":
+      type: file
+      description: "NCBI nodes.dmp; [] = FragPipe's tools/metaproteomics/nodes.dmp"
+      pattern: "*.dmp"
+  - "decoy_tag":
+      type: string
+      description: "Decoy protein prefix from workflow database.decoy-tag (FragpipeRun.java:1442)"
 output:
   results_dir:
-    - - meta:
+    - - "meta":
           type: map
-          description: Groovy Map containing sample information
+          description: "Groovy Map containing sample information"
       - "${prefix}":
           type: directory
-          description: Directory containing metaproteomics results and log
+          description: "FP-Meta DbOptimizer outputs (refined database, species tables) and metaproteomics.log"
           pattern: "${prefix}"
-  optimized_fasta:
-    - - meta:
-          type: map
-          description: Groovy Map containing sample information
-      - "${prefix}/*_optimized.fasta":
-          type: file
-          description: Optimized FASTA database filtered by taxonomic analysis
-          pattern: "*_optimized.fasta"
-  taxonomy_results:
-    - - meta:
-          type: map
-          description: Groovy Map containing sample information
-      - "${prefix}/*_taxonomy*.tsv":
-          type: file
-          description: Taxonomy analysis results
-          pattern: "*_taxonomy*.tsv"
-  results:
-    - - meta:
-          type: map
-          description: Groovy Map containing sample information
-      - "${prefix}/*_metaproteomics*.tsv":
-          type: file
-          description: Metaproteomics analysis results
-          pattern: "*_metaproteomics*.tsv"
+  versions_metaproteomics:
+    - - "${task.process}":
+          type: string
+          description: The name of the process
+      - "metaproteomics":
+          type: string
+          description: The name of the tool
+      - "cat .metaproteomics_version":
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_fragpipe:
+    - - "${task.process}":
+          type: string
+          description: The name of the process
+      - "fragpipe":
+          type: string
+          description: The name of the tool
+      - "cat .fragpipe_version":
+          type: eval
+          description: The expression to obtain the version of the tool
+
+topics:
   versions:
-    - versions.yml:
-        type: file
-        description: File containing software versions
-        pattern: "versions.yml"
+    - - "${task.process}":
+          type: string
+          description: The name of the process
+      - "metaproteomics":
+          type: string
+          description: The name of the tool
+      - "cat .metaproteomics_version":
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - "${task.process}":
+          type: string
+          description: The name of the process
+      - "fragpipe":
+          type: string
+          description: The name of the tool
+      - "cat .fragpipe_version":
+          type: eval
+          description: The expression to obtain the version of the tool
 
 authors:
   - "@dongzehe"

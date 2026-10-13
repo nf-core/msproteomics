@@ -1,0 +1,55 @@
+{
+    "fragpipe_headless - stub LFQ manifest keeps experiment and bioreplicate": {
+        "content": [
+            [
+                "raw_files/sample.mzML\texperiment1\t1\tDDA"
+            ],
+            [
+                [
+                    "combined_ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "combined_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "combined_protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                "combined_protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ],
+            [
+                "combined_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ],
+            [
+                "combined_ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-04T23:24:38.062689282"
+    },
+    "fragpipe_headless - stub TMT one directory and annotation per group, blank group at root": {
+        "content": [
+            [
+                "raw_files/plex1/p1.mzML\tplex1\t\tDDA",
+                "raw_files/p2.mzML\t\t\tDDA"
+            ],
+            {
+                "raw_files/_annotation.txt": [
+                    "126 _126",
+                    "127N _127N"
+                ],
+                "raw_files/plex1/plex1_annotation.txt": [
+                    "126 S1",
+                    "127N NA"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-04T23:24:42.353201579"
+    }
+}

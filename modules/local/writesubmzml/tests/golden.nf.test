@@ -1,0 +1,108 @@
+// Golden differential test: MSFRAGGER (write_mzbin_all = 1, --no-ptm-score-in-pin) then WRITESUBMZML vs
+// FragPipe 24.0 (golden set PXD001468/Basic-Search_submzml, tab-run.write_sub_mzml=true, Thermo .raw).
+// FragPipe deletes the .mzBIN_all after WriteSubMzml (WriteSubMzml.java:75-77), so the test makes it again
+// with MSFRAGGER from the golden fragger.params, then writes the _sub.mzML from the golden psm.tsv.
+// Run: FRAGPIPE_CONTAINER=<licensed image> GOLDEN_ROOT=<golden root> nf-test test modules/local/writesubmzml/tests/golden.nf.test
+nextflow_process {
+
+    name "Golden WRITESUBMZML vs FragPipe 24.0"
+    script "../main.nf"
+    process "WRITESUBMZML"
+    config "./golden.config"
+
+    tag "golden"
+    tag "writesubmzml"
+
+    test("PXD001468 Basic-Search_submzml - .mzBIN_all, argv and _sub.mzML reproduce FragPipe") {
+
+        setup {
+            run("MSFRAGGER") {
+                script "../../msfragger/main.nf"
+                process {
+                    """
+                    assert System.getenv('GOLDEN_ROOT') : 'set GOLDEN_ROOT to the golden data root'
+                    def g = { String rel -> file("\${System.getenv('GOLDEN_ROOT')}/PXD001468/Basic-Search_submzml/files/\${rel}", checkIfExists: true) }
+                    def params_text = g.call('work/fragger.params').text
+                    assert params_text.readLines().contains('write_mzbin_all = 1')
+                    input[0] = channel.of([
+                        [ id: 'b1906_293T_proteinID_01A_QE3_122212', data_type: 'DDA', group: 'b1906_01A_1' ],
+                        g.call('input/b1906_293T_proteinID_01A_QE3_122212.raw'),
+                        'fragger.params',
+                        params_text,
+                        g.call('db/human_canonical_2026_03_decoys_contam.fasta')
+                    ])
+                    """
+                }
+            }
+        }
+
+        when {
+            params {
+                golden_set = "${System.getenv('GOLDEN_ROOT')}/PXD001468/Basic-Search_submzml"
+            }
+            process {
+                """
+                def gw = { String rel -> file("\${params.golden_set}/files/\${rel}", checkIfExists: true) }
+                input[0] = MSFRAGGER.out.mzbin_all
+                    .join(MSFRAGGER.out.log, failOnMismatch: true)
+                    .map { meta, mzbin, log_file ->
+                        [meta + [msfragger_log: log_file.toString()], gw.call("input/\${meta.id}.raw"), mzbin, gw.call('work/b1906_01A_1/psm.tsv'), '0.5']
+                    }
+                """
+            }
+        }
+
+        then {
+            def stem     = 'b1906_293T_proteinID_01A_QE3_122212'
+            def golden   = new File(params.golden_set)
+            def manifest = new groovy.json.JsonSlurper().parse(new File(golden, 'manifest.json'))
+            def goldenLog = new File(golden, 'fragpipe_log.redacted.txt').readLines()
+            def step     = manifest.steps.find { s -> s.cmd_name == 'WriteSubMzml' }
+            def subLog   = new File(process.out.log[0][1].toString())
+            def taskDir  = subLog.parentFile
+            // the MSFragger console output of the setup run (meta.msfragger_log, set in when)
+            def fragger  = new File(process.out.log[0][0].msfragger_log).readLines()
+            def argvFile = new File(outputDir, 'write_sub_mzml.cmd'); argvFile.text = subLog.readLines()[0]
+            def report   = new File(outputDir, 'golden_report.json')
+            def check = [
+                'python3', "${baseDir}/bin/golden_step_check.py",
+                '--golden', golden.path,
+                '--steps', "${step.step_index}",
+                '--argv-only',
+                // FragPipe runs it in {WORKDIR}/<group>; the module in <task>/<group>, the task dir standing for {WORKDIR}
+                '--actual-cwd', "${taskDir.path}/b1906_01A_1",
+                '--actual-workdir', taskDir.path,
+                '--actual-outdir', taskDir.path,
+                '--actual-input-dir', "${taskDir.path}/lcms",
+                '--actual-argv', "${step.step_index}=${argvFile.path}",
+                '--json', report.path
+            ].execute()
+            def checkOut = new StringBuffer(), checkErr = new StringBuffer()
+            check.waitForProcessOutput(checkOut, checkErr)
+            // the _sub.mzML names the LC-MS directory as sourceFile location (WriteSubMzml.java:217-233)
+            def compare = [
+                'python3', "${baseDir}/bin/golden_compare.py", 'pairs',
+                '--pair', "work/${stem}_sub.mzML", "${golden.path}/files/work/${stem}_sub.mzML", new File(process.out.sub_mzml[0][1].toString()).path,
+                '--expected-prefix', manifest.roots['{LCMS_DIR}'],
+                '--actual-prefix', "${taskDir.path}/lcms",
+                '--json', new File(outputDir, 'compare_report.json').path
+            ].execute()
+            def compareOut = new StringBuffer(), compareErr = new StringBuffer()
+            compare.waitForProcessOutput(compareOut, compareErr)
+            println checkOut
+            println compareOut
+            assertAll(
+                { assert process.success },
+                // CmdMsfragger.java:628-630: --no-ptm-score-in-pin after the LC-MS file (golden step MSFragger)
+                { assert fragger[0].endsWith(" ${stem}.raw --no-ptm-score-in-pin") : fragger[0] },
+                { assert manifest.steps.find { s -> s.cmd_name == 'MSFragger' }.argv[-1] == '--no-ptm-score-in-pin' },
+                // the MSFragger values the finalizer parses (FragpipeRun.java:600-633) are FragPipe's
+                { assert fragger.findAll { l -> l.startsWith('New ') } == goldenLog.findAll { l -> l.startsWith('New ') } },
+                { assert check.exitValue() == 0 : "argv check failed, see ${report.path}:\n${checkOut}${checkErr}" },
+                { assert subLog.readLines().findAll { l -> l ==~ /Found \d+ scans to exclude\./ } == goldenLog.findAll { l -> l ==~ /Found \d+ scans to exclude\./ } },
+                { assert compare.exitValue() == 0 : "_sub.mzML differs:\n${compareOut}${compareErr}" },
+                { assert snapshot(process.out.versions_fragpipe).match() }
+            )
+        }
+    }
+}

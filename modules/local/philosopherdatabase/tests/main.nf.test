@@ -1,0 +1,73 @@
+nextflow_process {
+
+    name "Test Process PHILOSOPHERDATABASE"
+    script "../main.nf"
+    process "PHILOSOPHERDATABASE"
+    config "./nextflow.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "philosopher"
+    tag "philosopher/database"
+
+    // FragPipe "Add decoys" argv: database --custom <fasta> --contam --contamprefix
+    // (FP/cmd/CmdDatabaseUpdate.java:44-53); the contaminant flags are ext.args.
+    test("philosopher_database - stub") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [[ id:'test' ], file("test.fasta")]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert new File(process.out.log.get(0).get(1)).text.trim() == 'philosopher database --custom test.fasta --contam --contamprefix' },
+                { assert snapshot(
+                    process.out.fasta,
+                    process.out.log,
+                    process.out.versions_philosopher,
+                    process.out.versions_fragpipe
+                ).match() }
+            )
+        }
+    }
+
+    test("philosopher_database - local FASTA") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                input[0] = [[ id:'erwinia_test' ], file("\${params.pipelines_testdata_base_path}/databases/erwinia_carotovora.fasta", checkIfExists: true)]
+                """
+            }
+        }
+
+        then {
+            def headers = new File(process.out.fasta.get(0).get(1)).readLines().findAll { line -> line.startsWith('>') }
+            // the FASTA staged into the task dir (test params do not carry the config's pipelines_testdata_base_path)
+            def input_targets = new File(new File(process.out.fasta.get(0).get(1)).parentFile, 'erwinia_carotovora.fasta').readLines().count { line -> line.startsWith('>') }
+            assertAll(
+                { assert process.success },
+                { assert new File(process.out.log.get(0).get(1)).readLines().first().matches(/.*philosopher\S* database --custom erwinia_carotovora\.fasta --contam --contamprefix/) },
+                // philosopher's default rev_ decoys, one per target (no --prefix, as FragPipe)
+                { assert headers.count { h -> h.startsWith('>rev_') } * 2 == headers.size() },
+                // --contam adds the cRAP contaminants as targets; with --custom philosopher does not
+                // prefix them (--contamprefix only tags proteome-ID downloads, PHI lib/dat/dat.go Create)
+                { assert headers.size() > 2 * input_targets },
+                // Exclude log channel (contains timestamps that change between runs)
+                { assert snapshot(
+                    process.out.fasta,
+                    process.out.versions_philosopher,
+                    process.out.versions_fragpipe
+                ).match() }
+            )
+        }
+    }
+}

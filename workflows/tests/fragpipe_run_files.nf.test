@@ -1,0 +1,198 @@
+// EX-02: pipeline mode writes FragPipe's run-folder files (FragpipeRun.java:371-376):
+// fragpipe-files.fp-manifest (TabWorkflow.manifestSave) and fragpipe.workflow.
+
+nextflow_workflow {
+
+    name "Test Workflow MSPROTEOMICS_FRAGPIPE - run-folder files"
+    script "../fragpipe.nf"
+    workflow "MSPROTEOMICS_FRAGPIPE"
+
+    tag "workflows"
+    tag "msproteomics_fragpipe"
+
+    // Work directory of the single task of a process in this test run (via the trace file)
+    def taskDir = { String output_dir, String process ->
+        def line = new File("${output_dir}/../meta/trace.csv").readLines().drop(1).find { l -> l.split('\t')[3].contains(":${process} ") || l.split('\t')[3].endsWith(":${process}") }
+        def (prefix, suffix) = line.split('\t')[1].tokenize('/')
+        new File("${output_dir}/../work", prefix).listFiles().find { d -> d.name.startsWith(suffix) }
+    }
+
+
+    // FragPipe's run-level MSFragger params (CmdMsfragger.java:441-447, :541-552): the parser's set with database_name = the run's FASTA
+    def runFraggerParams = { String output_dir ->
+        def files = new File("${output_dir}/msfragger").listFiles().findAll { f -> f.isFile() && f.name ==~ /fragger.*\.params/ }
+        def set = new File("${output_dir}/parse/configs/fragger.params").readLines()
+        def run = files ? files[0].readLines() : []
+        [names: files*.name, database: run ? run[0] : '', rest_equal: run.drop(1) == set.drop(1)]
+    }
+
+    test("EX-02 - pipeline mode writes fragpipe-files.fp-manifest, fragpipe.workflow and sdrf.tsv") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                input             = ss.toString()
+                database          = "${fixtures}/test.fasta"
+                fragpipe_workflow = "${fixtures}/fragpipe_workflows/LFQ-MBR.workflow"
+                fragpipe_mode     = 'pipeline'
+                outdir            = "$outputDir"
+            }
+        }
+
+        then {
+            def fixtures = new File("${baseDir}/tests/fixtures").canonicalPath
+            def manifest = new File("${outputDir}/fragpipe/fragpipe-files.fp-manifest").text
+            assertAll(
+                { assert workflow.success },
+                // manifestSave joins rows with "\n" and writes no trailing newline
+                { assert manifest == [
+                    "${fixtures}/spectra/ctrl_1.mzML\tcontrol\t1\tDDA",
+                    "${fixtures}/spectra/ctrl_2.mzML\tcontrol\t2\tDDA",
+                    "${fixtures}/spectra/trt_1.mzML\ttreated\t1\tDDA",
+                    "${fixtures}/spectra/trt_2.mzML\ttreated\t2\tDDA"
+                ].join('\n') : manifest },
+                { assert new File("${outputDir}/fragpipe/sdrf.tsv").exists() },
+                { assert runFraggerParams(outputDir).names == ['fragger.params'] : runFraggerParams(outputDir) },
+                { assert runFraggerParams(outputDir).database ==~ /database_name = \/.+\/test\.fasta\t.*/ : runFraggerParams(outputDir).database },
+                { assert runFraggerParams(outputDir).rest_equal },
+                { assert workflow.trace.tasks().count { task -> task.name.contains('FRAGPIPESDRF') } == 1 },
+                // FRAGPIPESAVEWORKFLOW writes FragPipe's UI state from the run's workflow and manifest
+                { assert new File("${outputDir}/fragpipe/fragpipe.workflow").readLines()[0] == '# Version info:' },
+                { assert new File(taskDir(outputDir, 'FRAGPIPESAVEWORKFLOW'), 'input/LFQ-MBR.workflow').text == new File("${fixtures}/fragpipe_workflows/LFQ-MBR.workflow").text },
+                { assert snapshot(manifest.readLines().collect { line -> line.replace(fixtures, '<fixtures>') }).match() }
+            )
+        }
+    }
+
+    // Write sub mzML (tab-run.write_sub_mzml=true): WriteSubMzml per LC-MS file after the final report
+    // (FragpipeRun.java:2388-2404, :2489) and the finalizer's second-pass workflow and manifest
+    // (FragpipeRun.java:589-700), all in FragPipe's work dir, published to fragpipe/
+    test("Write sub mzML - _sub.mzML files and the second-pass workflow and manifest in fragpipe/") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                def wf = new File("${outputDir}/write_sub_mzml.workflow")
+                wf.text = new File("${fixtures}/fragpipe_workflows/LFQ-MBR.workflow").text.replace('tab-run.write_sub_mzml=false', 'tab-run.write_sub_mzml=true')
+                input             = ss.toString()
+                database          = "${fixtures}/test.fasta"
+                fragpipe_workflow = wf.toString()
+                fragpipe_mode     = 'pipeline'
+                outdir            = "$outputDir"
+            }
+        }
+
+        then {
+            def out = new File("${outputDir}/fragpipe")
+            def subs = out.listFiles().findAll { f -> f.name.endsWith('_sub.mzML') }.collect { f -> f.name }.sort()
+            def second = new File(out, 'fragpipe-files-second-pass.fp-manifest').text
+            def weights = []
+            out.eachFileRecurse(groovy.io.FileType.FILES) { f -> if (f.name.endsWith('_percolator.weights')) { weights << out.toPath().relativize(f.toPath()).toString() } }
+            weights = weights.sort()
+            assertAll(
+                { assert workflow.success },
+                { assert subs == ['ctrl_1_sub.mzML', 'ctrl_2_sub.mzML', 'trt_1_sub.mzML', 'trt_2_sub.mzML'] },
+                // the weights next to the _sub.mzML files, in FragPipe's <wd>/<group> (CmdPercolator.java:180-183, :214), the only
+                // copies below fragpipe/: a second run on fragpipe/<stem>_sub.mzML finds each exactly once (CmdPercolator.java:185-201)
+                { assert weights == ['control_1/ctrl_1_percolator.weights', 'control_2/ctrl_2_percolator.weights',
+                                     'treated_1/trt_1_percolator.weights', 'treated_2/trt_2_percolator.weights'] : weights },
+                { assert workflow.trace.tasks().count { task -> task.name.contains('WRITESUBMZML') } == 4 },
+                // the second-pass manifest names the published _sub.mzML files (FragpipeRun.java:684-697)
+                { assert second == ['ctrl_1', 'ctrl_2', 'trt_1', 'trt_2'].withIndex().collect { stem, i ->
+                    "${out.canonicalPath}/${stem}_sub.mzML\t${i < 2 ? 'control' : 'treated'}\t${i % 2 + 1}\tDDA\n" }.join('') : second },
+                // stub fragpipe.workflow: the two version lines, unchanged by the rules
+                { assert new File(out, 'fragpipe-second-pass.workflow').text == '# Version info:\n# FragPipe version 24.0\n' },
+                { assert snapshot(subs, second.replace(out.canonicalPath, '<fragpipe>')).match() }
+            )
+        }
+    }
+
+    // TabMsfragger.java:2388 keys instruments by the file MSFragger read. MSFragger reads .raw
+    // natively (RC-09), so the searched name is the .raw itself, not its _uncalibrated.mzML.
+    test("EX-02 - sdrf.tsv maps a .raw input to the file MSFragger searched") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = "sample,spectra,data_type\nthermo,${fixtures}/spectra/thermo.raw,DDA\nctrl_1,${fixtures}/spectra/ctrl_1.mzML,DDA\n"
+                input             = ss.toString()
+                database          = "${fixtures}/test.fasta"
+                fragpipe_workflow = "${fixtures}/fragpipe_workflows/LFQ-noMBR.workflow"
+                fragpipe_mode     = 'pipeline'
+                outdir            = "$outputDir"
+            }
+        }
+
+        then {
+            def sdrf_dir = taskDir(outputDir, 'FRAGPIPESDRF')
+            def searched = new File(sdrf_dir, 'searched_files.tsv').readLines()
+            def logs = new File(sdrf_dir, 'logs').listFiles().collect { d -> d.listFiles()*.name }.flatten()
+            assertAll(
+                { assert workflow.success },
+                { assert searched == ['ctrl_1.mzML\tctrl_1.mzML', 'thermo.raw\tthermo.raw'] : searched },
+                { assert logs == ['msfragger.log', 'msfragger.log'] : logs },
+                { assert snapshot(searched).match() }
+            )
+        }
+    }
+
+    // FragPipe writes sdrf.tsv in split-database mode too, from the console text
+    // (FragpipeRun.java:586): here each file's calibration log (calibrate_mass 2), which read the
+    // original file. The slice count comes from the workflow's msfragger.misc.slice-db (RC-20).
+    test("EX-02 - split-database search writes sdrf.tsv from the calibration log") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                input                = ss.toString()
+                database             = "${fixtures}/test.fasta"
+                def wf = new File("${outputDir}/LFQ-MBR-split.workflow")
+                wf.text = new File("${fixtures}/fragpipe_workflows/LFQ-MBR.workflow").text.replace('msfragger.misc.slice-db=1', 'msfragger.misc.slice-db=2')
+                fragpipe_workflow    = wf.toString()
+                fragpipe_mode        = 'pipeline'
+                outdir               = "$outputDir"
+            }
+        }
+
+        then {
+            def sdrf_dir = taskDir(outputDir, 'FRAGPIPESDRF')
+            def logs = new File(sdrf_dir, 'logs').listFiles().collect { d -> d.listFiles()*.name }.flatten()
+            // msfragger_pep_split.py leaves the merged pepXML and pin where a single search puts them
+            // (:397, :462) and deletes the chunk searches (:645)
+            def msfragger = new File("${outputDir}/msfragger").listFiles().findAll { f -> f.isDirectory() }
+            def searched = ['ctrl_1', 'ctrl_2', 'trt_1', 'trt_2'].collect { id -> new File("${outputDir}/msfragger/${id}") }
+            assertAll(
+                { assert workflow.success },
+                { assert new File("${outputDir}/fragpipe/sdrf.tsv").exists() },
+                { assert searched.every { d -> new File(d, "${d.name}.pepXML").exists() && new File(d, "${d.name}.pin").exists() } : msfragger*.name },
+                { assert !msfragger.any { d -> d.name.contains('_chunk_') } : msfragger*.name },
+                { assert !new File("${outputDir}/merge_split_search").exists() },
+                // msfragger_pep_split.py leaves FragPipe's params file as it is (calibrated params live in its deleted tempdir)
+                { assert runFraggerParams(outputDir).names == ['fragger.params'] : runFraggerParams(outputDir) },
+                { assert runFraggerParams(outputDir).database ==~ /database_name = \/.+\/test\.fasta\t.*/ : runFraggerParams(outputDir).database },
+                { assert runFraggerParams(outputDir).rest_equal },
+                { assert logs.size() == 4 && logs.every { name -> name == 'msfragger_calibrate.log' } : logs },
+                { assert snapshot(logs).match() }
+            )
+        }
+    }
+}

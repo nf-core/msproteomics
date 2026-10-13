@@ -1,0 +1,86 @@
+{
+    "merge_split_search - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_sample"
+                    },
+                    "test_sample.pepXML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_sample"
+                    },
+                    "test_sample.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                "I_AGREE_FRAGPIPE_LICENSE_AGREEMENT:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ],
+            [
+                [
+                    "MERGESPLITSEARCH",
+                    "msfragger",
+                    "24.0"
+                ]
+            ],
+            [
+                [
+                    "MERGESPLITSEARCH",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ],
+            [
+                [
+                    "MERGESPLITSEARCH",
+                    "python"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-05T01:55:27.559465586"
+    },
+    "merge_split_search - integration with mock data": {
+        "content": [
+            [
+                "test_sample.pepXML"
+            ],
+            [
+                "test_sample.pin"
+            ],
+            [
+                [
+                    "MERGESPLITSEARCH",
+                    "msfragger",
+                    "4.4.1"
+                ]
+            ],
+            [
+                [
+                    "MERGESPLITSEARCH",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ],
+            [
+                [
+                    "MERGESPLITSEARCH",
+                    "python",
+                    "3.12.3"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-05T02:56:04.89084167"
+    }
+}

@@ -9,45 +9,20 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { paramsSummaryMap       } from 'plugin/nf-schema'
-include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-include { methodsDescriptionText; generateFragpipeManifest } from '../subworkflows/local/utils_nfcore_msproteomics_pipeline'
+include { checkWorkflowDatabase; resolveDatabase; generateSdrfBookkeeping; resolveProteome; resolveOrganism; resolveFragPipeDatabase; resolveFragPipeDatabaseChannels } from '../subworkflows/local/utils_nfcore_msproteomics_pipeline'
 
 // SDRF generation (bookkeeping only)
-include { GENERATE_SDRF_FROM_SAMPLESHEET } from '../modules/local/generate_sdrf_from_samplesheet/main'
+include { GENERATESDRFFROMSAMPLESHEET } from '../modules/local/generatesdrffromsamplesheet/main'
 
 // FragPipe subworkflows
 include { FRAGPIPE_WF as FRAGPIPE_PIPELINE } from '../subworkflows/local/fragpipe/main'
 include { FRAGPIPE_HEADLESS_WF             } from '../subworkflows/local/fragpipe_headless_wf/main'
+include { FRAGPIPESDRF } from '../modules/local/fragpipesdrf/main'
+include { FRAGPIPESAVEWORKFLOW } from '../modules/local/fragpipesaveworkflow/main'
+include { FRAGPIPESECONDPASS } from '../modules/local/fragpipesecondpass/main'
 
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    HELPER FUNCTIONS
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-
-def parse_samplesheet() {
-    return Channel.fromPath(params.input, checkIfExists: true)
-        .splitCsv(header: true)
-        .map { row ->
-            def sample    = row.sample
-            def filepath  = row.spectra
-            def condition = row.condition ?: sample
-            def fraction  = row.fraction ?: null
-            def label     = row.label ?: null
-
-            def meta = [
-                id:        fraction ? "${sample}_f${fraction}" : sample,
-                group:     condition,
-                sample:    sample,
-                condition: condition,
-                label:     label,
-                fraction:  fraction ? fraction as int : 1
-            ]
-            [ meta, file(filepath) ]
-        }
-}
+// FragPipe utilities
+include { msfraggerConsoleLogs; subMzmlWeights; generateFragpipeManifest; fragpipeManifestEntries; parseSamplesheet; speclibOrDiannRuns; checkDiaPreprocessing; uniqueSpectraFiles; requireFragpipeLcmsFiles; tmtAnnotationLines; fragpipeWorkflowProperties } from '../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -58,132 +33,170 @@ def parse_samplesheet() {
 workflow MSPROTEOMICS_FRAGPIPE {
 
     main:
-    ch_input = parse_samplesheet()
+    // FragPipe runs every tool from one licensed distribution; there is no public default image (a stub run runs no tool)
+    if (workflow.containerEngine && !workflow.stubRun && !params.fragpipe_container) {
+        error("--mode fragpipe with ${workflow.containerEngine} needs --fragpipe_container: the licensed FragPipe image that runs every FragPipe tool")
+    }
+    // Workflow file: the shipped DDA LFQ workflow when none is given (docs/usage.md); TMT quantification has
+    // no shipped workflow, so it needs --fragpipe_workflow (nf-core/msproteomics#2)
+    if (!params.fragpipe_workflow && params.tmt_mode) {
+        error("--tmt_mode ${params.tmt_mode} requires --fragpipe_workflow (a FragPipe .workflow file, see docs/usage.md)")
+    }
+    def fragpipe_workflow_file = file(params.fragpipe_workflow ?: "${projectDir}/assets/LFQ-MBR.workflow", checkIfExists: true)
+    def workflow_props = fragpipeWorkflowProperties(fragpipe_workflow_file)
 
-    GENERATE_SDRF_FROM_SAMPLESHEET(
-        Channel.fromPath(params.input, checkIfExists: true),
-        WorkflowUtils.generateSdrfBookkeeping(params)
+    // One row per samplesheet line (TMT: one per channel); one item per spectra file.
+    // SpecLibGen/DIA-NN on: every file is in FragPipe's single group "" (RC-04).
+    def samplesheet_rows = parseSamplesheet(params.input, "${projectDir}/assets/schema_input.json", speclibOrDiannRuns(workflow_props))
+    // Second pass of Write sub mzML: _sub.mzML inputs with their _percolator.weights (CmdMsfragger.java:612-626, CmdPercolator.java:185-201)
+    def spectra_files    = subMzmlWeights(checkDiaPreprocessing(
+        requireFragpipeLcmsFiles(uniqueSpectraFiles(samplesheet_rows)),
+        workflow_props.getProperty('diaumpire.run-diaumpire') == 'true',
+        workflow_props.getProperty('diatracer.run-diatracer') == 'true'
+    ))
+
+    // iProteome (--proteome): fasta and hosted FragPipe database; --database wins
+    def proteome = resolveProteome(params)
+    checkWorkflowDatabase(workflow_props, [resolveDatabase(proteome, params), resolveFragPipeDatabase(proteome, params)])
+
+    GENERATESDRFFROMSAMPLESHEET(
+        channel.fromPath(params.input, checkIfExists: true),
+        generateSdrfBookkeeping(params, resolveOrganism(proteome, params)),
+        file(resolveFragPipeDatabase(proteome, params), glob: false, checkIfExists: true)
     )
 
-    def organism = WorkflowUtils.convertOrganismToStandardName(params.organism ?: 'Homo sapiens')
-    def db_channels = WorkflowUtils.resolveFragPipeDatabaseChannels(organism, params)
+    def db_channels = resolveFragPipeDatabaseChannels(proteome, params)
 
-    ch_workflow_file = Channel.of(
-        [[id: 'fragpipe_config'], file(params.fragpipe_workflow, checkIfExists: true)]
-    )
+    ch_workflow_file = channel.of([[id: 'fragpipe_config'], fragpipe_workflow_file])
 
-    // TMT annotation: built from samplesheet label column.
-    // Uses multi-plex TMTIntegrator format (plex\tchannel\tsample\tsample_name\tcondition\treplicate)
-    // so the IonQuant module can extract per-plex 2-column annotations.
-    // When no labels are present, ch_annotation is empty ([]) and FragPipe runs in LFQ mode.
-    ch_annotation = ch_input
-        .filter { meta, _file -> meta.label != null }
-        .map { meta, _ms_file ->
-            def plex = meta.group ?: meta.sample
-            "plex\tchannel\tsample\tsample_name\tcondition\treplicate\n${plex}\t${meta.label.replaceAll(/^TMT/, '')}\t${meta.sample}\t${meta.sample}\t${meta.condition ?: meta.sample}\t1\n"
-        }
-        .collectFile(name: 'tmt_annotation.tsv', sort: true, keepHeader: true)
+    // TMT annotation (one plex per FragPipe group, see tmtAnnotationLines) in the multi-plex
+    // TMT-Integrator format (plex\tchannel\tsample\tsample_name\tcondition\treplicate).
+    // Empty ([]) when TMT-Integrator does not run, as FragPipe then uses no annotation.
+    def tmt_annotation_lines = tmtAnnotationLines(samplesheet_rows, spectra_files, workflow_props)
+    ch_annotation = channel.fromList(tmt_annotation_lines)
+        .collectFile(name: 'tmt_annotation.tsv', newLine: true, sort: false)
         .ifEmpty([])
 
-    // Deduplicate input files: TMT samplesheets have multiple rows per file (one per channel).
-    // Only convert each .raw file once. Applies to both headless and pipeline modes.
-    // Override meta.id with spectra file basename so ThermoRawFileParser outputs unique filenames.
-    // Without this, all plexes get meta.id="sample-01" (first channel) causing staging collisions.
-    ch_unique_files = ch_input
-        .unique { _meta, spectra_file -> spectra_file.name }
-        .map { meta, spectra_file ->
-            [meta + [id: spectra_file.baseName], spectra_file]
-        }
+    ch_unique_files = channel.fromList(spectra_files)
 
     if (params.fragpipe_mode == 'headless') {
         //
         // ALL-IN-ONE MODE: Run FragPipe headless in a single process
         //
-        // Pre-converts .raw to .mzML before running FragPipe headless.
+        // FragPipe headless reads every LC-MS file as given (.raw natively).
         // Generates a manifest from the samplesheet for FragPipe's --manifest flag.
         // For TMT: generates per-experiment annotation content for auto-discovery.
         //
+        def headless_files = spectra_files.collect { meta, spectra_file -> [meta, spectra_file.name] }
 
-        // Collect samplesheet entries for manifest generation.
-        // Each entry is [group, filename] where group = condition for experiment grouping.
-        // After conversion, filenames will be .mzML — update extensions accordingly.
-        // TMT samplesheets have multiple rows per file (one per channel).
-        // Deduplicate by [condition, filename] so each file appears once in the manifest.
-        ch_manifest = ch_input
-            .map { meta, spectra_file ->
-                def fname = spectra_file.name.toLowerCase().endsWith('.raw')
-                    ? spectra_file.baseName + '.mzML'
-                    : spectra_file.name
-                [ meta.condition, fname ]
+        // Manifest rows: each spectra file with its experiment, bioreplicate, data type and FragPipe group;
+        // FRAGPIPEHEADLESS puts each TMT group's files in one directory with its annotation (headlessLayout)
+        ch_manifest_rows = channel.value(
+            headless_files.collect { meta, fname -> [fname, meta.experiment, meta.bioreplicate, meta.data_type, meta.group] }
+        )
+
+        // TMT annotation for headless mode: group, channel, sample_name per channel, the same rows as the
+        // pipeline-mode annotation; the blank group "" stays "". [] for LFQ.
+        ch_annotation_rows = channel.value(
+            tmt_annotation_lines.drop(1).collect { line ->
+                def cols = line.split('\t')
+                [cols[0], cols[1], cols[3]]
             }
-            .unique()
-            .collect(flat: false)
-            .map { entries -> generateFragpipeManifest(entries, 'DDA') }
-
-        // TMT annotation for headless mode: 3-column format (experiment\tchannel\tsample_name).
-        // FragPipe headless auto-discovers *annotation.txt files in each experiment directory.
-        // When no labels are present, annotation_content is empty and headless runs in LFQ mode.
-        // FragPipe 24.0 requires globally unique sample names across all plexes
-        // (CmdTmtIntegrator.java:205). Prefix with short plex ID from experiment name.
-        ch_annotation_content = ch_input
-            .filter { meta, _file -> meta.label != null }
-            .map { meta, _ms_file ->
-                def experiment = meta.condition ?: meta.sample
-                def channel = meta.label.replaceAll(/^TMT/, '')
-                def plexId = experiment.split('_')[-1]
-                "${experiment}\t${channel}\t${plexId}_${meta.sample}"
-            }
-            .collect()
-            .map { lines -> lines.join('\n') }
-            .ifEmpty('')
-
-        // File-to-experiment mapping using spectra file basename (matches ThermoRawFileParser output).
-        // Dedup by spectra filename keeps 1 entry per unique .raw file.
-        // Used by FRAGPIPE_HEADLESS to organize multi-plex files into per-experiment directories.
-        ch_file_experiment_map = ch_input
-            .unique { _meta, spectra_file -> spectra_file.name }
-            .map { meta, spectra_file ->
-                def experiment = meta.condition ?: meta.sample
-                "${spectra_file.baseName}.mzML\t${experiment}"
-            }
-            .collect()
-            .map { lines -> lines.join('\n') }
-            .ifEmpty('')
-
-        // Resolve database path for headless mode.
-        // Handles both raw FASTA (ch_fasta) and prebuilt philosopher database (ch_prebuilt_db).
-        // FragPipe headless handles decoy generation internally via Philosopher.
-        ch_database_file = db_channels.ch_fasta
-            .mix(db_channels.ch_prebuilt_db)
-            .map { _meta, db -> db }
+        )
 
         // Workflow file (plain path, not tuple)
-        ch_wf_file = Channel.of(file(params.fragpipe_workflow, checkIfExists: true))
+        ch_wf_file = channel.of(fragpipe_workflow_file)
 
+        // FragPipe headless never generates decoys; FRAGPIPE_HEADLESS_WF checks the database
+        // (and runs the database update first with --add_philosopher_decoy / --add_philosopher_contaminants).
         FRAGPIPE_HEADLESS_WF(
             ch_unique_files,
-            ch_database_file,
+            db_channels.ch_fasta,
+            db_channels.ch_prebuilt_db,
             ch_wf_file,
-            ch_manifest,
-            ch_annotation_content,
-            ch_file_experiment_map
+            ch_manifest_rows,
+            ch_annotation_rows
         )
     } else {
         //
         // PIPELINE MODE: Modular FragPipe subworkflows with Nextflow orchestration
         //
+        // FragPipe run-folder files (FragpipeRun.java:371-376): the manifest of the LC-MS files
+        // (TabWorkflow.manifestSave: absolute path, experiment, bioreplicate, data type; no trailing
+        // newline) and FragPipe's saved UI state. Published to <outdir>/fragpipe/ like headless mode.
+        // Read by DIA-NN's post-steps and MBG too.
+        ch_fragpipe_manifest = channel.of(generateFragpipeManifest(fragpipeManifestEntries(spectra_files)))
+            .collectFile(name: 'fragpipe-files.fp-manifest', storeDir: "${params.outdir}/fragpipe").first()
+        // fragpipe.workflow: FragPipe's saved UI state for this run, written by FragPipe's own code.
+        // FragPipe loads the manifest and drops the LC-MS files that do not exist (TabWorkflow.manifestLoad),
+        // so the task loads a manifest naming the files it stages (spectra/<name>), not the input paths
+        // (an S3 input is not a path inside the task). The database is staged too.
+        def fragpipe_workdir = file("${params.outdir}/fragpipe").toString()
+        def fragpipe_db = file(resolveFragPipeDatabase(proteome, params), glob: false, checkIfExists: true)
+        def ui_state_dir = file("${projectDir}/assets/fragpipe_ui_state", checkIfExists: true)
+        def ch_staged_manifest = channel.of(generateFragpipeManifest(fragpipeManifestEntries(spectra_files, 'spectra')))
+            .collectFile(name: 'staged.fp-manifest')
+        FRAGPIPESAVEWORKFLOW(
+            ch_staged_manifest.map { manifest ->
+                [[id: 'fragpipe'], fragpipe_workflow_file, manifest, ui_state_dir, fragpipe_db, fragpipe_workdir, spectra_files.collect { _meta, spectra_file -> spectra_file }]
+            }
+        )
+
         FRAGPIPE_PIPELINE(
             ch_unique_files,
             db_channels.ch_fasta,
             ch_workflow_file,
             db_channels.ch_prebuilt_db,
             ch_annotation,
-            []
+            ch_fragpipe_manifest
         )
+
+        // MSFragger console text in the order FragPipe runs MSFragger (FRAGPIPESDRF, FRAGPIPESECONDPASS)
+        def ch_msfragger_logs = FRAGPIPE_PIPELINE.out.msfragger_logs
+            .toList()
+            .map { items -> msfraggerConsoleLogs(items, spectra_files) }
+
+        // Write sub mzML: FragPipe's finalizer writes the second-pass workflow and manifest from
+        // fragpipe.workflow, the manifest and the console text (FragpipeRun.java:589-700); the
+        // _sub.mzML files are published to the same fragpipe/ folder (WRITESUBMZML)
+        if (workflow_props.getProperty('tab-run.write_sub_mzml', 'false').toLowerCase() == 'true') {
+            FRAGPIPESECONDPASS(
+                FRAGPIPESAVEWORKFLOW.out.workflow
+                    .combine(ch_fragpipe_manifest)
+                    .combine(ch_msfragger_logs.map { logs -> [logs] })
+                    .map { _meta, saved_workflow, manifest, logs -> [[id: 'fragpipe'], saved_workflow, manifest, logs, fragpipe_workdir] }
+            )
+        }
+
+        // FragPipe saves the SDRF template after the run when workflow.misc.save-sdrf=true
+        // (FragpipeRun.java:582-587; the checkbox defaults to on, TabRun.java:429) from the run
+        // database (FragpipeRun.java:439-442), the MSFragger console text in MSFragger's run order
+        // (msfraggerConsoleLogs) and the TMT-Integrator channel type when
+        // TMT-Integrator runs. Instruments are keyed by the file MSFragger searched
+        // (TabMsfragger.java:2388), so the manifest names are mapped to the searched names.
+        if (workflow_props.getProperty('workflow.misc.save-sdrf', 'true') == 'true') {
+            def tmt_label = workflow_props.getProperty('tmtintegrator.run-tmtintegrator') == 'true'
+                ? workflow_props.getProperty('tmtintegrator.channel_num')
+                : ''
+            def sdrf_manifest_names = spectra_files.collectEntries { meta, spectra_file -> [meta.id, spectra_file.name] }
+            def ch_sdrf_searched_names = FRAGPIPE_PIPELINE.out.searched_lcms
+                .map { meta, searched -> "${sdrf_manifest_names[meta.id]}\t${searched.name}" }
+                .collectFile(name: 'searched_files.tsv', newLine: true, sort: true)
+            FRAGPIPESDRF(
+                ch_fragpipe_manifest
+                    .combine(FRAGPIPE_PIPELINE.out.database)
+                    .combine(ch_sdrf_searched_names)
+                    .combine(ch_msfragger_logs.map { logs -> [logs] })
+                    .combine(channel.value(file("${projectDir}/assets/unimod.obo", checkIfExists: true)))
+                    .combine(FRAGPIPESAVEWORKFLOW.out.workflow.map { _meta, saved_workflow -> saved_workflow })
+                    .map { manifest, fasta, searched_names, logs, unimod_obo, workflow_file -> [[id: 'fragpipe'], workflow_file, manifest, searched_names, fasta, unimod_obo, logs, tmt_label] }
+            )
+        }
     }
 
     emit:
-    versions = Channel.empty()
+    versions      = channel.empty() // every module reports its version on the 'versions' topic
+    multiqc_files = channel.empty()
 }
 
 /*

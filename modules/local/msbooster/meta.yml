@@ -16,60 +16,107 @@ tools:
       homepage: "https://github.com/Nesvilab/MSBooster"
       documentation: "https://github.com/Nesvilab/MSBooster/wiki"
       tool_dev_url: "https://github.com/Nesvilab/MSBooster"
-      licence: ["Commercial"]
-      note: "License pre-installed in container"
+      licence: ["Apache-2.0"]
+      note: "Runs from the FragPipe image (--fragpipe_container)"
 
 input:
-  - - meta:
+  - - "meta":
         type: map
-        description: Groovy Map containing sample information
-    - pin_files:
+        description: "Groovy Map containing sample information"
+    - "pin_files":
         type: file
-        description: Percolator input file(s) from MSFragger
+        description: "MSFragger PIN file(s)"
         pattern: "*.pin"
-    - mzml_files:
+    - "mzml_files":
         type: file
-        description: mzML spectral file(s)
-        pattern: "*.mzML"
-  - - params_file:
-        type: file
-        description: |
-          Full MSBooster params file (key = value format). Pass [] when not using.
-          When provided, module operates in params-file mode (matching FragPipe calling convention).
-        pattern: "*.{config,txt}"
-  - - fragger_params:
-        type: file
-        description: |
-          MSFragger params file for modification definitions. Pass [] when not using.
-          MSBooster reads mod definitions from this file for rescoring (CmdMSBooster.java:171).
-        pattern: "*.params"
-  - - has_ion_mobility:
-        type: boolean
-        description: |
-          Whether input data has ion mobility (e.g., Bruker timsTOF .d files).
-          Used to auto-detect useIM when not set in params file.
-
+        description: "FragPipe's LC-MS directory content for those PINs (LC-MS files plus the MSFragger mzML outputs); MSBooster matches <base>.mzML / <base>_uncalibrated.mzML / .mgf itself"
+        pattern: "*"
+  - "params_text":
+      type: string
+      description: "Workflow-derived msbooster params (PARSEFRAGPIPEWORKFLOW msbooster.config text)"
+  - "fragger_params":
+      type: file
+      description: "MSFragger params file MSBooster reads (CmdMSBooster.java:134-149)"
+      pattern: "*.params"
+  - "library":
+      type: file
+      description: "The file of msbooster.spectral-library-path (spectraPredFile/RTPredFile/IMPredFile; CmdMSBooster.java:180-184), staged as spectral_library/<name>; empty list without one"
+      pattern: "*"
+  - "has_ion_mobility":
+      type: boolean
+      description: "True when any LC-MS file of the run is timsTOF data"
+  - "threads":
+      type: integer
+      description: "numThreads of params_text (workflow.threads / --fragpipe_threads); the task asks for that many cores"
+  - "pin_dirs":
+      type: list
+      description: "FragPipe group of each PIN (same order as pin_files; '' for the blank group); MSBooster is given <group>/<pin>"
 output:
   results_dir:
-    - - meta:
+    - - "meta":
           type: map
-          description: Groovy Map containing sample information
+          description: "Groovy Map containing sample information"
       - "${prefix}":
           type: directory
-          description: Directory containing rescored PIN files and logs
+          description: "Directory with the rescored PINs, msbooster_params.txt and the MSBooster log"
+          pattern: "${prefix}"
   pin_edited:
-    - - meta:
+    - - "meta":
           type: map
-          description: Groovy Map containing sample information
+          description: "Groovy Map containing sample information"
       - "${prefix}/*.pin":
           type: file
-          description: Rescored PIN files with additional features (renamed from *_edited.pin)
-          pattern: "*.pin"
+          description: "<base>_edited.pin, the rescored PIN MSBooster writes"
+          pattern: "*_edited.pin"
+  predictions:
+    - - "meta":
+          type: map
+          description: "Groovy Map containing sample information"
+      - "${booster_dir}":
+          type: directory
+          description: "MSBooster/ under the PINs' deepest common directory: spectraRT.tsv, spectraRT_full.tsv, spectraRT.predicted.bin (FragPipe-PDV) and MSBooster_plots/"
+          pattern: "MSBooster"
+  versions_msbooster:
+    - - "${task.process}":
+          type: string
+          description: The name of the process
+      - "msbooster":
+          type: string
+          description: The name of the tool
+      - "cat .msbooster_version":
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_fragpipe:
+    - - "${task.process}":
+          type: string
+          description: The name of the process
+      - "fragpipe":
+          type: string
+          description: The name of the tool
+      - "cat .fragpipe_version":
+          type: eval
+          description: The expression to obtain the version of the tool
+
+topics:
   versions:
-    - versions.yml:
-        type: file
-        description: File containing software versions
-        pattern: "versions.yml"
+    - - "${task.process}":
+          type: string
+          description: The name of the process
+      - "msbooster":
+          type: string
+          description: The name of the tool
+      - "cat .msbooster_version":
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - "${task.process}":
+          type: string
+          description: The name of the process
+      - "fragpipe":
+          type: string
+          description: The name of the tool
+      - "cat .fragpipe_version":
+          type: eval
+          description: The expression to obtain the version of the tool
 
 authors:
   - "@dongzehe"

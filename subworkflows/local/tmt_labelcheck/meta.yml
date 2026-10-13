@@ -9,14 +9,19 @@ keywords:
   - labeling-efficiency
   - tandem-mass-tag
 components:
-  - parse/fragpipe/workflow
+  - parsefragpipeworkflow
   - msfragger
-  - tmt/labelcheck/analyze
+  - tmtlabelcheckanalyze
   - fragpipe_database
   - fragpipe_convert
   - fragpipe_validate
   - fragpipe_inference
   - fragpipe_quant
+  - checkcentroid
+  - fragpipe_matched_fragments_inputs
+  - fragpipe_philosopher_quant
+  - fragpipe_search
+  - writesubmzml
 input:
   - ch_file:
       type: channel
@@ -38,7 +43,7 @@ input:
       type: value
       description: |
         TMT type string specifying the TMT plex (e.g., TMT6, TMT10, TMT16, TMTPRO).
-        Used by TMT_LABELCHECK_ANALYZE to determine which mass to search for in results.
+        Used by TMTLABELCHECKANALYZE to determine which mass to search for in results.
   - ch_decoy_db:
       type: channel
       description: |
@@ -106,11 +111,26 @@ output:
       description: |
         Combined labeling efficiency summary from IonQuant aggregate analysis.
         Structure: [ val(meta), path(labeling_summary.tsv) ]
-  - versions:
-      type: file
+  - searched_lcms:
+      type: channel
       description: |
-        File containing software versions.
-        Structure: [ path(versions.yml) ]
+        The LC-MS file MSFragger searched.
+        Structure: [ val(meta), path(file) ]
+  - database:
+      type: channel
+      description: |
+        The run database (decoys, contaminants).
+        Structure: path(fasta)
+  - msfragger_logs:
+      type: channel
+      description: |
+        MSFragger console output.
+        Structure: [ val(meta), path(log) ]
+  - versions:
+      type: channel
+      description: |
+        Software versions (topic tuples).
+        Structure: [ val(process), val(tool), val(version) ]
 authors:
   - "@dongzehe"
 maintainers:

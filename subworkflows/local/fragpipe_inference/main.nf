@@ -2,90 +2,207 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     FRAGPIPE_INFERENCE SUBWORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Protein inference and FDR filtering.
+    Protein inference, FDR filtering and the multi-experiment report, as
+    FragpipeRun.java:1670-1810 configures them.
 
     Modules:
-    - PROTEINPROPHET (aggregate protein inference)
-    - PHILOSOPHER_FILTER (per-sample FDR filtering and reporting)
+    - PROTEINPROPHET (all groups together, CmdProteinProphet)
+    - PHILOSOPHERFILTER (DbAnnotate + filter + report per group, CmdPhilosopherFilter)
+    - IPROPHET (CmdIprophet) and PHILOSOPHERABACUS (CmdPhilosopherAbacus)
 
-    Execution: Mixed (aggregate → per-sample)
+    Every tool sees FragPipe's work-dir layout: <group>/<file>, the blank group in the root.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { PROTEINPROPHET    } from '../../../modules/local/philosopher/proteinprophet/main'
-include { PHILOSOPHER_FILTER } from '../../../modules/local/philosopher/filter/main'
-include { shouldRunTool; getToolArgs; getToolReportArgs } from '../utils_nfcore_msproteomics_pipeline'
+include { PROTEINPROPHET                                   } from '../../../modules/local/philosopher/proteinprophet/main'
+include { PHILOSOPHERFILTER } from '../../../modules/local/philosopherfilter/main'
+include { PHILOSOPHERFILTER as PHILOSOPHERFILTER_LATER } from '../../../modules/local/philosopherfilter/main'
+include { IPROPHET                                         } from '../../../modules/local/philosopher/iprophet/main'
+include { PHILOSOPHERABACUS } from '../../../modules/local/philosopherabacus/main'
+include { fpopCoadaptrMeta; shouldRunTool; getToolArgs; getToolField; getDecoyTag; requireToolField; fragpipeGroupDir; groupResultsDir; fragpipeLcmsOrderKey; compareFragpipeLcmsKeys; sortByRank; fragpipeGroupPath; fragpipeQuantLabels } from '../utils_nfcore_msproteomics_pipeline/fragpipe_utils'
 
 workflow FRAGPIPE_INFERENCE {
     take:
-    ch_pepxml        // channel: [ val(meta), path(pepxml) ] - all samples
+    ch_pepxml        // channel: [ val(meta), path(pepxml(s)) ] - validated pepXMLs (sharedPepxmlFiles)
+    ch_pepxml_group  // channel: [ val(meta), path(pepxml(s)) ] - every pepXML of a group dir (validated + PTMProphet)
     ch_fasta         // channel: path(fasta) - value channel for database
     ch_tool_configs  // channel: val(tool_configs_map) - parsed JSON config
     aggregate_meta   // val(meta) for aggregate outputs
 
     main:
 
-    //
-    // STEP 1: ProteinProphet (aggregate protein inference)
-    // Combines all pepXML files into a single protein-level analysis
-    //
-    ch_all_pepxml = ch_pepxml
-        .map { meta, pepxml -> pepxml }
-        .collect(sort: true)
-        .map { items -> [items] }  // Wrap to prevent combine from flattening
+    // Decoy tag (workflow database.decoy-tag) - single source for every decoy-aware tool
+    ch_decoy_tag = ch_tool_configs.map { configs -> getDecoyTag(configs) }
 
-    ch_for_proteinprophet = ch_tool_configs
-        .filter { configs -> shouldRunTool(configs, 'proteinprophet') }
-        .combine(ch_all_pepxml)
-        .map { configs, pepxml_wrapped ->
-            def args = getToolArgs(configs, 'proteinprophet')
-            [aggregate_meta, pepxml_wrapped, args]
+    // sharedPepxmlFiles in FragPipe order (TreeMap of InputLcmsFile, InputLcmsFile.compareTo):
+    // [ordered files, their work-dir locations, first group]
+    ch_shared = ch_pepxml
+        .toList()
+        .map { items ->
+            def ordered = items.sort(false) { a, b -> compareFragpipeLcmsKeys(fragpipeLcmsOrderKey(a[0]), fragpipeLcmsOrderKey(b[0])) }
+            def entries = ordered.collectMany { meta, files -> sortByRank(files).collect { f -> [f, fragpipeGroupPath(meta.group, f.name)] } }
+                .unique { entry -> entry[1] }
+            [entries.collect { e -> e[0] }, entries.collect { e -> e[1] }, ordered ? ordered[0][0].group : null]
         }
 
-    PROTEINPROPHET(ch_for_proteinprophet)
-
     //
-    // STEP 2: Philosopher Filter (per-group FDR filtering)
-    // Groups pepXMLs by meta.group for fractionation support:
-    //   Non-fractionated: meta.group == meta.id → each group has one pepXML (same as per-sample)
-    //   Fractionated: meta.group groups fractions → filter runs on all fractions together
-    // This matches FragPipe's CmdPhilosopherFilter.java:60-122 which iterates
-    // mapGroupsToProtxml.entrySet() (one filter invocation per experiment group).
+    // STEP 1: ProteinProphet over every group's pepXMLs (CmdProteinProphet.java:121-224)
     //
-    ch_pepxml_grouped = ch_pepxml
-        .map { meta, pepxml -> [meta.group ?: meta.id, pepxml] }
-        .groupTuple(sort: true)
-        .map { group, pepxmls ->
-            // Flatten nested lists: each sample may contribute a list of ranked pepXMLs
-            // (e.g., DDA+ ion mobility: interact-sample_rank1.pep.xml through _rank5.pep.xml).
-            // groupTuple wraps each emission in a list, so [[rank1, rank2, ...]] needs flattening.
-            def flat_pepxmls = pepxmls.flatten()
-            [[id: group, group: group], flat_pepxmls]
-        }
-
-    ch_for_filter = ch_pepxml_grouped
-        .combine(PROTEINPROPHET.out.protxml.map { _meta, protxml -> protxml })
+    ch_for_proteinprophet = ch_shared
         .combine(ch_tool_configs)
-        .filter { meta, pepxmls, protxml, configs -> shouldRunTool(configs, 'filter') }
-        .map { meta, pepxmls, protxml, configs ->
-            def filter_args = getToolArgs(configs, 'filter')
-            // --razor is enforced by parse_fragpipe_workflow.py (matching CmdPhilosopherFilter.java:84-114)
-            def report_args = getToolReportArgs(configs, 'filter')
-            [meta, pepxmls, protxml, filter_args, report_args]
+        .filter { files, _paths, _first, configs -> files && shouldRunTool(configs, 'proteinprophet') }
+        .map { files, paths, _first, configs -> [aggregate_meta, files, paths, getToolArgs(configs, 'proteinprophet')] }
+
+    PROTEINPROPHET(ch_for_proteinprophet, ch_fasta)
+
+    //
+    // STEP 2: DbAnnotate + filter + report per group (FragpipeRun.java:1688-1780). Groups after the
+    // first read the first group's workspace (--dbbin/--probin, CmdPhilosopherFilter.java:103-113).
+    //
+    ch_groups = ch_pepxml_group
+        .toList()
+        .map { items -> [items] }  // keep the list one element through combine
+        .combine(ch_shared.map { _files, _paths, first -> first })
+        .combine(ch_tool_configs)
+        .filter { _items, first, configs -> first != null && shouldRunTool(configs, 'filter') }
+        .flatMap { items, first, configs ->
+            def by_group = items.groupBy { item -> item[0].group }
+            def report_args = by_group.size() == 1 ? requireToolField(configs, 'filter', 'report_args_single_group') : getToolField(configs, 'filter', 'report_args')
+            def dont_use = requireToolField(configs, 'filter', 'dont_use_protxml')
+            // FreeQuant/Labelquant are followed by PHILOSOPHERREPORT, which writes the final tables
+            def report_after_quant = shouldRunTool(configs, 'freequant') || shouldRunTool(configs, 'labelquant')
+            by_group.collect { group, group_items ->
+                def files = group_items.collectMany { item -> [item[1]].flatten() }.unique { f -> f.name }
+                // FPOP coADAPTr replaces the group's final psm.tsv (filter's, or report's after quant);
+                // FragPipe exports matched fragments into the final psm.tsv (FRAGPIPE_MATCHED_FRAGMENTS),
+                // which then replaces the report's psm.tsv in the published results.
+                def group_meta = [id: fragpipeGroupDir(group), group: group, report_after_quant: report_after_quant,
+                                  export_matched_fragments: shouldRunTool(configs, 'exportmatchedfragments')]
+                [fpopCoadaptrMeta(group_meta, configs, ['filter', 'report']), files, first,
+                 getToolArgs(configs, 'filter'), dont_use, report_args]
+            }
         }
 
-    PHILOSOPHER_FILTER(ch_for_filter, ch_fasta)
+    ch_protxml_for_filter = PROTEINPROPHET.out.protxml.map { _meta, protxml -> [protxml] }
+        .ifEmpty([[]])
+
+    ch_filter_rows = ch_groups
+        .combine(ch_protxml_for_filter)
+        .map { meta, files, first, filter_args, dont_use, report_args, protxml ->
+            def protxmls = [protxml].flatten().findAll { f -> f }
+            if (!dont_use && !protxmls) {
+                error("FRAGPIPE_INFERENCE: the filter uses the protXML but ProteinProphet produced none")
+            }
+            [meta, files, dont_use ? [] : protxmls[0], first, filter_args, dont_use, report_args]
+        }
+        .branch { row ->
+            first: row[0].group == row[3]
+            later: true
+        }
+
+    PHILOSOPHERFILTER(
+        ch_filter_rows.first.map { meta, files, protxml, first, filter_args, dont_use, report_args ->
+            [meta, files, protxml, [], first, filter_args, dont_use, report_args]
+        },
+        ch_fasta,
+        ch_decoy_tag
+    )
+
+    PHILOSOPHERFILTER_LATER(
+        ch_filter_rows.later
+            .combine(PHILOSOPHERFILTER.out.workspace.map { _meta, workspace -> workspace })
+            .map { meta, files, protxml, first, filter_args, dont_use, report_args, first_workspace ->
+                [meta, files, protxml, first_workspace, first, filter_args, dont_use, report_args]
+            },
+        ch_fasta,
+        ch_decoy_tag
+    )
+
+    ch_filter_files = PHILOSOPHERFILTER.out.results_files.mix(PHILOSOPHERFILTER_LATER.out.results_files)
+    ch_workspaces = PHILOSOPHERFILTER.out.workspace.mix(PHILOSOPHERFILTER_LATER.out.workspace)
+
+    //
+    // STEP 3: iProphet and Abacus for more than one group without label-free IonQuant
+    // (FragpipeRun.java:1782-1809).
+    // Exemption from FragPipe (user decision):
+    // Abacus --reprint also runs when SAINTexpress is on and no IonQuant run writes the REPRINT tables,
+    // although FragPipe's own conditions would not run it; its outputs then exist only in the pipeline.
+    //
+    ch_report_groups = ch_workspaces
+        .toList()
+        .map { items -> [items] }  // keep the list one element through combine
+        .combine(ch_tool_configs)
+        .map { workspaces, configs ->
+            // mapGroupsToProtxml is a TreeMap of LcmsFileGroup ordered by name (LcmsFileGroup.java:46-48)
+            def ordered = workspaces.sort(false) { a, b -> a[0].group <=> b[0].group }
+            def ionquant_reprint = shouldRunTool(configs, 'ionquant') || shouldRunTool(configs, 'ionquant_ms1') || shouldRunTool(configs, 'ionquant_isobaric')
+            def abacus = ordered.size() > 1 && (shouldRunTool(configs, 'abacus') || (shouldRunTool(configs, 'saintexpress') && !ionquant_reprint))
+            [ordered, abacus, abacus && shouldRunTool(configs, 'iprophet'), configs]
+        }
+
+    ch_for_iprophet = ch_report_groups
+        .filter { _ordered, _abacus, iprophet, _configs -> iprophet }
+        .combine(ch_shared)
+        .map { _ordered, _abacus, _iprophet, configs, files, paths, _first -> [aggregate_meta, files, paths, getToolArgs(configs, 'iprophet')] }
+
+    IPROPHET(ch_for_iprophet)
+
+    ch_for_abacus = ch_report_groups
+        .filter { _ordered, abacus, _iprophet, _configs -> abacus }
+        // Without ProteinProphet FragPipe still configures Abacus on combined.prot.xml of the work dir
+        // (sharedMapGroupsToProtxml is refilled outside isRun(), FragpipeRun.java:1684-1685); Philosopher
+        // then fails on the missing file when --protein reads it (philosopher lib/aba/pro.go).
+        .combine(PROTEINPROPHET.out.protxml.map { _meta, protxml -> [protxml] }.ifEmpty([[]]))
+        .combine(IPROPHET.out.pepxml.map { _meta, pepxml -> [pepxml] }.ifEmpty([[]]))
+        .map { ordered, _abacus, _iprophet, configs, protxml_item, combined ->
+            def protxml = [protxml_item].flatten().findAll { f -> f }
+            def combined_pepxml = [combined].flatten().findAll { f -> f }
+            def abacus_opts = requireToolField(configs, 'abacus', 'args').tokenize()
+            if (abacus_opts.contains('--peptide') && !combined_pepxml) {
+                error("FRAGPIPE_INFERENCE: abacus --peptide reads combined.pep.xml, which only iProphet writes (philosopher lib/aba/pep.go), and iProphet did not run")
+            }
+            if (abacus_opts.contains('--protein') && !protxml) {
+                error("FRAGPIPE_INFERENCE: abacus --protein reads combined.prot.xml (philosopher lib/aba/pro.go: \"cannot find combined.prot.xml file\"), but ProteinProphet did not run")
+            }
+            def label = getToolField(configs, 'abacus', 'labels_channel_num')
+            def plex = 0
+            if (label) {
+                if (fragpipeQuantLabels()[label] == null) {
+                    error("FRAGPIPE_INFERENCE: unknown TMT label ${label} for abacus --plex")
+                }
+                plex = fragpipeQuantLabels()[label].size()
+            }
+            def abacus_args = requireToolField(configs, 'abacus', 'args')
+            [aggregate_meta, ordered.collect { item -> item[1] }, ordered.collect { item -> item[0].group }, protxml ? protxml[0] : [],
+             combined_pepxml ? combined_pepxml[0] : [], abacus_args, plex]
+        }
+
+    PHILOSOPHERABACUS(ch_for_abacus)
+
+    ch_results_dir = ch_filter_files.map { meta, files -> [meta, groupResultsDir(files)] }
 
     emit:
-    protxml      = PROTEINPROPHET.out.protxml                  // channel: [ val(meta), path(combined.prot.xml) ]
-    results_dir  = PHILOSOPHER_FILTER.out.results_dir          // channel: [ val(meta), path(results_dir) ] per-sample
-    psms         = PHILOSOPHER_FILTER.out.psms                 // channel: [ val(meta), path(psm.tsv) ]
-    peptides     = PHILOSOPHER_FILTER.out.peptides             // channel: [ val(meta), path(peptide.tsv) ]
-    proteins     = PHILOSOPHER_FILTER.out.proteins             // channel: [ val(meta), path(protein.tsv) ]
-    ions         = PHILOSOPHER_FILTER.out.ions                 // channel: [ val(meta), path(ion.tsv) ] optional
-    pepxml       = ch_pepxml                                   // channel: [ val(meta), path(pepxml) ] - ProteinProphet doesn't modify pepXML
-    versions     = PROTEINPROPHET.out.versions_philosopher
+    protxml          = PROTEINPROPHET.out.protxml                  // channel: [ val(meta), path(combined.prot.xml) ]
+    results_dir      = ch_results_dir                              // channel: [ val(meta), path(results_dir) ] per FragPipe group
+    workspace        = ch_workspaces                               // channel: [ val(meta), path(.meta) ] per FragPipe group
+    psms             = PHILOSOPHERFILTER.out.psms.mix(PHILOSOPHERFILTER_LATER.out.psms)          // channel: [ val(meta), path(psm.tsv) ]
+    peptides         = PHILOSOPHERFILTER.out.peptides.mix(PHILOSOPHERFILTER_LATER.out.peptides)  // channel: [ val(meta), path(peptide.tsv) ]
+    proteins         = PHILOSOPHERFILTER.out.proteins.mix(PHILOSOPHERFILTER_LATER.out.proteins)  // channel: [ val(meta), path(protein.tsv) ]
+    ions             = PHILOSOPHERFILTER.out.ions.mix(PHILOSOPHERFILTER_LATER.out.ions)          // channel: [ val(meta), path(ion.tsv) ] optional
+    pepxml           = ch_pepxml                                   // channel: [ val(meta), path(pepxml) ] - ProteinProphet doesn't modify pepXML
+    combined_pepxml  = IPROPHET.out.pepxml                         // channel: [ val(meta), path(combined.pep.xml) ]
+    reprint_spc      = PHILOSOPHERABACUS.out.reprint_spc          // channel: [ val(meta), path(reprint.spc.tsv) ]
+    reprint_int      = PHILOSOPHERABACUS.out.reprint_int          // channel: [ val(meta), path(reprint.int.tsv) ]
+    combined_protein = PHILOSOPHERABACUS.out.combined_protein     // channel: [ val(meta), path(combined_protein.tsv) ]
+    combined_peptide = PHILOSOPHERABACUS.out.combined_peptide     // channel: [ val(meta), path(combined_peptide.tsv) ]
+    versions         = PROTEINPROPHET.out.versions_philosopher
         .mix(PROTEINPROPHET.out.versions_fragpipe)
-        .mix(PHILOSOPHER_FILTER.out.versions_philosopher)
-        .mix(PHILOSOPHER_FILTER.out.versions_fragpipe)
+        .mix(PHILOSOPHERFILTER.out.versions_philosopher)
+        .mix(PHILOSOPHERFILTER.out.versions_fragpipe)
+        .mix(PHILOSOPHERFILTER_LATER.out.versions_philosopher)
+        .mix(PHILOSOPHERFILTER_LATER.out.versions_fragpipe)
+        .mix(IPROPHET.out.versions_philosopher)
+        .mix(IPROPHET.out.versions_fragpipe)
+        .mix(PHILOSOPHERABACUS.out.versions_philosopher)
+        .mix(PHILOSOPHERABACUS.out.versions_fragpipe)
 }

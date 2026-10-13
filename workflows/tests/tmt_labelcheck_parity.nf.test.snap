@@ -1,0 +1,61 @@
+{
+    "RC-03 TMT per-channel samplesheet - one MSFRAGGER task per raw file": {
+        "content": [
+            {
+                "0": [
+                    
+                ],
+                "1": [
+                    
+                ],
+                "multiqc_files": [
+                    
+                ],
+                "versions": [
+                    
+                ]
+            },
+            [
+                "MSPROTEOMICS_TMT_LABELCHECK:FRAGPIPESAVEWORKFLOW (fragpipe)",
+                "MSPROTEOMICS_TMT_LABELCHECK:FRAGPIPESDRF (fragpipe)",
+                "MSPROTEOMICS_TMT_LABELCHECK:GENERATESDRFFROMSAMPLESHEET (generate_sdrf)",
+                "MSPROTEOMICS_TMT_LABELCHECK:TMT_LABELCHECK:CHECKCENTROID (plex1)",
+                "MSPROTEOMICS_TMT_LABELCHECK:TMT_LABELCHECK:FRAGPIPE_DATABASE:CHECKDBCONFIG (database)",
+                "MSPROTEOMICS_TMT_LABELCHECK:TMT_LABELCHECK:FRAGPIPE_INFERENCE:PHILOSOPHERFILTER (plex1)",
+                "MSPROTEOMICS_TMT_LABELCHECK:TMT_LABELCHECK:FRAGPIPE_INFERENCE:PHILOSOPHERFILTER_LATER (plex2)",
+                "MSPROTEOMICS_TMT_LABELCHECK:TMT_LABELCHECK:FRAGPIPE_INFERENCE:PROTEINPROPHET (tmt_labelcheck)",
+                "MSPROTEOMICS_TMT_LABELCHECK:TMT_LABELCHECK:FRAGPIPE_QUANT:IONQUANT (tmt_labelcheck_combined)",
+                "MSPROTEOMICS_TMT_LABELCHECK:TMT_LABELCHECK:FRAGPIPE_SEARCH:MSFRAGGER (plex1)",
+                "MSPROTEOMICS_TMT_LABELCHECK:TMT_LABELCHECK:FRAGPIPE_SEARCH:MSFRAGGER (plex2)",
+                "MSPROTEOMICS_TMT_LABELCHECK:TMT_LABELCHECK:FRAGPIPE_SEARCH:WRITE_FRAGGER_PARAMS (fragger)",
+                "MSPROTEOMICS_TMT_LABELCHECK:TMT_LABELCHECK:FRAGPIPE_VALIDATE:PERCOLATOR (plex1)",
+                "MSPROTEOMICS_TMT_LABELCHECK:TMT_LABELCHECK:FRAGPIPE_VALIDATE:PERCOLATOR (plex2)",
+                "MSPROTEOMICS_TMT_LABELCHECK:TMT_LABELCHECK:PARSEFRAGPIPEWORKFLOW (labelcheck_workflow)",
+                "MSPROTEOMICS_TMT_LABELCHECK:TMT_LABELCHECK:TMTLABELCHECKANALYZE (tmt_labelcheck)",
+                "MSPROTEOMICS_TMT_LABELCHECK:TMT_LABELCHECK:TMTLABELCHECKANALYZE_IONQUANT (tmt_labelcheck_combined)"
+            ]
+        ],
+        "timestamp": "2026-10-14T00:48:51.923418744",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "Write sub mzML - label check writes _sub.mzML and the second-pass files to fragpipe/": {
+        "content": [
+            [
+                "plex1_sub.mzML",
+                "plex2_sub.mzML"
+            ],
+            [
+                "<fragpipe>/plex1_sub.mzML\tplex1\t\tDDA",
+                "<fragpipe>/plex2_sub.mzML\tplex2\t\tDDA"
+            ]
+        ],
+        "timestamp": "2026-10-11T07:41:12.142840393",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

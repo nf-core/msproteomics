@@ -1,0 +1,72 @@
+{
+    "philosopher_database - local FASTA": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "erwinia_test"
+                    },
+                    "erwinia_test_philosopher.fasta:md5,5c424db03e0132905f6abcb80858b8ff"
+                ]
+            ],
+            [
+                [
+                    "PHILOSOPHERDATABASE",
+                    "philosopher",
+                    "5.1.3"
+                ]
+            ],
+            [
+                [
+                    "PHILOSOPHERDATABASE",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-07T10:42:55.469765558"
+    },
+    "philosopher_database - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "test_philosopher.fasta:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "philosopher_database.log:md5,eaa9e2e09ce15319f63761a484728b56"
+                ]
+            ],
+            [
+                [
+                    "PHILOSOPHERDATABASE",
+                    "philosopher",
+                    "5.1.3"
+                ]
+            ],
+            [
+                [
+                    "PHILOSOPHERDATABASE",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-07T22:03:29.452754175"
+    }
+}

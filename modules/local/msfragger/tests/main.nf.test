@@ -21,15 +21,14 @@ nextflow_process {
                 mzml_file.text = "mock"
                 fasta_file.text = ">sp|P00001|TEST\\nMKTEST"
 
-                // Four inputs: tuple [meta, mzml], path fasta, path params_file, path pepindex
+                // tuple [meta, mzml, params name, params text, fasta]
                 input[0] = channel.of([
                     [ id: 'test_sample' ],
-                    mzml_file
+                    mzml_file,
+                    'fragger.params',
+                    file("\${projectDir}/tests/fixtures/fragger_params/TMT-labelcheck-304/fragger.params", checkIfExists: true).text,
+                    fasta_file
                 ])
-                input[1] = fasta_file
-                input[2] = []  // params_file (CLI mode, uses ext.args)
-                input[3] = []  // pepindex (no prebuilt index)
-                input[4] = []  // msfragger_dir (use auto-discovery)
                 """
             }
         }
@@ -41,14 +40,44 @@ nextflow_process {
                     process.out.pepxml,
                     process.out.pin,
                     process.out.tsv,
-                    process.out.calibrated_mzml,
-                    process.out.uncalibrated_mzml,
+                    process.out.lcms_files,
                     process.out.results_dir,
                     process.out.log,
                     process.out.license_agreement,
                     process.out.versions_msfragger,
                     process.out.versions_fragpipe
                 ).match() }
+            )
+        }
+    }
+
+    // Non-DDA params write ranked pepXMLs <stem>_rank1..N.pepXML, N = output_report_topN
+    // (CmdMsfragger.java:103-126, e.g. DIA with output_report_topN_dia1 = 5).
+    test("msfragger - stub DIA params write ranked pepXMLs") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def mzml_file = file("\${workDir}/sample_dia.mzML")
+                def fasta_file = file("\${workDir}/test.fasta")
+                mzml_file.text = "mock"
+                fasta_file.text = ">sp|P00001|TEST\\nMKTEST"
+                def params_text = file("\${projectDir}/tests/fixtures/fragger_params/TMT-labelcheck-304/fragger.params", checkIfExists: true).text
+                    .replaceFirst(/(?m)^data_type = 0/, 'data_type = 1').replaceFirst(/(?m)^output_report_topN = 1/, 'output_report_topN = 3')
+                input[0] = channel.of([[ id: 'test_dia' ], mzml_file, 'fragger_dia.params', params_text, fasta_file])
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert process.out.pepxml[0][1].collect { f -> file(f).name } == ['sample_dia_rank1.pepXML', 'sample_dia_rank2.pepXML', 'sample_dia_rank3.pepXML'] },
+                // the params are written under FragPipe's name of the data type's set (CmdMsfragger.java:444-447)
+                { assert new File(process.out.results_dir[0][1].toString()).list().findAll { n -> n.endsWith('.params') } == ['fragger_dia.params'] },
+                { assert snapshot(process.out.pepxml, process.out.pin).match() }
             )
         }
     }
@@ -60,27 +89,65 @@ nextflow_process {
         when {
             process {
                 """
-                // Five inputs: tuple [meta, mzml], path fasta, path params_file, path pepindex, path msfragger_dir
+                // tuple [meta, mzml, params name, params text, fasta]
                 input[0] = channel.of([
                     [ id: 'msfragger_test' ],
-                    file("\${params.pipelines_testdata_base_path}/spectra/tmt_erwinia_subset.mzML", checkIfExists: true)
+                    file("\${params.pipelines_testdata_base_path}/spectra/tmt_erwinia_subset.mzML", checkIfExists: true),
+                    'fragger.params',
+                    file("\${projectDir}/tests/fixtures/fragger_params/TMT-labelcheck-304/fragger.params", checkIfExists: true).text,
+                    file("\${params.pipelines_testdata_base_path}/databases/erwinia_carotovora.fasta", checkIfExists: true)
                 ])
-                input[1] = file("\${params.pipelines_testdata_base_path}/databases/erwinia_carotovora.fasta", checkIfExists: true)
-                input[2] = []  // params_file (CLI mode, uses ext.args)
-                input[3] = []  // pepindex (no prebuilt index)
-                input[4] = []  // msfragger_dir (use auto-discovery)
                 """
             }
         }
 
         then {
+            // -Duser.home=$PWD: the container user has no passwd entry, so the JVM home was "?" in the task dir
+            def question_dirs = []
+            new File("${launchDir}/work").eachFileRecurse { f -> if (f.name == '?') question_dirs << f.path }
+            def scripts = []
+            new File("${launchDir}/work").eachFileRecurse { f -> if (f.name == '.command.sh') scripts << f.text }
             assertAll (
                 { assert process.success },
+                { assert scripts.any { sh -> sh.contains('"java" "-Duser.home=${PWD}" "-jar"') } : 'MSFragger command line lacks -Duser.home' },
+                { assert question_dirs == [] : question_dirs },
                 { assert snapshot(
                     process.out.pepxml.collect { meta, f -> file(f).name },
                     process.out.versions_msfragger,
                     process.out.versions_fragpipe
                 ).match() }
+            )
+        }
+    }
+
+    // Thermo .raw reaches MSFragger as a real file, not Nextflow's staged symlink: batmass-io reads
+    // it under Mono, which sizes a symlink as the link itself
+    test("msfragger - stub staged RAW symlink is replaced by the file") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def raw_file = file("\${workDir}/run1.raw")
+                raw_file.text = "raw bytes"
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">sp|P00001|TEST\\nMKTEST"
+                input[0] = channel.of([[ id: 'run1' ], raw_file, 'fragger.params', file("\${projectDir}/tests/fixtures/fragger_params/TMT-labelcheck-304/fragger.params", checkIfExists: true).text, fasta_file])
+                """
+            }
+        }
+
+        then {
+            // the task's staged input: <workDir>/<2 hex>/<30 hex>/run1.raw
+            def staged = java.nio.file.Files.walk(java.nio.file.Paths.get(workDir.toString()))
+                .filter { p -> p.toString() ==~ /.*\/[0-9a-f]{2}\/[0-9a-f]{30}\/run1\.raw/ }
+                .findFirst().get()
+            assertAll(
+                { assert process.success },
+                { assert java.nio.file.Files.isRegularFile(staged, java.nio.file.LinkOption.NOFOLLOW_LINKS) },
+                { assert staged.text == 'raw bytes' },
+                { assert process.out.lcms_files.collect { item -> file(item[1]).name } == ['run1_uncalibrated.mzML'] }
             )
         }
     }

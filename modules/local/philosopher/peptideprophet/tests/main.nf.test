@@ -8,38 +8,60 @@ nextflow_process {
     tag "modules_nfcore"
     tag "peptideprophet"
 
-    test("peptideprophet - stub") {
+    test("peptideprophet - stub per-file mode") {
         options "-stub"
         tag "stub"
-        tag "integration"
 
         when {
             process {
                 """
-                def pepxml_file = file("\${workDir}/test.pepXML")
-                def mzml_file = file("\${workDir}/test.mzML")
-                def fasta_file = file("\${workDir}/test.fasta")
-                def config_file = file("\${workDir}/peptide-prophet.config")
-                pepxml_file.text = "mock"
-                mzml_file.text = "mock"
-                fasta_file.text = ">sp|P00001|TEST\\nMKTEST"
-                config_file.text = "peptideprophet=--decoyprobs --ppm --accmass --nonparam --expectscore"
-
-                input[0] = channel.of([[ id: 'test_sample' ], pepxml_file, mzml_file, config_file])
-                input[1] = fasta_file
+                ['s1.pepXML', 's1.mzML', 'db.fasta'].each { n -> file("\${workDir}/\${n}").text = 'mock' }
+                input[0] = channel.of([[ id: 's1', group: 'A' ], file("\${workDir}/s1.pepXML"), [file("\${workDir}/s1.mzML")], ['s1.mzML'],
+                    '--decoyprobs --ppm --accmass --nonparam --expectscore', false])
+                input[1] = file("\${workDir}/db.fasta")
+                input[2] = 'DECOY_'
                 """
             }
         }
 
         then {
+            def log_lines = new File(process.out.results_dir.get(0).get(1), 'peptideprophet.log').readLines()
+            def phi = '/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9'
             assertAll (
                 { assert process.success },
-                { assert snapshot(
-                    process.out.results_dir,
-                    process.out.pepxml,
-                    process.out.versions_philosopher,
-                    process.out.versions_fragpipe
-                ).match() }
+                // CmdPeptideProphet.java:229,264-275: run in <group dir>/fragpipe-<pepxml>-temp on ../<pepxml>
+                { assert log_lines[0] == "cd A/fragpipe-s1.pepXML-temp; ${phi} peptideprophet --decoyprobs --ppm --accmass --nonparam --expectscore --decoy DECOY_ --database {CWD}/db.fasta ../s1.pepXML" : log_lines[0] },
+                // CmdPeptideProphet.java:426-451: RewritePepxml <interact> <lcms...>
+                { assert log_lines[1] == "java -cp /fragpipe_bin/fragpipe-24.0/fragpipe-24.0/lib/* org.nesvilab.fragpipe.util.RewritePepxml {CWD}/A/interact-s1.pep.xml {CWD}/s1.mzML" : log_lines[1] },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+
+    test("peptideprophet - stub combine mode") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                ['a.pepXML', 'b.pepXML', 'a.mzML', 'b.mzML', 'db.fasta'].each { n -> file("\${workDir}/\${n}").text = 'mock' }
+                input[0] = channel.of([[ id: 'G1', group: 'G1' ], [file("\${workDir}/a.pepXML"), file("\${workDir}/b.pepXML")],
+                    [file("\${workDir}/a.mzML"), file("\${workDir}/b.mzML")], ['a.mzML', 'b.mzML'], '--nonparam --expectscore', true])
+                input[1] = file("\${workDir}/db.fasta")
+                input[2] = 'rev_'
+                """
+            }
+        }
+
+        then {
+            def log_lines = new File(process.out.results_dir.get(0).get(1), 'peptideprophet.log').readLines()
+            assertAll (
+                { assert process.success },
+                // CmdPeptideProphet.java:319-336: --combine and all group pepXMLs in the group dir, output <group>/interact.pep.xml
+                { assert log_lines[0].endsWith('peptideprophet --nonparam --expectscore --decoy rev_ --database {CWD}/db.fasta --combine a.pepXML b.pepXML') : log_lines[0] },
+                { assert log_lines[1].endsWith('RewritePepxml {CWD}/G1/interact.pep.xml {CWD}/a.mzML {CWD}/b.mzML') : log_lines[1] },
+                { assert snapshot(process.out).match() }
             )
         }
     }
@@ -50,30 +72,29 @@ nextflow_process {
         when {
             process {
                 """
-                // Use pre-computed pepXML from test-datasets (real MSFragger output)
-                def pepxml_file = file("\${params.pipelines_testdata_base_path}/module_inputs/tmt_erwinia_subset_msfragger.pepXML", checkIfExists: true)
-                def mzml_file = file("\${params.pipelines_testdata_base_path}/spectra/tmt_erwinia_subset.mzML", checkIfExists: true)
-                def fasta_file = file("\${params.pipelines_testdata_base_path}/databases/erwinia_carotovora.fasta", checkIfExists: true)
-                def config_file = file("\${workDir}/peptide-prophet.config")
-                config_file.text = "peptideprophet=--decoyprobs --ppm --accmass --nonparam --expectscore"
-
-                input[0] = channel.of([ [ id: 'peptideprophet_test' ], pepxml_file, mzml_file, config_file ])
-                input[1] = fasta_file
+                def base = params.pipelines_testdata_base_path
+                def pepxml = file("\${base}/module_inputs/tmt_erwinia_subset_msfragger.pepXML", checkIfExists: true)
+                def staged = file("\${workDir}/tmt_erwinia_subset.pepXML")
+                pepxml.copyTo(staged)
+                def mzml = file("\${base}/spectra/tmt_erwinia_subset.mzML", checkIfExists: true)
+                // combine mode in a named group: the output dir is the group dir (FragPipe's exp_1_1/interact.pep.xml)
+                input[0] = channel.of([[ id: 'exp_1_1', group: 'exp_1_1' ], staged, [mzml], ['tmt_erwinia_subset.mzML'],
+                    '--decoyprobs --ppm --accmass --nonparam --expectscore', true])
+                input[1] = file("\${base}/databases/erwinia_carotovora.fasta", checkIfExists: true)
+                input[2] = 'rev_'
                 """
             }
         }
 
         then {
-            def outDir = new File(process.out.results_dir[0][1].toString())
-            def outFiles = outDir.listFiles().sort { it.name }
             assertAll (
                 { assert process.success },
-                { assert snapshot(
-                    outFiles.collect { it.name },
-                    process.out.versions_philosopher,
-                    process.out.versions_fragpipe
-                ).match("file_names") },
-                { assert outFiles.every { it.size() > 0 } }
+                { assert process.out.pepxml.size() == 1 },
+                // PeptideProphet writes the interact file's own path (stylesheet, summary_xml) and the pepXML it read
+                { assert new File(process.out.pepxml.get(0).get(1).toString()).readLines().take(6).with { head ->
+                    head[1].contains('/exp_1_1/interact.pep.xsl"') && head.any { line -> line.contains('<inputfile name="') && line.contains('/exp_1_1/tmt_erwinia_subset.pep') } } },
+                { assert new File(process.out.results_dir.get(0).get(1).toString()).list().sort() == ['interact.pep.xml', 'peptideprophet.log'] },
+                { assert snapshot(process.out.versions_philosopher, process.out.versions_fragpipe).match() }
             )
         }
     }

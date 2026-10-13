@@ -1,0 +1,50 @@
+// Golden differential test: FRAGPIPESECONDPASS vs FragPipe 24.0's finalizer (FragpipeRun.java:589-700),
+// golden set PXD001468/Basic-Search_submzml (tab-run.write_sub_mzml=true). Inputs are the run's
+// fragpipe.workflow, fragpipe-files.fp-manifest and console text; both outputs must be byte-equal.
+// The MSFragger values of the console text are checked against MSFRAGGER's log in
+// modules/local/writesubmzml/tests/golden.nf.test.
+// Run: GOLDEN_ROOT=<golden root> nf-test test modules/local/fragpipesecondpass/tests/golden.nf.test
+nextflow_process {
+
+    name "Golden FRAGPIPESECONDPASS vs FragPipe 24.0"
+    script "../main.nf"
+    process "FRAGPIPESECONDPASS"
+
+    tag "golden"
+    tag "fragpipesecondpass"
+
+    test("PXD001468 Basic-Search_submzml - second-pass workflow and manifest are FragPipe's") {
+
+        when {
+            params {
+                golden_set = "${System.getenv('GOLDEN_ROOT')}/PXD001468/Basic-Search_submzml"
+            }
+            process {
+                """
+                assert System.getenv('GOLDEN_ROOT') : 'set GOLDEN_ROOT to the golden data root'
+                def g = { String rel -> file("\${params.golden_set}/\${rel}", checkIfExists: true) }
+                def manifest = new groovy.json.JsonSlurper().parse(g.call('manifest.json').toFile())
+                input[0] = channel.of([
+                    [ id: 'fragpipe' ],
+                    g.call('files/work/fragpipe.workflow'),
+                    g.call('files/work/fragpipe-files.fp-manifest'),
+                    [g.call('fragpipe_log.redacted.txt')],
+                    manifest.roots['{WORKDIR}']
+                ])
+                """
+            }
+        }
+
+        then {
+            def golden = new File("${params.golden_set}/files/work")
+            def wf = new File(process.out.workflow[0][1].toString())
+            def manifest = new File(process.out.manifest[0][1].toString())
+            assertAll(
+                { assert process.success },
+                { assert wf.bytes == new File(golden, 'fragpipe-second-pass.workflow').bytes },
+                { assert manifest.bytes == new File(golden, 'fragpipe-files-second-pass.fp-manifest').bytes },
+                { assert snapshot(process.out.versions_python.collect { entry -> entry.take(2) }).match() }
+            )
+        }
+    }
+}

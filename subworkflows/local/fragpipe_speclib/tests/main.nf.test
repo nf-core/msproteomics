@@ -1,3 +1,7 @@
+// FRAGPIPE_SPECLIB: SpecLibGen (CmdSpecLibGen) then DIA-NN (CmdDiann) on FragPipe's single group.
+// Tool settings are PARSEFRAGPIPEWORKFLOW's output for the bundled DIA_SpecLib_Quant workflow
+// (modules/local/speclibgen/tests/convert_pepxml.json, diann entry as in modules/local/diannfragpipe/tests).
+
 nextflow_workflow {
 
     name "Test Subworkflow FRAGPIPE_SPECLIB"
@@ -8,101 +12,122 @@ nextflow_workflow {
     tag "subworkflows"
     tag "subworkflows_local"
     tag "fragpipe_speclib"
+    tag "speclibgen"
+    tag "diann_fragpipe"
 
-    test("fragpipe_speclib - stub") {
+    test("fragpipe_speclib - stub - SpecLibGen and DIA-NN on DIA and DIA-Quant files") {
         options "-stub"
         tag "stub"
 
         when {
             workflow {
                 """
-                // Create per-sample PSM and peptide files
-                def psm_file1 = file("\${workDir}/sample1_psm.tsv")
-                psm_file1.text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
-                def psm_file2 = file("\${workDir}/sample2_psm.tsv")
-                psm_file2.text = "peptide\\tprotein\\nPEPTIDER\\tPROT2"
-
-                def pep_file1 = file("\${workDir}/sample1_peptide.tsv")
-                pep_file1.text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
-                def pep_file2 = file("\${workDir}/sample2_peptide.tsv")
-                pep_file2.text = "peptide\\tprotein\\nPEPTIDER\\tPROT2"
-
-                def mzml_file1 = file("\${workDir}/sample1.mzML")
-                mzml_file1.text = "<?xml version='1.0'?><mzML></mzML>"
-                def mzml_file2 = file("\${workDir}/sample2.mzML")
-                mzml_file2.text = "<?xml version='1.0'?><mzML></mzML>"
-
-                def fasta_file = file("\${workDir}/test.fasta")
-                fasta_file.text = ">PROT1\\nPEPTIDEK\\n>PROT2\\nPEPTIDER"
-
-                // Tool configs: speclibgen enabled with bash_source config
-                def speclibgen_args = "CONVERT_ARGS='--max_delta_unimod 0.02 --max_delta_ppm 15'; FRAGMENT_TYPES='[\\\"b\\\",\\\"y\\\"]'; LIBRARY_ARGS='--rt_lowess_fraction 0'; RT_CAL='noiRT'; IM_CAL='noIM'; KEEP_INTERMEDIATE='false'"
+                def text = { name, content -> def f = file("\${workDir}/\${name}"); f.text = content; f }
+                def psm = text.call('psm.tsv', "Spectrum\\tPeptide\\nrun1.00001.00001.2\\tPEPTIDEK\\n")
+                def peptide = text.call('peptide.tsv', "Peptide\\nPEPTIDEK\\n")
+                def protein = text.call('protein.tsv', "Protein\\nP1\\n")
+                def pepxml1 = text.call('interact-run1.pep.xml', '<msms_pipeline_analysis/>')
+                def pepxml2 = text.call('interact-run2.pep.xml', '<msms_pipeline_analysis/>')
+                def pepxml4 = text.call('interact-dda4.pep.xml', '<msms_pipeline_analysis/>')
+                def run1 = text.call('run1.mzML', '<mzML/>')
+                def run2 = text.call('run2.mzML', '<mzML/>')
+                def quant = text.call('quant3.mzML', '<mzML/>')
+                def dda = text.call('dda4.mzML', '<mzML/>')
+                def fasta = text.call('db.fasta', ">rev_P1\\nKEDITPEP\\n>P1\\nPEPTIDEK\\n")
+                def manifest = text.call('fragpipe-files.fp-manifest', "/data/run1.mzML\\t\\t\\tDIA\\n/data/run2.mzML\\t\\t\\tDIA\\n/data/quant3.mzML\\t\\t\\tDIA-Quant\\n/data/dda4.mzML\\t\\t\\tDDA")
+                def m = { id, type -> [id: id, group: '', experiment: null, bioreplicate: null, data_type: type] }
                 def tool_configs = [
-                    speclibgen: [run: true, args: speclibgen_args, config_type: 'bash_source']
+                    database:   [run: true, args: '', decoy_tag: 'rev_'],
+                    diaumpire:  [run: false, args: ''],
+                    speclibgen: [run: true, config_type: 'bash_source', rt_cal_file: '', im_cal_file: '',
+                                 argv_parts: new groovy.json.JsonSlurper().parse(file("\${baseDir}/modules/local/speclibgen/tests/convert_pepxml.json", checkIfExists: true).toFile())],
+                    diann:      [run: true, config_type: 'cli', args: '--qvalue 0.01 --matrix-qvalue 0.01 --matrices',
+                                 args_post: '--smart-profiling --peak-center --no-ifs-removal --report-lib-info',
+                                 qvalue: '0.01', run_specific_protein_qvalue: false, redo_protein_inference: false,
+                                 generate_msstats: true, library: '', run_plex: false, light: '', medium: '', heavy: '',
+                                 mod_tag: '', min_site_prob: '0.75', report_levels: 'peptide;modified-peptide']
                 ]
-
-                input[0] = channel.of(
-                    [[ id: 'sample1' ], psm_file1],
-                    [[ id: 'sample2' ], psm_file2]
-                )
-                input[1] = channel.of(
-                    [[ id: 'sample1' ], pep_file1],
-                    [[ id: 'sample2' ], pep_file2]
-                )
-                input[2] = channel.of(
-                    [[ id: 'sample1' ], mzml_file1],
-                    [[ id: 'sample2' ], mzml_file2]
-                )
-                input[3] = fasta_file
-                input[4] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
-                input[5] = [ id: 'speclib' ]
+                input[0] = channel.of([[id: 'workdir-root', group: ''], psm])
+                input[1] = channel.of([[id: 'workdir-root', group: ''], peptide])
+                input[2] = channel.of([[id: 'workdir-root', group: ''], protein])
+                input[3] = channel.of([m.call('run1', 'DIA'), pepxml1], [m.call('run2', 'DIA'), pepxml2], [m.call('dda4', 'DDA'), pepxml4])
+                input[4] = channel.of([m.call('run1', 'DIA'), run1], [m.call('run2', 'DIA'), run2], [m.call('dda4', 'DDA'), dda])
+                input[5] = channel.empty()
+                input[6] = channel.of([m.call('run1', 'DIA'), run1], [m.call('run2', 'DIA'), run2], [m.call('quant3', 'DIA-Quant'), quant], [m.call('dda4', 'DDA'), dda])
+                input[7] = channel.value(manifest)
+                input[8] = channel.value(fasta)
+                input[9] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[10] = [id: 'fragpipe']
                 """
             }
         }
 
         then {
+            def diann_inputs = path(new File(workflow.out.diann_report.get(0).get(1).toString()).parentFile.parent + '/filelist_diann.txt').readLines().collect { line -> new File(line - '--f ').name }.sort()
             assertAll(
                 { assert workflow.success },
+                // CmdDiann.java:232: DIA and DIA-Quant files only
+                { assert diann_inputs == ['quant3.mzML', 'run1.mzML', 'run2.mzML'] },
                 { assert snapshot(
                     workflow.out.library_tsv,
-                    workflow.out.library_speclib,
-                    workflow.out.library_parquet,
-                    workflow.out.results_dir
+                    workflow.out.diann_report,
+                    workflow.out.diann_pg_matrix,
+                    workflow.out.diann_pr_matrix,
+                    workflow.out.diann_speclib,
+                    workflow.out.diann_msstats,
+                    workflow.out.versions
                 ).match() }
             )
         }
     }
 
-    test("fragpipe_speclib - stub single sample") {
+    test("fragpipe_speclib - stub - FPOP coADAPTr: DIA-NN's unedited report.tsv is not published") {
         options "-stub"
         tag "stub"
 
         when {
+            params {
+                outdir = "$outputDir"
+            }
             workflow {
                 """
-                def psm_file = file("\${workDir}/single_psm.tsv")
-                psm_file.text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
-
-                def pep_file = file("\${workDir}/single_peptide.tsv")
-                pep_file.text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
-
-                def mzml_file = file("\${workDir}/single.mzML")
-                mzml_file.text = "<?xml version='1.0'?><mzML></mzML>"
-
-                def fasta_file = file("\${workDir}/test.fasta")
-                fasta_file.text = ">PROT1\\nPEPTIDEK"
-
-                def speclibgen_args = "CONVERT_ARGS='--max_delta_unimod 0.02 --max_delta_ppm 15'; FRAGMENT_TYPES='[\\\"b\\\",\\\"y\\\"]'; LIBRARY_ARGS='--rt_lowess_fraction 0'; RT_CAL='noiRT'; IM_CAL='noIM'; KEEP_INTERMEDIATE='false'"
+                def text = { name, content -> def f = file("\${workDir}/\${name}"); f.text = content; f }
+                def psm = text.call('psm.tsv', "Spectrum\\tPeptide\\nrun1.00001.00001.2\\tPEPTIDEK\\n")
+                def peptide = text.call('peptide.tsv', "Peptide\\nPEPTIDEK\\n")
+                def protein = text.call('protein.tsv', "Protein\\nP1\\n")
+                def pepxml1 = text.call('interact-run1.pep.xml', '<msms_pipeline_analysis/>')
+                def pepxml2 = text.call('interact-run2.pep.xml', '<msms_pipeline_analysis/>')
+                def pepxml4 = text.call('interact-dda4.pep.xml', '<msms_pipeline_analysis/>')
+                def run1 = text.call('run1.mzML', '<mzML/>')
+                def run2 = text.call('run2.mzML', '<mzML/>')
+                def quant = text.call('quant3.mzML', '<mzML/>')
+                def dda = text.call('dda4.mzML', '<mzML/>')
+                def fasta = text.call('db.fasta', ">rev_P1\\nKEDITPEP\\n>P1\\nPEPTIDEK\\n")
+                def manifest = text.call('fragpipe-files.fp-manifest', "/data/run1.mzML\\t\\t\\tDIA\\n/data/run2.mzML\\t\\t\\tDIA\\n/data/quant3.mzML\\t\\t\\tDIA-Quant\\n/data/dda4.mzML\\t\\t\\tDDA")
+                def m = { id, type -> [id: id, group: '', experiment: null, bioreplicate: null, data_type: type] }
                 def tool_configs = [
-                    speclibgen: [run: true, args: speclibgen_args, config_type: 'bash_source']
+                    database:   [run: true, args: '', decoy_tag: 'rev_'],
+                    diaumpire:  [run: false, args: ''],
+                    speclibgen: [run: true, config_type: 'bash_source', rt_cal_file: '', im_cal_file: '',
+                                 argv_parts: new groovy.json.JsonSlurper().parse(file("\${baseDir}/modules/local/speclibgen/tests/convert_pepxml.json", checkIfExists: true).toFile())],
+                    diann:      [run: true, config_type: 'cli', args: '--qvalue 0.01 --matrix-qvalue 0.01 --matrices',
+                                 args_post: '--smart-profiling --peak-center --no-ifs-removal --report-lib-info',
+                                 qvalue: '0.01', run_specific_protein_qvalue: false, redo_protein_inference: false,
+                                 generate_msstats: true, library: '', run_plex: false, light: '', medium: '', heavy: '',
+                                 mod_tag: '', min_site_prob: '0.75', report_levels: 'peptide;modified-peptide'],
+                    fpop_coadaptr: [run: true, args: '']
                 ]
-
-                input[0] = channel.of([[ id: 'single' ], psm_file])
-                input[1] = channel.of([[ id: 'single' ], pep_file])
-                input[2] = channel.of([[ id: 'single' ], mzml_file])
-                input[3] = fasta_file
-                input[4] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
-                input[5] = [ id: 'single_speclib' ]
+                input[0] = channel.of([[id: 'workdir-root', group: ''], psm])
+                input[1] = channel.of([[id: 'workdir-root', group: ''], peptide])
+                input[2] = channel.of([[id: 'workdir-root', group: ''], protein])
+                input[3] = channel.of([m.call('run1', 'DIA'), pepxml1], [m.call('run2', 'DIA'), pepxml2], [m.call('dda4', 'DDA'), pepxml4])
+                input[4] = channel.of([m.call('run1', 'DIA'), run1], [m.call('run2', 'DIA'), run2], [m.call('dda4', 'DDA'), dda])
+                input[5] = channel.empty()
+                input[6] = channel.of([m.call('run1', 'DIA'), run1], [m.call('run2', 'DIA'), run2], [m.call('quant3', 'DIA-Quant'), quant], [m.call('dda4', 'DDA'), dda])
+                input[7] = channel.value(manifest)
+                input[8] = channel.value(fasta)
+                input[9] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[10] = [id: 'fragpipe']   // FRAGPIPE_SPECLIB sets meta.fpop_coadaptr from the tool configs
                 """
             }
         }
@@ -110,12 +135,114 @@ nextflow_workflow {
         then {
             assertAll(
                 { assert workflow.success },
-                { assert snapshot(
-                    workflow.out.library_tsv,
-                    workflow.out.library_speclib,
-                    workflow.out.library_parquet,
-                    workflow.out.results_dir
-                ).match() }
+                // fix/fpop-meta sets meta.fpop_coadaptr; conf/modules.config saveAs drops the unedited report
+                { assert !new File("${outputDir}/dia_quant/dia-quant-output/report.tsv").exists() },
+                { assert new File("${outputDir}/dia_quant/dia-quant-output/report.pg_matrix.tsv").exists() },
+                { assert snapshot(workflow.out.diann_pg_matrix).match() }
+            )
+        }
+    }
+
+    test("fragpipe_speclib - stub - unreadable diann.library fails like CmdDiann") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                def text = { name, content -> def f = file("\${workDir}/\${name}"); f.text = content; f }
+                def psm = text.call('psm.tsv', "Spectrum\\tPeptide\\nrun1.00001.00001.2\\tPEPTIDEK\\n")
+                def peptide = text.call('peptide.tsv', "Peptide\\nPEPTIDEK\\n")
+                def protein = text.call('protein.tsv', "Protein\\nP1\\n")
+                def pepxml1 = text.call('interact-run1.pep.xml', '<msms_pipeline_analysis/>')
+                def pepxml2 = text.call('interact-run2.pep.xml', '<msms_pipeline_analysis/>')
+                def pepxml4 = text.call('interact-dda4.pep.xml', '<msms_pipeline_analysis/>')
+                def run1 = text.call('run1.mzML', '<mzML/>')
+                def run2 = text.call('run2.mzML', '<mzML/>')
+                def quant = text.call('quant3.mzML', '<mzML/>')
+                def dda = text.call('dda4.mzML', '<mzML/>')
+                def fasta = text.call('db.fasta', ">rev_P1\\nKEDITPEP\\n>P1\\nPEPTIDEK\\n")
+                def manifest = text.call('fragpipe-files.fp-manifest', "/data/run1.mzML\\t\\t\\tDIA\\n/data/run2.mzML\\t\\t\\tDIA\\n/data/quant3.mzML\\t\\t\\tDIA-Quant\\n/data/dda4.mzML\\t\\t\\tDDA")
+                def m = { id, type -> [id: id, group: '', experiment: null, bioreplicate: null, data_type: type] }
+                def tool_configs = [
+                    database:   [run: true, args: '', decoy_tag: 'rev_'],
+                    diaumpire:  [run: false, args: ''],
+                    speclibgen: [run: true, config_type: 'bash_source', rt_cal_file: '', im_cal_file: '',
+                                 argv_parts: new groovy.json.JsonSlurper().parse(file("\${baseDir}/modules/local/speclibgen/tests/convert_pepxml.json", checkIfExists: true).toFile())],
+                    diann:      [run: true, config_type: 'cli', args: '--qvalue 0.01 --matrix-qvalue 0.01 --matrices',
+                                 args_post: '--smart-profiling --peak-center --no-ifs-removal --report-lib-info',
+                                 qvalue: '0.01', run_specific_protein_qvalue: false, redo_protein_inference: false,
+                                 generate_msstats: false, library: '/nonexistent/predicted.speclib', run_plex: false, light: '', medium: '', heavy: '',
+                                 mod_tag: '', min_site_prob: '0.75', report_levels: 'peptide;modified-peptide']
+                ]
+                input[0] = channel.of([[id: 'workdir-root', group: ''], psm])
+                input[1] = channel.of([[id: 'workdir-root', group: ''], peptide])
+                input[2] = channel.of([[id: 'workdir-root', group: ''], protein])
+                input[3] = channel.of([m.call('run1', 'DIA'), pepxml1], [m.call('run2', 'DIA'), pepxml2], [m.call('dda4', 'DDA'), pepxml4])
+                input[4] = channel.of([m.call('run1', 'DIA'), run1], [m.call('run2', 'DIA'), run2], [m.call('dda4', 'DDA'), dda])
+                input[5] = channel.empty()
+                input[6] = channel.of([m.call('run1', 'DIA'), run1], [m.call('run2', 'DIA'), run2], [m.call('quant3', 'DIA-Quant'), quant], [m.call('dda4', 'DDA'), dda])
+                input[7] = channel.value(manifest)
+                input[8] = channel.value(fasta)
+                input[9] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[10] = [id: 'fragpipe']
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.failed },
+                // CmdDiann.java:305-311
+                { assert (workflow.stdout + workflow.stderr).any { line -> line.contains('The custom library file does not exist or is not readable: /nonexistent/predicted.speclib') } }
+            )
+        }
+    }
+
+    test("fragpipe_speclib - stub - DIA-NN off, no DIA files") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                def text = { name, content -> def f = file("\${workDir}/\${name}"); f.text = content; f }
+                def psm = text.call('psm.tsv', "Spectrum\\tPeptide\\nrun1.00001.00001.2\\tPEPTIDEK\\n")
+                def peptide = text.call('peptide.tsv', "Peptide\\nPEPTIDEK\\n")
+                def protein = text.call('protein.tsv', "Protein\\nP1\\n")
+                def pepxml = text.call('interact-run1.pep.xml', '<msms_pipeline_analysis/>')
+                def run1 = text.call('run1.mzML', '<mzML/>')
+                def fasta = text.call('db.fasta', ">rev_P1\\nKEDITPEP\\n>P1\\nPEPTIDEK\\n")
+                def manifest = text.call('fragpipe-files.fp-manifest', "/data/run1.mzML\\t\\t\\tDDA")
+                def m = [id: 'run1', group: '', experiment: null, bioreplicate: null, data_type: 'DDA']
+                def tool_configs = [
+                    database:   [run: true, args: '', decoy_tag: 'rev_'],
+                    diaumpire:  [run: false, args: ''],
+                    speclibgen: [run: true, config_type: 'bash_source', rt_cal_file: '', im_cal_file: '',
+                                 argv_parts: new groovy.json.JsonSlurper().parse(file("\${baseDir}/modules/local/speclibgen/tests/convert_psm.json", checkIfExists: true).toFile())],
+                    diann:      [run: false, args: '']
+                ]
+                input[0] = channel.of([[id: 'workdir-root', group: ''], psm])
+                input[1] = channel.of([[id: 'workdir-root', group: ''], peptide])
+                input[2] = channel.of([[id: 'workdir-root', group: ''], protein])
+                input[3] = channel.of([m, pepxml])
+                input[4] = channel.of([m, run1])
+                input[5] = channel.empty()
+                input[6] = channel.of([m, run1])
+                input[7] = channel.value(manifest)
+                input[8] = channel.value(fasta)
+                input[9] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[10] = [id: 'fragpipe']
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert workflow.out.library_tsv.size() == 1 },
+                { assert workflow.out.diann_report.isEmpty() },
+                { assert snapshot(workflow.out.library_tsv, workflow.out.versions).match() }
             )
         }
     }

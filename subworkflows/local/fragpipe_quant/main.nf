@@ -2,16 +2,15 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     FRAGPIPE_QUANT SUBWORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Quantification module orchestration.
+    Quantification after the glyco chain, in FragPipe 24.0's command order and data flow
+    (FragpipeRun.java:2477-2481). The Philosopher path (FreeQuant, LabelQuant, final Report) runs
+    before the glyco chain in FRAGPIPE_PHILOSOPHER_QUANT.
 
-    Modules:
-    - IONQUANT (label-free quantification with MaxLFQ, aggregate)
-    - TMTINTEGRATOR (TMT quantification, aggregate)
-    - FREEQUANT (simple label-free using Philosopher, per-sample)
-    - PHILOSOPHER_LABELQUANT (TMT reporter ion extraction via Philosopher, per-sample)
-    - PHILOSOPHER_REPORT (generate TSVs after FreeQuant/Labelquant, per-sample)
-
-    Execution: Aggregate (mostly)
+    - IONQUANT (label-free) -> IONQUANT_MS1 (TMT) -> IONQUANT_ISOBARIC (TMT): FragPipe runs
+      cmdIonquant, cmdTmtIonquant and cmdTmtIonquantIsobaric one after another in the same
+      work dir, so each pass reads the psm.tsv files the previous pass rewrote
+    - TMTINTEGRATOR on one psm.tsv per group (IonQuant isobaric output, or the final tables of
+      the Philosopher TMT path)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
@@ -19,264 +18,244 @@ include { IONQUANT                      } from '../../../modules/local/ionquant/
 include { IONQUANT as IONQUANT_MS1      } from '../../../modules/local/ionquant/main'
 include { IONQUANT as IONQUANT_ISOBARIC } from '../../../modules/local/ionquant/main'
 include { TMTINTEGRATOR            } from '../../../modules/local/tmtintegrator/main'
-include { FREEQUANT                } from '../../../modules/local/freequant/main'
-include { PHILOSOPHER_LABELQUANT   } from '../../../modules/local/philosopher/labelquant/main'
-include { PHILOSOPHER_REPORT       } from '../../../modules/local/philosopher/report/main'
-include { shouldRunTool; getToolArgs; getToolModmasses; getToolReportArgs } from '../utils_nfcore_msproteomics_pipeline'
+include { TMTINTEGRATOR as TMTINTEGRATOR_UNMOD } from '../../../modules/local/tmtintegrator/main'
+include { WRITETEXTFILE as WRITE_MSSTATS_TMT_ANNOTATION } from '../../../modules/local/writetextfile/main'
+include { shouldRunTool; getToolArgs; getToolField; getToolModmasses; fragpipeRootGroupDir; ionquantGroupDirs; lfqExperimentAnnotationLines; isobaricExperimentAnnotationLines; msstatsTmtAnnotationLines; ionquantInputDataTypeArgs; fpopCoadaptrMeta } from '../utils_nfcore_msproteomics_pipeline/fragpipe_utils'
 
 workflow FRAGPIPE_QUANT {
     take:
-    ch_results_dir          // channel: [ val(meta), path(results_dir) ] - per-sample PHILOSOPHER_FILTER output
-    ch_mzml                 // channel: [ val(meta), path(mzml) ] - mzML files
-    ch_annotation           // channel: path(annotation_file) - optional annotation for TMT/IsoQuant
-    ch_fasta                // channel: path(fasta) - protein database for PHILOSOPHER_REPORT
+    ch_results_dir          // channel: [ val(meta), path(results_dir) ] - final per-group tables (FRAGPIPE_PHILOSOPHER_QUANT, then the glyco chain; meta.group)
+    ch_mzml                 // channel: [ val(meta), path(mzml) ] - searched spectra (meta.group = FragPipe group)
+    ch_lcms_files           // channel: [ val(meta), path(spectra) ] - every samplesheet LC-MS file as given (FragPipe's file list)
+    ch_annotation           // channel: path(annotation_file) - multi-plex TMT annotation, [] when TMT-Integrator does not run
     ch_tool_configs         // channel: val(tool_configs_map) - parsed JSON config
-    ch_tmtintegrator_config // channel: path(tmt-integrator.yml) - value channel, [] when not used
+    ch_glyco_masses         // channel: path(glyco_masses_list.txt) - value channel, [] when AppendFile does not run (FragpipeRun.java:1822-1830)
     aggregate_meta          // val(meta) for aggregate outputs
 
     main:
 
-    //
-    // STEP 1: IonQuant (label-free quantification, aggregate)
-    // Combines all samples for MaxLFQ and MBR
-    //
+    // FragPipe's LC-MS file list (wrapped so combine keeps it one item) and the TMT annotation
+    // lines (header first; [] without TMT)
+    ch_lcms_list = ch_lcms_files.toList().map { files -> [files] }
+    ch_annotation_lines = ch_annotation.map { annot -> annot ? [annot.readLines()] : [[]] }
+
+    // Per-group results as [ [group dirs], root_group_dir ]: root_group_dir names the blank
+    // group "" ('' if none), which IonQuant reads from its work-dir root like FragPipe.
     ch_all_results = ch_results_dir
-        .map { meta, dir -> dir }
-        .collect(sort: true)
-        .map { items -> [items] }  // Wrap in list to prevent combine from flattening
+        .collect(flat: false)
+        .map { items ->
+            def sorted = items.toSorted { item -> item[0].id }
+            [sorted.collect { item -> item[1] }, fragpipeRootGroupDir(sorted.collect { item -> item[0] })]
+        }
 
     ch_all_mzml = ch_mzml
-        .map { meta, mzml -> mzml }
+        .map { _meta, mzml -> mzml }
         .collect(sort: true)
         .map { items -> [items] }  // Wrap in list to prevent combine from flattening
 
+    //
+    // STEP 4: label-free IonQuant (FragpipeRun.java:1859-1891). It writes the label-free
+    // experiment_annotation.tsv unless a TMT pass configured after it in FragPipe replaces the
+    // file (IonQuant isobaric pass, FragpipeRun.java:2005-2028; LabelQuant, CmdLabelquant.java:163-170).
+    //
     ch_for_ionquant = ch_tool_configs
         .filter { configs -> shouldRunTool(configs, 'ionquant') }
         .combine(ch_all_results)
         .combine(ch_all_mzml)
-        .map { configs, results_wrapped, mzml_wrapped ->
-            def args = getToolArgs(configs, 'ionquant')
-            def modmasses = getToolModmasses(configs, 'ionquant')
-            [aggregate_meta, results_wrapped, mzml_wrapped, args, modmasses]
+        .combine(ch_lcms_list)
+        .map { configs, results, root_group_dir, mzml, lcms_files ->
+            def tmt_annotation_later = shouldRunTool(configs, 'ionquant_isobaric') || shouldRunTool(configs, 'labelquant')
+            [
+                fpopCoadaptrMeta(aggregate_meta, configs, ['ionquant']), results, mzml,
+                ionquantInputDataTypeArgs(getToolArgs(configs, 'ionquant'), lcms_files),
+                getToolModmasses(configs, 'ionquant'), root_group_dir,
+                tmt_annotation_later ? [] : lfqExperimentAnnotationLines(lcms_files)
+            ]
         }
 
-    // Pass annotation through - [] signals "not provided" to modules
-    ch_annotation_file = ch_annotation
-
     IONQUANT(
-        ch_for_ionquant.map { meta, results, mzml, _args, _modmasses -> [meta, results, mzml] },
-        ch_annotation_file,
-        ch_for_ionquant.map { _meta, _results, _mzml, args, _modmasses -> args },
-        ch_for_ionquant.map { _meta, _results, _mzml, _args, modmasses -> modmasses },
-        []
+        ch_for_ionquant.map { item -> [item[0], item[1], item[2]] },
+        [],
+        ch_for_ionquant.map { item -> item[3] },
+        ch_for_ionquant.map { item -> item[4] },
+        ch_for_ionquant.map { item -> item[5] },
+        ch_for_ionquant.map { item -> item[6] },
+        ch_glyco_masses
     )
 
     //
-    // STEP 2: TMT Two-Pass IonQuant (when TMTIntegrator is enabled)
-    // Pass 1 (MS1): Adds precursor intensity columns to psm.tsv
-    // Pass 2 (Isobaric): Adds TMT reporter ion intensities to psm.tsv (in-place)
-    // Replicates FragPipe's FragpipeRun.java:1978-2031
+    // STEP 5: TMT IonQuant MS1 pass (FragpipeRun.java:1978-1995). It reads the label-free IonQuant
+    // output when that ran before it, else the final per-group tables.
     //
+    // root_group exists only with a blank group (an empty output directory has no object on S3):
+    // the remainder join gives null for its absence.
+    ch_ms1_results = IONQUANT.out.results_dir
+        .join(IONQUANT.out.root_group, remainder: true, failOnDuplicate: true)
+        .map { _meta, dir, root_dir -> ionquantGroupDirs(dir, root_dir) }
+        .mix(
+            ch_tool_configs
+                .filter { configs -> !shouldRunTool(configs, 'ionquant') }
+                .combine(ch_all_results)
+                .map { _configs, results, root_group_dir -> [results, root_group_dir] }
+        )
 
-    // --- TMT IonQuant MS1 Pass ---
     ch_for_ionquant_ms1 = ch_tool_configs
         .filter { configs -> shouldRunTool(configs, 'ionquant_ms1') }
-        .combine(ch_all_results)
+        .combine(ch_ms1_results)
         .combine(ch_all_mzml)
-        .map { configs, results_wrapped, mzml_wrapped ->
-            def args = getToolArgs(configs, 'ionquant_ms1')
-            def modmasses = getToolModmasses(configs, 'ionquant_ms1')
-            [aggregate_meta, results_wrapped, mzml_wrapped, args, modmasses]
+        .combine(ch_lcms_list)
+        .map { configs, results, root_group_dir, mzml, lcms_files ->
+            [
+                aggregate_meta, results, mzml,
+                ionquantInputDataTypeArgs(getToolArgs(configs, 'ionquant_ms1'), lcms_files),
+                getToolModmasses(configs, 'ionquant_ms1'), root_group_dir
+            ]
         }
 
     IONQUANT_MS1(
-        ch_for_ionquant_ms1.map { meta, results, mzml, _args, _modmasses -> [meta, results, mzml] },
-        ch_annotation_file,
-        ch_for_ionquant_ms1.map { _meta, _results, _mzml, args, _modmasses -> args },
-        ch_for_ionquant_ms1.map { _meta, _results, _mzml, _args, modmasses -> modmasses },
-        []
+        ch_for_ionquant_ms1.map { item -> [item[0], item[1], item[2]] },
+        [],
+        ch_for_ionquant_ms1.map { item -> item[3] },
+        ch_for_ionquant_ms1.map { item -> item[4] },
+        ch_for_ionquant_ms1.map { item -> item[5] },
+        [],
+        ch_glyco_masses
     )
 
-    // --- TMT IonQuant Isobaric Pass ---
-    // IonQuant MS1 pass copies per-sample directories and adds MS1 intensity columns
-    // to psm.tsv within the copies. The isobaric pass MUST use the MS1-updated dirs
-    // (from IONQUANT_MS1 output), not the original philosopher dirs.
     //
-    // IONQUANT_MS1.out.results_dir emits [meta, prefix_dir] where prefix_dir contains
-    // per-sample subdirectories with MS1-updated psm.tsv files. We extract those subdirs
-    // to pass as psm_dirs input to the isobaric pass.
+    // STEP 6: TMT IonQuant isobaric pass on the MS1-updated psm.tsv files (FragpipeRun.java:2005-2028),
+    // writing the isobaric experiment_annotation.tsv
     //
-    // When no annotation file is provided, the ionquant module script handles this gracefully:
-    // it disables isoquant (--perform-isoquant 0) and exits cleanly when both quantification
-    // modes are disabled (both --perform-isoquant 0 and --perform-ms1quant 0).
-    ch_ms1_results = IONQUANT_MS1.out.results_dir
-        .map { _meta, dir ->
-            // Extract per-sample subdirectories from MS1 output (dirs containing psm.tsv)
-            // Use NIO Files.list() instead of toFile().listFiles() — toFile() throws
-            // UnsupportedOperationException on S3-backed paths (AWS Batch / Tower).
-            def subdirs = []
-            java.nio.file.Files.list(dir).withCloseable { stream ->
-                subdirs = stream.collect(java.util.stream.Collectors.toList())
-                    .findAll { java.nio.file.Files.isDirectory(it) && java.nio.file.Files.exists(it.resolve('psm.tsv')) }
-                    .sort { it.toString() }
-            }
-            [subdirs]  // Wrap in list to prevent combine from flattening
-        }
-
     ch_for_ionquant_isobaric = ch_tool_configs
         .filter { configs -> shouldRunTool(configs, 'ionquant_isobaric') }
-        .combine(ch_ms1_results)  // Data dependency + MS1-updated dirs
+        .combine(
+            IONQUANT_MS1.out.results_dir
+                .join(IONQUANT_MS1.out.root_group, remainder: true, failOnDuplicate: true)
+                .map { _meta, dir, root_dir -> ionquantGroupDirs(dir, root_dir) }
+        )
         .combine(ch_all_mzml)
-        .map { configs, results_wrapped, mzml_wrapped ->
-            def args = getToolArgs(configs, 'ionquant_isobaric')
-            def modmasses = getToolModmasses(configs, 'ionquant_isobaric')
-            [aggregate_meta, results_wrapped, mzml_wrapped, args, modmasses]
+        .combine(ch_lcms_list)
+        .combine(ch_annotation_lines)
+        .map { configs, results, root_group_dir, mzml, lcms_files, annotation_lines ->
+            [
+                fpopCoadaptrMeta(aggregate_meta, configs, ['isobaric']), results, mzml,
+                ionquantInputDataTypeArgs(getToolArgs(configs, 'ionquant_isobaric'), lcms_files),
+                getToolModmasses(configs, 'ionquant_isobaric'), root_group_dir,
+                isobaricExperimentAnnotationLines(annotation_lines)
+            ]
         }
 
     IONQUANT_ISOBARIC(
-        ch_for_ionquant_isobaric.map { meta, results, mzml, _args, _modmasses -> [meta, results, mzml] },
-        ch_annotation_file,
-        ch_for_ionquant_isobaric.map { _meta, _results, _mzml, args, _modmasses -> args },
-        ch_for_ionquant_isobaric.map { _meta, _results, _mzml, _args, modmasses -> modmasses },
-        []
+        ch_for_ionquant_isobaric.map { item -> [item[0], item[1], item[2]] },
+        ch_annotation_lines.map { wrapped -> wrapped[0] },
+        ch_for_ionquant_isobaric.map { item -> item[3] },
+        ch_for_ionquant_isobaric.map { item -> item[4] },
+        ch_for_ionquant_isobaric.map { item -> item[5] },
+        ch_for_ionquant_isobaric.map { item -> item[6] },
+        ch_glyco_masses
     )
 
     //
-    // STEP 3: FreeQuant (simple label-free or TMT Philosopher mode, per-sample)
-    // In LFQ workflows: simple label-free quantification
-    // In TMT Philosopher mode (intensity_extraction_tool=1): adds MS1 intensities
-    //   before Labelquant extracts TMT reporter ions (FragpipeRun.java:2049-2055)
+    // STEP 7: TMT-Integrator on one psm.tsv per group (CmdTmtIntegrator.java:288-296): the IonQuant
+    // isobaric pass output, or the Philosopher report output. FragPipe skips TMT-Integrator when
+    // any LC-MS file is DIA, DIA-Lib, DIA-Quant or GPF-DIA and accepts only mzML, raw and .d
+    // (FragpipeRun.java:1896-1912).
     //
-    ch_results_keyed = ch_results_dir
-        .map { meta, dir -> [meta.id, meta, dir] }
+    ch_tmt_from_ionquant = IONQUANT_ISOBARIC.out.results_dir
+        .join(IONQUANT_ISOBARIC.out.root_group, remainder: true, failOnDuplicate: true)
+        .map { _meta, dir, root_dir -> ionquantGroupDirs(dir, root_dir) }
 
-    ch_mzml_keyed = ch_mzml
-        .map { meta, mzml -> [meta.id, mzml] }
-
-    // FreeQuant runs when either freequant is enabled OR labelquant is enabled
-    // (Philosopher TMT mode requires FreeQuant before Labelquant)
-    ch_for_freequant = ch_results_keyed
-        .join(ch_mzml_keyed, by: 0, failOnMismatch: false, failOnDuplicate: false)
+    ch_tmt_from_report = ch_results_dir
+        .filter { meta, _dir -> meta.report_after_quant }
+        .collect(flat: false)
+        .map { items -> [items] }
         .combine(ch_tool_configs)
-        .filter { key, meta, dir, mzml, configs ->
-            shouldRunTool(configs, 'freequant') || shouldRunTool(configs, 'labelquant')
-        }
-        .map { key, meta, dir, mzml, configs ->
-            def args = getToolArgs(configs, 'freequant')
-            // FreeQuant needs directory containing mzML, not the file directly
-            def mzml_dir = mzml.parent
-            [meta, dir, mzml_dir, args]
+        .filter { _items, configs -> shouldRunTool(configs, 'labelquant') }
+        .map { items, _configs ->
+            def sorted = items.sort { item -> item[0].id }
+            [sorted.collect { item -> item[1] }, fragpipeRootGroupDir(sorted.collect { item -> item[0] })]
         }
 
-    FREEQUANT(ch_for_freequant)
-
-    //
-    // STEP 4: Philosopher Labelquant (TMT Philosopher mode, per-sample)
-    // Extracts TMT reporter ion intensities from mzML into .meta/ workspace.
-    // Runs AFTER FreeQuant (which adds MS1 intensities) and BEFORE Report.
-    // Only active when intensity_extraction_tool=1 (CmdLabelquant.java).
-    //
-    ch_for_labelquant = FREEQUANT.out.results_dir
-        .map { meta, dir -> [meta.id, meta, dir] }
-        .join(
-            ch_mzml.map { meta, mzml -> [meta.id, mzml] },
-            by: 0, failOnMismatch: false, failOnDuplicate: false
-        )
+    ch_for_tmtintegrator = ch_tmt_from_ionquant
+        .mix(ch_tmt_from_report)
         .combine(ch_tool_configs)
-        .filter { key, meta, dir, mzml, configs -> shouldRunTool(configs, 'labelquant') }
-        .combine(ch_annotation)
-        .map { key, meta, dir, mzml, configs, annot ->
-            def args = getToolArgs(configs, 'labelquant')
-            // Labelquant needs directory containing mzML files
-            def mzml_dir = mzml.parent
-            [meta, dir, mzml_dir, annot, args]
+        .combine(ch_lcms_list)
+        .combine(ch_annotation_lines)
+        .filter { _dirs, _root, configs, lcms_files, _lines ->
+            shouldRunTool(configs, 'tmtintegrator') &&
+                !lcms_files.any { item -> item[0].data_type in ['DIA', 'DIA-Lib', 'DIA-Quant', 'GPF-DIA'] }
+        }
+        .map { dirs, root_group_dir, configs, lcms_files, annotation_lines ->
+            if (lcms_files.any { item -> !(item[1].name.toLowerCase() ==~ /.+\.(mzml|raw|d)/) }) {
+                error("TMT-Integrator only supports mzML, raw, and .d files.\nPlease remove other files from the input list.")
+            }
+            def msstats = getToolField(configs, 'tmtintegrator', 'philosopher_msstats', false) ?
+                msstatsTmtAnnotationLines(annotation_lines, lcms_files) : []
+            [aggregate_meta, dirs, root_group_dir, msstats]
         }
 
-    // Always invoke PHILOSOPHER_LABELQUANT (empty input = no tasks executed, but .out is defined)
-    PHILOSOPHER_LABELQUANT(ch_for_labelquant)
-
-    //
-    // STEP 5: Philosopher Report after FreeQuant/Labelquant (per-sample)
-    // Regenerates TSVs from .meta/ binaries with correct intensity columns.
-    // After FreeQuant-only: produces TSVs with MS1 intensities.
-    // After FreeQuant+Labelquant: produces TSVs with TMT reporter ion columns.
-    //
-    // Use Labelquant output when available, otherwise FreeQuant output
-    ch_report_from_labelquant = PHILOSOPHER_LABELQUANT.out.results_dir
-
-    ch_report_from_freequant_only = FREEQUANT.out.results_dir
-        .combine(ch_tool_configs)
-        .filter { meta, dir, configs ->
-            shouldRunTool(configs, 'freequant') && !shouldRunTool(configs, 'labelquant')
-        }
-        .map { meta, dir, _configs -> [meta, dir] }
-
-    ch_for_report = ch_report_from_labelquant
-        .mix(ch_report_from_freequant_only)
-        .combine(ch_tool_configs)
-        .map { meta, dir, configs ->
-            def report_args = getToolReportArgs(configs, 'filter')
-            [meta, dir, report_args]
-        }
-
-    // Always invoke PHILOSOPHER_REPORT (empty input = no tasks executed, but .out is defined)
-    PHILOSOPHER_REPORT(ch_for_report, ch_fasta)
-
-    //
-    // STEP 6: TMTIntegrator (TMT quantification, aggregate)
-    // Uses per-sample psm.tsv/protein.tsv from directories that now contain TMT
-    // reporter ion columns added by IonQuant isobaric pass (extraction_tool=0)
-    // or Philosopher Labelquant + Report (extraction_tool=1).
-    //
-    // Gating: TMTIntegrator fires when (1) tmtintegrator is enabled in the workflow
-    // config AND (2) at least one extraction path produces output directories.
-    // Having result directories implies extraction is complete — no separate gate needed.
-    //
-    // Channel strategy: uses .take(1) instead of .first() to keep the channel as a
-    // queue channel throughout. .first() creates value channels that can deadlock
-    // when combined with other value channels in Nextflow 25.04.
-    //
-
-    // IonQuant extraction mode: single output directory with per-sample subdirs
-    ch_tmt_dirs_from_ionquant = IONQUANT_ISOBARIC.out.results_dir
-        .map { _meta, dir -> [dir] }
-
-    // Philosopher extraction mode: collect per-sample dirs from PHILOSOPHER_REPORT
-    ch_tmt_dirs_from_labelquant = PHILOSOPHER_REPORT.out.results_dir
-        .map { _meta, dir -> dir }
-        .collect(sort: true)
-        .filter { it.size() > 0 }
-
-    // Take whichever extraction path provides results (only one active per run).
-    // .take(1): queue channel with at most 1 item (avoids .first() value channel issues).
-    ch_for_tmtintegrator = ch_tmt_dirs_from_ionquant
-        .mix(ch_tmt_dirs_from_labelquant)
-        .take(1)
-        .combine(ch_tool_configs)
-        .filter { _dirs, configs -> shouldRunTool(configs, 'tmtintegrator') }
-        .map { dirs, _configs -> [aggregate_meta, dirs] }
+    // MSstatsTMT_annotation.csv (CmdTmtIntegrator.java:105-140), written once and copied into each run's work dir
+    // The run's meta (aggregate_meta, one TMT-Integrator run per pipeline run) is the key that carries the CSV back into the run's tuple.
+    WRITE_MSSTATS_TMT_ANNOTATION(
+        ch_for_tmtintegrator
+            .filter { _meta, _dirs, _root, msstats -> msstats }
+            .map { meta, _dirs, _root, msstats -> [meta, 'MSstatsTMT_annotation.csv', msstats.collect { line -> "${line}\n" }.join('')] }
+    )
+    ch_tmti_runs = ch_for_tmtintegrator
+        .map { meta, dirs, root_group_dir, _msstats -> [meta, dirs, root_group_dir] }
+        .join(WRITE_MSSTATS_TMT_ANNOTATION.out.file, remainder: true, failOnDuplicate: true)
+        .map { meta, dirs, root_group_dir, csv -> [meta, dirs, root_group_dir, csv ?: []] }
 
     TMTINTEGRATOR(
-        ch_for_tmtintegrator,
-        ch_annotation_file,
-        ch_tmtintegrator_config
+        ch_tmti_runs,
+        // tmt-integrator-conf.yml text: the parser's tmtintegrator.args (tool_configs JSON, a channel value)
+        ch_tool_configs.map { configs -> getToolArgs(configs, 'tmtintegrator') }
     )
+
+    //
+    //
+    // TMT-Integrator second run for FPOP TMT (FragpipeRun.java:2195-2209): same PSM tables,
+    // mod_tag none and min_site_prob -1, written to tmt-report-unmod (CmdTmtIntegrator.java:149-152).
+    //
+    TMTINTEGRATOR_UNMOD(
+        ch_tmti_runs
+            .combine(ch_tool_configs)
+            .filter { row -> shouldRunTool(row[-1], 'tmtintegrator_unmod') }
+            .map { meta, dirs, root_group_dir, csv, _configs -> [meta, dirs, root_group_dir, csv] },
+        ch_tool_configs.map { configs -> getToolArgs(configs, 'tmtintegrator_unmod') }
+    )
+
+    // REPRINT tables IonQuant writes into the work dir (reprint.spc.tsv / reprint.int.tsv). FragPipe's
+    // Downstream SAINTexpress reads the work dir's copy, i.e. the one of the last IonQuant run that wrote
+    // it, in FragPipe order: LFQ IonQuant, or TMT MS1 then isobaric (FragpipeRun.java:2477-2479).
+    //
+    ch_reprint_runs = IONQUANT.out.reprint_spc.map { _meta, tsv -> ['spc', 0, tsv] }
+        .mix(IONQUANT.out.reprint_int.map { _meta, tsv -> ['int', 0, tsv] })
+        .mix(IONQUANT_MS1.out.reprint_spc.map { _meta, tsv -> ['spc', 1, tsv] })
+        .mix(IONQUANT_MS1.out.reprint_int.map { _meta, tsv -> ['int', 1, tsv] })
+        .mix(IONQUANT_ISOBARIC.out.reprint_spc.map { _meta, tsv -> ['spc', 2, tsv] })
+        .mix(IONQUANT_ISOBARIC.out.reprint_int.map { _meta, tsv -> ['int', 2, tsv] })
+    ch_reprint = ch_reprint_runs
+        .toList()
+        .flatMap { rows ->
+            rows.groupBy { row -> row[0] }.collect { mode, mode_rows -> [mode, mode_rows.max { row -> row[1] }[2]] }
+        }
 
     emit:
     combined_protein = IONQUANT.out.combined_protein           // channel: [ val(meta), path(combined_protein.tsv) ]
     combined_peptide = IONQUANT.out.combined_peptide           // channel: [ val(meta), path(combined_peptide.tsv) ]
     combined_ion     = IONQUANT.out.combined_ions              // channel: [ val(meta), path(combined_ion.tsv) ]
     combined_modified_peptide = IONQUANT.out.combined_modified_peptide  // channel: [ val(meta), path(combined_modified_peptide.tsv) ]
+    experiment_annotation = IONQUANT.out.experiment_annotation
+        .mix(IONQUANT_ISOBARIC.out.experiment_annotation)    // channel: [ val(meta), path(experiment_annotation.tsv) ]
     tmt_abundance    = TMTINTEGRATOR.out.abundance             // channel: [ val(meta), path(abundance_*.tsv) ]
     tmt_ratio        = TMTINTEGRATOR.out.ratio                 // channel: [ val(meta), path(ratio_*.tsv) ]
     ionquant_dir     = IONQUANT.out.results_dir                // channel: [ val(meta), path(results_dir) ]
+    reprint          = ch_reprint                              // channel: [ val(mode), path(reprint.<mode>.tsv) ] - REPRINT tables IonQuant leaves in the work dir
+    ionquant_ms1_dir = IONQUANT_MS1.out.results_dir            // channel: [ val(meta), path(results_dir) ]
     tmt_dir          = TMTINTEGRATOR.out.results_dir           // channel: [ val(meta), path(tmt-report) ]
-    freequant_ions   = FREEQUANT.out.ions                      // channel: [ val(meta), path(ion.tsv) ]
-    labelquant_results_dir = PHILOSOPHER_LABELQUANT.out.results_dir  // channel: [ val(meta), path(results_dir) ] - with TMT intensities in .meta/
-    report_results_dir = PHILOSOPHER_REPORT.out.results_dir    // channel: [ val(meta), path(results_dir) ] - TSVs with correct intensities
-    report_psms      = PHILOSOPHER_REPORT.out.psms             // channel: [ val(meta), path(psm.tsv) ]
-    report_peptides  = PHILOSOPHER_REPORT.out.peptides         // channel: [ val(meta), path(peptide.tsv) ]
-    report_proteins  = PHILOSOPHER_REPORT.out.proteins         // channel: [ val(meta), path(protein.tsv) ]
+    tmt_unmod_dir    = TMTINTEGRATOR_UNMOD.out.results_dir     // channel: [ val(meta), path(tmt-report-unmod) ]
+    isobaric_dir     = IONQUANT_ISOBARIC.out.results_dir       // channel: [ val(meta), path(results_dir) ]
     versions         = IONQUANT.out.versions_ionquant
         .mix(IONQUANT.out.versions_fragpipe)
         .mix(IONQUANT_MS1.out.versions_ionquant)
@@ -285,10 +264,6 @@ workflow FRAGPIPE_QUANT {
         .mix(IONQUANT_ISOBARIC.out.versions_fragpipe)
         .mix(TMTINTEGRATOR.out.versions_tmtintegrator)
         .mix(TMTINTEGRATOR.out.versions_fragpipe)
-        .mix(FREEQUANT.out.versions_philosopher)
-        .mix(FREEQUANT.out.versions_fragpipe)
-        .mix(PHILOSOPHER_LABELQUANT.out.versions_philosopher)
-        .mix(PHILOSOPHER_LABELQUANT.out.versions_fragpipe)
-        .mix(PHILOSOPHER_REPORT.out.versions_philosopher)
-        .mix(PHILOSOPHER_REPORT.out.versions_fragpipe)
+        .mix(TMTINTEGRATOR_UNMOD.out.versions_tmtintegrator)
+        .mix(TMTINTEGRATOR_UNMOD.out.versions_fragpipe)
 }

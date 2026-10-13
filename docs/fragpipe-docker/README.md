@@ -22,7 +22,7 @@ nf-fragpipe supports two Docker container variants:
 
 Both containers use `fcyucn/fragpipe:24.0` as their base image, which provides all open-source FragPipe tools pre-installed (Philosopher, Percolator, MSBooster, PTMShepherd, etc.).
 The academic container layers academic-licensed JARs (MSFragger, IonQuant, DiaTracer) on top.
-The commercial container overlays the FragPipePlus distribution (commercial JARs + DIA-NN) on the same base.
+The commercial container replaces the base's `lib/` and `tools/` with the FragPipePlus distribution's (commercial JARs + DIA-NN), so no superseded public JAR (batmass-io 1.36.5, MSBooster 1.4.14) or `tools/Skyline/` stays behind.
 
 Both containers expose the same tool aliases in PATH, so pipeline modules work identically with either variant.
 
@@ -134,8 +134,7 @@ TAG=my-fragpipe:latest ./build_nfcore.sh academic
 
 ## Container Override
 
-The pipeline's open-source modules use `fcyucn/fragpipe:24.0` (no licensed tools).
-Commercial modules (MSFragger, IonQuant, DiaTracer, fragpipe_headless) require a container with licensed JARs, provided via `--fragpipe_container`:
+Every FragPipe module (licensed and open-source tools alike) runs from the one image given with `--fragpipe_container`, as FragPipe runs all tools from one distribution; there is no default image:
 
 ```bash
 nextflow run main.nf \

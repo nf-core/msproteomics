@@ -1,0 +1,136 @@
+{
+    "fragpipe_philosopher_quant - stub freequant stages every LC-MS file of a group": {
+        "content": [
+            [
+                "QUANT_CHAIN:FRAGPIPE_PHILOSOPHER_QUANT:FREEQUANT (control)"
+            ],
+            [
+                [
+                    "ctrl_a.mzML",
+                    "ctrl_b.mzML"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "control",
+                        "group": "control",
+                        "report_after_quant": true
+                    },
+                    "psm.tsv:md5,083b3053d8f5380e8d1645ac54346e51"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-07T05:07:48.869238794"
+    },
+    "fragpipe_philosopher_quant - stub with freequant": {
+        "content": [
+            [
+                
+            ],
+            [
+                
+            ],
+            [
+                [
+                    {
+                        "id": "sample_fq",
+                        "group": "sample_fq",
+                        "report_after_quant": true
+                    },
+                    [
+                        "peptide.tsv",
+                        "protein.tsv",
+                        "psm.tsv"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "sample_fq",
+                        "group": "sample_fq",
+                        "report_after_quant": true
+                    },
+                    "psm.tsv:md5,083b3053d8f5380e8d1645ac54346e51"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-07T05:07:18.372280525"
+    },
+    "fragpipe_philosopher_quant - stub Philosopher TMT extraction": {
+        "content": [
+            [
+                [
+                    "plex\tchannel\tsample\tsample_name\tcondition\treplicate",
+                    "p1\t126\tA_1\tA_1\tA\t1",
+                    "p2\t126\tA_2\tA_2\tA\t2"
+                ]
+            ],
+            [
+                [
+                    "p1",
+                    [
+                        "p1_annotation.txt",
+                        "peptide.tsv",
+                        "protein.tsv",
+                        "psm.tsv"
+                    ]
+                ],
+                [
+                    "p2",
+                    [
+                        "p2_annotation.txt",
+                        "peptide.tsv",
+                        "protein.tsv",
+                        "psm.tsv"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "fragpipe"
+                    },
+                    [
+                        "abundance_gene_None.tsv",
+                        "abundance_protein_None.tsv"
+                    ]
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-07T05:08:17.869545529"
+    },
+    "fragpipe_philosopher_quant - stub freequant group: IonQuant reads the final report with matched fragments": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "control",
+                        "group": "control",
+                        "report_after_quant": true,
+                        "export_matched_fragments": true
+                    },
+                    "psm.tsv:md5,6eac0e2634b28f02f020c895ecde2bf8"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-07T05:09:20.767989445"
+    }
+}

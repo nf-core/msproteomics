@@ -1,0 +1,93 @@
+// RC-12: DIA-Umpire SE params file as FragPipe 24.0 writes umpire-se.params.
+// FP = FragPipe-GUI/src/main/java/org/nesvilab/fragpipe/
+// UmpirePanel.collect() (FP/tools/umpire/UmpirePanel.java:397-428) loads the jar template
+// FP/tools/umpire/diaumpire_se.params, overlays the panel's named params (paramNames,
+// UmpirePanel.java:120-145) with the workflow values and sets Thread to the run's threads.
+// PropertiesUtils.writePropertiesContent keeps the template's lines and order, writing each
+// property as "name = value" (FP/../utils/PropertiesUtils.java:291-321).
+// CmdUmpireSe.java:66-75 adds the enabled Q tiers to the LC-MS list.
+
+nextflow_process {
+
+    name "Test Process PARSEFRAGPIPEWORKFLOW - DIA-Umpire params"
+    script "../main.nf"
+    process "PARSEFRAGPIPEWORKFLOW"
+    config "./nextflow.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "parse_fragpipe_workflow"
+    tag "stub"
+
+    test("parse_fragpipe_workflow - umpire-se.params is FragPipe's template with the workflow values") {
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = channel.of([[ id: 'umpire' ], file("${baseDir}/tests/fixtures/fragpipe_workflows/DIA_DIA-Umpire_SpecLib_Quant.workflow", checkIfExists: true), ['DIA']])
+                """
+            }
+        }
+
+        then {
+            def props = new Properties()
+            new File("${baseDir}/tests/fixtures/fragpipe_workflows/DIA_DIA-Umpire_SpecLib_Quant.workflow").withInputStream { s -> props.load(s) }
+            def template = new File("${baseDir}/modules/local/parsefragpipeworkflow/resources/usr/bin/diaumpire_se.params").readLines()
+            // the panel params with a component named diaumpire.<name> (UmpirePanel.java:224-244); WindowType, WindowSize,
+            // SE.MinMSIntensity and SE.MinMSMSIntensity are in UmpirePanel.paramNames but no component carries their name
+            def panel = ['RPmax', 'RFmax', 'CorrThreshold', 'DeltaApex', 'RTOverlap', 'AdjustFragIntensity', 'BoostComplementaryIon',
+                         'SE.MS1PPM', 'SE.MS2PPM', 'SE.NoMissedScan', 'SE.EstimateBG',
+                         'SE.IsoPattern', 'SE.MassDefectOffset', 'SE.MassDefectFilter', 'ExportPrecursorPeak',
+                         'SE.SN', 'SE.MS2SN', 'Q1', 'Q2', 'Q3']
+            def expected = template.collect { line ->
+                def m = (line =~ /^\s*([^=#]+?)\s*=\s*(.+?)\s*$/)
+                if (line.startsWith('#') || line.startsWith('==') || !m) {
+                    return line
+                }
+                def name = m[0][1]
+                def value = panel.contains(name) && props.getProperty("diaumpire.${name}") != null ? props.getProperty("diaumpire.${name}") : m[0][2]
+                name == 'Thread' ? 'Thread = THREADS' : "${name} = ${value}".toString()
+            }
+            def written = new File("${process.out.all_configs[0][1]}/diaumpire.params").readLines()
+            def json = new groovy.json.JsonSlurper().parse(new File(process.out.tool_configs_json[0][1].toString()))
+            assertAll(
+                { assert process.success },
+                { assert written == expected },
+                { assert json.diaumpire.args == new File("${process.out.all_configs[0][1]}/diaumpire.params").text },
+                { assert json.diaumpire.q_tiers == ['Q1', 'Q2', 'Q3'] },
+                { assert snapshot(written).match() }
+            )
+        }
+    }
+
+    // RC-13: diaTracer argv after --threadNum, exactly as CmdDiaTracer.java:104-117 builds it from
+    // DiaTracerPanel (FP/tools/diatracer/DiaTracerPanel.java:121-129, 180-206): booleans as 1/0,
+    // floats via String.valueOf(float), ints via String.valueOf(int).
+    test("parse_fragpipe_workflow - diaTracer flags use diaTracer's own option names") {
+        options "-stub"
+
+        when {
+            process {
+                """
+                def wf = file("\${workDir}/diatracer.workflow")
+                wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/DIA_DIA-Umpire_SpecLib_Quant.workflow").text
+                    .replace('diatracer.run-diatracer=false', 'diatracer.run-diatracer=true')
+                    .replace('diaumpire.run-diaumpire=true', 'diaumpire.run-diaumpire=false')
+                    .replace('diatracer.mass-defect-offset=0.1', 'diatracer.mass-defect-offset=1')
+                input[0] = channel.of([[ id: 'diatracer' ], wf, ['DIA']])
+                """
+            }
+        }
+
+        then {
+            def json = new groovy.json.JsonSlurper().parse(new File(process.out.tool_configs_json[0][1].toString()))
+            def expected = '--writeInter 0 --deltaApexIM 0.01 --deltaApexRT 3 --massDefectFilter 1 --massDefectOffset 1.0 --ms1MS2Corr 0.3 --RFMax 500'
+            assertAll(
+                { assert process.success },
+                { assert json.diatracer.run == true },
+                { assert json.diatracer.args == expected : json.diatracer.args }
+            )
+        }
+    }
+}

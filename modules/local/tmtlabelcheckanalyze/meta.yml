@@ -1,0 +1,120 @@
+name: "tmtlabelcheckanalyze"
+description: |
+  Analyze TMT labeling efficiency from PSM results using per-peptide site-level calculation.
+  Calculates labeling efficiency based on (Labeled Sites / Total Labelable Sites) where
+  labelable sites = lysine residues + N-terminus per peptide. Properly handles N-terminal
+  acetylation as biological blocking (not labeling failure). Optionally calculates channel
+  mixing ratios for TMT normalization.
+keywords:
+  - proteomics
+  - TMT
+  - isobaric labeling
+  - quality control
+  - labeling efficiency
+  - mixing ratios
+tools:
+  - tmt_qc:
+      description: |
+        TMT QC Analysis Tool - Python CLI for calculating per-peptide TMT labeling
+        efficiency and channel mixing ratios. Supports Philosopher psm.tsv and
+        Percolator target_psms.tsv formats.
+
+        Labeling Efficiency Formula:
+          Total_Sites = peptide.count('K') + 1  (lysines + N-terminus)
+          Labeled_Sites = count(TMT modifications in Assigned Modifications)
+          Efficiency = sum(Labeled_Sites) / sum(Total_Sites) * 100
+
+        N-terminal acetylation (42.0106 Da) is excluded from failure counts as it
+        represents biological blocking, not labeling failure.
+      homepage: "https://github.com/nf-fragpipe"
+      licence: ["MIT"]
+  - pandas:
+      description: Python data analysis library
+      homepage: "https://pandas.pydata.org/"
+      documentation: "https://pandas.pydata.org/docs/"
+      licence: ["BSD-3-Clause"]
+
+input:
+  - - meta:
+        type: map
+        description: Groovy Map with the run's metadata, e.g. [ id:'tmt_labelcheck' ]
+    - input_files:
+        type: file
+        description: |
+          mode psm: every FragPipe group's psm.tsv (tmt_qc.py concatenates them, header once);
+          mode ionquant: IonQuant's combined_modified_peptide.tsv
+        pattern: "*.tsv"
+  - tmt_type:
+      type: string
+      description: |
+        TMT reagent type. Determines TMT mass and expected channels.
+        Valid values: TMT0, TMT2, TMT6, TMT10, TMT11, TMT16, TMT18, TMT35, TMTPRO
+  - mode:
+      type: string
+      description: psm (per-sample PSM files) or ionquant (combined_modified_peptide.tsv)
+
+output:
+  html_report:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - report.html:
+          type: file
+          description: |
+            Rich HTML report with embedded CSS styling, including:
+            - Large efficiency percentage with color-coded status
+            - Summary statistics in formatted tables
+          pattern: "report.html"
+  md_report:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - report.md:
+          type: file
+          description: Markdown report suitable for documentation and GitHub rendering
+          pattern: "report.md"
+  summary:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - labeling_summary.tsv:
+          type: file
+          description: |
+            Machine-readable labeling summary in TSV format with columns:
+            metric, value, percentage
+          pattern: "labeling_summary.tsv"
+  per_sample:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - per_sample_efficiency.csv:
+          type: file
+          description: Per-sample labeling efficiency table
+          pattern: "per_sample_efficiency.csv"
+  versions_python:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - python:
+          type: string
+          description: The tool name
+      - python3 --version 2>&1 | sed "s/Python //":
+          type: eval
+          description: The expression to obtain the version of the tool
+
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - python:
+          type: string
+          description: The tool name
+      - python3 --version 2>&1 | sed "s/Python //":
+          type: eval
+          description: The expression to obtain the version of the tool
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

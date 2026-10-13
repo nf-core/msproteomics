@@ -1,0 +1,125 @@
+{
+    "fragpipe_save_workflow - stub with the manifest's spectra staged": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        "fragpipe.workflow:md5,a655d4f4bf3b8f899aeba1d8c7190114"
+                    ]
+                ],
+                "1": [
+                    [
+                        "FRAGPIPESAVEWORKFLOW",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "versions_fragpipe": [
+                    [
+                        "FRAGPIPESAVEWORKFLOW",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "workflow": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        "fragpipe.workflow:md5,a655d4f4bf3b8f899aeba1d8c7190114"
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-07T05:02:44.468389565"
+    },
+    "fragpipe_save_workflow - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        "fragpipe.workflow:md5,a655d4f4bf3b8f899aeba1d8c7190114"
+                    ]
+                ],
+                "1": [
+                    [
+                        "FRAGPIPESAVEWORKFLOW",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "versions_fragpipe": [
+                    [
+                        "FRAGPIPESAVEWORKFLOW",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "workflow": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        "fragpipe.workflow:md5,a655d4f4bf3b8f899aeba1d8c7190114"
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-06T06:25:37.359234305"
+    },
+    "fragpipe_save_workflow - stub leaves an input named fragpipe.workflow unchanged": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        "fragpipe.workflow:md5,a655d4f4bf3b8f899aeba1d8c7190114"
+                    ]
+                ],
+                "1": [
+                    [
+                        "FRAGPIPESAVEWORKFLOW",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "versions_fragpipe": [
+                    [
+                        "FRAGPIPESAVEWORKFLOW",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "workflow": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        "fragpipe.workflow:md5,a655d4f4bf3b8f899aeba1d8c7190114"
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-10T20:13:21.087513177"
+    }
+}

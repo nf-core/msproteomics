@@ -1,0 +1,1668 @@
+// Unit tests for fragpipe_utils_a.nf: FragPipe 24.0 tool paths (golden FragPipe argv), in-place params
+// values (Props.java:240-273 layout) and the here-document body the modules write files with.
+
+nextflow_function {
+
+    name "Test Functions fragpipe_utils_a"
+    script "../fragpipe_utils_a.nf"
+
+    tag "subworkflows"
+    tag "fragpipe_utils"
+    tag "stub"
+
+    // Paths as the golden FragPipe 24.0 argv ({FRAGPIPE} = /fp/fragpipe-24.0)
+    test("fragpipeTools - FragPipe 24.0 names under the tools directory") {
+        function "fragpipeTools"
+        when {
+            function {
+                """
+                input[0] = [ext: [fragpipe_tools_dir: '/fp/fragpipe-24.0/tools/']]
+                """
+            }
+        }
+        then {
+            def t = function.result
+            assertAll(
+                { assert function.success },
+                { assert t.fragpipe_version == '24.0' },
+                { assert t.fragpipe_jar == '/fp/fragpipe-24.0/lib/fragpipe-24.0.jar' },
+                { assert t.license == '/fp/fragpipe-24.0/license.dat' },
+                // FragPipe writes getDirTools() into argv unnormalised (FragpipeLocations.java:105)
+                { assert t.argv_tools_dir == '/fp/fragpipe-24.0/lib/../tools' },
+                // the distribution-named jars are found in the task (fragpipeJarLines)
+                { assert t.msfragger_jar == '{MSFRAGGER_JAR}' },
+                { assert t.thermo_dir == '{MSFRAGGER_DIR}/ext/thermo' },
+                { assert t.batmass_io_jar == '{BATMASS_IO_JAR}' },
+                { assert t.msbooster_jar == '{MSBOOSTER_JAR}' },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    test("fragpipeTools - a relative or missing tools directory fails") {
+        function "fragpipeTools"
+        when {
+            function {
+                """
+                input[0] = [ext: [fragpipe_tools_dir: null]]
+                """
+            }
+        }
+        then {
+            assert function.failed
+        }
+    }
+
+    // The jar tokens become the task's shell variables in double-quoted words
+    test("shellArgs - jar tokens become shell variables") {
+        function "shellArgs"
+        when {
+            function {
+                """
+                input[0] = ['{MSFRAGGER_JAR}', '-Dlibs.thermo.dir={MSFRAGGER_DIR}/ext/thermo', '{IONQUANT_JAR}:{DIATRACER_JAR}']
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == '"${MSFRAGGER_JAR}" "-Dlibs.thermo.dir=${MSFRAGGER_DIR}/ext/thermo" "${IONQUANT_JAR}:${DIATRACER_JAR}"' }
+            )
+        }
+    }
+
+    // FragPipe's lookup (TabConfig.java:176-178, :188-209): <tool>-<version>.jar anywhere under the tools folder,
+    // case-insensitive, highest version; the academic and the FragPipePlus names both resolve
+    test("fragpipeJarLines - finds academic and edition-named jar names, highest version, MSFragger dir") {
+        function "fragpipeJarLines"
+        when {
+            function {
+                """
+                input[0] = [tools_dir: '/fp/fragpipe-24.0/tools']
+                input[1] = ['msfragger', 'ionquant', 'diatracer']
+                """
+            }
+        }
+        then {
+            def run = { String layout ->
+                def tmp = java.nio.file.Files.createTempDirectory('fpjars').toFile()
+                def tools = new File(tmp, 'fragpipe-24.0/tools')
+                layout.split(' ').each { rel -> def f = new File(tools, rel); f.parentFile.mkdirs(); f.text = '' }
+                def script = function.result.replace('/fp/fragpipe-24.0/tools', tools.path) +
+                    '\nprintf "%s|%s|%s|%s|%s\\n" "${MSFRAGGER_JAR#' + tools.path + '/}" "${MSFRAGGER_DIR#' + tools.path + '/}" "${IONQUANT_JAR#' + tools.path + '/}" "${DIATRACER_JAR#' + tools.path + '/}" "$(cat .msfragger_version)"\n'
+                def proc = new ProcessBuilder('bash', '-euo', 'pipefail', '-c', script).directory(tmp).redirectErrorStream(true).start()
+                def out = proc.inputStream.text.trim()
+                [proc.waitFor(), out]
+            }
+            assertAll(
+                { assert function.success },
+                { assert run('MSFragger-4.4.1/MSFragger-4.4.1.jar IonQuant-1.11.20.jar diaTracer-2.2.1.jar') ==
+                    [0, 'MSFragger-4.4.1/MSFragger-4.4.1.jar|MSFragger-4.4.1|IonQuant-1.11.20.jar|diaTracer-2.2.1.jar|4.4.1'] },
+                // a distribution-specific name (FragPipePlus adds an edition word before the version)
+                { assert run('MSFragger-4.4.1/MSFragger-Plus-4.4.1.jar IonQuant-Plus-1.11.20.jar diaTracer-Plus-2.2.1.jar') ==
+                    [0, 'MSFragger-4.4.1/MSFragger-Plus-4.4.1.jar|MSFragger-4.4.1|IonQuant-Plus-1.11.20.jar|diaTracer-Plus-2.2.1.jar|4.4.1'] },
+                { assert run('MSFragger-4.3/MSFragger-4.3.jar MSFragger-4.4.1/msfragger-4.4.1.jar IonQuant-1.11.20.jar diaTracer-2.2.1.jar')[1].startsWith('MSFragger-4.4.1/msfragger-4.4.1.jar|MSFragger-4.4.1|') }
+            )
+        }
+    }
+
+    // batmass-io and MSBooster: the names the FragPipe build compiled in (ToolingUtils.BATMASS_IO_JAR,
+    // CmdMSBooster.JAR_MSBOOSTER_NAME), read from lib/fragpipe-<version>.jar, not the highest jar in tools/
+    test("fragpipeJarLines - batmass-io and MSBooster are the jars the FragPipe build names") {
+        function "fragpipeJarLines"
+        when {
+            function {
+                """
+                input[0] = [tools_dir: '/fp/fragpipe-24.0/tools', fragpipe_jar: '/fp/fragpipe-24.0/lib/fragpipe-24.0.jar']
+                input[1] = ['batmass_io', 'msbooster']
+                """
+            }
+        }
+        then {
+            def tmp = java.nio.file.Files.createTempDirectory('fpjars').toFile()
+            def root = new File(tmp, 'fragpipe-24.0')
+            ['tools/batmass-io-1.36.5.jar', 'tools/batmass-io-1.36.6.jar', 'tools/MSBooster-1.4.14.jar', 'tools/MSBooster-1.4.17.jar'].each { rel ->
+                def f = new File(root, rel); f.parentFile.mkdirs(); f.text = ''
+            }
+            def jar = new File(root, 'lib/fragpipe-24.0.jar')
+            jar.parentFile.mkdirs()
+            new java.util.zip.ZipOutputStream(new FileOutputStream(jar)).withCloseable { z ->
+                [['org/nesvilab/fragpipe/cmd/ToolingUtils.class', '\u0001\u0000\u0015batmass-io-1.36.5.jar\u0001'],
+                 ['org/nesvilab/fragpipe/cmd/CmdMSBooster.class', '\u0001\u0000\u0014MSBooster-1.4.14.jar\u0001']].each { e ->
+                    z.putNextEntry(new java.util.zip.ZipEntry(e[0])); z.write(e[1].getBytes('ISO-8859-1')); z.closeEntry()
+                }
+            }
+            def script = function.result.replace('/fp/fragpipe-24.0', root.path) +
+                '\nprintf "%s|%s|%s" "${BATMASS_IO_JAR#' + root.path + '/}" "${MSBOOSTER_JAR#' + root.path + '/}" "$(cat .msbooster_version)"'
+            def proc = new ProcessBuilder('bash', '-euo', 'pipefail', '-c', script).directory(tmp).redirectErrorStream(true).start()
+            def out = proc.inputStream.text
+            assertAll(
+                { assert function.success },
+                { assert proc.waitFor() == 0 : out },
+                { assert out == 'tools/batmass-io-1.36.5.jar|tools/MSBooster-1.4.14.jar|1.4.14' }
+            )
+        }
+    }
+
+    test("fragpipeJarLines - a required jar that is missing stops the task, an optional one is left empty") {
+        // bash -euo pipefail as the tasks run (nextflow.config process.shell): a missing tools folder still reaches the error
+        function "fragpipeJarLines"
+        when {
+            function {
+                """
+                input[0] = [tools_dir: '/fp/fragpipe-24.0/tools']
+                input[1] = ['ionquant']
+                input[2] = ['msfragger']
+                """
+            }
+        }
+        then {
+            def tmp = java.nio.file.Files.createTempDirectory('fpjars').toFile()
+            def tools = new File(tmp, 'fragpipe-24.0/tools')
+            tools.mkdirs()
+            def script = function.result.replace('/fp/fragpipe-24.0/tools', tools.path)
+            def proc = new ProcessBuilder('bash', '-euo', 'pipefail', '-c', script).directory(tmp).redirectErrorStream(true).start()
+            def out = proc.inputStream.text
+            def code = proc.waitFor()
+            def optional = new ProcessBuilder('bash', '-euo', 'pipefail', '-c', script.readLines().findAll { l -> !l.contains('IONQUANT') }.join('\n') + '\nprintf "[%s][%s]" "$MSFRAGGER_JAR" "$MSFRAGGER_DIR"').directory(tmp).redirectErrorStream(true).start()
+            assertAll(
+                { assert function.success },
+                { assert code == 1 },
+                { assert out.contains("ERROR: no IonQuant-*.jar under ${tools.path}") : out },
+                { assert optional.inputStream.text == '[][]' },
+                { assert optional.waitFor() == 0 }
+            )
+        }
+    }
+
+    test("fragpipeTools - a tools directory without fragpipe-<version> fails") {
+        function "fragpipeTools"
+        when {
+            function {
+                """
+                input[0] = [ext: [fragpipe_tools_dir: '/opt/fragpipe/tools']]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains('names no fragpipe-<version> directory') } }
+            )
+        }
+    }
+
+    test("setFragpipeParamValues - values replaced in place, tab comments kept") {
+        function "setFragpipeParamValues"
+        when {
+            function {
+                """
+                input[0] = 'database_name = /old/db.fasta\\t\\t\\t# FASTA\\nnum_threads = 0\\nnum_threads_x = 3\\t# other key\\ncalibrate_mass = 2\\t\\t# keep\\n'
+                input[1] = [database_name: '{TASK_DIR}/db.fasta', num_threads: 8]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'database_name = {TASK_DIR}/db.fasta\t\t\t# FASTA\nnum_threads = 8\nnum_threads_x = 3\t# other key\ncalibrate_mass = 2\t\t# keep\n' }
+            )
+        }
+    }
+
+    test("setFragpipeParamValues - text without a final newline gets one") {
+        function "setFragpipeParamValues"
+        when {
+            function {
+                """
+                input[0] = 'a = 1\\nb = 2'
+                input[1] = [b: 3]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'a = 1\nb = 3\n' }
+            )
+        }
+    }
+
+    // Behaviour check: bash writes the original text back, with {TASK_DIR} as the shell's PWD
+    test("heredocText - bash here-document reproduces the text, {TASK_DIR} becomes PWD") {
+        function "heredocText"
+        when {
+            function {
+                """
+                input[0] = 'fasta = {TASK_DIR}/db.fasta\\tx\\nre = ^a\\\\d\$HOME `x` \\\\\$\\n'
+                """
+            }
+        }
+        then {
+            def dir = new File(System.getProperty('java.io.tmpdir')).canonicalPath
+            def proc = ['bash', '-c', "cd '${dir}' && cat <<FP_EOF\n${function.result}\nFP_EOF"].execute()
+            def out = new StringBuffer(); def err = new StringBuffer()
+            proc.waitForProcessOutput(out, err)
+            assertAll(
+                { assert function.success },
+                { assert proc.exitValue() == 0 : err.toString() },
+                { assert out.toString() == "fasta = ${dir}/db.fasta\tx\nre = ^a\\d\$HOME `x` \\\$\n".toString() }
+            )
+        }
+    }
+
+    // CmdCrystalc.java:190-196 runtime keys; extension case kept (StringUtils.afterLastDot)
+    test("crystalcRuntimeParams - runtime keys after an empty line") {
+        function "crystalcRuntimeParams"
+        when {
+            function {
+                """
+                input[0] = 32
+                input[1] = 'db.fasta'
+                input[2] = 'EXP_A01.mzML'
+                input[3] = 'A01'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == '\nthread = 32\nfasta = {TASK_DIR}/db.fasta\nraw_file_location = {TASK_DIR}\nraw_file_extension = mzML\noutput_location = {TASK_DIR}/A01\n' }
+            )
+        }
+    }
+
+    test("rawSymlinksToFiles - only .raw files (any case) are copied over their links") {
+        function "rawSymlinksToFiles"
+        when {
+            function {
+                """
+                input[0] = ['a.RAW', 'b.mzML', 'c.raw']
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == "[ ! -L 'a.RAW' ] || cp --remove-destination \"\$(readlink -f 'a.RAW')\" 'a.RAW'\n[ ! -L 'c.raw' ] || cp --remove-destination \"\$(readlink -f 'c.raw')\" 'c.raw'" }
+            )
+        }
+    }
+
+    test("rawSymlinksToFiles - no .raw file gives no line") {
+        function "rawSymlinksToFiles"
+        when {
+            function {
+                """
+                input[0] = 'run.mzML'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == '' }
+            )
+        }
+    }
+
+    // TabWorkflow.java:1241-1250: path, experiment, bioreplicate, data type; null cells empty; no final newline
+    test("fragpipeManifestText - manifest lines under the spectra directory") {
+        function "fragpipeManifestText"
+        when {
+            function {
+                """
+                input[0] = [ ['run_A.mzML', 'cancer', null, 'DDA'], ['run_B.mzML', 'saliva', 1, 'DDA'] ]
+                input[1] = '{TASK_DIR}/spectra'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == '{TASK_DIR}/spectra/run_A.mzML\tcancer\t\tDDA\n{TASK_DIR}/spectra/run_B.mzML\tsaliva\t1\tDDA' }
+            )
+        }
+    }
+
+    test("fillArgvTokens - every token in every word") {
+        function "fillArgvTokens"
+        when {
+            function {
+                """
+                input[0] = ['--psm', '@PSM@', '--threads', '@THREADS@', '@TOOLS_DIR@/x:@TOOLS_DIR@/y']
+                input[1] = ['@PSM@': '{TASK_DIR}/g/psm.tsv', '@THREADS@': 4, '@TOOLS_DIR@': '/t']
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == ['--psm', '{TASK_DIR}/g/psm.tsv', '--threads', '4', '/t/x:/t/y'] }
+            )
+        }
+    }
+
+    // Behaviour checks through bash: the file holds the text byte for byte, the words arrive unchanged
+    test("writeTextFile and shellArgs - bash writes the exact text and words") {
+        function "writeTextFile"
+        when {
+            function {
+                """
+                input[0] = 'm.txt'
+                input[1] = 'a\\t\$x `y` \\\\\\n{TASK_DIR}/z'
+                """
+            }
+        }
+        then {
+            def dir = new File(System.getProperty('java.io.tmpdir'), "wtf_${System.nanoTime()}")
+            dir.mkdirs()
+            def canon = dir.canonicalPath
+            def proc = ['bash', '-c', "cd '${canon}' && ${function.result}"].execute()
+            proc.waitForProcessOutput(System.out, System.err)
+            assertAll(
+                { assert function.success },
+                { assert proc.exitValue() == 0 },
+                { assert new File(dir, 'm.txt').text == "a\t\$x `y` \\\n${canon}/z".toString() }
+            )
+        }
+    }
+
+    test("shellArgs - words with quotes, dollars and spaces survive bash") {
+        function "shellArgs"
+        when {
+            function {
+                """
+                input[0] = ['a b', 'q"\$HOME`x`\\\\', '{TASK_DIR}/f']
+                """
+            }
+        }
+        then {
+            def dir = new File(System.getProperty('java.io.tmpdir')).canonicalPath
+            def proc = ['bash', '-c', "cd '${dir}' && printf '%s\\n' ${function.result}"].execute()
+            def out = new StringBuffer(); proc.waitForProcessOutput(out, System.err)
+            assertAll(
+                { assert function.success },
+                { assert out.toString() == "a b\nq\"\$HOME`x`\\\n${dir}/f\n".toString() }
+            )
+        }
+    }
+
+    test("writeTextFile - empty text truncates the file") {
+        function "writeTextFile"
+        when {
+            function {
+                """
+                input[0] = 'e.txt'
+                input[1] = ''
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == ": > 'e.txt'" }
+            )
+        }
+    }
+
+    test("setFragpipeParamValues - a key with no line fails") {
+        function "setFragpipeParamValues"
+        when {
+            function {
+                """
+                input[0] = 'RPmax = 25\\n'
+                input[1] = [Thread: 4]
+                """
+            }
+        }
+        then {
+            assert function.failed
+        }
+    }
+
+    test("requireFragpipeLicenseAgreement - agreement gives the record text") {
+        function "requireFragpipeLicenseAgreement"
+        when {
+            function {
+                """
+                input[0] = [ext: [agree_fragpipe_license_agreement: true]]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'User agreed to FragPipe license agreement (agree_fragpipe_license_agreement=true)\n' }
+            )
+        }
+    }
+
+    test("requireFragpipeLicenseAgreement - no agreement fails") {
+        function "requireFragpipeLicenseAgreement"
+        when {
+            function {
+                """
+                input[0] = [ext: [agree_fragpipe_license_agreement: null]]
+                """
+            }
+        }
+        then {
+            assert function.failed
+        }
+    }
+
+    test("fragpipeParamValue - value up to the tab comment, null when absent") {
+        function "fragpipeParamValue"
+        when {
+            function {
+                """
+                input[0] = 'output_report_topN = 3\\t\\t# N\\noutput_report_topN_dia1 = 5\\nx=1 # c\\n'
+                input[1] = 'x'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == '1' }
+            )
+        }
+    }
+
+    // msfragger_pep_split.py:76-80 regexes and defaults
+    test("msfraggerSplitMergeSettings - defaults for extension and max expect") {
+        function "msfraggerSplitMergeSettings"
+        when {
+            function {
+                """
+                input[0] = 'output_report_topN = 1\\t\\t\\t# Reports top N\\noutput_report_topN_dia1 = 5\\n'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == [output_file_extension: 'pepXML', output_report_topN: '1', output_max_expect: '50.0'] }
+            )
+        }
+    }
+
+    test("msfraggerSplitMergeSettings - values from the params, topN required") {
+        function "msfraggerSplitMergeSettings"
+        when {
+            function {
+                """
+                input[0] = 'output_file_extension = pepXML\\noutput_report_topN = 2\\noutput_max_expect = 20\\t# max\\n'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == [output_file_extension: 'pepXML', output_report_topN: '2', output_max_expect: '20'] }
+            )
+        }
+    }
+
+    test("msfraggerSplitMergeSettings - no output_report_topN fails") {
+        function "msfraggerSplitMergeSettings"
+        when {
+            function {
+                """
+                input[0] = 'output_max_expect = 20\\n'
+                """
+            }
+        }
+        then {
+            assert function.failed
+        }
+    }
+
+    // CmdMsfragger.java:103-126 output names; .raw gets _uncalibrated.mzML; calibration with write_calibrated_mzml
+    test("msfraggerStubFiles - ranked DIA pepXMLs, raw side files, two pepindex sets") {
+        function "msfraggerStubFiles"
+        when {
+            function {
+                """
+                input[0] = ['a.raw', 'b.mzML']
+                input[1] = 'db.fasta'
+                input[2] = 'data_type = 1\\noutput_report_topN = 2\\ncalibrate_mass = 2\\nwrite_calibrated_mzml = 1\\noutput_format = tsv_pepXML_pin\\n'
+                input[3] = 'out'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == ['out/a_rank1.pepXML', 'out/a_rank2.pepXML', 'out/a.pin', 'out/a_scores_histogram.tsv', 'a_uncalibrated.mzML', 'a_calibrated.mzML',
+                                             'out/b_rank1.pepXML', 'out/b_rank2.pepXML', 'out/b.pin', 'out/b_scores_histogram.tsv', 'b_calibrated.mzML',
+                                             'db.fasta.1.pepindex', 'db.fasta.2.pepindex'] }
+            )
+        }
+    }
+
+    test("msfraggerStubFiles - DDA without calibration") {
+        function "msfraggerStubFiles"
+        when {
+            function {
+                """
+                input[0] = 'run.mzML'
+                input[1] = 'db.fasta'
+                input[2] = 'data_type = 0\\t# DDA\\noutput_report_topN = 1\\ncalibrate_mass = 0\\nwrite_calibrated_mzml = 0\\noutput_format = tsv_pepXML_pin\\n'
+                input[3] = 'out'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == ['out/run.pepXML', 'out/run.pin', 'out/run_scores_histogram.tsv', 'db.fasta.1.pepindex'] }
+            )
+        }
+    }
+
+    // CmdMSBooster.java:151-212: IM keys moved after the workflow lines and ANDed with timsTOF, then runtime keys
+    test("msboosterParamsText - IM keys off without timsTOF, keys in CmdMSBooster's order") {
+        function "msboosterParamsText"
+        when {
+            function {
+                """
+                input[0] = 'useRT = true\\nuseIM = true\\nfindBestImModel = true\\nFragmentationType = auto\\nnumThreads = 8\\n'
+                input[1] = false
+                input[2] = 8
+                input[3] = [diann: '/t/diann', unimod_obo: '/t/unimod.obo']
+                input[4] = 'fragger.params'
+                input[5] = ['a.pin', 'b.pin']
+                input[6] = []  // no spectral library
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'numThreads = 8\nDiaNN = /t/diann\nuseRT = true\nuseIM = false\nfragger = {TASK_DIR}/fragger.params\nfindBestImModel = false\nFragmentationType = auto\nunimodObo = /t/unimod.obo\nmzmlDirectory = {TASK_DIR} \npinPepXMLDirectory = b.pin a.pin\n' }
+            )
+        }
+    }
+
+    test("msboosterParamsText - timsTOF keeps the workflow's IM values") {
+        function "msboosterParamsText"
+        when {
+            function {
+                """
+                input[0] = 'useIM = true\\nfindBestImModel = false\\nnumThreads = 1\\n'
+                input[1] = true
+                input[2] = 1
+                input[3] = [diann: 'd', unimod_obo: 'u']
+                input[4] = 'f.params'
+                input[5] = 'a.pin'
+                input[6] = []  // no spectral library
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.readLines().findAll { l -> l.startsWith('useIM') || l.startsWith('findBestIm') } == ['useIM = true', 'findBestImModel = false'] }
+            )
+        }
+    }
+
+    // CmdMSBooster.java:180-184: the three prediction files name the library when libraryPath is not empty
+    test("msboosterParamsText - staged spectral library names spectraPredFile, RTPredFile and IMPredFile") {
+        function "msboosterParamsText"
+        when {
+            function {
+                """
+                input[0] = 'useRT = true\\nuseIM = false\\nfindBestImModel = false\\nspectraPredFile = {SPECTRAL_LIBRARY}\\nRTPredFile = {SPECTRAL_LIBRARY}\\nIMPredFile = {SPECTRAL_LIBRARY}\\nnumThreads = 1\\n'
+                input[1] = false
+                input[2] = 1
+                input[3] = [diann: 'd', unimod_obo: 'u']
+                input[4] = 'f.params'
+                input[5] = 'a.pin'
+                input[6] = 'spectral_library/my_library.tsv'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.readLines().findAll { l -> l.contains('PredFile') } == ['spectraPredFile = {TASK_DIR}/spectral_library/my_library.tsv', 'RTPredFile = {TASK_DIR}/spectral_library/my_library.tsv', 'IMPredFile = {TASK_DIR}/spectral_library/my_library.tsv'] },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    test("msboosterParamsText - spectral library named by the params but not staged fails") {
+        function "msboosterParamsText"
+        when {
+            function {
+                """
+                input[0] = 'spectraPredFile = {SPECTRAL_LIBRARY}\\nnumThreads = 1\\n'
+                input[1] = false
+                input[2] = 1
+                input[3] = [diann: 'd', unimod_obo: 'u']
+                input[4] = 'f.params'
+                input[5] = 'a.pin'
+                input[6] = []
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains('name a spectral library but 0 was staged') } }
+            )
+        }
+    }
+
+    // ccRCC-DIA-SpecLib FragPipe 24.0 run: PINs added in LC-MS order (NAT_1..NAT_5, T_1..T_5);
+    // 01882_NAT and 00606_T share a bucket, so the line depends on that order
+    test("msboosterParamsText - PINs in LC-MS order give FragPipe's pinPepXMLDirectory line") {
+        function "msboosterParamsText"
+        when {
+            function {
+                """
+                def p = 'CPTAC_CCRCC_W_JHU_20190112_LUMOS_'
+                input[0] = 'numThreads = 1\\nuseIM = false\\nfindBestImModel = false\\n'
+                input[1] = false
+                input[2] = 1
+                input[3] = [diann: 'd', unimod_obo: 'u']
+                input[4] = 'f.params'
+                input[5] = ['C3L-00418_NAT', 'C3L-00606_NAT', 'C3L-01882_NAT', 'C3N-00577_NAT', 'C3N-00733_NAT',
+                    'C3L-00418_T', 'C3L-00606_T', 'C3L-01882_T', 'C3N-00577_T', 'C3N-00733_T'].collect { s -> p + s + '.pin' }
+                input[6] = []
+                """
+            }
+        }
+        then {
+            def p = 'CPTAC_CCRCC_W_JHU_20190112_LUMOS_'
+            def expected = 'pinPepXMLDirectory = ' + ['C3L-00418_NAT', 'C3L-00418_T', 'C3N-00577_T', 'C3L-00606_NAT', 'C3L-01882_T',
+                'C3N-00733_T', 'C3L-01882_NAT', 'C3L-00606_T', 'C3N-00577_NAT', 'C3N-00733_NAT'].collect { s -> p + s + '.pin' }.join(' ')
+            assertAll(
+                { assert function.success },
+                { assert function.result.readLines().last() == expected }
+            )
+        }
+    }
+
+    // FragPipe's set is filled by add() (16 buckets up to 12 entries); new HashSet(Collection) has 32 for 12 on JDK 17
+    test("msboosterParamsText - 12 PINs iterate as an add()-filled HashSet") {
+        function "msboosterParamsText"
+        when {
+            function {
+                """
+                input[0] = 'numThreads = 1\\nuseIM = false\\nfindBestImModel = false\\n'
+                input[1] = false
+                input[2] = 1
+                input[3] = [diann: 'd', unimod_obo: 'u']
+                input[4] = 'f.params'
+                input[5] = (12..1).collect { i -> String.format('run%02d.pin', i) }
+                input[6] = []
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.readLines().last() == 'pinPepXMLDirectory = run06.pin run01.pin run11.pin run02.pin run12.pin run10.pin run09.pin run04.pin run03.pin run05.pin run08.pin run07.pin' }
+            )
+        }
+    }
+
+    // Constants.updateOutputDirectory: MSBooster/ under MyFileUtils.findDeepestCommonDirectory of the PINs
+    test("msboosterOutputDir - one group's PINs write <group>/MSBooster") {
+        function "msboosterOutputDir"
+        when {
+            function {
+                """
+                input[0] = ['C02/a.pin', 'C02/b.pin']
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'C02/MSBooster' }
+            )
+        }
+    }
+
+    test("msboosterOutputDir - PINs of several groups write MSBooster in the work directory") {
+        function "msboosterOutputDir"
+        when {
+            function {
+                """
+                input[0] = ['C02/a.pin', 'C03/b.pin', 'c.pin']
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'MSBooster' }
+            )
+        }
+    }
+
+    test("msboosterOutputDir - one PIN writes MSBooster next to it") {
+        function "msboosterOutputDir"
+        when {
+            function {
+                """
+                input[0] = ['C02/a.pin']
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'C02/MSBooster' }
+            )
+        }
+    }
+
+    test("msboosterPinPaths - group directory before the PIN name, none for the blank group") {
+        function "msboosterPinPaths"
+        when {
+            function {
+                """
+                input[0] = ['a.pin', 'b.pin']
+                input[1] = ['C02', '']
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == ['C02/a.pin', 'b.pin'] }
+            )
+        }
+    }
+
+    test("msboosterThreads - the parser's numThreads") {
+        function "msboosterThreads"
+        when {
+            function {
+                """
+                input[0] = 'useRT = true\\nnumThreads = 32\\nFragmentationType = auto\\n'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == 32 }
+            )
+        }
+    }
+
+    test("msboosterThreads - params without numThreads fail") {
+        function "msboosterThreads"
+        when {
+            function {
+                """
+                input[0] = 'useRT = true\\n'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains('exactly one numThreads line') } }
+            )
+        }
+    }
+
+    // numThreads is the parser's and must be the run's thread count (MSBooster's RT loess depends on it)
+    test("msboosterParamsText - parser numThreads other than the thread count fails") {
+        function "msboosterParamsText"
+        when {
+            function {
+                """
+                input[0] = 'useIM = true\\nfindBestImModel = false\\nnumThreads = 4\\n'
+                input[1] = false
+                input[2] = 2
+                input[3] = [diann: 'd', unimod_obo: 'u']
+                input[4] = 'f.params'
+                input[5] = 'a.pin'
+                input[6] = []  // no spectral library
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains('must hold numThreads = 2') } }
+            )
+        }
+    }
+
+    // CmdIonquant.java:178-337: blank group first, named groups sorted, --multidir . with named groups
+    test("ionquantRun - named groups sorted, blank group in the root, --multidir") {
+        function "ionquantRun"
+        when {
+            function {
+                """
+                input[0] = ['saliva', 'root-group', 'cancer']
+                input[1] = 'root-group'
+                input[2] = '--perform-ms1quant 1 --perform-isoquant 0 --minexps 1 --mbr 1'
+                input[3] = []
+                input[4] = '{TASK_DIR}/spectra'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.named_groups == ['cancer', 'saliva'] },
+                { assert function.result.filelist == 'flag\tvalue\n--psm\tpsm.tsv\n--psm\tcancer/psm.tsv\n--psm\tsaliva/psm.tsv\n--specdir\t{TASK_DIR}/spectra\n' },
+                { assert function.result.args == ['--perform-ms1quant', '1', '--perform-isoquant', '0', '--minexps', '1', '--mbr', '1', '--multidir', '.'] },
+                { assert function.result.annotations == [] }
+            )
+        }
+    }
+
+    // CmdIonquant.java:204-219, TmtiPanel.java:712-713: --annotation <psm>=<annotation> before --minexps
+    test("ionquantRun - isobaric pass writes per-group annotations") {
+        function "ionquantRun"
+        when {
+            function {
+                """
+                input[0] = ['C02', 'D02']
+                input[1] = ''
+                input[2] = '--perform-isoquant 1 --msstats 0 --minexps 1 --mbr 0'
+                input[3] = ['plex\\tchannel\\tsample\\tsample_name', 'C02\\t126\\ts1\\tn1', 'D02\\t126\\ts2\\tn2', 'C02\\t127N\\ts3\\tn3']
+                input[4] = '{TASK_DIR}/spectra'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.annotations == [['C02/C02_annotation.txt', '126 n1\n127N n3\n'], ['D02/D02_annotation.txt', '126 n2\n']] },
+                { assert function.result.args == ['--perform-isoquant', '1', '--msstats', '0',
+                    '--annotation', '{TASK_DIR}/C02/psm.tsv={TASK_DIR}/C02/C02_annotation.txt',
+                    '--annotation', '{TASK_DIR}/D02/psm.tsv={TASK_DIR}/D02/D02_annotation.txt',
+                    '--minexps', '1', '--mbr', '0', '--multidir', '.'] }
+            )
+        }
+    }
+
+    test("ionquantRun - MBR without named groups fails like FragPipe") {
+        function "ionquantRun"
+        when {
+            function {
+                """
+                input[0] = ['root']
+                input[1] = 'root'
+                input[2] = '--minexps 1 --mbr 1'
+                input[3] = []
+                input[4] = '{TASK_DIR}/spectra'
+                """
+            }
+        }
+        then {
+            assert function.failed
+        }
+    }
+
+    test("ionquantRun - options without --minexps fail") {
+        function "ionquantRun"
+        when {
+            function {
+                """
+                input[0] = ['g']
+                input[1] = ''
+                input[2] = '--mbr 0'
+                input[3] = []
+                input[4] = '{TASK_DIR}/spectra'
+                """
+            }
+        }
+        then {
+            assert function.failed
+        }
+    }
+
+    test("ionquantStaging, ionquantFiles, ionquantCollect - shell lines") {
+        function "ionquantFiles"
+        when {
+            function {
+                """
+                input[0] = [filelist: 'flag\\tvalue\\n', annotations: [['_annotation.txt', '126 a\\n']], args: [], named_groups: []]
+                input[1] = []
+                input[2] = ['file\\tsample']
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.contains("cat > 'filelist_ionquant.txt' <<FP_EOF") },
+                { assert function.result.contains("cat > '_annotation.txt' <<FP_EOF") },
+                { assert function.result.contains(": > 'modmasses_ionquant.txt'") },
+                { assert function.result.contains("cat > 'experiment_annotation.tsv' <<FP_EOF\nfile\tsample\nFP_EOF") }
+            )
+        }
+    }
+
+    // CmdMetaproteomics.java:70-111 argv order; cmd-line-opts one element only when not blank
+    test("metaproteomicsArgv - FragPipe's DbOptimizer argv") {
+        function "metaproteomicsArgv"
+        when {
+            function {
+                """
+                input[0] = [qvalue: '0.01', deltaHyperscore: '0.0', minPeptCntPerProt: '1', minUniqPeptCntPerProt: '1', minUniqPeptCnt: '3', hostName: '"Homo sapiens"', iterations: '3', cmdLineOpts: '--foo 1']
+                input[1] = '/w'
+                input[2] = '/w/db.fasta'
+                input[3] = 'rev_'
+                input[4] = '/t/names.dmp'
+                input[5] = '/t/nodes.dmp'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == ['DbOptimizer', '--projectDir', '/w', '--fastaFile', '/w/db.fasta', '--outdir', '/w', '--decoyTag', 'rev_',
+                    '--qvalue', '0.01', '--deltaHyperscore', '0.0', '--minPeptCntPerProt', '1', '--minUniqPeptCntPerProt', '1', '--minUniqPeptCnt', '3',
+                    '--taxonNameFile', '/t/names.dmp', '--taxonNodeFile', '/t/nodes.dmp', '--hostName', '"Homo sapiens"', '--iterations', '3', '--foo 1'] }
+            )
+        }
+    }
+
+    test("metaproteomicsArgv - blank cmd-line-opts adds nothing, missing values fail") {
+        function "metaproteomicsArgv"
+        when {
+            function {
+                """
+                input[0] = [qvalue: '0.01']
+                input[1] = '/w'
+                input[2] = '/w/db.fasta'
+                input[3] = 'rev_'
+                input[4] = 'n'
+                input[5] = 'm'
+                """
+            }
+        }
+        then {
+            assert function.failed
+        }
+    }
+
+    test("fpopCoadaptrStaging - groups layout copies each psm.tsv") {
+        function "fpopCoadaptrStaging"
+        when {
+            function {
+                """
+                input[0] = 'groups'
+                input[1] = ['input/1/A01', 'input/2/workdir-root']
+                input[2] = 'fragpipe'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == "mkdir -p 'fragpipe'\nmkdir -p 'fragpipe/A01'\ncp -L 'input/1/A01/psm.tsv' 'fragpipe/A01/psm.tsv'\nmkdir -p 'fragpipe/workdir-root'\ncp -L 'input/2/workdir-root/psm.tsv' 'fragpipe/workdir-root/psm.tsv'" }
+            )
+        }
+    }
+
+    test("fpopCoadaptrStaging - tree layout copies directories whole") {
+        function "fpopCoadaptrStaging"
+        when {
+            function {
+                """
+                input[0] = 'tree'
+                input[1] = 'input/1/fragpipe'
+                input[2] = 'out'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == "mkdir -p 'out'\ncp -rL 'input/1/fragpipe' 'out/fragpipe'" }
+            )
+        }
+    }
+
+    test("fpopCoadaptrStaging - duplicate names fail") {
+        function "fpopCoadaptrStaging"
+        when {
+            function {
+                """
+                input[0] = 'diann'
+                input[1] = ['input/1/dia-quant-output', 'input/2/dia-quant-output']
+                input[2] = 'out'
+                """
+            }
+        }
+        then {
+            assert function.failed
+        }
+    }
+
+    // ResultProcessor.processManifestFile/goThroughFolder: <experiment>[_<bioreplicate>]/, or the root
+    test("matchedFragmentsExportPsms - named experiments and bioreplicates") {
+        function "matchedFragmentsExportPsms"
+        when {
+            function {
+                """
+                input[0] = '../spectra/b.mzML\\tB\\t2\\tDDA\\n../spectra/a.mzML\\tA\\t\\tDDA\\n../spectra/c.mzML\\tA\\t\\tDDA'
+                input[1] = false
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == ['fragpipe/A/psm.tsv', 'fragpipe/B_2/psm.tsv'] }
+            )
+        }
+    }
+
+    test("matchedFragmentsExportPsms - blank experiment or SpecLibGen reads the root") {
+        function "matchedFragmentsExportPsms"
+        when {
+            function {
+                """
+                input[0] = '../spectra/a.mzML\\tA\\t\\tDDA\\n'
+                input[1] = true
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == ['fragpipe/psm.tsv'] }
+            )
+        }
+    }
+
+    test("matchedFragmentsStaging - work dir with the blank group in the root and umpire-se.params") {
+        function "matchedFragmentsStaging"
+        when {
+            function {
+                """
+                input[0] = 'm.tsv'
+                input[1] = ['A', 'workdir-root']
+                input[2] = 'workdir-root'
+                input[3] = true
+                input[4] = false
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.readLines().findAll { l -> l.startsWith('cp') || l.startsWith('touch') } == ["cp 'm.tsv' fragpipe/fragpipe-files.fp-manifest", "cp -rL 'groups/A' 'fragpipe/A'", "cp -rL 'groups/workdir-root/.' fragpipe/", 'touch fragpipe/umpire-se.params'] },
+                { assert function.result.contains('speclibgen.run-speclibgen=false') }
+            )
+        }
+    }
+
+    test("matchedFragmentsCollect - blank group gets the root psm.tsv") {
+        function "matchedFragmentsCollect"
+        when {
+            function {
+                """
+                input[0] = ['A', 'workdir-root']
+                input[1] = 'workdir-root'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == "mkdir -p results\ncp -rL 'fragpipe/A' 'results/A'\ncp -rL 'groups/workdir-root' 'results/workdir-root'\ncp fragpipe/psm.tsv 'results/workdir-root/psm.tsv'" }
+            )
+        }
+    }
+
+    // CmdDiann.java:268-294: largest first, a .d directory counts every file under it, ties keep the order
+    test("diannSizeOrder - largest first, directories summed, ties stable") {
+        function "diannSizeOrder"
+        when {
+            function {
+                """
+                def dir = file("\${workDir}/sizes")
+                dir.mkdirs()
+                def small = file("\${dir}/small.mzML"); small.text = 'x'
+                def tie1 = file("\${dir}/tie1.mzML"); tie1.text = 'xxx'
+                def tie2 = file("\${dir}/tie2.mzML"); tie2.text = 'yyy'
+                def d = file("\${dir}/run.d"); d.mkdirs()
+                file("\${d}/a.tdf").text = 'xx'; file("\${d}/b.tdf_bin").text = 'xxx'
+                input[0] = [small, tie1, d, tie2]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.collect { f -> new File(f.toString()).name } == ['run.d', 'tie1.mzML', 'tie2.mzML', 'small.mzML'] }
+            )
+        }
+    }
+
+    // CmdDiann.java:313-409 for DIA-NN 1.8.2 Beta 8
+    test("diannArgv - SpecLibGen library, protein inference off") {
+        function "diannArgv"
+        when {
+            function {
+                """
+                input[0] = [args: '--qvalue 0.01 --matrices', args_post: '--smart-profiling', library: '', run_plex: false, redo_protein_inference: false]
+                input[1] = '/t/diann'
+                input[2] = 48
+                input[3] = 'library_input/library.tsv'
+                input[4] = 'db.fasta'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.head == ['/t/diann', '--lib', 'library.tsv', '--threads', '48', '--verbose', '1', '--out', 'dia-quant-output/report.tsv', '--qvalue', '0.01', '--matrices', '--no-prot-inf', '--smart-profiling'] },
+                { assert function.result.tail == ['--cfg', '{TASK_DIR}/filelist_diann.txt--'] }
+            )
+        }
+    }
+
+    test("diannArgv - external library and relaxed protein inference") {
+        function "diannArgv"
+        when {
+            function {
+                """
+                input[0] = [args: '', args_post: '', library: '/x/lib.tsv', run_plex: false, redo_protein_inference: true]
+                input[1] = 'diann'
+                input[2] = 2
+                input[3] = 'library_input/lib.tsv'
+                input[4] = 'db.fasta'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.head == ['diann', '--lib', '{TASK_DIR}/library_input/lib.tsv', '--threads', '2', '--verbose', '1', '--out', 'dia-quant-output/report.tsv', '--relaxed-prot-inf', '--fasta', '{TASK_DIR}/db.fasta'] }
+            )
+        }
+    }
+
+    // CmdDiann.java:386-388: cmd.add(additionalCmdOpts), the diann.cmd-opts text is ONE argv element
+    test("diannArgv - diann.cmd-opts stays one argv element after the post flags") {
+        function "diannArgv"
+        when {
+            function {
+                """
+                input[0] = [args: '--qvalue 0.01', args_post: '--smart-profiling', cmd_opts: '--mod 280.1899,280.1899', library: '', run_plex: false, redo_protein_inference: false]
+                input[1] = 'diann'
+                input[2] = 2
+                input[3] = ''
+                input[4] = 'db.fasta'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.head.takeRight(3) == ['--no-prot-inf', '--smart-profiling', '--mod 280.1899,280.1899'] },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    test("diannFilelistText - one --f line per input in order") {
+        function "diannFilelistText"
+        when {
+            function {
+                """
+                input[0] = ['b.mzML', 'a.d']
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == '--f {DIANN_INPUT_DIR}/b.mzML\n--f {DIANN_INPUT_DIR}/a.d\n' }
+            )
+        }
+    }
+
+    // TabWorkflow.java:1255-1282, TmtiPanel.java:712-720, 868-880
+    test("headlessLayout - TMT groups in their own directory, blank group at the root") {
+        function "headlessLayout"
+        when {
+            function {
+                """
+                input[0] = [['p1.mzML', 'plex1', null, 'DDA', 'plex1'], ['p2.mzML', '', 2, 'DDA', '']]
+                input[1] = [['plex1', '126', 'S1'], ['', '126', '_126'], ['plex1', '127N', 'NA']]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.moves == [['raw_files/p1.mzML', 'raw_files/plex1/p1.mzML']] },
+                { assert function.result.manifest == '{TASK_DIR}/raw_files/plex1/p1.mzML\tplex1\t\tDDA\n{TASK_DIR}/raw_files/p2.mzML\t\t2\tDDA\n' },
+                { assert function.result.annotations == [['raw_files/_annotation.txt', '126 _126\n'], ['raw_files/plex1/plex1_annotation.txt', '126 S1\n127N NA\n']] }
+            )
+        }
+    }
+
+    test("headlessLayout - label-free files stay in raw_files") {
+        function "headlessLayout"
+        when {
+            function {
+                """
+                input[0] = [['a.raw', 'exp1', 1, 'DDA', 'exp1_1']]
+                input[1] = []
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == [moves: [], manifest: '{TASK_DIR}/raw_files/a.raw\texp1\t1\tDDA\n', annotations: []] }
+            )
+        }
+    }
+
+    // nf-core/msproteomics a3f8742: manifest rows match the staged files exactly, or the run stops
+    // FragPipe guesses a type only for a manifest line without one (InputLcmsFile.java:54-55); FragPipe headless's manifest
+    // carries the type parseSamplesheet took from the original path, never a guess from the staged raw_files/ name
+    test("headlessLayout - the manifest's type column is the meta data type, not a guess from the staged name") {
+        function "headlessLayout"
+        when {
+            function {
+                """
+                input[0] = [['a.mzML', 'exp', null, 'DIA', 'exp']]
+                input[1] = []
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.manifest == '{TASK_DIR}/raw_files/a.mzML\texp\t\tDIA\n' }
+            )
+        }
+    }
+
+    test("checkHeadlessRows - rows match the staged files by exact name") {
+        function "checkHeadlessRows"
+        when {
+            function {
+                """
+                input[0] = ['raw_files/A1.mzML', 'raw_files/XA1.mzML']
+                input[1] = [['XA1.mzML', 'x', 1, 'DDA', 'x_1'], ['A1.mzML', 'a', 1, 'DDA', 'a_1']]
+                input[2] = []
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == true }
+            )
+        }
+    }
+
+    test("checkHeadlessRows - staged file without a row fails") {
+        function "checkHeadlessRows"
+        when {
+            function {
+                """
+                input[0] = ['raw_files/A1.mzML', 'raw_files/XA1.mzML']
+                input[1] = [['XA1.mzML', 'x', 1, 'DDA', 'x_1']]
+                input[2] = []
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains("staged LC-MS file(s) without a manifest row: A1.mzML") } }
+            )
+        }
+    }
+
+    test("checkHeadlessRows - row naming no staged file fails") {
+        function "checkHeadlessRows"
+        when {
+            function {
+                """
+                input[0] = ['raw_files/A1.mzML']
+                input[1] = [['A1.mzML', 'a', 1, 'DDA', 'a_1'], ['B1.mzML', 'b', 1, 'DDA', 'b_1']]
+                input[2] = []
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains("manifest row(s) naming no staged LC-MS file: B1.mzML") } }
+            )
+        }
+    }
+
+    test("checkHeadlessRows - file listed twice fails") {
+        function "checkHeadlessRows"
+        when {
+            function {
+                """
+                input[0] = ['raw_files/A1.mzML']
+                input[1] = [['A1.mzML', 'a', 1, 'DDA', 'a_1'], ['A1.mzML', 'b', 1, 'DDA', 'b_1']]
+                input[2] = []
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains("listed more than once in the manifest rows: A1.mzML") } }
+            )
+        }
+    }
+
+    test("checkHeadlessRows - no rows fails") {
+        function "checkHeadlessRows"
+        when {
+            function {
+                """
+                input[0] = ['raw_files/A1.mzML']
+                input[1] = []
+                input[2] = []
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains("no manifest rows for the 1 staged LC-MS file(s)") } }
+            )
+        }
+    }
+
+    test("checkHeadlessRows - TMT group without annotation fails") {
+        function "checkHeadlessRows"
+        when {
+            function {
+                """
+                input[0] = ['raw_files/p1.mzML', 'raw_files/p2.mzML']
+                input[1] = [['p1.mzML', 'plex1', null, 'DDA', 'plex1'], ['p2.mzML', 'plex2', null, 'DDA', 'plex2']]
+                input[2] = [['plex1', '126', 'S1']]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains("TMT file(s) whose group has no annotation channels: p2.mzML (plex2)") } }
+            )
+        }
+    }
+
+    test("headlessWorkflowText - database path replaced, every other line kept") {
+        function "headlessWorkflowText"
+        when {
+            function {
+                """
+                input[0] = 'database.db-path=/old/db.fasta\\nphilosopher.exe=/x\\nfragpipe-config.bin-msfragger=/y\\nmsfragger.run-msfragger=true\\n'
+                input[1] = 'db.fasta'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'database.db-path={TASK_DIR}/db.fasta\nphilosopher.exe=/x\nfragpipe-config.bin-msfragger=/y\nmsfragger.run-msfragger=true\n' }
+            )
+        }
+    }
+
+    test("headlessWorkflowText - database path appended when absent") {
+        function "headlessWorkflowText"
+        when {
+            function {
+                """
+                input[0] = 'a=1'
+                input[1] = 'db.fasta'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'a=1\ndatabase.db-path={TASK_DIR}/db.fasta\n' }
+            )
+        }
+    }
+
+    // DIA-NN 1.8.2 Beta 8 aborts on a run path of 256+ characters: the task dir when it fits, else a short /tmp link
+    test("diannInputDirLines - task dir when the paths fit, a short link for a long work dir") {
+        function "diannInputDirLines"
+        when {
+            function {
+                """
+                input[0] = ['r' * 40 + '.mzML']
+                """
+            }
+        }
+        then {
+            def run_in = { String dir ->
+                new File(dir).mkdirs()
+                def proc = ['bash', '-c', "cd '${dir}' && ${function.result}\necho \"\$DIANN_INPUT_DIR\"\nreadlink -f \"\$DIANN_INPUT_DIR\""].execute()
+                def out = new StringBuffer(); proc.waitForProcessOutput(out, System.err)
+                out.toString().trim().readLines()
+            }
+            def tmp = new File(System.getProperty('java.io.tmpdir')).canonicalPath
+            def short_dir = new File(tmp, "short_${System.nanoTime()}").path
+            def long_dir = new File(tmp, "long_${System.nanoTime()}/" + ('d' * 100) + '/' + ('e' * 100)).path
+            def got_short = run_in.call(short_dir)
+            def got_long = run_in.call(long_dir)
+            assertAll(
+                { assert function.success },
+                { assert got_short[0] == short_dir },
+                { assert got_long[0] ==~ /\/tmp\/diann\.\w{6}\/s/ },
+                // the link points at the task dir while the script runs and is gone after it exits
+                { assert got_long[1] == new File(long_dir).canonicalPath },
+                { assert !new File(got_long[0]).parentFile.exists() },
+                { assert got_long[0].length() + 1 + 45 <= 255 }
+            )
+        }
+    }
+    // CmdMsfragger.java:586, :628-630: --no-ptm-score-in-pin after the LC-MS files when Write sub mzML is on
+    // (write_mzbin_all = 1 in the params, FragpipeRun.java:1481, CmdMsfragger.java:443)
+    test("msfraggerTrailingArgv - --no-ptm-score-in-pin follows write_mzbin_all") {
+        function "msfraggerTrailingArgv"
+        when {
+            function {
+                """
+                input[0] = 'write_mzbin_all = 1\\t\\t\\t# write mzBIN_all\\n'
+                input[1] = [id: 'x']
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == ['--no-ptm-score-in-pin'] }
+            )
+        }
+    }
+
+    test("msfraggerTrailingArgv - nothing with write_mzbin_all = 0 or absent") {
+        function "msfraggerTrailingArgv"
+        when {
+            function {
+                """
+                input[0] = 'write_mzbin_all = 0\\n'
+                input[1] = [id: 'x']
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == [] }
+            )
+        }
+    }
+
+    // second pass: a _sub.mzML of the command has its _percolator.weights (CmdMsfragger.java:612-630)
+    test("msfraggerTrailingArgv - second-pass _sub.mzML with weights") {
+        function "msfraggerTrailingArgv"
+        when {
+            function {
+                """
+                input[0] = 'write_mzbin_all = 0\\n'
+                input[1] = [no_ptm_score_in_pin: true]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == ['--no-ptm-score-in-pin'] }
+            )
+        }
+    }
+
+    // MSFragger writes the PIN only for an output_format that names it (FragPipe's tsv_pepXML for PeptideProphet)
+    test("msfraggerStubFiles - output_format without pin writes no PIN") {
+        function "msfraggerStubFiles"
+        when {
+            function {
+                """
+                input[0] = 'run.mzML'
+                input[1] = 'db.fasta'
+                input[2] = 'data_type = 0\\noutput_report_topN = 1\\ncalibrate_mass = 0\\nwrite_calibrated_mzml = 0\\noutput_format = tsv_pepXML\\n'
+                input[3] = 'out'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == ['out/run.pepXML', 'out/run_scores_histogram.tsv', 'db.fasta.1.pepindex'] }
+            )
+        }
+    }
+
+    test("msfraggerStubFiles - write_mzbin_all writes <stem>.mzBIN_all next to the LC-MS file") {
+        function "msfraggerStubFiles"
+        when {
+            function {
+                """
+                input[0] = 'run.mzML'
+                input[1] = 'db.fasta'
+                input[2] = 'data_type = 0\\noutput_report_topN = 1\\ncalibrate_mass = 0\\nwrite_calibrated_mzml = 0\\nwrite_mzbin_all = 1\\noutput_format = tsv_pepXML_pin\\n'
+                input[3] = 'out'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == ['out/run.pepXML', 'out/run.pin', 'out/run_scores_histogram.tsv', 'run.mzBIN_all', 'db.fasta.1.pepindex'] }
+            )
+        }
+    }
+
+    // CmdWriteSubMzml.java:82-130 argv; class path a HashSet of the batmass-io jar and <install>/lib/* (:93-95)
+    test("writeSubMzmlArgv - named group, FragPipe argv order") {
+        function "writeSubMzmlArgv"
+        when {
+            function {
+                """
+                def tools = [batmass_io_jar: '/fp/fragpipe-24.0/tools/batmass-io-1.36.6.jar', fragpipe_lib: '/fp/fragpipe-24.0/lib',
+                             bruker_dir: '/fp/fragpipe-24.0/tools/MSFragger-4.4.1/ext/bruker', thermo_dir: '/fp/fragpipe-24.0/tools/MSFragger-4.4.1/ext/thermo']
+                input[0] = 'A01.mzML'
+                input[1] = 'lcms'
+                input[2] = [group: 'A01']
+                input[3] = '0.5'
+                input[4] = 8
+                input[5] = tools
+                """
+            }
+        }
+        then {
+            def r = function.result
+            assertAll(
+                { assert function.success },
+                // the task orders the class path as FragPipe's HashSet (hashSetClassPathLines), insertion order:
+                { assert r.classpath_words == ['/fp/fragpipe-24.0/tools/batmass-io-1.36.6.jar', '/fp/fragpipe-24.0/lib/*'] },
+                { assert r.argv == ['java', '-Duser.home={TASK_DIR}', '-Xmx8G',
+                                    '-Dlibs.bruker.dir=/fp/fragpipe-24.0/tools/MSFragger-4.4.1/ext/bruker',
+                                    '-Dlibs.thermo.dir=/fp/fragpipe-24.0/tools/MSFragger-4.4.1/ext/thermo',
+                                    '-cp', '{FRAGPIPE_HASHSET_CP}', 'org.nesvilab.fragpipe.util.WriteSubMzml',
+                                    '{TASK_DIR}/lcms/A01.mzML', '{TASK_DIR}/A01/psm.tsv', '{TASK_DIR}/A01_sub.mzML', '0.5', '1'] },
+                { assert r.group_dir == 'A01' },
+                { assert r.psm == 'A01/psm.tsv' },
+                { assert r.sub_mzml == 'A01_sub.mzML' },
+                { assert snapshot(r).match() }
+            )
+        }
+    }
+
+    // CmdWriteSubMzml.java:93-95 joins a java.util.HashSet: the shell order must be the JVM's for any paths
+    test("hashSetClassPathLines - same order as java.util.HashSet") {
+        function "hashSetClassPathLines"
+        when {
+            function {
+                """
+                input[0] = ['/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools/batmass-io-1.36.5.jar', '/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/lib/*']
+                """
+            }
+        }
+        then {
+            def order = { List words ->
+                def lines = function.result.readLines()
+                def script = [lines[0], "FP_CP_WORDS=(${words.collect { w -> "'${w}'" }.join(' ')})", lines[2], 'printf "%s" "$FRAGPIPE_HASHSET_CP"'].join('\n')
+                def proc = new ProcessBuilder('bash', '-euo', 'pipefail', '-c', script).redirectErrorStream(true).start()
+                def out = proc.inputStream.text
+                proc.waitFor()
+                out
+            }
+            def expected = { List words -> def set = new java.util.HashSet<String>(); words.each { w -> set.add(w) }; set.join(':') }
+            def cases = ['/fragpipe_bin/fragpipe-24.0/fragpipe-24.0', '/fp/fragpipe-24.0', '/opt/fragpipe-24.0', '/x'].collectMany { root ->
+                ['1.36.5', '1.36.6'].collect { v -> ["${root}/tools/batmass-io-${v}.jar".toString(), "${root}/lib/*".toString()] }
+            }
+            assertAll(
+                { assert function.success },
+                { assert function.result.contains('FP_CP_WORDS=("/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools/batmass-io-1.36.5.jar" "/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/lib/*")') },
+                { assert cases.collect { c -> order(c) } == cases.collect { c -> expected(c) } }
+            )
+        }
+    }
+
+    // Blank group: cwd and psm.tsv are the work dir (wd.resolve("")); the threshold prints as a float ("" + 1.0f)
+    test("writeSubMzmlArgv - blank group and float threshold") {
+        function "writeSubMzmlArgv"
+        when {
+            function {
+                """
+                input[0] = 'run.raw'
+                input[1] = 'lcms'
+                input[2] = [group: '']
+                input[3] = '1'
+                input[4] = 4
+                input[5] = [batmass_io_jar: '/t/batmass-io-1.36.6.jar', fragpipe_lib: '/l', bruker_dir: '/b', thermo_dir: '/th']
+                """
+            }
+        }
+        then {
+            def r = function.result
+            assertAll(
+                { assert function.success },
+                { assert r.argv[-5..-1] == ['{TASK_DIR}/lcms/run.raw', '{TASK_DIR}/psm.tsv', '{TASK_DIR}/run_sub.mzML', '1.0', '1'] },
+                { assert r.group_dir == '.' },
+                { assert r.psm == 'psm.tsv' }
+            )
+        }
+    }
+}

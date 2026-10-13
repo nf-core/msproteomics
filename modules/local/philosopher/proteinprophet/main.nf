@@ -1,19 +1,28 @@
+include { proteinProphetCommand; shellQuote; fragpipeToolVersions } from '../../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
+
 process PROTEINPROPHET {
     tag "${meta.id}"
     label 'process_high'
 
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'docker://fcyucn/fragpipe:24.0' :
-        'docker.io/fcyucn/fragpipe:24.0' }"
-
     input:
-    tuple val(meta), path(pepxml_files), val(config_cli)  // pepXML files + config as CLI string (e.g., "--maxppmdiff 2000000")
+    // pepxml_files: plain interact pepXMLs of every group (FragpipeRun.java:1677-1680 feeds
+    //   sharedPepxmlFiles, never PTMProphet's .mod.pep.xml)
+    // filelist_paths: per pepXML its FragPipe location relative to the work dir ("<group>/<file>",
+    //   or "<file>" for the blank group), in FragPipe order (InputLcmsFile.compareTo); the
+    //   filelist holds their absolute paths (CmdProteinProphet.java:150-166), and protXML
+    //   source_files record them
+    // proteinprophet_cli: workflow protein-prophet.cmd-opts
+    tuple val(meta), path(pepxml_files, stageAs: 'pepxml_inputs/?/*'), val(filelist_paths), val(proteinprophet_cli)
+    // database: the run's FASTA. ProteinProphet opens the file named in the pepXML header (search_database
+    //   local_path, a symlink to this FASTA in the work dir of the search or of the split-database merge) for
+    //   protein length, coverage and mu; staging it makes its real location visible in the container. Without it ProteinProphet warns
+    //   "Cannot open DB", writes prot_length 0 and no percent_coverage
+    path(database, stageAs: 'database/*')
 
     output:
-    tuple val(meta), path("${prefix}")                    , emit: results_dir
-    tuple val(meta), path("${prefix}/combined.prot.xml")  , emit: protxml
-    tuple val(meta), path(pepxml_files)                   , emit: pepxml  // Pass through
-    tuple val("${task.process}"), val('philosopher'), eval("cat .philosopher_version"), emit: versions_philosopher, topic: versions
+    tuple val(meta), path("${prefix}")              , emit: results_dir
+    tuple val(meta), path("${prefix}/*.prot.xml")   , emit: protxml
+    tuple val("${task.process}"), val('philosopher'), val(fragpipeToolVersions().philosopher), emit: versions_philosopher, topic: versions
     tuple val("${task.process}"), val('fragpipe'), eval("cat .fragpipe_version"), emit: versions_fragpipe, topic: versions
 
     when:
@@ -22,86 +31,45 @@ process PROTEINPROPHET {
     script:
     def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id}"
-    def pepxml_list = pepxml_files instanceof List ? pepxml_files : [pepxml_files]
-    def ram = task.memory ? Math.max(1, task.memory.toGiga() - 2) : 30
-    tools_dir = task.ext.fragpipe_tools_dir ?: '/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools'
-
+    def cmds = proteinProphetCommand(pepxml_files, filelist_paths, proteinprophet_cli, args, task)
+    def stage = cmds.links.collect { staged, rel ->
+        def dir = rel.contains('/') ? rel[0..<rel.lastIndexOf('/')] : ''
+        (dir ? "mkdir -p ${shellQuote(dir)}\n    " : '') +
+            "ln -s \"\$PWD\"/${shellQuote(staged)} ${shellQuote(rel)}\n    printf '%s\\n' \"\$PWD\"/${shellQuote(rel)} >> filelist_proteinprophet.txt"
+    }.join('\n    ')
     """
     export HOME=\$(pwd)
     mkdir -p ${prefix}
+    [ -x ${shellQuote(cmds.philosopher)} ] || { echo "ERROR: ${cmds.philosopher} not found (the FragPipe tools directory set in nextflow.config)" >&2; exit 1; }
+    printf '%s\\n' ${shellQuote(cmds.fragpipe_version)} > .fragpipe_version
 
-    TOOLS_DIR="${tools_dir}"
+    # pepXMLs at their FragPipe locations, listed in FragPipe order (CmdProteinProphet.java:150-166)
+    : > filelist_proteinprophet.txt
+    ${stage}
 
-    discover_tool() {
-        local name="\$1"; shift
-        local matches count
-        matches=\$(find "\$TOOLS_DIR" "\$@" -type f 2>/dev/null)
-        count=\$(echo "\$matches" | grep -c . 2>/dev/null)
-        if [ "\$count" -eq 0 ]; then
-            echo "ERROR: \$name not found in \$TOOLS_DIR" >&2; exit 1
-        elif [ "\$count" -gt 1 ]; then
-            echo "ERROR: Multiple \$name matches in \$TOOLS_DIR:" >&2
-            echo "\$matches" >&2; exit 1
-        fi
-        echo "\$matches"
-    }
+    # Work-dir workspace (CmdPhilosopherWorkspaceCleanInit.java:66-74)
+    phi_temp="\$PWD/phi_temp/\$(cat /proc/sys/kernel/random/uuid)"
+    mkdir -p "\$phi_temp"
+    ${shellQuote(cmds.philosopher)} workspace --init --nocheck --temp "\$phi_temp"
 
-    # Tool discovery
-    PHILOSOPHER=\$(discover_tool 'philosopher' -path '*/Philosopher/philosopher*')
+    # ProteinProphet in the work dir with XML_ONLY=1 and Philosopher's dir appended to PATH as
+    # FragPipe does (CmdProteinProphet.java:172-216)
+    pp_cmd=(${cmds.argv.collect { token -> shellQuote(token) }.join(' ')} "\$PWD"/filelist_proteinprophet.txt)
+    printf '%s\\n' "\${pp_cmd[*]}" > ${prefix}/proteinprophet.log
+    XML_ONLY=1 PATH="\$PATH;;${cmds.philosopher_dir}" "\${pp_cmd[@]}" 2>&1 | tee -a ${prefix}/proteinprophet.log
 
-    # Version capture
-    _ver=\$(\$PHILOSOPHER version 2>&1 | grep -oP 'version=v\\K[\\d.]+' | head -1 || true)
-
-    echo "\$_ver" > .philosopher_version
-    _ver=\$(echo "\$TOOLS_DIR" | grep -oP 'fragpipe-\\K[0-9]+\\.[0-9]+[0-9.]*' | head -1 || true)
-
-    echo "\$_ver" > .fragpipe_version
-
-    export GOMAXPROCS=${task.cpus}
-    export GOMEMLIMIT="${ram}GiB"
-    export GOGC=200
-
-    > filelist_proteinprophet.txt
-    for f in ${pepxml_list.join(' ')}; do
-        echo "\$(pwd)/\$f" >> filelist_proteinprophet.txt
-    done
-
-    export XML_ONLY=1
-    \$PHILOSOPHER workspace --init --nocheck 2>&1
-
-    CMD="\$PHILOSOPHER proteinprophet ${config_cli} --output combined filelist_proteinprophet.txt ${args}"
-    printf '%s\\n' "\$CMD" > ${prefix}/proteinprophet.log
-
-    # Run ProteinProphet
-    \$CMD 2>&1 | tee -a ${prefix}/proteinprophet.log
-
-    mv combined.prot.xml ${prefix}/
-
-    \$PHILOSOPHER workspace --clean --nocheck 2>&1
-
+    mv ${shellQuote(cmds.output)} ${prefix}/
+    rm -rf phi_temp
     """
 
     stub:
     prefix = task.ext.prefix ?: "${meta.id}"
+    def cmds = proteinProphetCommand(pepxml_files, filelist_paths, proteinprophet_cli, task.ext.args ?: '', task)
     """
     mkdir -p ${prefix}
-    touch ${prefix}/combined.prot.xml
-    touch ${prefix}/proteinprophet.log
-    TOOLS_DIR="${task.ext.fragpipe_tools_dir ?: '/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools'}"
-    PHILOSOPHER=\$(find "\$TOOLS_DIR" -name 'philosopher' -type f 2>/dev/null | head -1) || true
-    if [ -z "\$PHILOSOPHER" ]; then
-        PHILOSOPHER=\$(which philosopher 2>/dev/null || true)
-    fi
-    _ver=""
-    if [ -n "\$PHILOSOPHER" ]; then
-        _ver=\$("\$PHILOSOPHER" version 2>&1 | grep -oP 'version=v\\K[\\d.]+' | head -1) || true
-    fi
-
-    echo "\$_ver" > .philosopher_version
-    _fp_ver=\$(echo "\$TOOLS_DIR" | grep -oP 'fragpipe-\\K[0-9]+\\.[0-9]+[0-9.]*' | head -1) || true
-
-    echo "\$_fp_ver" > .fragpipe_version
-
-
+    touch ${prefix}/${cmds.output}
+    printf '%s\\n' ${shellQuote(cmds.argv.join(' ') + ' {CWD}/filelist_proteinprophet.txt')} > ${prefix}/proteinprophet.log
+    printf '{CWD}/%s\\n' ${cmds.filelist.collect { rel -> shellQuote(rel) }.join(' ')} > ${prefix}/filelist_proteinprophet.txt
+    printf '%s\\n' ${shellQuote(cmds.fragpipe_version)} > .fragpipe_version
     """
 }

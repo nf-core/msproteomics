@@ -1,0 +1,286 @@
+// FragPipe 24.0 parity acceptance tests for MSPROTEOMICS_FRAGPIPE (pipeline mode).
+// Written test-first against FragPipe behaviour (RC-01 / RC-02 / RC-03 of the
+// FragPipe parity review).
+//
+// FragPipe source root (FP): FragPipe-GUI/src/main/java/org/nesvilab/fragpipe/
+//
+// Stub runs execute PARSEFRAGPIPEWORKFLOW for real and build IonQuant's filelist,
+// annotations and command line exactly as the real run does, so the snapshots record
+// the files FragPipe's tools would read.
+
+nextflow_workflow {
+
+    name "Test Workflow MSPROTEOMICS_FRAGPIPE - FragPipe parity"
+    script "../fragpipe.nf"
+    workflow "MSPROTEOMICS_FRAGPIPE"
+
+    tag "workflows"
+    tag "msproteomics_fragpipe"
+    tag "parity"
+
+    // RC-01: FP/api/InputLcmsFile.java:131-145 getGroup():
+    //   speclib/DIA-NN run -> ""; bioreplicate set -> experiment + "_" + bioreplicate
+    //   (or "exp_" + bioreplicate when experiment blank); else experiment.
+    // FP/tabs/TabWorkflow.java:1625-1636 groups files by getGroup(); FP/cmd/CmdPhilosopherFilter.java:60-122
+    // runs ONE philosopher filter per group. FP/cmd/CmdIonquant.java:221-222,316-327: --multidir .
+    // when a group is named, one --psm <group>/psm.tsv per group.
+    test("RC-01 grouping - experiment + bioreplicate gives one filter per experiment_bioreplicate") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                input             = ss.toString()
+                database          = "${fixtures}/test.fasta"
+                fragpipe_workflow = "${fixtures}/fragpipe_workflows/LFQ-MBR.workflow"
+                fragpipe_mode     = 'pipeline'
+                outdir            = "$outputDir"
+            }
+        }
+
+        then {
+            def filter_groups = workflow.trace.tasks()
+                .findAll { it.name.contains(':PHILOSOPHERFILTER') }
+                .collect { (it.name =~ /\((.*)\)$/) ? (it.name =~ /\((.*)\)$/)[0][1] : '' }
+                .sort()
+            def filelist = new File("${outputDir}/ionquant/fragpipe/filelist_ionquant.txt").readLines().collect { line -> line.replaceAll(/[^\s=]*\/work\/[0-9a-f]{2}\/[0-9a-f]+/, '<wd>') }
+            def command = new File("${outputDir}/ionquant/fragpipe/ionquant.log").readLines()[0]
+            assertAll(
+                { assert workflow.success },
+                { assert filter_groups.size() == 4 : "expected 4 PHILOSOPHERFILTER tasks (one per FragPipe group), got ${filter_groups.size()}: ${filter_groups}" },
+                { assert filter_groups == ['control_1', 'control_2', 'treated_1', 'treated_2'] : "PHILOSOPHERFILTER groups must follow InputLcmsFile.getGroup(); got ${filter_groups}" },
+                { assert filelist == ['flag\tvalue', '--psm\tcontrol_1/psm.tsv', '--psm\tcontrol_2/psm.tsv', '--psm\ttreated_1/psm.tsv', '--psm\ttreated_2/psm.tsv', '--specdir\t<wd>'] },
+                { assert command.contains('--multidir .') : "named groups need --multidir (CmdIonquant.java:221-222): ${command}" },
+                { assert snapshot(filelist, command, workflow.trace.succeeded().collect { task -> task.name }.sort()).match() }
+            )
+        }
+    }
+
+    // RC-04: with SpecLibGen or DIA-NN on, getGroup() is "" for every file
+    // (FP/api/InputLcmsFile.java:131-136), so ONE philosopher filter/report runs over all
+    // pepXMLs in the work-dir root (CmdPhilosopherFilter.java:60-122) and SpecLibGen runs once
+    // in that group directory (CmdSpecLibGen.java:116,138-140), even with named experiments.
+    test("RC-04 grouping - SpecLibGen/DIA-NN workflow puts named experiments in the single group") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                input             = ss.toString()
+                database          = "${fixtures}/test.fasta"
+                fragpipe_workflow = "${fixtures}/fragpipe_workflows/DIA_SpecLib_Quant.workflow"
+                fragpipe_mode     = 'pipeline'
+                outdir            = "$outputDir"
+            }
+        }
+
+        then {
+            def filter_tasks = workflow.trace.tasks().findAll { it.name.contains(':PHILOSOPHERFILTER') }.collect { it.name }
+            def speclib_tasks = workflow.trace.tasks().findAll { it.name.contains(':SPECLIBGEN') }.collect { it.name }
+            assertAll(
+                { assert workflow.success },
+                { assert filter_tasks.size() == 1 : "SpecLibGen/DIA-NN on: one PHILOSOPHERFILTER task for the single group \"\", got ${filter_tasks}" },
+                { assert filter_tasks[0].endsWith('(workdir-root)') : "the single group is FragPipe's blank group: ${filter_tasks}" },
+                { assert speclib_tasks.size() == 1 : "one SpecLibGen run: ${speclib_tasks}" },
+                { assert snapshot(workflow.trace.succeeded().collect { task -> task.name }.sort()).match() }
+            )
+        }
+    }
+
+    // RC-01: blank experiment and blank bioreplicate -> getGroup() returns "" for every file
+    // -> ONE group (user-confirmed default). FragPipe refuses IonQuant MBR without named
+    // experiments (FP/cmd/CmdIonquant.java:288-294), so LFQ-MBR must fail with its message.
+    test("RC-01 grouping - blank experiment and bioreplicate with MBR fails like FragPipe") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_blank.csv").text.replace('${FIXTURES}', fixtures)
+                input             = ss.toString()
+                database          = "${fixtures}/test.fasta"
+                fragpipe_workflow = "${fixtures}/fragpipe_workflows/LFQ-MBR.workflow"
+                fragpipe_mode     = 'pipeline'
+                outdir            = "$outputDir"
+            }
+        }
+
+        then {
+            def filter_tasks = workflow.trace.tasks().findAll { it.name.contains(':PHILOSOPHERFILTER') }.collect { it.name }
+            def message = "IonQuant with MBR requires designating LCMS runs to experiments. Please assign the experiment groups in the 'Workflow' tab, and make sure that the 'Spec Lib' tab is disabled."
+            assertAll(
+                { assert workflow.failed },
+                { assert filter_tasks.size() == 1 : "expected exactly 1 PHILOSOPHERFILTER task (single FragPipe group \"\"), got ${filter_tasks.size()}: ${filter_tasks}" },
+                { assert (workflow.stdout + workflow.stderr).any { line -> line.contains(message) } : "IonQuant must refuse MBR like FragPipe" },
+                // the refusal is raised by ionquantRun (Groovy), so Nextflow appends ' -- Check script ...' to the line
+                { assert snapshot((workflow.stdout + workflow.stderr).findAll { line -> line.contains(message) }.collect { line -> line.trim().replaceFirst(/ -- Check script .*$/, '') }.unique()).match() }
+            )
+        }
+    }
+
+    // RC-01: blank groups without MBR: FragPipe runs IonQuant without --multidir on the
+    // work-dir root psm.tsv (CmdIonquant.java:221-222, 316-327; LcmsFileGroup.outputDir("") == wd).
+    // The Nextflow-internal staging name of the blank group must not reach tools or published paths.
+    test("RC-01 grouping - blank experiment and bioreplicate without MBR runs IonQuant on the root group") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_blank.csv").text.replace('${FIXTURES}', fixtures)
+                input             = ss.toString()
+                database          = "${fixtures}/test.fasta"
+                fragpipe_workflow = "${fixtures}/fragpipe_workflows/LFQ-noMBR.workflow"
+                fragpipe_mode     = 'pipeline'
+                outdir            = "$outputDir"
+            }
+        }
+
+        then {
+            def filter_tasks = workflow.trace.tasks().findAll { it.name.contains(':PHILOSOPHERFILTER') }.collect { it.name }
+            def filelist = new File("${outputDir}/ionquant/fragpipe/filelist_ionquant.txt").readLines().collect { line -> line.replaceAll(/[^\s=]*\/work\/[0-9a-f]{2}\/[0-9a-f]+/, '<wd>') }
+            def command = new File("${outputDir}/ionquant/fragpipe/ionquant.log").readLines()[0]
+            def published = []
+            new File("${outputDir}").eachFileRecurse { f -> published << f.path.substring("${outputDir}".length() + 1) }
+            assertAll(
+                { assert workflow.success },
+                { assert filter_tasks.size() == 1 : "expected exactly 1 PHILOSOPHERFILTER task (single FragPipe group \"\"), got ${filter_tasks}" },
+                { assert filelist == ['flag\tvalue', '--psm\tpsm.tsv', '--specdir\t<wd>'] },
+                { assert !command.contains('--multidir') : "all groups blank: no --multidir (CmdIonquant.java:221-222): ${command}" },
+                { assert new File("${outputDir}/philosopher/psm.tsv").exists() : "the blank group's results belong at the output root" },
+                { assert !published.any { p -> p.contains('workdir-root') || p.contains('ionquant_root') } : "staging names leaked into published paths: ${published.findAll { p -> p.contains('root') }}" },
+                { assert snapshot(filelist, command, workflow.trace.succeeded().collect { task -> task.name }.sort()).match() }
+            )
+        }
+    }
+
+    // RC-02: one annotation per experiment (LcmsFileGroup == one plex) holding every channel of the
+    // label type; the samplesheet's per-channel `sample` is the annotation's sample name, NA excludes
+    // a channel. FP/tools/tmtintegrator/TmtiPanel.java:684-721, FP/cmd/CmdTmtIntegrator.java:195-208,
+    // FP/FragpipeRun.java:1917-1922 (annotations passed per group), FP/cmd/CmdIonquant.java:204-215.
+    // RC-03 (search side): FP/FragpipeRun.java:1258-1262 takes each LC-MS file once -> one MSFragger input per file.
+    test("RC-02/RC-03 TMT per-channel samplesheet - one search per raw file, one annotation per plex") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/tmt_per_channel_two_plex.csv").text.replace('${FIXTURES}', fixtures)
+                input             = ss.toString()
+                database          = "${fixtures}/test.fasta"
+                fragpipe_workflow = "${fixtures}/fragpipe_workflows/TMT10.workflow"
+                fragpipe_mode     = 'pipeline'
+                outdir            = "$outputDir"
+            }
+        }
+
+        then {
+            def tasks = workflow.trace.tasks()
+            def msfragger_tasks = tasks.findAll { it.name ==~ /.*:MSFRAGGER \(.*\)$/ }.collect { it.name }
+            def succeeded = workflow.trace.succeeded().collect { task -> task.name }
+
+            // Locate the TMT annotation staged into the IonQuant task(s) of this run.
+            def annot_files = []
+            new File("${launchDir}/work").eachFileRecurse { f -> if (f.name == 'tmt_annotation.tsv') annot_files << f.canonicalFile }
+            annot_files = annot_files.unique { it.text }
+            def plex_channels = [:]
+            if (annot_files) {
+                def lines  = annot_files[0].readLines().findAll { it.trim() }
+                def header = lines[0].split('\t') as List
+                lines.drop(1).each { l ->
+                    def c = l.split('\t')
+                    def plex = c[header.indexOf('plex')]
+                    plex_channels.get(plex, [] as SortedSet) << c[header.indexOf('channel')]
+                }
+            }
+            def tmt10 = ['126', '127N', '127C', '128N', '128C', '129N', '129C', '130N', '130C', '131N'] as SortedSet
+            def expected = [plex1: tmt10, plex2: tmt10]
+            // IonQuant isobaric pass: one "<channel> <sample>" annotation per plex (TmtiPanel.java:712-720 format)
+            def isobaric = "${outputDir}/ionquant_isobaric/fragpipe"
+            def plex_annotations = ['plex1', 'plex2'].collectEntries { plex -> [plex, new File("${isobaric}/${plex}/${plex}_annotation.txt").readLines()] }
+            def isobaric_filelist = new File("${isobaric}/filelist_ionquant.txt").readLines().collect { line -> line.replaceAll(/[^\s=]*\/work\/[0-9a-f]{2}\/[0-9a-f]+/, '<wd>') }
+            def isobaric_command = new File("${isobaric}/ionquant.log").readLines().collect { line -> line.replaceAll(/[^\s=]*\/work\/[0-9a-f]{2}\/[0-9a-f]+/, '<wd>') }[0]
+
+            assertAll(
+                { assert workflow.success },
+                { assert msfragger_tasks.size() == 2 : "expected one MSFRAGGER task per raw file (2), got ${msfragger_tasks.size()}: ${msfragger_tasks}" },
+                { assert annot_files.size() == 1 : "expected exactly one TMT annotation (tmt_annotation.tsv) for the run, found ${annot_files}" },
+                { assert plex_channels == expected : "annotation must have one plex per experiment with all its channels; got ${plex_channels}" },
+                { assert succeeded.any { name -> name.contains(':IONQUANT_ISOBARIC') } && succeeded.any { name -> name.contains(':TMTINTEGRATOR') } : "TMT run must reach IONQUANT_ISOBARIC and TMTINTEGRATOR: ${succeeded}" },
+                { assert plex_annotations.plex1[0] == '126 Bridge_plex1' && plex_annotations.plex2.contains('131N NA') },
+                { assert isobaric_command.contains('--annotation <wd>/plex1/psm.tsv=<wd>/plex1/plex1_annotation.txt --annotation <wd>/plex2/psm.tsv=<wd>/plex2/plex2_annotation.txt') : isobaric_command },
+                { assert snapshot(annot_files[0].readLines(), plex_annotations, isobaric_filelist, isobaric_command, succeeded.sort()).match() }
+            )
+        }
+    }
+
+    // RC-01/RC-02: a TMT plex with blank experiment is FragPipe's group "": its annotation is
+    // _annotation.txt in the work dir, IonQuant reads psm.tsv there without --multidir
+    // (CmdIonquant.java:204-215, 221-222), and TMT-Integrator receives the work-dir psm.tsv
+    // (CmdTmtIntegrator.java:293-296: g.outputDir(wd).resolve("psm.tsv")).
+    test("RC-01/RC-02 TMT blank experiment - group \"\" through IonQuant and TMT-Integrator") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/tmt_blank_experiment.csv").text.replace('${FIXTURES}', fixtures)
+                input             = ss.toString()
+                database          = "${fixtures}/test.fasta"
+                fragpipe_workflow = "${fixtures}/fragpipe_workflows/TMT10.workflow"
+                fragpipe_mode     = 'pipeline'
+                outdir            = "$outputDir"
+            }
+        }
+
+        then {
+            def succeeded = workflow.trace.succeeded().collect { task -> task.name }
+            def norm = { line -> line.replaceAll(/[^\s=]*\/work\/[0-9a-f]{2}\/[0-9a-f]+/, '<wd>') }
+            def isobaric = "${outputDir}/ionquant_isobaric/fragpipe"
+            def isobaric_command = norm(new File("${isobaric}/ionquant.log").readLines()[0])
+            def root_annotation = new File("${isobaric}/_annotation.txt").readLines()
+            // TMTINTEGRATOR task: the psm.tsv files it was given, in FragPipe's work-dir layout named
+            // like the results directory (the blank group's plex name)
+            def tmti_dirs = []
+            new File("${launchDir}/work").eachDirRecurse { d -> if (new File(d, '.command.sh').exists() && new File(d, '.command.sh').text.contains('abundance_gene_None.tsv')) tmti_dirs << d }
+            def wd_name = new File("${outputDir}").name
+            // psm.tsv arguments as the TMT-Integrator stub logs them (tmtIntegratorCommands)
+            def tmti_psms = new File(tmti_dirs[0], 'tmt-integrator.log').text.trim().tokenize(' ').drop(2).collect { p -> p.replace(tmti_dirs[0].absolutePath, '<task>') }
+            // experiment_annotation.tsv of the isobaric pass, published at the results root (FragPipe work dir)
+            def tmti_annotation = new File("${outputDir}/experiment_annotation.tsv").readLines()
+            assertAll(
+                { assert workflow.success },
+                { assert succeeded.count { name -> name.contains(':PHILOSOPHERFILTER (workdir-root)') } == 1 },
+                { assert succeeded.any { name -> name.contains(':TMTINTEGRATOR') } },
+                { assert !isobaric_command.contains('--multidir') : isobaric_command },
+                { assert isobaric_command.contains('--annotation <wd>/psm.tsv=<wd>/_annotation.txt') : isobaric_command },
+                { assert root_annotation[0] == '126 Bridge' && root_annotation.size() == 10 },
+                { assert tmti_dirs.size() == 1 : "expected one TMTINTEGRATOR task dir, got ${tmti_dirs}" },
+                { assert tmti_annotation[0] == 'plex\tchannel\tsample\tsample_name\tcondition\treplicate' && tmti_annotation.drop(1).every { line -> line.startsWith('\t') } : "plex of the blank group must be \"\": ${tmti_annotation}" },
+                { assert tmti_psms == ["<task>/${wd_name}/psm.tsv".toString()] : "TMT-Integrator must get the work-dir psm.tsv of group \"\", got ${tmti_psms}" },
+                { assert new File("${outputDir}/tmt-report/abundance_gene_None.tsv").exists() && new File("${outputDir}/tmt-integrator-conf.yml").exists() },
+                { assert snapshot(isobaric_command, root_annotation, tmti_annotation, tmti_psms, succeeded.sort()).match() }
+            )
+        }
+    }
+}

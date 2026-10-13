@@ -1,0 +1,29 @@
+{
+    "openms_peak_picker - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "sample.mzML:md5,a630060fc9a62789c0327725d65d910b"
+                ]
+            ],
+            [
+                "test_pp.log:md5,1ad239c94b4b8739c6acd1bb40b24990"
+            ],
+            [
+                [
+                    "OPENMSPEAKPICKER",
+                    "openms",
+                    "stub"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-05T14:23:31.189865178"
+    }
+}

@@ -1,19 +1,26 @@
+include { peptideProphetCommands; peptideProphetDirLines; shellQuote; fragpipeToolVersions } from '../../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
+
 process PEPTIDEPROPHET {
     tag "${meta.id}"
     label 'process_medium'
 
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'docker://fcyucn/fragpipe:24.0' :
-        'docker.io/fcyucn/fragpipe:24.0' }"
-
     input:
-    tuple val(meta), path(pepxml), path(mzml), path(config_file)
+    // pepxml_files: one MSFragger pepXML (per-file mode), or every pepXML of one FragPipe group in
+    //   FragPipe order (combine mode, CmdPeptideProphet.java:302-336)
+    // spectra: the searched LC-MS files of those pepXMLs plus MSFragger's _calibrated/_uncalibrated
+    //   mzML; RewritePepxml falls back to the files that exist (RewritePepxml.java:31-62)
+    // lcms_names: per LC-MS file the path name FragPipe passes to RewritePepxml
+    //   (CmdPeptideProphet.java:439-450), distinct, in FragPipe order
+    // peptideprophet_cli: cmd-opts with FragPipe's enzyme flags (CmdPeptideProphet.java:375-404)
+    // combine: one --combine run for the group (CmdPeptideProphet.java:190-202)
+    tuple val(meta), path(pepxml_files), path(spectra), val(lcms_names), val(peptideprophet_cli), val(combine)
     path(fasta)
+    val decoy_tag    // decoy protein prefix from workflow database.decoy-tag (FragpipeRun.java:1442)
 
     output:
-    tuple val(meta), path("${prefix}")                    , emit: results_dir
-    tuple val(meta), path("${prefix}/interact-*.pep.xml") , emit: pepxml
-    tuple val("${task.process}"), val('philosopher'), eval("cat .philosopher_version"), emit: versions_philosopher, topic: versions
+    tuple val(meta), path("${prefix}")                   , emit: results_dir
+    tuple val(meta), path("${prefix}/interact*.pep.xml") , emit: pepxml
+    tuple val("${task.process}"), val('philosopher'), val(fragpipeToolVersions().philosopher), emit: versions_philosopher, topic: versions
     tuple val("${task.process}"), val('fragpipe'), eval("cat .fragpipe_version"), emit: versions_fragpipe, topic: versions
 
     when:
@@ -22,107 +29,55 @@ process PEPTIDEPROPHET {
     script:
     def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id}"
-    def decoy_tag = task.ext.decoy_tag ?: 'rev_'
-    def ram = task.memory ? Math.max(1, task.memory.toGiga() - 2) : 30
-    tools_dir = task.ext.fragpipe_tools_dir ?: '/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools'
-
-    // Config file parsing is done in bash for compatibility with nf-test
-    // Note: Enzyme-conditional flags (--nontt --nonmc, --enzyme nonspecific) for
-    // nonspecific/dual-enzyme/nocleavage searches (CmdPeptideProphet.java:391-404)
-    // are already included in config_file by parse_fragpipe_workflow.py via
-    // _get_peptideprophet_enzyme_flags().
-
+    def cmds = peptideProphetCommands(meta, pepxml_files, lcms_names, peptideprophet_cli, args, combine, fasta, decoy_tag, task)
+    def gdir = shellQuote(cmds.group_dir)
+    def lcms_args = cmds.lcms.collect { name -> "\"\$PWD\"/${shellQuote(name)}" }.join(' ')
+    // the group dir holds the pepXMLs like FragPipe's (the task dir itself for the blank group)
+    def inputs = [pepxml_files].flatten().collect { f -> shellQuote(f.name) }
+    def link_inputs = cmds.group_dir == '.' ? '' : inputs.collect { name -> "ln -s \"\$PWD\"/${name} ${gdir}/${name}" }.join('\n    ')
+    def unlink_inputs = cmds.group_dir == '.' ? '' : "rm ${inputs.collect { name -> "${gdir}/${name}" }.join(' ')}"
+    def move_interact = cmds.group_dir == prefix ? '' : "mv ${shellQuote(cmds.interact_path)} ${shellQuote(prefix)}/"
     """
     export HOME=\$(pwd)
-    mkdir -p ${prefix}
+    mkdir -p ${prefix} ${gdir}
+    ${link_inputs}
+    [ -x ${shellQuote(cmds.philosopher)} ] || { echo "ERROR: ${cmds.philosopher} not found (the FragPipe tools directory set in nextflow.config)" >&2; exit 1; }
+    [ -d ${shellQuote(cmds.fragpipe_lib)} ] || { echo "ERROR: ${cmds.fragpipe_lib} not found (the FragPipe tools directory set in nextflow.config)" >&2; exit 1; }
+    printf '%s\\n' ${shellQuote(cmds.fragpipe_version)} > .fragpipe_version
 
-    TOOLS_DIR="${tools_dir}"
+    # Philosopher workspace with its own temp dir (CmdPeptideProphet.java:248-262,
+    # CmdPhilosopherWorkspaceCleanInit.java:66-74); per-file mode runs in <group dir>/fragpipe-<pepxml>-temp
+    run_dir=${shellQuote(cmds.run_dir)}
+    phi_temp="\$PWD/phi_temp/\$(cat /proc/sys/kernel/random/uuid)"
+    mkdir -p "\$run_dir" "\$phi_temp"
+    # InteractParser's 256-byte <pepXML dir>/<base name> buffer: a short /tmp link for a long work dir
+${peptideProphetDirLines(cmds.group_dir, cmds.run_names)}
+    (cd "\$PP_GROUP_DIR"/${shellQuote(cmds.run_sub)} && ${shellQuote(cmds.philosopher)} workspace --init --nocheck --temp "\$phi_temp")
 
-    discover_tool() {
-        local name="\$1"; shift
-        local matches count
-        matches=\$(find "\$TOOLS_DIR" "\$@" -type f 2>/dev/null)
-        count=\$(echo "\$matches" | grep -c . 2>/dev/null)
-        if [ "\$count" -eq 0 ]; then
-            echo "ERROR: \$name not found in \$TOOLS_DIR" >&2; exit 1
-        elif [ "\$count" -gt 1 ]; then
-            echo "ERROR: Multiple \$name matches in \$TOOLS_DIR:" >&2
-            echo "\$matches" >&2; exit 1
-        fi
-        echo "\$matches"
-    }
+    # PeptideProphet (CmdPeptideProphet.java:264-275 per file, :319-336 combined); WEBSERVER_ROOT as in setupEnv (:365-368)
+    pp_cmd=(${cmds.peptideprophet.collect { token -> token.startsWith('{CWD}/') ? "\"\$PWD\"/" + shellQuote(token.substring('{CWD}/'.length())) : shellQuote(token) }.join(' ')})
+    printf '%s\\n' "\${pp_cmd[*]}" > ${prefix}/peptideprophet.log
+    (cd "\$PP_GROUP_DIR"/${shellQuote(cmds.run_sub)} && WEBSERVER_ROOT=fake-WEBSERVER_ROOT-value "\${pp_cmd[@]}") 2>&1 | tee -a ${prefix}/peptideprophet.log
 
-    # Tool discovery
-    PHILOSOPHER=\$(discover_tool 'philosopher' -path '*/Philosopher/philosopher*')
+    # RewritePepxml always follows PeptideProphet (CmdPeptideProphet.java:340-355, :428-451)
+    rewrite_cmd=(${shellQuote(cmds.rewrite[0])} -Duser.home="\$PWD" ${cmds.rewrite.drop(1).collect { token -> shellQuote(token) }.join(' ')} "\$PWD"/${shellQuote(cmds.interact_path)} ${lcms_args})
+    printf '%s\\n' "\${rewrite_cmd[*]}" >> ${prefix}/peptideprophet.log
+    "\${rewrite_cmd[@]}" 2>&1 | tee -a ${prefix}/peptideprophet.log
 
-    # Version capture
-    _ver=\$(\$PHILOSOPHER version 2>&1 | grep -oP 'version=v\\K[\\d.]+' | head -1 || true)
-
-    echo "\$_ver" > .philosopher_version
-    _ver=\$(echo "\$TOOLS_DIR" | grep -oP 'fragpipe-\\K[0-9]+\\.[0-9]+[0-9.]*' | head -1 || true)
-
-    echo "\$_ver" > .fragpipe_version
-
-    export GOMAXPROCS=${task.cpus}
-    export GOMEMLIMIT="${ram}GiB"
-    export GOGC=200
-
-    # Parse config file for peptideprophet flags (format: peptideprophet=flags)
-    CMD_FLAGS=\$(grep -E '^peptideprophet=' ${config_file} | sed 's/^peptideprophet=//')
-    if [ -z "\$CMD_FLAGS" ]; then
-        echo "ERROR: No 'peptideprophet=' key found in config file ${config_file}" >&2
-        exit 1
-    fi
-
-    # Initialize philosopher workspace
-    \$PHILOSOPHER workspace --init --nocheck 2>&1
-
-    CMD="\$PHILOSOPHER peptideprophet --decoy ${decoy_tag} --database ${fasta} \$CMD_FLAGS ${args} ${pepxml}"
-    printf '%s\\n' "\$CMD" > ${prefix}/peptideprophet.log
-    \$CMD 2>&1 | tee -a ${prefix}/peptideprophet.log
-
-    shopt -s nullglob
-    for f in interact-*.pep.xml; do mv "\$f" "${prefix}/"; done
-    shopt -u nullglob
-
-    # Clean up philosopher workspace
-    \$PHILOSOPHER workspace --clean --nocheck 2>&1
-
-    # Normalize base_name attribute in pepXML: PeptideProphet embeds absolute paths from
-    # the Nextflow work directory (e.g., "/work/ab/123.../sample1") which become invalid
-    # after files are moved. Downstream tools (ProteinProphet, Philosopher filter/report)
-    # use this attribute to associate peptides with source files, so we simplify it to
-    # just the base name (e.g., "sample1").
-    for f in ${prefix}/interact-*.pep.xml; do
-        if [[ -f "\$f" ]]; then
-            sed -i "s|<msms_run_summary base_name=\\"[^\\"]*\\"|<msms_run_summary base_name=\\"${mzml.baseName}\\"|g" "\$f"
-        fi
-    done
-
+    ${unlink_inputs}
+    ${move_interact}
+    rm -rf ${combine ? '"\$run_dir"/.meta' : '"\$run_dir"'} phi_temp
     """
 
     stub:
     prefix = task.ext.prefix ?: "${meta.id}"
-    def basename = pepxml.baseName.replaceAll('\\.pepXML$', '')
+    def cmds = peptideProphetCommands(meta, pepxml_files, lcms_names, peptideprophet_cli, task.ext.args ?: '', combine, fasta, decoy_tag, task)
+    def pp_line = "cd ${cmds.run_dir}; " + cmds.peptideprophet.join(' ')
+    def rewrite_line = (cmds.rewrite + ["{CWD}/${cmds.interact_path}"] + cmds.lcms.collect { name -> "{CWD}/${name}" }).join(' ')
     """
     mkdir -p ${prefix}
-    touch ${prefix}/interact-${basename}.pep.xml
-    touch ${prefix}/peptideprophet.log
-    TOOLS_DIR="${task.ext.fragpipe_tools_dir ?: '/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools'}"
-    PHILOSOPHER=\$(find "\$TOOLS_DIR" -name 'philosopher' -type f 2>/dev/null | head -1) || true
-    if [ -z "\$PHILOSOPHER" ]; then
-        PHILOSOPHER=\$(which philosopher 2>/dev/null || true)
-    fi
-    _ver=""
-    if [ -n "\$PHILOSOPHER" ]; then
-        _ver=\$("\$PHILOSOPHER" version 2>&1 | grep -oP 'version=v\\K[\\d.]+' | head -1) || true
-    fi
-
-    echo "\$_ver" > .philosopher_version
-    _fp_ver=\$(echo "\$TOOLS_DIR" | grep -oP 'fragpipe-\\K[0-9]+\\.[0-9]+[0-9.]*' | head -1) || true
-
-    echo "\$_fp_ver" > .fragpipe_version
-
-
+    touch ${prefix}/${cmds.interact}
+    printf '%s\\n' ${shellQuote(pp_line)} ${shellQuote(rewrite_line)} > ${prefix}/peptideprophet.log
+    printf '%s\\n' ${shellQuote(cmds.fragpipe_version)} > .fragpipe_version
     """
 }

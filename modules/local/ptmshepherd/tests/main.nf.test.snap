@@ -1,48 +1,71 @@
 {
-    "ptmshepherd - stub": {
+    "ptmshepherd - stub - custom annotation file is staged and named by the config": {
         "content": [
             [
                 [
                     {
-                        "id": "test_shepherd"
+                        "id": "fragpipe"
+                    },
+                    "shepherd.config:md5,39f4dd105b0231cf6f7f81ecbd877b71"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-11T15:02:37.430271287",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "ptmshepherd - stub - shepherd.config layout and rewritten group copies": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "fragpipe"
                     },
                     [
-                        "global.modsummary.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "global.profile.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "ptmshepherd.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        [
+                            "psm.tsv:md5,e0b2bdb0e94dbc3e3b5e4d30dc4351c8"
+                        ],
+                        [
+                            "psm.tsv:md5,06f601e9c82e955a4309e4ee17ae37ca"
+                        ]
                     ]
                 ]
             ],
             [
                 [
                     {
-                        "id": "test_shepherd"
+                        "id": "fragpipe"
                     },
-                    "global.profile.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    [
+                        "global.modsummary.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "global.profile.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "glyco_masses_list.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
                 ]
             ],
             [
                 [
                     {
-                        "id": "test_shepherd"
+                        "id": "fragpipe"
                     },
-                    "global.modsummary.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    "glyco_masses_list.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
             ],
             [
-                
-            ],
-            [
-                
-            ],
-            [
-                
+                [
+                    {
+                        "id": "fragpipe"
+                    },
+                    "shepherd.config:md5,b11b804601c4e114c965c9daab6a08c6"
+                ]
             ],
             [
                 [
                     "PTMSHEPHERD",
                     "ptmshepherd",
-                    "24.0"
+                    "3.0.11"
                 ]
             ],
             [
@@ -53,10 +76,10 @@
                 ]
             ]
         ],
-        "timestamp": "2026-03-31T19:44:35.727127132",
+        "timestamp": "2026-10-07T22:03:48.593363401",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
         }
     }
 }

@@ -8,17 +8,20 @@ nextflow_workflow {
     tag "subworkflows"
     tag "subworkflows_local"
     tag "fragpipe_export"
+    tag "fpop"
+    tag "fpop_coadaptr"
+    tag "metaproteomics"
 
     test("fragpipe_export - stub with saintexpress") {
         options "-stub"
         tag "stub"
 
         when {
+            params {
+                outdir = "$outputDir"
+            }
             workflow {
                 """
-                def results_dir = file("\${workDir}/sample_results")
-                results_dir.mkdirs()
-                file("\${results_dir}/psm.tsv").text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
 
                 def mzml_file = file("\${workDir}/sample.mzML")
                 mzml_file.text = "<?xml version='1.0'?><mzML></mzML>"
@@ -34,29 +37,29 @@ nextflow_workflow {
                 def taxon_nodes = file("\${workDir}/nodes.dmp")
                 taxon_nodes.text = "1\\t|\\t1\\t|\\tno rank"
 
-                def inter_file = file("\${workDir}/inter.dat")
-                inter_file.text = "bait\\tprey\\tcount"
-                def bait_file = file("\${workDir}/bait.dat")
-                bait_file.text = "bait\\tT"
-                def prey_file = file("\${workDir}/prey.dat")
-                prey_file.text = "prey\\t100"
+                // REPRINT tables of the work dir (Abacus --reprint or IonQuant)
+                def reprint_spc = file("\${workDir}/reprint.spc.tsv")
+                reprint_spc.text = "PROTID\\tGENEID\\tB1_SPC\\nna\\tna\\tBAIT\\nP1\\tG1\\t3\\n"
+                def reprint_int = file("\${workDir}/reprint.int.tsv")
+                reprint_int.text = "PROTID\\tGENEID\\tB1_INT\\nna\\tna\\tBAIT\\nP1\\tG1\\t3.0\\n"
 
                 // Tool configs: saintexpress enabled
                 def tool_configs = [
-                    skyline:        [run: false, args: ''],
-                    saintexpress:   [run: true, args: '-R 3 -L 0'],
+                    database:       [run: true, args: '--prefix rev_', decoy_tag: 'rev_'],
+                    saintexpress:   [run: true, args: '-R3 -L0', cmd_opts: ''],
                     fpop:           [run: false, args: ''],
                     metaproteomics: [run: false, args: '']
                 ]
 
-                input[0] = channel.of([[ id: 'sample' ], results_dir])
-                input[1] = channel.of([[ id: 'sample' ], mzml_file])
-                input[2] = channel.of([[ id: 'speclib' ], speclib_file])
-                input[3] = fasta_file
-                input[4] = channel.of([taxon_names, taxon_nodes])
-                input[5] = channel.of([inter_file, bait_file, prey_file])
-                input[6] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
-                input[7] = [ id: 'export' ]
+                input[0] = fasta_file
+                input[1] = channel.empty()          // FPOP coADAPTr tables
+                input[2] = channel.empty()          // DIA-NN report
+                input[3] = channel.empty()          // FPOP Quant inputs
+                input[4] = channel.empty()          // Metaproteomics files
+                input[5] = channel.value([[], []])  // taxonomy dumps
+                input[6] = channel.of(['spc', reprint_spc], ['int', reprint_int])
+                input[7] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[8] = [ id: 'export' ]
                 """
             }
         }
@@ -64,9 +67,13 @@ nextflow_workflow {
         then {
             assertAll(
                 { assert workflow.success },
+                // both REPRINT tables present: both modes run, nothing skipped
+                { assert workflow.out.saint_results.collect { item -> new File(item[1].toString()).parentFile.name }.sort() == ['saintexpress-int', 'saintexpress-spc'] },
+                { assert workflow.out.saint_skipped.size() == 0 },
+                // optional post-run step (FragPipe's Downstream tab): its own output dir and a log line
+                { assert ['spc', 'int'].every { mode -> new File("$outputDir/downstream/saintexpress/saintexpress-${mode}/list.txt").exists() } },
+                { assert new File("${launchDir}/meta/nextflow.log").text.contains("SAINTexpress runs as an optional post-run step: FragPipe's Downstream-tab action, not part of FragPipe's run") },
                 { assert snapshot(
-                    workflow.out.skyline_doc,
-                    workflow.out.skyline_reports,
                     workflow.out.saint_results,
                     workflow.out.fpop_results,
                     workflow.out.taxonomy_results
@@ -75,55 +82,81 @@ nextflow_workflow {
         }
     }
 
-    test("fragpipe_export - stub with fpop") {
+
+    // TabDownstream.java:137-145 + CmdSaintExpress.java:72-79: a missing reprint table logs FragPipe's
+    // error and skips only that mode
+    [['spc', 'int'], ['int', 'spc']].each { missing, present ->
+        test("fragpipe_export - stub saintexpress skips ${missing} when reprint.${missing}.tsv is missing") {
+            options "-stub"
+            tag "stub"
+
+            when {
+                workflow {
+                    """
+                    def reprint = file("\${workDir}/reprint.${present}.tsv")
+                    reprint.text = "PROTID\\tGENEID\\tB1_X\\nna\\tna\\tBAIT\\nP1\\tG1\\t3\\n"
+                    def fasta_file = file("\${workDir}/test.fasta")
+                    fasta_file.text = ">PROT1\\nPEPTIDEK"
+                    def tool_configs = [
+                        database:       [run: true, decoy_tag: 'rev_'],
+                        fpop: [run: false], metaproteomics: [run: false],
+                        saintexpress:   [run: true, args: '-R10 -L100', cmd_opts: '']
+                    ]
+                    input[0] = fasta_file
+                    input[1] = channel.empty()          // FPOP coADAPTr tables
+                    input[2] = channel.empty()          // DIA-NN report
+                    input[3] = channel.empty()          // FPOP Quant inputs
+                    input[4] = channel.empty()          // Metaproteomics files
+                    input[5] = channel.value([[], []])  // taxonomy dumps
+                    input[6] = channel.of(['${present}', reprint])
+                    input[7] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                    input[8] = [ id: 'export' ]
+                        """
+                }
+            }
+
+            then {
+                def skipped = workflow.out.saint_skipped.collect { item -> new File(item[1].toString()) }
+                assertAll(
+                    { assert workflow.success },
+                    { assert workflow.out.saint_results.collect { item -> new File(item[1].toString()).parentFile.name } == ["saintexpress-${present}"] },
+                    { assert skipped.size() == 1 && skipped[0].parentFile.name == "saintexpress-${missing}" },
+                    // CmdSaintExpress.java:74 message, the task dir standing for the work dir
+                    { assert skipped[0].text ==~ /Input file \/.+\/reprint\.${missing}\.tsv is not accessible\.\n/ : skipped[0].text }
+                )
+            }
+        }
+    }
+
+    test("fragpipe_export - stub FPOP Quant reads IonQuant's combined_modified_peptide.tsv") {
         options "-stub"
         tag "stub"
 
         when {
             workflow {
                 """
-                def results_dir = file("\${workDir}/sample_results_fpop")
-                results_dir.mkdirs()
-                file("\${results_dir}/combined_modified_peptide.tsv").text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
-
                 def mzml_file = file("\${workDir}/sample.mzML")
                 mzml_file.text = "<?xml version='1.0'?><mzML></mzML>"
-
-                def speclib_file = file("\${workDir}/empty.speclib")
-                speclib_file.text = ""
-
                 def fasta_file = file("\${workDir}/test.fasta")
                 fasta_file.text = ">PROT1\\nPEPTIDEK"
 
-                def taxon_names = file("\${workDir}/names.dmp")
-                taxon_names.text = "1\\t|\\troot\\t|"
-                def taxon_nodes = file("\${workDir}/nodes.dmp")
-                taxon_nodes.text = "1\\t|\\t1\\t|\\tno rank"
-
-                def inter_file = file("\${workDir}/inter.dat")
-                inter_file.text = ""
-                def bait_file = file("\${workDir}/bait.dat")
-                bait_file.text = ""
-                def prey_file = file("\${workDir}/prey.dat")
-                prey_file.text = ""
-
-                // Tool configs: fpop enabled with bash_source config
-                def fpop_args = "REGION_SIZE='50'; CONTROL_LABEL='control'; FPOP_LABEL='fpop'; SUBTRACT_CONTROL='true'; IS_TMT='false'"
                 def tool_configs = [
-                    skyline:        [run: false, args: ''],
+                    database:       [run: true, args: '--prefix rev_', decoy_tag: 'rev_'],
                     saintexpress:   [run: false, args: ''],
-                    fpop:           [run: true, args: fpop_args, config_type: 'bash_source'],
+                    fpop:           [run: true, args: ['combined_modified_peptide.tsv', '1', '', '', 'false', 'false'], config_type: 'argv'],
+                    fpop_coadaptr:  [run: false, args: ''],
                     metaproteomics: [run: false, args: '']
                 ]
 
-                input[0] = channel.of([[ id: 'sample_fpop' ], results_dir])
-                input[1] = channel.of([[ id: 'sample_fpop' ], mzml_file])
-                input[2] = channel.of([[ id: 'speclib' ], speclib_file])
-                input[3] = fasta_file
-                input[4] = channel.of([taxon_names, taxon_nodes])
-                input[5] = channel.of([inter_file, bait_file, prey_file])
-                input[6] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
-                input[7] = [ id: 'fpop_export' ]
+                input[0] = fasta_file
+                input[1] = channel.empty()
+                input[2] = channel.empty()
+                input[3] = channel.of([file("${baseDir}/tests/fixtures/fpop/combined_modified_peptide.tsv", checkIfExists: true), [], []])
+                input[4] = channel.empty()
+                input[5] = channel.value([[], []])
+                input[6] = channel.empty()
+                input[7] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[8] = [ id: 'fragpipe' ]
                 """
             }
         }
@@ -131,79 +164,167 @@ nextflow_workflow {
         then {
             assertAll(
                 { assert workflow.success },
-                { assert snapshot(
-                    workflow.out.skyline_doc,
-                    workflow.out.skyline_reports,
-                    workflow.out.saint_results,
-                    workflow.out.fpop_results,
-                    workflow.out.taxonomy_results
-                ).match() }
+                { assert new File(workflow.out.fpop_results[0][1].toString(), 'fpop.log').text.trim() == "FragPipe_FPOP_Analysis.py combined_modified_peptide.tsv 1 '' '' false false" },
+                { assert snapshot(workflow.out.fpop_results, workflow.out.fpop_psms, workflow.out.taxonomy_results).match() }
             )
         }
     }
 
-    test("fragpipe_export - stub with metaproteomics") {
+    test("fragpipe_export - stub FPOP coADAPTr edits the filter psm.tsv and publishes it at philosopher/") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+            workflow {
+                """
+                def mzml_file = file("\${workDir}/sample.mzML")
+                mzml_file.text = "<?xml version='1.0'?><mzML></mzML>"
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">PROT1\\nPEPTIDEK"
+
+                def tool_configs = [
+                    database:       [run: true, args: '--prefix rev_', decoy_tag: 'rev_'],
+                    saintexpress:   [run: false, args: ''],
+                    fpop:           [run: false, args: ''],
+                    fpop_coadaptr:  [run: true, args: '15.9949,31.9898', config_type: 'cli'],
+                    metaproteomics: [run: false, args: '']
+                ]
+
+                input[0] = fasta_file
+                input[1] = channel.of(
+                    ['ionquant', 'tree', [file("${baseDir}/tests/fixtures/fpop/ionquant/fragpipe", checkIfExists: true)]],
+                    ['filter', 'groups', [
+                        file("${baseDir}/tests/fixtures/fpop/psm_dirs/control", checkIfExists: true),
+                        file("${baseDir}/tests/fixtures/fpop/psm_dirs/workdir-root", checkIfExists: true)
+                    ]]
+                )
+                input[2] = channel.empty()
+                input[3] = channel.empty()
+                input[4] = channel.empty()
+                input[5] = channel.value([[], []])
+                input[6] = channel.empty()
+                input[7] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[8] = [ id: 'fragpipe' ]
+                """
+            }
+        }
+
+        then {
+            def out = new File(outputDir.toString())
+            assertAll(
+                { assert workflow.success },
+                // no quantification: the Philosopher filter tables are the final ones (fpopCoadaptrSource)
+                { assert workflow.out.fpop_psms[0][0] == [id: 'fragpipe', fpop_source: 'filter'] },
+                { assert new File(out, 'philosopher/control/psm.tsv').exists() },
+                { assert new File(out, 'philosopher/psm.tsv').exists() },
+                { assert !new File(out, 'ionquant').exists() },
+                { assert new File(out, 'fpop_coadaptr/fpop_coadaptr.log').exists() },
+                { assert workflow.out.fpop_psms[0][1].collect { f -> new File(f.toString()).parentFile.name }.sort() == ['control', 'workdir-root'] },
+                { assert snapshot(workflow.out.fpop_psms, workflow.out.fpop_results, workflow.out.taxonomy_results).match() }
+            )
+        }
+    }
+
+    test("fragpipe_export - stub FPOP coADAPTr with DIA-NN edits report.tsv and publishes it at dia_quant/") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+            workflow {
+                """
+                def mzml_file = file("\${workDir}/sample.mzML")
+                mzml_file.text = "<?xml version='1.0'?><mzML></mzML>"
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">PROT1\\nPEPTIDEK"
+
+                def tool_configs = [
+                    database:       [run: true, args: '--prefix rev_', decoy_tag: 'rev_'],
+                    saintexpress:   [run: false, args: ''],
+                    fpop:           [run: false, args: ''],
+                    fpop_coadaptr:  [run: true, args: '15.9949,31.9898', config_type: 'cli'],
+                    diann:          [run: true, args: ''],
+                    metaproteomics: [run: false, args: '']
+                ]
+
+                input[0] = fasta_file
+                input[1] = channel.of(
+                    ['ionquant', 'tree', [file("${baseDir}/tests/fixtures/fpop/ionquant/fragpipe", checkIfExists: true)]],
+                    ['filter', 'groups', [
+                        file("${baseDir}/tests/fixtures/fpop/psm_dirs/control", checkIfExists: true),
+                        file("${baseDir}/tests/fixtures/fpop/psm_dirs/workdir-root", checkIfExists: true)
+                    ]]
+                )
+                // DIANNFRAGPIPE emit report (fix/dia-speclib-diann): [ meta, dia-quant-output/report.tsv ]
+                input[2] = channel.of([[ id: 'fragpipe' ], file("${baseDir}/tests/fixtures/fpop/dia-quant-output/report.tsv", checkIfExists: true)])
+                input[3] = channel.empty()
+                input[4] = channel.empty()
+                input[5] = channel.value([[], []])
+                input[6] = channel.empty()
+                input[7] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[8] = [ id: 'fragpipe' ]
+                """
+            }
+        }
+
+        then {
+            def out = new File(outputDir.toString())
+            assertAll(
+                { assert workflow.success },
+                // with DIA-NN, FragPipe edits only DIA-NN's report.tsv (CmdFPOPcoadaptr.java:429-433)
+                { assert workflow.out.fpop_psms.isEmpty() },
+                { assert workflow.out.fpop_diann_report[0][0] == [id: 'fragpipe', fpop_source: 'diann'] },
+                { assert new File(out, 'dia_quant/dia-quant-output/report.tsv').exists() },
+                { assert !new File(out, 'philosopher').exists() },
+                { assert snapshot(workflow.out.fpop_diann_report, workflow.out.fpop_psms).match() }
+            )
+        }
+    }
+
+    test("fragpipe_export - stub Metaproteomics runs once over all .pin and Percolator files") {
         options "-stub"
         tag "stub"
 
         when {
             workflow {
                 """
-                def project_dir = file("\${workDir}/project")
-                project_dir.mkdirs()
-                file("\${project_dir}/psm.tsv").text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
-
+                def fixtures = "${baseDir}/tests/fixtures/metaproteomics"
                 def mzml_file = file("\${workDir}/sample.mzML")
                 mzml_file.text = "<?xml version='1.0'?><mzML></mzML>"
 
-                def speclib_file = file("\${workDir}/empty.speclib")
-                speclib_file.text = ""
-
-                def fasta_file = file("\${workDir}/test.fasta")
-                fasta_file.text = ">PROT1\\nPEPTIDEK"
-
-                def taxon_names = file("\${workDir}/names.dmp")
-                taxon_names.text = "1\\t|\\troot\\t|\\t\\t|\\tscientific name\\t|"
-                def taxon_nodes = file("\${workDir}/nodes.dmp")
-                taxon_nodes.text = "1\\t|\\t1\\t|\\tno rank\\t|\\t\\t|"
-
-                def inter_file = file("\${workDir}/inter.dat")
-                inter_file.text = ""
-                def bait_file = file("\${workDir}/bait.dat")
-                bait_file.text = ""
-                def prey_file = file("\${workDir}/prey.dat")
-                prey_file.text = ""
-
-                // Tool configs: metaproteomics enabled
                 def tool_configs = [
-                    skyline:        [run: false, args: ''],
+                    database:       [run: true, args: '--prefix rev_', decoy_tag: 'DECOY_'],
                     saintexpress:   [run: false, args: ''],
                     fpop:           [run: false, args: ''],
-                    metaproteomics: [run: true, args: '--decoyTag rev_ --qvalue 0.01']
+                    fpop_coadaptr:  [run: false, args: ''],
+                    metaproteomics: [run: true, args: [qvalue: '0.01', deltaHyperscore: '0.0', minPeptCntPerProt: '1', minUniqPeptCntPerProt: '1', minUniqPeptCnt: '3', hostName: 'Host', iterations: '3', cmdLineOpts: ''], config_type: 'argv']
                 ]
 
-                input[0] = channel.of([[ id: 'meta_sample' ], project_dir])
-                input[1] = channel.of([[ id: 'meta_sample' ], mzml_file])
-                input[2] = channel.of([[ id: 'speclib' ], speclib_file])
-                input[3] = fasta_file
-                input[4] = channel.of([taxon_names, taxon_nodes])
-                input[5] = channel.of([inter_file, bait_file, prey_file])
-                input[6] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
-                input[7] = [ id: 'meta_export' ]
+                input[0] = file("\${fixtures}/database.fasta", checkIfExists: true)
+                input[1] = channel.empty()
+                input[2] = channel.empty()
+                input[3] = channel.empty()
+                input[4] = channel.of(file("\${fixtures}/*{.pin,_psms.tsv}", checkIfExists: true))
+                input[5] = channel.value([[], []])
+                input[6] = channel.empty()
+                input[7] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[8] = [ id: 'fragpipe' ]
                 """
             }
         }
 
         then {
+            def log_lines = new File(workflow.out.taxonomy_results[0][1].toString(), 'metaproteomics.log').readLines()
             assertAll(
                 { assert workflow.success },
-                { assert snapshot(
-                    workflow.out.skyline_doc,
-                    workflow.out.skyline_reports,
-                    workflow.out.saint_results,
-                    workflow.out.fpop_results,
-                    workflow.out.taxonomy_results
-                ).match() }
+                { assert log_lines[0].trim() == 'DbOptimizer --decoyTag DECOY_ --qvalue 0.01 --hostName Host --iterations 3' },
+                { assert log_lines.drop(1).size() == 6 },
+                { assert snapshot(workflow.out.taxonomy_results, workflow.out.fpop_results, workflow.out.fpop_psms).match() }
             )
         }
     }

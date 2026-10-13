@@ -1,0 +1,48 @@
+// The test samplesheets hold full spectra URLs (a CSV cannot reference params), so they must
+// follow params.pipelines_testdata_base_path: switching the base path (e.g. back to
+// nf-core/test-datasets after PR 1953) without updating them fails here.
+
+nextflow_function {
+
+    name "Test samplesheet URLs follow pipelines_testdata_base_path"
+    script "./fixtures.nf"
+    function "remoteUrlsOutsideBase"
+
+    tag "test_data"
+    tag "stub"
+
+    test("every remote spectra URL in tests/fixtures/samplesheets/test_*.csv starts with the base path") {
+        when {
+            function {
+                """
+                input[0] = "${baseDir}/tests/fixtures/samplesheets"
+                input[1] = params.pipelines_testdata_base_path
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == [] : function.result }
+            )
+        }
+    }
+
+    test("every test-data URL in tests/default.nf.test starts with the base path") {
+        function "testDataUrlsOutsideBase"
+        when {
+            function {
+                """
+                input[0] = "${baseDir}/tests/default.nf.test"
+                input[1] = params.pipelines_testdata_base_path
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == [] : function.result }
+            )
+        }
+    }
+}

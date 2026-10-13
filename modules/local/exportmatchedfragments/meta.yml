@@ -1,0 +1,98 @@
+name: "exportmatchedfragments"
+description: FragPipe "Export matched fragments" - annotate every PSM in psm.tsv with its matched fragment ions
+keywords:
+  - proteomics
+  - mass spectrometry
+  - fragpipe
+  - fragment ions
+  - psm
+tools:
+  - fragannotator:
+      description: |
+        FragAnnotator (FragPipe-PDV) FragmentsExportMainClass, run by FragPipe's
+        CmdExportMatchedFragments when tab-run.export_matched_fragments=true.
+        It rewrites each group's psm.tsv with the columns ions, ion_mz and ion_int.
+      homepage: "https://fragpipe.nesvilab.org/"
+      tool_dev_url: "https://github.com/Nesvilab/FragPipe"
+      licence: ["GPL-3.0-or-later"]
+
+input:
+  - - meta:
+        type: map
+        description: Aggregate metadata map
+    - group_dirs:
+        type: directory
+        description: Per-group Philosopher result directories, named by FragPipe group (blank group uses its stand-in name)
+    - spectra:
+        type: file
+        description: Spectra the manifest points to (../spectra/<name>)
+        pattern: "*.mzML"
+    - umpire_spectra:
+        type: file
+        description: DIA-Umpire pseudo-spectra, staged in the FragPipe work dir
+        pattern: "*.mzML"
+  - manifest:
+      type: file
+      description: fragpipe-files.fp-manifest for the export
+  - root_group_dir:
+      type: string
+      description: group_dirs entry holding FragPipe's blank group ("" when there is none)
+  - - diaumpire:
+        type: boolean
+        description: true when DIA-Umpire runs (umpire-se.params in the work dir)
+    - speclibgen:
+        type: boolean
+        description: true when SpecLibGen runs (speclibgen.run-speclibgen=true in fragpipe.workflow)
+    - export_psms:
+        type: list
+        description: The psm.tsv files the export rewrites (matchedFragmentsExportPsms); the stub edits them
+
+output:
+  results_dirs:
+    - - meta:
+          type: map
+          description: Aggregate metadata map
+      - "results/*":
+          type: directory
+          description: One directory per group with the annotated psm.tsv
+  psms:
+    - - meta:
+          type: map
+          description: Aggregate metadata map
+      - "results/*/psm.tsv":
+          type: file
+          description: Annotated psm.tsv per group
+  log:
+    - - meta:
+          type: map
+          description: Aggregate metadata map
+      - "export_matched_fragments.log":
+          type: file
+          description: Console output of the export
+  versions_fragannotator:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - fragannotator:
+          type: string
+          description: The name of the tool
+      - cat .fragannotator_version:
+          type: eval
+          description: The FragAnnotator version (from the jar name)
+
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - fragannotator:
+          type: string
+          description: The name of the tool
+      - cat .fragannotator_version:
+          type: eval
+          description: The FragAnnotator version
+
+authors:
+  - "@an-altosian"
+maintainers:
+  - "@an-altosian"

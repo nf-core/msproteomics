@@ -1,0 +1,58 @@
+// Export matched fragments run decision.
+//
+// FragPipe 24.0 (FP = FragPipe-GUI/src/main/java/org/nesvilab/fragpipe/) runs
+// CmdExportMatchedFragments when tabRun.isExportMatchedFragments() (FP/FragpipeRun.java:2411),
+// i.e. when the Run-tab checkbox named "tab-run.export_matched_fragments" is checked
+// (FP/tabs/TabRun.java:92,223-225,491-492). The checkbox defaults to false (TabRun.java:223),
+// so a workflow without the key does not run it.
+
+nextflow_process {
+
+    name "Test Process PARSEFRAGPIPEWORKFLOW - export matched fragments"
+    script "../main.nf"
+    process "PARSEFRAGPIPEWORKFLOW"
+    config "./nextflow.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "parse_fragpipe_workflow"
+    tag "stub"
+
+    test("parse_fragpipe_workflow - exportmatchedfragments follows tab-run.export_matched_fragments") {
+        options "-stub"
+
+        when {
+            process {
+                """
+                def text = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text
+                assert text.contains('tab-run.export_matched_fragments=false')
+                def variants = [
+                    off:    text,
+                    on:     text.replace('tab-run.export_matched_fragments=false', 'tab-run.export_matched_fragments=true'),
+                    absent: text.readLines().findAll { line -> !line.startsWith('tab-run.export_matched_fragments=') }.join('\\n')
+                ]
+                input[0] = channel.fromList(variants.collect { name, content -> [name, content] })
+                    .map { name, content ->
+                        def wf = file("\${workDir}/emf_\${name}.workflow")
+                        wf.text = content
+                        [ [ id: name ], wf, ['DDA'] ]
+                    }
+                """
+            }
+        }
+
+        then {
+            def decisions = process.out.tool_configs_json.collectEntries { item ->
+                def json = new groovy.json.JsonSlurper().parse(new File(item[1].toString()))
+                [item[0].id, json.exportmatchedfragments]
+            }
+            assertAll(
+                { assert process.success },
+                { assert decisions.on == [run: true, args: '', config_type: 'cli'] },
+                { assert decisions.off.run == false },
+                { assert decisions.absent.run == false },
+                { assert snapshot(decisions.sort()).match() }
+            )
+        }
+    }
+}

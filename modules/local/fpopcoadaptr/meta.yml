@@ -1,0 +1,96 @@
+name: "fpopcoadaptr"
+description: Add the FPOP Modifications column to every psm.tsv (FragPipe FPOP coADAPTr converter)
+keywords:
+  - proteomics
+  - mass spectrometry
+  - FPOP
+  - oxidation
+  - protein footprinting
+tools:
+  - fragpipe:
+      description: |
+        FragPipe's FPOP_PSMwriter (CmdFPOPcoadaptr) inserts an "FPOP Modifications" column after
+        "Assigned Modifications" in each psm.tsv, listing the assigned modifications whose mass
+        is within 0.01 Da of one of the FPOP masses.
+      homepage: "https://fragpipe.nesvilab.org/"
+      documentation: "https://fragpipe.nesvilab.org/docs/tutorial_fpop.html"
+      tool_dev_url: "https://github.com/Nesvilab/FragPipe"
+      licence: ["GPL-3.0-or-later"]
+
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample information
+    - inputs:
+        type: directory
+        description: |
+          Directories FragPipe's Files.walk would find in the work dir: IonQuant results
+          (layout tree), Philosopher per-group results (layout groups, workdir-root = blank group)
+          or DIA-NN dia-quant-output (layout diann)
+    - layout:
+        type: string
+        description: "tree, groups or diann (diann runs FPOP_DiannReport_Editor on report.tsv)"
+    - fpop_mods:
+        type: string
+        description: Comma-joined %.4f FPOP masses (fpop.coadaptr.fpop.fpop_masses)
+
+output:
+  tables:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/**":
+          type: file
+          description: Every file of the edited copy (published in place of the originals)
+          pattern: "*"
+  psms:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/**/psm.tsv":
+          type: file
+          description: psm.tsv files with the FPOP Modifications column
+          pattern: "psm.tsv"
+  diann_report:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${prefix}/**/report.tsv":
+          type: file
+          description: DIA-NN report.tsv with the FPOP Modifications column (layout diann)
+          pattern: "report.tsv"
+  log:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "fpop_coadaptr.log":
+          type: file
+          description: Editor command line and output
+          pattern: "fpop_coadaptr.log"
+  versions_fragpipe:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - fragpipe:
+          type: string
+          description: The name of the tool
+      - "cat .fragpipe_version":
+          type: eval
+          description: The FragPipe version of the tools directory
+
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - fragpipe:
+          type: string
+          description: The name of the tool
+      - "cat .fragpipe_version":
+          type: eval
+          description: The FragPipe version of the tools directory
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

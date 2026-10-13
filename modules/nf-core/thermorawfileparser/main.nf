@@ -3,16 +3,16 @@ process THERMORAWFILEPARSER {
     label 'process_low'
 
     conda "${moduleDir}/environment.yml"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+    container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/thermorawfileparser:1.4.5--h05cac1d_1' :
-        'biocontainers/thermorawfileparser:1.4.5--h05cac1d_1' }"
+        'quay.io/biocontainers/thermorawfileparser:1.4.5--h05cac1d_1' }"
 
     input:
     tuple val(meta), path(raw)
 
     output:
     tuple val(meta), path("*.{mzML,mzML.gz,mgf,mgf.gz,parquet,parquet.gz}"), emit: spectra
-    tuple val("${task.process}"), val('thermorawfileparser'), eval("ThermoRawFileParser.sh --version"), emit: versions_thermorawfileparser, topic: versions
+    tuple val("${task.process}"), val('thermorawfileparser'), eval(workflow.stubRun ? "echo 1.4.5" : "ThermoRawFileParser.sh --version"), emit: versions_thermorawfileparser, topic: versions
 
     when:
     task.ext.when == null || task.ext.when

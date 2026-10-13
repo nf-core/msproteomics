@@ -38,7 +38,7 @@ Used within the FRAGPIPE_CONVERT subworkflow for DIA data preprocessing.
 
 ## Container
 
-`docker.io/fcyucn/fragpipe:24.0`
+The licensed FragPipe image given with `--fragpipe_container`.
 
 ## Usage
 

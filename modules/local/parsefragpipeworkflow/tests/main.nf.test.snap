@@ -1,0 +1,384 @@
+{
+    "parse_fragpipe_workflow - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "tool_configs.json:md5,c58395aa2c9c00ff12aa7df2f3edb4f7"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "fragger.params:md5,f5bed594adcf68e1e36446ffbed2ad12"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "ionquant.config:md5,b1dd4aed1524639533c3141f20ef1522"
+                ]
+            ],
+            [
+                
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "percolator.config:md5,68b329da9893e34099c7d8ad5cb9c940"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "phi-report.config:md5,72486573a7ffec2badca70a4ea523457"
+                ]
+            ],
+            [
+                
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "protein-prophet.config:md5,b0769cb698b4373af727a2e4cf7c57bc"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "database.config:md5,858c6fcee6f0be037d299a71e8d22b56"
+                ]
+            ],
+            [
+                
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    [
+                        "database.config:md5,858c6fcee6f0be037d299a71e8d22b56",
+                        "fragger.params:md5,f5bed594adcf68e1e36446ffbed2ad12",
+                        "fragger_dda_plus.params:md5,8a7281071c59e5e32b36561a629dd75d",
+                        "fragger_dia.params:md5,56ec85de059871895088053051afd1e0",
+                        "fragger_gpfdia.params:md5,5dcff13cb255956a2ab482bb56fd0b14",
+                        "ionquant.config:md5,b1dd4aed1524639533c3141f20ef1522",
+                        "percolator.config:md5,68b329da9893e34099c7d8ad5cb9c940",
+                        "phi-report.config:md5,72486573a7ffec2badca70a4ea523457",
+                        "protein-prophet.config:md5,b0769cb698b4373af727a2e4cf7c57bc",
+                        "quantitation.config:md5,98c8d4486ebabc2b3adf195456b2561c",
+                        "workflow.config:md5,57bc186be3ddf73c9001d3bd9544f110"
+                    ]
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-11T23:09:12.358838202",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "parse_fragpipe_workflow - integration with real workflow file": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "tool_configs.json:md5,99916f70f7163da7316720c85c143e7e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "fragger.params:md5,f5bed594adcf68e1e36446ffbed2ad12"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "ionquant.config:md5,f98a3839327ac67b207dcdc590af1ee5"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "msbooster.config:md5,3537831a8c194aa7730296f2ff3736f5"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "percolator.config:md5,a03660f366829ad361e5549052b57249"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "phi-report.config:md5,ec86b914aec87c5f0e20a5ac0509af77"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "peptide-prophet.config:md5,513f37cf7a92e4a71f43018818615d50"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "protein-prophet.config:md5,ca53bcff706030eb6dc8d78f3e9930e9"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "database.config:md5,858c6fcee6f0be037d299a71e8d22b56"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    "tmtintegrator.yml:md5,f8a24127301cf777669ad39c4806192d"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_experiment"
+                    },
+                    [
+                        "database.config:md5,858c6fcee6f0be037d299a71e8d22b56",
+                        "fragger.params:md5,f5bed594adcf68e1e36446ffbed2ad12",
+                        "fragger_dda_plus.params:md5,8a7281071c59e5e32b36561a629dd75d",
+                        "fragger_dia.params:md5,56ec85de059871895088053051afd1e0",
+                        "fragger_gpfdia.params:md5,5dcff13cb255956a2ab482bb56fd0b14",
+                        "ionquant.config:md5,f98a3839327ac67b207dcdc590af1ee5",
+                        "msbooster.config:md5,3537831a8c194aa7730296f2ff3736f5",
+                        "peptide-prophet.config:md5,513f37cf7a92e4a71f43018818615d50",
+                        "percolator.config:md5,a03660f366829ad361e5549052b57249",
+                        "phi-report.config:md5,ec86b914aec87c5f0e20a5ac0509af77",
+                        "protein-prophet.config:md5,ca53bcff706030eb6dc8d78f3e9930e9",
+                        "quantitation.config:md5,98c8d4486ebabc2b3adf195456b2561c",
+                        "tmtintegrator.yml:md5,f8a24127301cf777669ad39c4806192d",
+                        "tmtintegrator_unmod.yml:md5,f8a24127301cf777669ad39c4806192d",
+                        "workflow.config:md5,57bc186be3ddf73c9001d3bd9544f110"
+                    ]
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-12T02:12:43.080529378",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "parse_fragpipe_workflow - speclibgen psm.tsv conversion flags": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "speclib"
+                    },
+                    "tool_configs.json:md5,0866e7fb94cae44bdb4e43e87843cd13"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-11T23:09:50.730988327",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "parse_fragpipe_workflow - stub msfragger.misc.slice-db is the slice count": {
+        "content": [
+            {
+                "plain": 1,
+                "split": 3
+            }
+        ],
+        "timestamp": "2026-10-06T19:54:10.929911903",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "parse_fragpipe_workflow - stub manifest data types switch PeptideProphet to Percolator": {
+        "content": [
+            {
+                "ddaplus": {
+                    "peptideprophet": false,
+                    "percolator": true,
+                    "crystalc": false,
+                    "tmtintegrator": false,
+                    "diaumpire": false
+                },
+                "dda": {
+                    "peptideprophet": true,
+                    "percolator": false,
+                    "crystalc": false,
+                    "tmtintegrator": false,
+                    "diaumpire": false
+                },
+                "dia": {
+                    "peptideprophet": false,
+                    "percolator": true,
+                    "crystalc": false,
+                    "tmtintegrator": false,
+                    "diaumpire": false
+                },
+                "tmt_ddaplus": {
+                    "peptideprophet": false,
+                    "percolator": true,
+                    "crystalc": false,
+                    "tmtintegrator": false,
+                    "diaumpire": false
+                },
+                "tmt_dda": {
+                    "peptideprophet": false,
+                    "percolator": true,
+                    "crystalc": true,
+                    "tmtintegrator": true,
+                    "diaumpire": false
+                }
+            },
+            {
+                "ddaplus": "output_format = pepXML_pin",
+                "dda": "output_format = tsv_pepXML",
+                "dia": "output_format = pepXML_pin",
+                "tmt_ddaplus": "output_format = pepXML_pin",
+                "tmt_dda": "output_format = pepXML_pin"
+            }
+        ],
+        "timestamp": "2026-10-06T19:54:18.832991618",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "parse_fragpipe_workflow - non-default decoy tag is the single source": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "decoy_experiment"
+                    },
+                    "tool_configs.json:md5,90357ee47f5d1240fcfdaa4500aa157a"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "decoy_experiment"
+                    },
+                    "fragger.params:md5,5ab20a9c633b307de8e9041316a024fb"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-10T21:15:26.851611613",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "parse_fragpipe_workflow - stub reads the workflow decoy tag": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "stub_decoy"
+                    },
+                    "tool_configs.json:md5,90357ee47f5d1240fcfdaa4500aa157a"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "stub_decoy"
+                    },
+                    "database.config:md5,25dbe19a3d7d1bc764864ec248ccdfc5"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-11T23:09:57.698128562",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "parse_fragpipe_workflow - absent decoy tag uses FragPipe default rev_": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "no_decoy_key"
+                    },
+                    "tool_configs.json:md5,8ef3d7f05029504a86244a29d8924af1"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "no_decoy_key"
+                    },
+                    "fragger.params:md5,1e1fb45cc51ee099a99da45f6b9ae109"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-10T21:15:41.12582137",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "parse_fragpipe_workflow - stub split database accepts DIA-Umpire with one DDA rank": {
+        "content": [
+            [
+                {
+                    "DDA": "2",
+                    "DIA": "2",
+                    "GPF-DIA": "2",
+                    "DDA+": "2"
+                }
+            ]
+        ],
+        "timestamp": "2026-10-06T19:54:32.588679399",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    }
+}

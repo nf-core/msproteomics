@@ -1,0 +1,114 @@
+{
+    "parse_fragpipe_workflow - user RT/IM calibration files and Biognosys iRT": {
+        "content": [
+            {
+                "biognosys": [
+                    "Biognosys_iRT",
+                    "noIM",
+                    "--max_delta_unimod 0.02 --max_delta_ppm 15.0 --fragment_types [\\'b\\',\\'y\\',]",
+                    "--rt_lowess_fraction 0.01",
+                    "delete_intermediate_files",
+                    "",
+                    ""
+                ],
+                "user_cal": [
+                    "",
+                    "",
+                    "--max_delta_unimod 0.02 --max_delta_ppm 15.0 --fragment_types [\\'b\\',] --enable_unspecific_losses",
+                    "--rt_lowess_fraction 0.01",
+                    "keep_intermediate_files",
+                    "/data/irt.tsv",
+                    "/data/im.tsv"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-05T14:30:53.675790065"
+    },
+    "parse_fragpipe_workflow - SpecLibGen and DIA-NN argv for DIA_SpecLib_Quant, DIA_SpecLib_Quant_diaPASEF, glyco-N-DIA": {
+        "content": [
+            {
+                "DIA_SpecLib_Quant_diaPASEF": {
+                    "run": [
+                        true,
+                        true
+                    ],
+                    "speclibgen": [
+                        "noiRT:noIM",
+                        "--max_delta_unimod 0.02 --max_delta_ppm 15.0 --fragment_types [\\'b\\',\\'y\\',]",
+                        "--rt_lowess_fraction 0.0",
+                        "delete_intermediate_files"
+                    ],
+                    "calibration_files": [
+                        "",
+                        ""
+                    ],
+                    "diann": "--qvalue 0.01 --matrix-qvalue 0.01 --matrices --no-prot-inf --smart-profiling --peak-center --no-ifs-removal --report-lib-info",
+                    "msstats": true,
+                    "reporter": [
+                        "",
+                        "0.75",
+                        "peptide;modified-peptide"
+                    ],
+                    "tabrun": false
+                },
+                "DIA_SpecLib_Quant": {
+                    "run": [
+                        true,
+                        true
+                    ],
+                    "speclibgen": [
+                        "noiRT:noIM",
+                        "--max_delta_unimod 0.02 --max_delta_ppm 15.0 --fragment_types [\\'b\\',\\'y\\',]",
+                        "--rt_lowess_fraction 0.0",
+                        "delete_intermediate_files"
+                    ],
+                    "calibration_files": [
+                        "",
+                        ""
+                    ],
+                    "diann": "--qvalue 0.01 --matrix-qvalue 0.01 --matrices --no-prot-inf --smart-profiling --peak-center --no-ifs-removal --report-lib-info",
+                    "msstats": true,
+                    "reporter": [
+                        "",
+                        "0.75",
+                        "peptide;modified-peptide"
+                    ],
+                    "tabrun": false
+                },
+                "glyco-N-DIA": {
+                    "run": [
+                        true,
+                        true
+                    ],
+                    "speclibgen": [
+                        "noiRT:noIM",
+                        "--max_delta_unimod 0.02 --max_delta_ppm 15.0 --fragment_types [\\'b\\',\\'y\\',] --decoy_prefix rev_ --labile_mods nglyc+ --max_glycan_q 0.01",
+                        "--rt_lowess_fraction 0.0",
+                        "delete_intermediate_files"
+                    ],
+                    "calibration_files": [
+                        "",
+                        ""
+                    ],
+                    "diann": "--qvalue 0.01 --matrix-qvalue 0.01 --matrices --no-prot-inf --smart-profiling --peak-center --no-ifs-removal",
+                    "msstats": false,
+                    "reporter": [
+                        "",
+                        "0.75",
+                        "peptide;modified-peptide"
+                    ],
+                    "tabrun": false
+                }
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-05T14:30:43.579694763"
+    }
+}

@@ -1,10 +1,10 @@
-# MZML_INDEXING
+# MZMLINDEXING
 
 Indexes mzML files using OpenMS FileConverter for efficient random access.
 
 ## Description
 
-MZML_INDEXING converts input mzML files to indexed mzML format using OpenMS FileConverter.
+MZMLINDEXING converts input mzML files to indexed mzML format using OpenMS FileConverter.
 Indexed mzML files support efficient random access by downstream tools, which is required for many proteomics analysis steps.
 This module is part of the file preparation stage in the pipeline.
 
@@ -31,7 +31,7 @@ This module is part of the file preparation stage in the pipeline.
 
 ## Container
 
-`ghcr.io/bigbio/openms-tools-thirdparty:2025.04.14`
+`quay.io/biocontainers/openms:3.5.0--h78fb946_0` (bioconda OpenMS 3.5.0; `environment.yml`)
 
 ## Usage
 

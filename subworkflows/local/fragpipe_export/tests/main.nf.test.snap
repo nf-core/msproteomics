@@ -1,83 +1,118 @@
 {
-    "fragpipe_export - stub with fpop": {
+    "fragpipe_export - stub FPOP coADAPTr edits the filter psm.tsv and publishes it at philosopher/": {
         "content": [
-            [
-                
-            ],
-            [
-                
-            ],
-            [
-                
-            ],
             [
                 [
                     {
-                        "id": "fpop_export"
+                        "id": "fragpipe",
+                        "fpop_source": "filter"
                     },
                     [
-                        "fpop.log:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "sample_fpop_results.csv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "sample_fpop_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        "psm.tsv:md5,afdaa313276fd85298f0a5ecb3b5dd75",
+                        "psm.tsv:md5,230311435e062d08a2fe6b1f17836037"
                     ]
                 ]
             ],
             [
                 
+            ],
+            [
+                
             ]
         ],
-        "timestamp": "2026-03-25T03:54:27.667593723",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
-        }
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-06T00:43:23.748175826"
     },
-    "fragpipe_export - stub with metaproteomics": {
+    "fragpipe_export - stub Metaproteomics runs once over all .pin and Percolator files": {
         "content": [
-            [
-                
-            ],
-            [
-                
-            ],
-            [
-                
-            ],
-            [
-                
-            ],
             [
                 [
                     {
-                        "id": "meta_export"
+                        "id": "fragpipe"
                     },
                     [
-                        "metaproteomics.log:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "sample_metaproteomics_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "sample_optimized.fasta:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "sample_taxonomy_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        "combined_PSM_species.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "metaproteomics.log:md5,cefe8c26bb0621b4913f7f290537da0d",
+                        "refined_db.fasta:md5,d41d8cd98f00b204e9800998ecf8427e"
                     ]
                 ]
+            ],
+            [
+                
+            ],
+            [
+                
             ]
         ],
-        "timestamp": "2026-03-25T03:54:34.778498265",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
-        }
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-06T00:43:37.263672226"
+    },
+    "fragpipe_export - stub FPOP coADAPTr with DIA-NN edits report.tsv and publishes it at dia_quant/": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "fragpipe",
+                        "fpop_source": "diann"
+                    },
+                    "report.tsv:md5,595617b25744bae1f519ef61766e0b9a"
+                ]
+            ],
+            [
+                
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-06T00:43:30.724822211"
+    },
+    "fragpipe_export - stub FPOP Quant reads IonQuant's combined_modified_peptide.tsv": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "fragpipe"
+                    },
+                    [
+                        "FPOP_peptides.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "FPOP_sites.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "fpop.log:md5,56c556fbcd107adb4bb683a4029db8eb"
+                    ]
+                ]
+            ],
+            [
+                
+            ],
+            [
+                
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-06T00:43:17.357972369"
     },
     "fragpipe_export - stub with saintexpress": {
         "content": [
             [
-                
-            ],
-            [
-                
-            ],
-            [
                 [
                     {
-                        "id": "export"
+                        "id": "saintexpress-int"
+                    },
+                    "list.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                [
+                    {
+                        "id": "saintexpress-spc"
                     },
                     "list.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
@@ -89,10 +124,10 @@
                 
             ]
         ],
-        "timestamp": "2026-03-25T03:54:20.647790664",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
-        }
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-06T20:38:51.150016948"
     }
 }

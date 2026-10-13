@@ -10,8 +10,8 @@ components:
   - thermorawfileparser
   - tdf2mzml
   - decompress
-  - mzml/indexing
-  - openms/peak/picker
+  - mzmlindexing
+  - openmspeakpicker
 input:
   - ch_rawfiles:
       type: channel
@@ -21,8 +21,9 @@ output:
       type: channel
       description: "Channel of [val(meta), path(mzML|.d)] tuples with converted/indexed spectra files"
   - versions:
-      type: file
-      description: File containing software versions
-      pattern: "versions.yml"
+      type: channel
+      description: |
+        Empty. Every module reports its version on the 'versions' topic.
+        Structure: []
 authors:
   - "@daichengxin"

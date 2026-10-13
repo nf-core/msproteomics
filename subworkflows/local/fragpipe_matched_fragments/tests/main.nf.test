@@ -1,0 +1,96 @@
+nextflow_workflow {
+
+    name "Test Subworkflow FRAGPIPE_MATCHED_FRAGMENTS"
+    script "../main.nf"
+    workflow "FRAGPIPE_MATCHED_FRAGMENTS"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "fragpipe_matched_fragments"
+
+    test("fragpipe_matched_fragments - stub exports flagged groups, passes the others through") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                def group = { name ->
+                    def dir = file("\${workDir}/\${name}")
+                    dir.mkdirs()
+                    file("\${dir}/psm.tsv").text = 'Spectrum\\tPeptide\\n' + "\${name}.00001.00001.2\\tPEPTIDEK\\n"
+                    dir
+                }
+                def manifest = file("\${workDir}/fragpipe-files.fp-manifest")
+                manifest.text = '../spectra/A.mzML\\tA\\t\\tDDA\\n../spectra/workdir-root.mzML\\t\\t\\tDDA\\n'
+                def spectra = file("\${workDir}/A.mzML")
+                spectra.text = ''
+                input[0] = channel.of(
+                    [[ id: 'A', group: 'A', export_matched_fragments: true ], group.call('A')],
+                    [[ id: 'workdir-root', group: '', export_matched_fragments: true ], group.call('workdir-root')],
+                    [[ id: 'C', group: 'C', export_matched_fragments: false ], group.call('C')]
+                )
+                input[1] = channel.value([manifest, [spectra], []])
+                input[2] = channel.value(groovy.json.JsonOutput.toJson([diaumpire: [run: false], speclibgen: [run: false]]))
+                input[3] = [ id: 'fragpipe' ]
+                """
+            }
+        }
+
+        then {
+            def headers = workflow.out.results_dir.collectEntries { item ->
+                [item[0].id, new File(item[1].toString(), 'psm.tsv').readLines()[0]]
+            }
+            assertAll(
+                { assert workflow.success },
+                // The manifest's blank experiment makes the jar read only the work-dir root psm.tsv
+                // (ResultProcessor.goThroughFolder), so group A stays unannotated, as in FragPipe.
+                { assert headers == [
+                    'A'           : 'Spectrum\tPeptide',
+                    'workdir-root': 'Spectrum\tPeptide\tions\tion_mz\tion_int',
+                    'C'           : 'Spectrum\tPeptide'
+                ] },
+                { assert snapshot(workflow.out.results_dir.sort { item -> item[0].id }).match() }
+            )
+        }
+    }
+
+    test("fragpipe_matched_fragments_inputs - manifest, spectra without .d, DIA-Umpire spectra") {
+        options "-stub"
+        tag "stub"
+        workflow "FRAGPIPE_MATCHED_FRAGMENTS_INPUTS"
+
+        when {
+            workflow {
+                """
+                def f = { name -> def p = file("\${workDir}/\${name}"); p.text = ''; p }
+                def d = file("\${workDir}/b.d")
+                d.mkdirs()
+                input[0] = channel.of(
+                    [[ experiment: 'A', data_type: 'DDA' ], file("\${workDir}/a.raw")],
+                    [[ experiment: 'B b', bioreplicate: 1, data_type: 'DDA' ], d],
+                    [[ experiment: 'U-1', data_type: 'DIA' ], file("\${workDir}/u.mzML")]
+                )
+                input[1] = channel.of(
+                    [[ id: 'a' ], f.call('a.mzML')],
+                    [[ id: 'b' ], d],
+                    [[ id: 'b' ], f.call('b_uncalibrated.mzML')],
+                    [[ id: 'u_Q1' ], f.call('u_Q1.mzML')]
+                )
+                input[2] = channel.of([[ id: 'u_Q1' ], f.call('u_Q1.mzML')])
+                """
+            }
+        }
+
+        then {
+            def inputs = workflow.out.inputs[0]
+            assertAll(
+                { assert workflow.success },
+                { assert new File(inputs[0].toString()).text == '../spectra/a.mzML\tA\t\tDDA\n../spectra/b.d\tB_b\t1\tDDA\n../spectra/u.mzML\tU_1\t\tDIA' },
+                { assert inputs[1].collect { p -> new File(p.toString()).name } == ['a.mzML', 'b_uncalibrated.mzML', 'u_Q1.mzML'] },
+                { assert inputs[2].collect { p -> new File(p.toString()).name } == ['u_Q1.mzML'] },
+                { assert snapshot(inputs).match() }
+            )
+        }
+    }
+}

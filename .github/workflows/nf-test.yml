@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - dev
-      - master
+      - main
     paths-ignore:
       - "docs/**"
       - "**/meta.yml"
@@ -25,6 +25,10 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
+
+# Read-only token: the jobs check out code and upload artifacts; pr-comment.yml posts the PR comment
+permissions:
+  contents: read
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -48,7 +52,7 @@ jobs:
           rm -rf ./* || true
           rm -rf ./.??* || true
           ls -la ./
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
 
@@ -85,21 +89,29 @@ jobs:
           - isMain: false
             profile: "singularity"
         NXF_VER:
-          - "25.04.0"
+          - "25.10.4"
           - "latest-everything"
     env:
       NXF_ANSI_LOG: false
       TOTAL_SHARDS: ${{ needs.nf-test-changes.outputs.total_shards }}
 
     steps:
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
+
+      # ubuntu-latest has ~14 GB free; the DIA images filled it ("no space left on device")
+      - name: Free disk space
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
+          sudo docker image prune --all --force
+          df -h /
 
       - name: Run nf-test
         id: run_nf_test
         uses: ./.github/actions/nf-test
-        continue-on-error: ${{ matrix.NXF_VER != '25.04.0' }}
+        continue-on-error: ${{ matrix.NXF_VER != '25.10.4' }}
         env:
           NFT_WORKDIR: ${{ env.NFT_WORKDIR }}
           NXF_VERSION: ${{ matrix.NXF_VER }}
@@ -115,41 +127,91 @@ jobs:
           if [[ "${{ steps.run_nf_test.outcome }}" == "failure" ]]; then
             echo "::error::Test with ${{ matrix.NXF_VER }} failed"
             echo "## ❌ Test failed: ${{ matrix.profile }} | ${{ matrix.NXF_VER }} | Shard ${{ matrix.shard }}/${{ env.TOTAL_SHARDS }}" >> $GITHUB_STEP_SUMMARY
-            if [[ "${{ matrix.NXF_VER }}" != "25.04.0" ]]; then
+            if [[ "${{ matrix.NXF_VER }}" != "25.10.4" ]]; then
               echo "::warning::Test with ${{ matrix.NXF_VER }} failed but will not cause workflow failure. Latest Nextflow is informational only."
             else
               exit 1
             fi
           fi
 
+      # continue-on-error keeps latest-everything from failing the job, so it never shows up in
+      # `needs.nf-test.result` downstream and CI stays green. Surface it via a PR comment instead;
+      # other NXF_VER failures already fail the job/CI directly, so no comment is needed for those.
+      - name: Prepare PR comment fragment
+        if: ${{ always() && steps.run_nf_test.outcome == 'failure' && matrix.NXF_VER == 'latest-everything' }}
+        run: |
+          mkdir -p pr-comment-fragment
+          echo "* ❌ \`${{ matrix.profile }}\` | \`${{ matrix.NXF_VER }}\` | Shard ${{ matrix.shard }}/${{ env.TOTAL_SHARDS }}" > pr-comment-fragment/fragment.md
+
+      - name: Upload PR comment fragment
+        if: ${{ always() && steps.run_nf_test.outcome == 'failure' && matrix.NXF_VER == 'latest-everything' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: pr-comment-fragment-${{ strategy.job-index }}
+          path: pr-comment-fragment/
+
   dia-integration:
     name: "DIA integration test"
+    needs: [nf-test-changes]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
 
+      # ubuntu-latest has ~14 GB free; the DIA images filled it ("no space left on device")
+      - name: Free disk space
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
+          sudo docker image prune --all --force
+          df -h /
+
       - name: Setup Nextflow
-        uses: nf-core/setup-nextflow@v2
+        uses: nf-core/setup-nextflow@893c28b667aedeba26e37f296d260ccc5bc4d914 # v3
         with:
-          version: "25.04.0"
+          version: "25.10.4"
 
       - name: Install nf-test
-        uses: nf-core/setup-nf-test@v1
+        uses: nf-core/setup-nf-test@4069fbbaabe94c08faba4ad261bfa88225ba133f # v2
         with:
           version: ${{ env.NFT_VER }}
 
+      # The DIA-NN results are snapshotted per CPU model (dia_*__<model name>, tests/default.nf.test)
+      - name: Show CPU model
+        run: lscpu | grep 'Model name'
+
+      # tests/default.nf.test.snap holds the test_dia snapshot (recorded with docker:
+      # nf-test test tests/default.nf.test --tag dia_integration --profile=+docker --update-snapshot).
       - name: Run DIA integration test
         id: run_dia_test
         env:
           NFT_WORKDIR: ${{ env.NFT_WORKDIR }}
         run: |
           nf-test test tests/default.nf.test \
-            --profile=+docker,test \
+            --profile=+docker \
             --tag dia_integration \
             --ci \
             --verbose
+
+      # A new CPU model has no dia_*__<model> snapshots (--ci writes none): its tables and the snapshot file record them.
+      # upload-artifact skips hidden paths and NFT_WORKDIR is the literal "~" dir, so stage them first.
+      - name: Stage DIA results
+        if: ${{ failure() }}
+        run: |
+          mkdir -p dia-results
+          for t in ./~/tests/*/; do
+            mkdir -p "dia-results/$(basename "$t")"
+            cp -r "$t"output/{diann,iq,quantmsutils} "dia-results/$(basename "$t")/"
+          done
+          cp tests/default.nf.test.snap dia-results/
+
+      - name: Upload DIA results
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: dia-integration-results
+          path: dia-results/
 
       - name: Report DIA test status
         if: ${{ always() }}
@@ -165,7 +227,7 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - name: One or more tests failed (excluding 25.04.0)
+      - name: One or more tests failed (excluding 25.10.4)
         if: ${{ contains(needs.*.result, 'failure') }}
         run: exit 1
 
@@ -184,3 +246,44 @@ jobs:
           echo "DEBUG: toJSON(needs) = ${{ toJSON(needs) }}"
           echo "DEBUG: toJSON(needs.*.result) = ${{ toJSON(needs.*.result) }}"
           echo "::endgroup::"
+
+      - name: Download PR comment fragments
+        if: ${{ always() }}
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        continue-on-error: true
+        with:
+          pattern: pr-comment-fragment-*
+          path: pr-comment-fragments
+          merge-multiple: true
+
+      # Build a comment for the shared pr-comment.yml poster to publish on the PR.
+      # Based on the fragments above (not needs.*.result) so non-blocking failures are still reported.
+      - name: Prepare PR comment
+        if: ${{ always() }}
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          mkdir -p pr-comment
+          echo "$PR_NUMBER" > pr-comment/pr_number.txt
+          echo "nf-test" > pr-comment/header.txt
+          if [ -d pr-comment-fragments ] && [ -n "$(ls -A pr-comment-fragments)" ]; then
+            {
+              echo "## ❌ nf-test failed with latest Nextflow version"
+              echo ""
+              echo "> [!NOTE]"
+              echo "> Tests with Nextflow's latest version failed but it will not cause a CI workflow failure."
+              echo "> Please check if the failure is expected with newer (edge-)releases of Nextflow or if it needs fixing."
+              echo ""
+              cat pr-comment-fragments/*.md
+              echo ""
+              echo "See the [full run](${RUN_URL}) for details."
+            } > pr-comment/comment.md
+          fi
+
+      - name: Upload PR comment artifact
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: pr-comment
+          path: pr-comment/

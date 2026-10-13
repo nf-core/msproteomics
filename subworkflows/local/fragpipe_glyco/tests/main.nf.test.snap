@@ -1,159 +1,56 @@
 {
-    "fragpipe_glyco - stub with opair": {
+    "fragpipe_glyco - stub - O-Pair user oxonium file is staged": {
         "content": [
             [
-                
-            ],
-            [
-                
-            ],
-            [
-                [
-                    {
-                        "id": "sample_op"
-                    },
-                    "sample_opair_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "sample_op"
-                    },
-                    "sample_opair_glycoforms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                
-            ],
-            [
-                [
-                    {
-                        "id": "sample_op"
-                    },
-                    [
-                        "opair.log:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "sample_opair_glycoforms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "sample_opair_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                    ]
-                ]
+                "-b 20.0",
+                "-f {TASK_DIR}/oxonium/my_oxonium.txt",
+                "-r {TASK_DIR}/g1/filelist_opair.txt",
+                "-s {TASK_DIR}/g1/psm.tsv",
+                "-o {TASK_DIR}/g1"
             ]
         ],
-        "timestamp": "2026-03-25T03:54:47.713079722",
+        "timestamp": "2026-10-11T23:01:54.068160869",
         "meta": {
             "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
+            "nextflow": "25.10.4"
         }
     },
-    "fragpipe_glyco - stub with mbg": {
+    "fragpipe_glyco - stub - PairScans then O-Pair on calibrated mzML; IonQuant input is O-Pair's group copy": {
         "content": [
             [
-                [
-                    {
-                        "id": "sample"
-                    },
-                    "sample_mbg_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
+                {
+                    "id": "g1",
+                    "group": "g1"
+                }
             ],
             [
-                [
-                    {
-                        "id": "sample"
-                    },
-                    "sample_glycan_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                
-            ],
-            [
-                
-            ],
-            [
-                [
-                    {
-                        "id": "sample"
-                    },
-                    [
-                        "mbg.log:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "sample_glycan_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "sample_mbg_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                    ]
-                ]
-            ],
-            [
-                
+                "A.pairs",
+                "B.pairs"
             ]
         ],
-        "timestamp": "2026-03-25T03:54:41.26510059",
+        "timestamp": "2026-10-05T14:49:46.245587219",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
         }
     },
-    "fragpipe_glyco - stub with both": {
+    "fragpipe_glyco - stub - PTM-Shepherd glyco then MBG: MBG reads PTM-S copies, manifest in file-table order": {
         "content": [
             [
-                [
-                    {
-                        "id": "sample_both"
-                    },
-                    "sample_mbg_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "sample_both"
-                    },
-                    "sample_glycan_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "sample_both"
-                    },
-                    "sample_opair_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "sample_both"
-                    },
-                    "sample_opair_glycoforms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "sample_both"
-                    },
-                    [
-                        "mbg.log:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "sample_glycan_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "sample_mbg_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                    ]
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "sample_both"
-                    },
-                    [
-                        "opair.log:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "sample_opair_glycoforms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "sample_opair_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                    ]
-                ]
+                {
+                    "id": "cancer",
+                    "group": "cancer"
+                },
+                {
+                    "id": "saliva",
+                    "group": "saliva"
+                }
             ]
         ],
-        "timestamp": "2026-03-25T03:54:54.055472644",
+        "timestamp": "2026-10-05T14:50:16.464539271",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
         }
     }
 }

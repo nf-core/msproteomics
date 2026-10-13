@@ -4,41 +4,63 @@
             [
                 [
                     {
-                        "id": "sample1"
+                        "id": "sample1",
+                        "group": "sample1",
+                        "data_type": "DDA"
                     },
-                    "sample1.mzML:md5,17404a596cbd0d1e6c7d23fcd845ab82"
+                    [
+                        "sample1.mzML:md5,17404a596cbd0d1e6c7d23fcd845ab82"
+                    ]
                 ],
                 [
                     {
-                        "id": "sample2"
+                        "id": "sample2",
+                        "group": "sample2",
+                        "data_type": "DDA"
                     },
-                    "sample2.mzML:md5,17404a596cbd0d1e6c7d23fcd845ab82"
+                    [
+                        "sample2.mzML:md5,17404a596cbd0d1e6c7d23fcd845ab82"
+                    ]
                 ]
             ],
             [
                 [
                     {
-                        "id": "sample1"
+                        "id": "sample1",
+                        "group": "sample1",
+                        "data_type": "DDA",
+                        "spectra_name": "sample1.mzML"
                     },
-                    "interact-sample1.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    [
+                        "interact-sample1.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
                 ],
                 [
                     {
-                        "id": "sample2"
+                        "id": "sample2",
+                        "group": "sample2",
+                        "data_type": "DDA",
+                        "spectra_name": "sample2.mzML"
                     },
-                    "interact-sample2.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    [
+                        "interact-sample2.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
                 ]
             ],
             [
                 [
                     {
-                        "id": "sample1"
+                        "id": "sample1",
+                        "group": "sample1",
+                        "data_type": "DDA"
                     },
                     "sample1.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ],
                 [
                     {
-                        "id": "sample2"
+                        "id": "sample2",
+                        "group": "sample2",
+                        "data_type": "DDA"
                     },
                     "sample2.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
@@ -55,14 +77,18 @@
                 [
                     {
                         "id": "sample1",
-                        "group": "sample1"
+                        "group": "sample1",
+                        "report_after_quant": false,
+                        "export_matched_fragments": false
                     },
                     "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ],
                 [
                     {
                         "id": "sample2",
-                        "group": "sample2"
+                        "group": "sample2",
+                        "report_after_quant": false,
+                        "export_matched_fragments": false
                     },
                     "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
@@ -124,10 +150,43 @@
                 ]
             ]
         ],
-        "timestamp": "2026-03-25T03:57:31.76807862",
+        "timestamp": "2026-10-06T05:27:21.244398828",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "TMT label check - workflow without msfragger settings searches with FragPipe's defaults": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "sample1",
+                        "group": "",
+                        "data_type": "DDA",
+                        "spectra_name": "sample1.mzML"
+                    },
+                    [
+                        "interact-sample1.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "workdir-root",
+                        "group": "",
+                        "report_after_quant": false,
+                        "export_matched_fragments": false
+                    },
+                    "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-12T02:07:19.154793849",
         "meta": {
             "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
+            "nextflow": "25.10.4"
         }
     }
 }

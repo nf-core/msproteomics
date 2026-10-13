@@ -1,0 +1,78 @@
+name: "fragpipeheadless"
+description: Run FragPipe in headless mode (all-in-one process) for database search, validation, quantification, and reporting.
+keywords:
+  - FragPipe
+  - proteomics
+  - database search
+  - MSFragger
+  - quantification
+tools:
+  - fragpipe:
+      description: |
+        FragPipe is an integrated proteomics pipeline that orchestrates MSFragger,
+        Philosopher, MSBooster, IonQuant, and other tools for comprehensive analysis.
+        This module runs FragPipe in headless mode, producing results identical to the GUI.
+      homepage: https://fragpipe.nesvilab.org/
+      documentation: https://fragpipe.nesvilab.org/docs/tutorial_fragpipe.html
+input:
+  - raw_files:
+      type: file
+      description: All raw data files (.d, .raw, .mzML) staged into raw_files/ subdirectory
+      pattern: "raw_files/*"
+  - database:
+      type: file
+      description: FASTA database file for protein identification
+      pattern: "*.fasta"
+  - workflow_text:
+      type: string
+      description: FragPipe .workflow text; headlessWorkflowText sets database.db-path and the tool paths
+  - manifest_rows:
+      type: list
+      description: One [filename, experiment, bioreplicate, data_type, FragPipe group] row per LC-MS file (headlessLayout)
+  - annotation_rows:
+      type: list
+      description: TMT annotation, one [group, channel, sample_name] row per channel (the blank group is ""); [] for LFQ
+output:
+  all_results:
+    - results/**:
+        type: file
+        description: All FragPipe output files
+        pattern: "results/**"
+  combined_protein:
+    - results/combined_protein.tsv:
+        type: file
+        description: Combined protein report across all experiments
+        pattern: "results/combined_protein.tsv"
+  combined_peptide:
+    - results/combined_peptide.tsv:
+        type: file
+        description: Combined peptide report across all experiments
+        pattern: "results/combined_peptide.tsv"
+  combined_ion:
+    - results/combined_ion.tsv:
+        type: file
+        description: Combined ion report across all experiments
+        pattern: "results/combined_ion.tsv"
+  manifest:
+    - manifest.fp-manifest:
+        type: file
+        description: Manifest passed to FragPipe (--manifest)
+        pattern: "manifest.fp-manifest"
+  annotations:
+    - raw_files/**annotation.txt:
+        type: file
+        description: Per-group TMT annotation files ("<channel> <sample>"), TMT only
+        pattern: "raw_files/**annotation.txt"
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+topics:
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+authors:
+  - "@dongzehe"

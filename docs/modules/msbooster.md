@@ -10,14 +10,14 @@ MSBooster is part of the FragPipe suite and fits in the pipeline between MSFragg
 
 ## Inputs
 
-| Channel          | Type         | Description                                                                  |
-| ---------------- | ------------ | ---------------------------------------------------------------------------- |
-| meta             | val(map)     | Sample metadata map                                                          |
-| pin_files        | path         | PIN files from MSFragger search (`*.pin`)                                    |
-| mzml_files       | path         | Mass spectrometry data files (`*.mzML`)                                      |
-| params_file      | path         | Full MSBooster params file (key=value format). Pass `[]` when not using      |
-| fragger_params   | path         | MSFragger params file for modification definitions. Pass `[]` when not using |
-| has_ion_mobility | val(boolean) | Whether input data has ion mobility (e.g., Bruker timsTOF .d files)          |
+| Channel          | Type         | Description                                                                                                                                  |
+| ---------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| meta             | val(map)     | Sample metadata map                                                                                                                          |
+| pin_files        | path         | PIN files from MSFragger search (`*.pin`)                                                                                                    |
+| mzml_files       | path         | Mass spectrometry data files (`*.mzML`)                                                                                                      |
+| params_file      | path         | Full MSBooster params file (key=value format). Pass `[]` when not using                                                                      |
+| fragger_params   | path         | MSFragger params file for modification definitions. Pass `[]` when not using                                                                 |
+| has_ion_mobility | val(boolean) | Whether any LC-MS file of the run is timsTOF data (.d or \_diatracer.mzML); ANDed into useIM and findBestImModel (CmdMSBooster.java:151-178) |
 
 ## Outputs
 
@@ -37,7 +37,7 @@ MSBooster is part of the FragPipe suite and fits in the pipeline between MSFragg
 
 ## Container
 
-`docker.io/fcyucn/fragpipe:24.0`
+The licensed FragPipe image given with `--fragpipe_container`.
 
 ## Usage
 
@@ -49,3 +49,9 @@ In params-file mode, runtime parameters (numThreads, DiaNN, unimodObo, fragger, 
 
 - [MSBooster GitHub](https://github.com/Nesvilab/MSBooster)
 - [MSBooster Wiki](https://github.com/Nesvilab/MSBooster/wiki)
+
+## Notes
+
+- Jars and DIA-NN are those of the FragPipe 24.0 release (golden log; the tag-24.0 source names 1.4.14 / 1.36.5): `MSBooster-1.4.17.jar`, `batmass-io-1.36.6.jar`, `diann/1.8.2_beta_8/linux/diann-1.8.1.8`; `LD_PRELOAD` follows `Diann.getLDPRELOAD` (only when DIA-NN fails without it).
+- argv: `java -Djava.awt.headless=true -Xmx<ram>G -cp <jars> mainsteps.MainClass --paramsList msbooster_params.txt`.
+- One task per file; one task over every file when the workflow pools runs (`find-best-*-model`, Koina models), as FragPipe does.

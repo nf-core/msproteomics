@@ -1,0 +1,42 @@
+{
+    "G1.3/G1.5/G1.14 - user tolerances reach DIA-NN, every file is in the design": {
+        "content": [
+            "Fraction_Group\tFraction\tSpectra_Filepath\tLabel\tSample\n1\t1\tctrl_1.mzML\t1\t1\n1\t1\tctrl_2.mzML\t1\t2\n1\t1\ttrt_1.mzML\t1\t3\n1\t1\ttrt_2.mzML\t1\t4\n\nSample\tMSstats_Condition\tMSstats_BioReplicate\n1\tcontrol\t1\n2\tcontrol\t2\n3\ttreated\t1\n4\ttreated\t2\n",
+            [
+                "DIANN_ASSEMBLEEMPIRICALLIBRARY",
+                "DIANN_FINALQUANTIFICATION",
+                "DIANN_INDIVIDUALANALYSIS",
+                "DIANN_INSILICOLIBRARYGENERATION",
+                "DIANN_PRELIMINARYANALYSIS",
+                "GENERATESDRFFROMSAMPLESHEET",
+                "IQ",
+                "MSSTATS",
+                "MZMLINDEXING",
+                "PMULTIQC",
+                "QUANTMSUTILS_DIANN2MZTAB",
+                "QUANTMSUTILS_DIANNCFG",
+                "QUANTMSUTILS_MZMLSTATISTICS"
+            ],
+            {
+                "DIANN_ASSEMBLEEMPIRICALLIBRARY": 1,
+                "DIANN_FINALQUANTIFICATION": 1,
+                "DIANN_INDIVIDUALANALYSIS": 4,
+                "DIANN_INSILICOLIBRARYGENERATION": 1,
+                "DIANN_PRELIMINARYANALYSIS": 4,
+                "GENERATESDRFFROMSAMPLESHEET": 1,
+                "IQ": 1,
+                "MSSTATS": 1,
+                "MZMLINDEXING": 4,
+                "PMULTIQC": 1,
+                "QUANTMSUTILS_DIANN2MZTAB": 1,
+                "QUANTMSUTILS_DIANNCFG": 1,
+                "QUANTMSUTILS_MZMLSTATISTICS": 4
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-05T14:47:49.599157192"
+    }
+}

@@ -1,0 +1,68 @@
+// --fragpipe_workflow is optional (nextflow_schema.json help_text): without it a FragPipe run uses the
+// shipped DDA LFQ workflow, and --tmt_mode, which has no shipped workflow, stops with an error (nf-core/msproteomics#2)
+nextflow_workflow {
+
+    name "Test Workflow MSPROTEOMICS_FRAGPIPE - default --fragpipe_workflow"
+    script "../fragpipe.nf"
+    workflow "MSPROTEOMICS_FRAGPIPE"
+
+    tag "workflows"
+    tag "msproteomics_fragpipe"
+    tag "fragpipe_default_workflow"
+
+    test("no --fragpipe_workflow runs the shipped LFQ-MBR workflow") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                input             = ss.toString()
+                database          = "${fixtures}/test.fasta"
+                fragpipe_workflow = null
+                tmt_mode          = null
+                outdir            = "$outputDir"
+            }
+        }
+
+        then {
+            def names = workflow.trace.tasks().collect { t -> t.name }
+            assertAll(
+                { assert workflow.success },
+                // LFQ-MBR: label-free IonQuant with match-between-runs, no TMT-Integrator
+                { assert names.any { n -> n.contains('IONQUANT') } : names },
+                { assert !names.any { n -> n.contains('TMTINTEGRATOR') } : names }
+            )
+        }
+    }
+
+    test("--tmt_mode without --fragpipe_workflow fails") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                input             = ss.toString()
+                database          = "${fixtures}/test.fasta"
+                fragpipe_workflow = null
+                tmt_mode          = 'quant'
+                outdir            = "$outputDir"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.failed },
+                { assert workflow.trace.tasks().size() == 0 },
+                { assert (workflow.stdout + workflow.stderr).any { line -> line.contains('--tmt_mode quant requires --fragpipe_workflow') } : workflow.stdout }
+            )
+        }
+    }
+}

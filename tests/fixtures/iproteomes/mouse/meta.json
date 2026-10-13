@@ -1,0 +1,34 @@
+{
+    "key": "mouse",
+    "build_commands": {
+        "diann": "diann --fasta test.fasta --threads 16 --out-lib test --out test.tsv --temp ./ --cut K*,R* --var-mod UniMod:35,15.994915,M --min-pr-mz 350 --max-pr-mz 1050 --min-fr-mz 200 --max-fr-mz 1800 --missed-cleavages 1 --min-pep-len 7 --max-pep-len 30 --min-pr-charge 1 --max-pr-charge 4 --var-mods 3 --mass-acc 18 --mass-acc-ms1 5 --verbose 3 --fasta-search --predictor --gen-spec-lib --rt-profiling --met-excision"
+    },
+    "tool_versions": {
+        "diann": "1.8.1 (test)"
+    },
+    "diann_library_settings": {
+        "cut": "K*,R*",
+        "missed_cleavages": 1,
+        "min_pep_len": 7,
+        "max_pep_len": 30,
+        "min_pr_charge": 1,
+        "max_pr_charge": 4,
+        "min_pr_mz": 350,
+        "max_pr_mz": 1050,
+        "min_fr_mz": 200,
+        "max_fr_mz": 1800,
+        "mass_acc": 18,
+        "mass_acc_ms1": 5,
+        "met_excision": true,
+        "fixed_mods": [],
+        "var_mods": [
+            {
+                "unimod": "UniMod:35",
+                "mass": 15.994915,
+                "residues": "M"
+            }
+        ],
+        "max_var_mods": 3,
+        "diann_version": "1.8.1"
+    }
+}

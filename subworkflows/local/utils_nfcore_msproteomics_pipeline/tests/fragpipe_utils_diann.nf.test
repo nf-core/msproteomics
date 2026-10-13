@@ -1,0 +1,258 @@
+// Unit tests for the SpecLibGen / DIA-NN helpers in fragpipe_utils.nf.
+// FP = FragPipe-GUI/src/main/java/org/nesvilab/fragpipe/ (FragPipe 24.0).
+
+nextflow_function {
+
+    name "Test Functions fragpipe_utils (SpecLibGen / DIA-NN)"
+    script "../fragpipe_utils.nf"
+
+    tag "subworkflows"
+    tag "fragpipe_utils"
+    tag "stub"
+
+    test("lfqExperimentAnnotation - no experiment or bioreplicate: sample names after the common file-name prefix") {
+        function "lfqExperimentAnnotation"
+        when {
+            function {
+                """
+                // ToolingUtils.java:240-266: common prefix "exp_ctrl_"; "a_1" -> condition a, replicate 1;
+                // "b_x" -> parseInt fails -> condition x, replicate 1; DDA file skipped (hasDia, :284-292)
+                input[0] = [
+                    ['/data/exp_ctrl_a_1.mzML', '', null, 'DIA'],
+                    ['/data/exp_ctrl_b_x.mzML', '', null, 'DIA-Quant'],
+                    ['/data/exp_ctrl_dda.mzML', '', null, 'DDA']
+                ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'file\tsample\tsample_name\tcondition\treplicate\n' +
+                    '/data/exp_ctrl_a_1.mzML\t/data/exp_ctrl_a_1.mzML\ta_1\ta\t1\n' +
+                    '/data/exp_ctrl_b_x.mzML\t/data/exp_ctrl_b_x.mzML\tb_x\tx\t1\n' },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    test("lfqExperimentAnnotation - experiment groups in TreeMap order, GPF-DIA / DIA-Lib skipped") {
+        function "lfqExperimentAnnotation"
+        when {
+            function {
+                """
+                // ToolingUtils.java:268-282 (type 1): path, path, getGroup2(), experiment.split("_")[0], replicate
+                input[0] = [
+                    ['/data/t2.mzML', 'treat_a', 2, 'DIA'],
+                    ['/data/c1.mzML', 'ctrl', 1, 'DIA'],
+                    ['/data/c0.mzML', 'ctrl', null, 'DIA'],
+                    ['/data/lib.mzML', 'lib', null, 'DIA-Lib'],
+                    ['/data/gpf.mzML', 'gpf', null, 'GPF-DIA']
+                ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.readLines() == [
+                    'file\tsample\tsample_name\tcondition\treplicate',
+                    '/data/c0.mzML\t/data/c0.mzML\tctrl\tctrl\t1',
+                    '/data/c1.mzML\t/data/c1.mzML\tctrl_1\tctrl\t1',
+                    '/data/t2.mzML\t/data/t2.mzML\ttreat_a_2\ttreat\t2'
+                ] },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    test("diannSpectraFiles - DIA / DIA-Quant only, DIA .raw replaced by MSFragger's uncalibrated mzML") {
+        function "diannSpectraFiles"
+        when {
+            function {
+                """
+                // CmdDiann.java:209-238
+                input[0] = [
+                    [[id: 'dia1', data_type: 'DIA'], file('/data/dia1.raw')],
+                    [[id: 'dia2', data_type: 'DIA'], file('/data/dia2.mzML')],
+                    [[id: 'quant', data_type: 'DIA-Quant'], file('/data/quant.raw')],
+                    [[id: 'dda', data_type: 'DDA'], file('/data/dda.raw')],
+                    [[id: 'lib', data_type: 'DIA-Lib'], file('/data/lib.mzML')]
+                ]
+                input[1] = [dia1: file('/work/dia1_uncalibrated.mzML')]
+                input[2] = false
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.collect { f -> f.toString() } == ['/work/dia1_uncalibrated.mzML', '/data/dia2.mzML', '/data/quant.raw'] },
+                { assert snapshot(function.result.collect { f -> f.toString() }).match() }
+            )
+        }
+    }
+
+    test("diannSpectraFiles - DIA .raw without MSFragger's uncalibrated mzML fails") {
+        function "diannSpectraFiles"
+        when {
+            function {
+                """
+                input[0] = [[[id: 'dia1', data_type: 'DIA'], file('/data/dia1.raw')]]
+                input[1] = [:]
+                input[2] = false
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains("DIA-NN reads MSFragger's dia1_uncalibrated.mzML for dia1.raw") } }
+            )
+        }
+    }
+
+    test("diannSpectraFiles - DIA-Umpire keeps the original DIA files") {
+        function "diannSpectraFiles"
+        when {
+            function {
+                """
+                input[0] = [
+                    [[id: 'dia1', data_type: 'DIA'], file('/data/dia1.raw')],
+                    [[id: 'dia2', data_type: 'DIA'], file('/data/dia2.raw')]
+                ]
+                input[1] = [:]
+                input[2] = true
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.collect { f -> f.toString() } == ['/data/dia1.raw', '/data/dia2.raw'] },
+                { assert snapshot(function.result.collect { f -> f.toString() }).match() }
+            )
+        }
+    }
+
+    test("diannSpectraFiles - unsupported format fails like CmdDiann.checkCompatibleFormats") {
+        function "diannSpectraFiles"
+        when {
+            function {
+                """
+                input[0] = [[[id: 'dia1', data_type: 'DIA'], file('/data/dia1.mzXML')]]
+                input[1] = [:]
+                input[2] = false
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains("DIA-Quant can't work with '.mzxml' files.") } }
+            )
+        }
+    }
+
+    test("speclibSpectraFiles - InputLcmsFile order (group2, data type, path), uncalibrated mzML for .raw / .d") {
+        function "speclibSpectraFiles"
+        when {
+            function {
+                """
+                // CmdSpecLibGen.java:172-185; same group and data type, so ordered by path
+                input[0] = [
+                    [[id: 'c_Q1'], file('/work/c_Q1.mzML')],
+                    [[id: 'b'], file('/work/b.mzML')],
+                    [[id: 'a'], file('/data/a.d')],
+                    [[id: 'c_Q2'], file('/work/c_Q2.mzML')]
+                ]
+                input[1] = [a: file('/work/a_uncalibrated.mzML'), b: file('/work/b_uncalibrated.mzML')]
+                input[2] = [
+                    [[id: 'b'], file('/data/b.raw')],
+                    [[id: 'c'], file('/data/c.mzML')],
+                    [[id: 'a'], file('/data/a.d')]
+                ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.collect { f -> f.toString() } == ['/work/a_uncalibrated.mzML', '/work/b_uncalibrated.mzML', '/work/c_Q1.mzML', '/work/c_Q2.mzML'] },
+                { assert snapshot(function.result.collect { f -> f.toString() }).match() }
+            )
+        }
+    }
+
+    // PXD047839: FragPipe lists diaTracer outputs by the path it gives them, next to the .d
+    // (CmdDiaTracer.java:132-141: <dir>/<run>_diatracer.mzML), so 0078 before 0088; the task dirs
+    // that wrote them (work hashes) must not order them
+    test("speclibSpectraFiles - diaTracer outputs ordered by FragPipe's path next to the .d, not the task dir") {
+        function "speclibSpectraFiles"
+        when {
+            function {
+                """
+                def m = { id -> [id: id, experiment: '', bioreplicate: 1, data_type: 'DDA'] }
+                input[0] = [
+                    [m.call('run_0088_diatracer'), file('/work/1a/run_0088_diatracer.mzML')],
+                    [m.call('run_0078_diatracer'), file('/work/9f/run_0078_diatracer.mzML')]
+                ]
+                input[1] = [:]
+                input[2] = [
+                    [[id: 'run_0078', experiment: 'exp1', bioreplicate: 1, data_type: 'DIA'], file('/data/in/run_0078.d')],
+                    [[id: 'run_0088', experiment: 'exp2', bioreplicate: 1, data_type: 'DIA'], file('/data/in/run_0088.d')]
+                ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.collect { f -> f.toString() } == ['/work/9f/run_0078_diatracer.mzML', '/work/1a/run_0088_diatracer.mzML'] },
+                { assert snapshot(function.result.collect { f -> f.toString() }).match() }
+            )
+        }
+    }
+
+    test("speclibSpectraFiles - .raw without MSFragger's uncalibrated mzML fails") {
+        function "speclibSpectraFiles"
+        when {
+            function {
+                """
+                input[0] = [[[id: 'a'], file('/work/a.mzML')]]
+                input[1] = [:]
+                input[2] = [[[id: 'a'], file('/data/a.raw')]]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains("SpecLibGen reads MSFragger's a_uncalibrated.mzML for a.raw") } }
+            )
+        }
+    }
+
+    test("speclibSpectraFiles - experiment_bioreplicate groups first, as FragPipe lists NAT_1..NAT_5 before T_1") {
+        function "speclibSpectraFiles"
+        when {
+            function {
+                """
+                def m = { id, exp, rep -> [id: id, experiment: exp, bioreplicate: rep, data_type: 'DIA'] }
+                def t = [[m.call('p1_T', 'T', 1), file('/data/p1_T.mzML')], [m.call('p1_NAT', 'NAT', 1), file('/data/p1_NAT.mzML')],
+                         [m.call('p2_NAT', 'NAT', 2), file('/data/p2_NAT.mzML')], [m.call('p2_T', 'T', 2), file('/data/p2_T.mzML')]]
+                input[0] = t
+                input[1] = [:]
+                input[2] = t
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.collect { f -> new File(f.toString()).name } == ['p1_NAT.mzML', 'p2_NAT.mzML', 'p1_T.mzML', 'p2_T.mzML'] },
+                { assert snapshot(function.result.collect { f -> f.toString() }).match() }
+            )
+        }
+    }
+}

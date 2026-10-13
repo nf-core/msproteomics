@@ -1,0 +1,5 @@
+sample,spectra
+bruker_dir,${FIXTURES}/spectra/bruker.d
+dia_gz,${FIXTURES}/spectra/dia.mzML.gz
+thermo,${FIXTURES}/spectra/thermo.raw
+bruker_tar,${FIXTURES}/spectra/bruker2.d.tar.gz

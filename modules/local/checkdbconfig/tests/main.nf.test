@@ -1,0 +1,211 @@
+nextflow_process {
+
+    name "Test Process CHECKDBCONFIG"
+    script "../main.nf"
+    process "CHECKDBCONFIG"
+
+    tag "modules"
+    tag "modules_local"
+    tag "check_db_config"
+
+    // Replicates FragpipeRun.checkDbConfig (FragpipeRun.java:2703-2765): the run
+    // stops with FragPipe's headless log.error message in each failing case.
+
+    test("check_db_config - 50% decoys with workflow tag passes") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                def fasta = file("\${workDir}/half.fasta")
+                fasta.text = '>sp|P1|A\\nMK\\n>sp|P2|B\\nMK\\n>DECOY_sp|P1|A\\nKM\\n>DECOY_sp|P2|B\\nKM\\n'
+                input[0] = [[ id: 'db' ], fasta]
+                input[1] = 'DECOY_'
+                """
+            }
+        }
+
+        then {
+            def scripts = []
+            new File(workDir.toString()).eachFileRecurse { f -> if (f.name == '.command.sh') { scripts << f.text } }
+            assertAll(
+                { assert process.success },
+                { assert scripts.any { s -> s.contains("--decoy-tag 'DECOY_'") } },
+                // The python3 on PATH is the host's or the container's, so only the version format is pinned
+                { assert process.out.versions_python.every { entry -> entry[2] ==~ /^3\.\d+\.\d+$/ } : process.out.versions_python },
+                { assert snapshot(process.out.fasta, process.out.versions_python.collect { entry -> entry.take(2) }).match() }
+            )
+        }
+    }
+
+    test("check_db_config - malformed UTF-8 byte is replaced like Java and still counted") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                // InputStreamReader(UTF_8) maps the 0xFF byte to U+FFFD; FragPipe counts 1/2 = 50 % decoys
+                def fasta = file("\${workDir}/bad_byte.fasta")
+                def bytes = new java.io.ByteArrayOutputStream()
+                bytes.write('>sp|P1|A'.getBytes('UTF-8'))
+                bytes.write(0xFF)
+                bytes.write('\\nMK\\n>rev_sp|P1|A\\nKM\\n'.getBytes('UTF-8'))
+                fasta.bytes = bytes.toByteArray()
+                input[0] = [[ id: 'db' ], fasta]
+                input[1] = 'rev_'
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                // The python3 on PATH is the host's or the container's, so only the version format is pinned
+                { assert process.out.versions_python.every { entry -> entry[2] ==~ /^3\.\d+\.\d+$/ } : process.out.versions_python },
+                { assert snapshot(process.out.fasta, process.out.versions_python.collect { entry -> entry.take(2) }).match() }
+            )
+        }
+    }
+
+    test("check_db_config - target-only database fails: no decoys with tag") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                // philosopher --custom writes rev_ decoys; a DECOY_ workflow finds none
+                def fasta = file("\${workDir}/rev_only.fasta")
+                fasta.text = '>sp|P1|A\\nMK\\n>rev_sp|P1|A\\nKM\\n'
+                input[0] = [[ id: 'db' ], fasta]
+                input[1] = 'DECOY_'
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.failed },
+                { assert (process.stdout + process.stderr).join('\\n').contains('No decoys found in the FASTA file.') }
+            )
+        }
+    }
+
+    test("check_db_config - all entries decoys fails") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                def fasta = file("\${workDir}/all_decoy.fasta")
+                fasta.text = '>rev_sp|P1|A\\nKM\\n>rev_sp|P2|B\\nKM\\n'
+                input[0] = [[ id: 'db' ], fasta]
+                input[1] = 'rev_'
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.failed },
+                { assert (process.stdout + process.stderr).join('\\n').contains('All FASTA entries seem to be decoys.') }
+            )
+        }
+    }
+
+    test("check_db_config - decoy share outside 40-60% fails") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                def fasta = file("\${workDir}/quarter.fasta")
+                fasta.text = '>sp|P1|A\\nMK\\n>sp|P2|B\\nMK\\n>sp|P3|C\\nMK\\n>rev_sp|P1|A\\nKM\\n'
+                input[0] = [[ id: 'db' ], fasta]
+                input[1] = 'rev_'
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.failed },
+                { assert (process.stdout + process.stderr).join('\\n').contains('FASTA file contains 25% decoys.') }
+            )
+        }
+    }
+
+    test("check_db_config - empty database fails") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                def fasta = file("\${workDir}/empty.fasta")
+                fasta.text = ''
+                input[0] = [[ id: 'db' ], fasta]
+                input[1] = 'rev_'
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.failed },
+                { assert (process.stdout + process.stderr).join('\\n').contains('Database looks to be empty') }
+            )
+        }
+    }
+
+    test("check_db_config - database of 1 GiB or more is not inspected") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                // Sparse 1 GiB file without any header: TabDatabase.databaseSizeLimit = 1 << 30
+                def fasta = file("\${workDir}/big.fasta")
+                def raf = new java.io.RandomAccessFile(fasta.toFile(), 'rw')
+                raf.setLength(1L << 30)
+                raf.close()
+                input[0] = [[ id: 'db' ], fasta]
+                input[1] = 'DECOY_'
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.fasta.size() == 1 },
+                // The python3 on PATH is the host's or the container's, so only the version format is pinned
+                { assert process.out.versions_python.every { entry -> entry[2] ==~ /^3\.\d+\.\d+$/ } : process.out.versions_python },
+                { assert snapshot(process.out.versions_python.collect { entry -> entry.take(2) }).match() }
+            )
+        }
+    }
+
+    test("check_db_config - stub") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def fasta = file("\${workDir}/stub.fasta")
+                fasta.text = ''
+                input[0] = [[ id: 'db' ], fasta]
+                input[1] = 'DECOY_'
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                // Stub runs use whatever python3 is on PATH (host or container), so only the version format is pinned
+                { assert process.out.versions_python.every { entry -> entry[2] ==~ /^3\.\d+\.\d+$/ } : process.out.versions_python },
+                { assert snapshot(process.out.fasta, process.out.versions_python.collect { entry -> entry.take(2) }).match() }
+            )
+        }
+    }
+}

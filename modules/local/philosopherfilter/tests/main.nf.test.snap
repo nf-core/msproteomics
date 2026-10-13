@@ -1,0 +1,185 @@
+{
+    "philosopher_filter - stub first group": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "A",
+                            "group": "A"
+                        },
+                        [
+                            "filter.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "philosopher_filter.log:md5,a40180a05c7d509b24d37fc231e041cb",
+                            "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "A",
+                            "group": "A"
+                        },
+                        [
+                            "meta.bin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "A",
+                            "group": "A"
+                        },
+                        "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "3": [
+                    [
+                        {
+                            "id": "A",
+                            "group": "A"
+                        },
+                        "peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "4": [
+                    [
+                        {
+                            "id": "A",
+                            "group": "A"
+                        },
+                        "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "5": [
+                    [
+                        {
+                            "id": "A",
+                            "group": "A"
+                        },
+                        "ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "6": [
+                    [
+                        {
+                            "id": "A",
+                            "group": "A"
+                        },
+                        "philosopher_filter.log:md5,a40180a05c7d509b24d37fc231e041cb"
+                    ]
+                ],
+                "7": [
+                    [
+                        "PHILOSOPHERFILTER",
+                        "philosopher",
+                        "5.1.3"
+                    ]
+                ],
+                "8": [
+                    [
+                        "PHILOSOPHERFILTER",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "ions": [
+                    [
+                        {
+                            "id": "A",
+                            "group": "A"
+                        },
+                        "ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "log": [
+                    [
+                        {
+                            "id": "A",
+                            "group": "A"
+                        },
+                        "philosopher_filter.log:md5,a40180a05c7d509b24d37fc231e041cb"
+                    ]
+                ],
+                "peptides": [
+                    [
+                        {
+                            "id": "A",
+                            "group": "A"
+                        },
+                        "peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "proteins": [
+                    [
+                        {
+                            "id": "A",
+                            "group": "A"
+                        },
+                        "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "psms": [
+                    [
+                        {
+                            "id": "A",
+                            "group": "A"
+                        },
+                        "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "results_files": [
+                    [
+                        {
+                            "id": "A",
+                            "group": "A"
+                        },
+                        [
+                            "filter.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "philosopher_filter.log:md5,a40180a05c7d509b24d37fc231e041cb",
+                            "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ],
+                "versions_fragpipe": [
+                    [
+                        "PHILOSOPHERFILTER",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "versions_philosopher": [
+                    [
+                        "PHILOSOPHERFILTER",
+                        "philosopher",
+                        "5.1.3"
+                    ]
+                ],
+                "workspace": [
+                    [
+                        {
+                            "id": "A",
+                            "group": "A"
+                        },
+                        [
+                            "meta.bin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-08T14:15:43.384151699"
+    }
+}

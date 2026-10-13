@@ -1,0 +1,48 @@
+name: "fragpipe_matched_fragments"
+description: FragPipe "Export matched fragments" right after the final Philosopher report, before every tool that reads psm.tsv
+keywords:
+  - proteomics
+  - fragpipe
+  - fragment ions
+components:
+  - exportmatchedfragments
+  - matchedfragmentsexportpsms
+input:
+  - ch_results_dir:
+      type: directory
+      description: |
+        Per-group Philosopher report output; groups with meta.export_matched_fragments are exported.
+        Structure: [ val(meta), path(results_dir) ]
+  - ch_emf_inputs:
+      type: list
+      description: |
+        Value channel from FRAGPIPE_MATCHED_FRAGMENTS_INPUTS.
+        Structure: [ path(manifest), [spectra], [umpire_spectra] ]
+  - ch_tool_configs:
+      type: channel
+      description: |
+        DIA-Umpire (umpire-se.params) and SpecLibGen (fragpipe.workflow) run flags.
+        Structure: val(tool_configs)
+  - aggregate_meta:
+      type: map
+      description: Meta map of the aggregate export task
+output:
+  - results_dir:
+      type: directory
+      description: |
+        Per-group results, psm.tsv with matched fragments when exported.
+        Structure: [ val(meta), path(results_dir) ]
+  - export_log:
+      type: file
+      description: |
+        Console output of the export.
+        Structure: [ val(meta), path(export_matched_fragments.log) ]
+  - versions:
+      type: channel
+      description: |
+        Software versions (topic tuples).
+        Structure: [ val(process), val(tool), val(version) ]
+authors:
+  - "@an-altosian"
+maintainers:
+  - "@an-altosian"

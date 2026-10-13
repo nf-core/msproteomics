@@ -1,0 +1,40 @@
+{
+    "msfragger_calibrate - stub calibration search of one file": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "sample1",
+                        "data_type": "DIA"
+                    },
+                    "msfragger_calibrate.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    [
+                        "sample1.mzBIN_calibrated:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                "I_AGREE_FRAGPIPE_LICENSE_AGREEMENT:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ],
+            [
+                [
+                    "MSFRAGGERCALIBRATE",
+                    "msfragger",
+                    "24.0"
+                ]
+            ],
+            [
+                [
+                    "MSFRAGGERCALIBRATE",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-07T10:10:25.665442354"
+    }
+}

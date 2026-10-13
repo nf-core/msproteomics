@@ -1,4 +1,4 @@
-# PHILOSOPHER_FILTER
+# PHILOSOPHERFILTER
 
 Performs FDR filtering and report generation for proteomics results using Philosopher.
 
@@ -10,14 +10,15 @@ When `skip_report=true`, the `.meta/` workspace is preserved for downstream tool
 
 ## Inputs
 
-| Channel      | Type        | Description                                                             |
-| ------------ | ----------- | ----------------------------------------------------------------------- |
-| meta         | val(map)    | Sample/experiment metadata                                              |
-| pepxml_files | path        | PepXML files from search/validation (`*.pep.xml`)                       |
-| protxml      | path        | ProtXML from ProteinProphet (`*.prot.xml`)                              |
-| filter_flags | val(string) | Filter CLI flags (e.g., `--sequential --razor --prot 0.01 --picked`)    |
-| report_flags | val(string) | Report CLI flags (e.g., `--msstats`)                                    |
-| fasta        | path        | Philosopher database with decoys/contaminants from PHILOSOPHER_DATABASE |
+| Channel      | Type        | Description                                                                       |
+| ------------ | ----------- | --------------------------------------------------------------------------------- |
+| meta         | val(map)    | Sample/experiment metadata                                                        |
+| pepxml_files | path        | PepXML files from search/validation (`*.pep.xml`)                                 |
+| protxml      | path        | ProtXML from ProteinProphet (`*.prot.xml`)                                        |
+| filter_flags | val(string) | Filter CLI flags (e.g., `--sequential --razor --prot 0.01 --picked`)              |
+| report_flags | val(string) | Report CLI flags (e.g., `--msstats`)                                              |
+| fasta        | path        | Philosopher database with decoys/contaminants from PHILOSOPHERDATABASE            |
+| decoy_tag    | val(string) | Decoy protein prefix from the workflow `database.decoy-tag` (via `getDecoyTag()`) |
 
 ## Outputs
 
@@ -37,18 +38,17 @@ When `skip_report=true`, the `.meta/` workspace is preserved for downstream tool
 | ---------------------- | ------------------------------------------------- | -------------------------------------------------------------------------- |
 | ext.args               | ''                                                | Additional command-line arguments for `philosopher filter`                 |
 | ext.prefix             | `${meta.id}`                                      | Output directory name                                                      |
-| ext.decoy_tag          | `rev_`                                            | Decoy protein prefix                                                       |
 | ext.skip_report        | false                                             | When true, preserve `.meta/` workspace for downstream FreeQuant/LabelQuant |
 | ext.fragpipe_tools_dir | `/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools` | FragPipe tools directory                                                   |
 
 ## Container
 
-`docker.io/fcyucn/fragpipe:24.0`
+The licensed FragPipe image given with `--fragpipe_container`.
 
 ## Usage
 
 Used in the `FRAGPIPE_INFERENCE` subworkflow (`subworkflows/local/fragpipe_inference/main.nf`) for per-sample FDR filtering after ProteinProphet protein inference.
-In TMT workflows with `skip_report=true`, the `.meta/` workspace is passed to PHILOSOPHER_LABELQUANT and then PHILOSOPHER_REPORT.
+In TMT workflows with `skip_report=true`, the `.meta/` workspace is passed to PHILOSOPHERLABELQUANT and then PHILOSOPHERREPORT.
 
 ## References
 

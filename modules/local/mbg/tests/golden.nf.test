@@ -1,0 +1,81 @@
+// Golden test: MBG vs FragPipe 24.0 steps "MBG" (PXD030670 glyco-N-LFQ-MBG, one step per group).
+// Needs GOLDEN_ROOT (golden data) and FRAGPIPE_CONTAINER (licensed image).
+// Input is FragPipe's own, exactly: the group psm.tsv FragPipe handed to MBG in this run (files/prembg, PTM-Shepherd's
+// output, copied by a java wrapper just before the step). Expected: the psm.tsv FragPipe handed on to IonQuant
+// (files/postmbg). Checked: argv equals FragPipe's (-Xmx is task memory, FragPipe passes none; the glycan
+// databases keep FragPipe's `<install>/lib/../tools` path) and each group's psm.tsv byte-identical. No column or row is excluded.
+
+nextflow_process {
+
+    name "Golden MBG vs FragPipe 24.0"
+    script "../main.nf"
+    process "MBG"
+    config "./golden.config"
+
+    tag "golden"
+    tag "mbg"
+
+    setup {
+        run("PARSEFRAGPIPEWORKFLOW") {
+            script "../../parsefragpipeworkflow/main.nf"
+            process {
+                """
+                assert System.getenv('GOLDEN_ROOT') : 'set GOLDEN_ROOT to the golden data root'
+                input[0] = channel.of([ [ id: 'mbg' ], file(System.getenv('GOLDEN_ROOT') + '/PXD030670/glyco-N-preptms_perfile/files/work/fragpipe.workflow', checkIfExists: true), ['DDA'] ])
+                """
+            }
+        }
+    }
+
+    test("PXD030670 glyco-N-LFQ-MBG - MBG reproduces FragPipe") {
+
+        when {
+            process {
+                """
+                def run = System.getenv('GOLDEN_ROOT') + '/PXD030670/glyco-N-preptms_perfile/files'
+                def raws = [ file("\${run}/input/CANCER-3.raw", checkIfExists: true), file("\${run}/input/SALIVA-1.raw", checkIfExists: true) ]
+                def rows = [['SALIVA-1.raw', 'saliva', null, 'DDA'], ['CANCER-3.raw', 'cancer', null, 'DDA']]  // FragPipe's manifest order
+                input[0] = PARSEFRAGPIPEWORKFLOW.out.tool_configs_json.flatMap { _m, json ->
+                    def argv = new groovy.json.JsonSlurper().parseText(json.text).mbg.args.collect { t -> t == '@NOPASEF@' ? 'true' : t }
+                    ['cancer', 'saliva'].collect { g ->
+                        def d = file("\${workDir}/\${g}")
+                        d.mkdirs()
+                        file("\${run}/prembg/\${g}.psm.tsv", checkIfExists: true).copyTo(file("\${d}/psm.tsv"))
+                        [ [ id: g, group: g ], d, raws, rows, argv ]
+                    }
+                }
+                """
+            }
+        }
+
+        then {
+            def root   = System.getenv('GOLDEN_ROOT')
+            def golden = new File("${root}/PXD030670/glyco-N-preptms_perfile")
+            def work   = new File(golden, 'files/work')
+            def steps  = new groovy.json.JsonSlurper().parse(new File(golden, 'manifest.json')).steps.findAll { s -> s.cmd_name == 'MBG' }
+            def results = []
+            process.out.psm_dir.each { entry ->
+                def group = entry[0].id
+                def dir   = new File(entry[1].toString())
+                def task  = dir.parentFile
+                def step  = steps.find { s -> s.argv.contains("{WORKDIR}/${group}/psm.tsv".toString()) }
+                def line  = new File(task, 'mbg.log').readLines()[0]
+                // FragPipe install root (fragpipe*) of the module's jar path (<root>/tools/..., fragpipeTools()), as bin/golden_step_check.py fragpipe_root
+                def fp    = (line =~ /(?i)(\/[^\s:]*\/fragpipe[^\/\s:]*)\/(?:tools|lib)\//)[0][1]
+                def norm  = { String t -> t.replace('{FRAGPIPE}', fp).replace('{WORKDIR}', '<WORK>') }
+                def expected = step.argv.collect { t -> norm.call(t) }
+                def actual = line.split(/(?<!\\) /).collect { t ->
+                    t.replace('\\', '').replace(task.path + '/' + group, '<WORK>/' + group).replace(task.path, '<WORK>') }.findAll { t -> t && !t.startsWith('-Xmx') && !t.startsWith('-Duser.home=') }  // -Duser.home: every java launch sets it (no passwd entry in the image)
+                results << (expected == actual ? "MATCH\t${group} argv".toString() : "DIFF\t${group} argv\n  FragPipe: ${expected}\n  module:   ${actual}".toString())
+                def same = new File(golden, "files/postmbg/${group}.psm.tsv").bytes == new File(dir, 'psm.tsv').bytes
+                results << "${same ? 'MATCH' : 'DIFF'}\t${group}/psm.tsv".toString()
+            }
+            println(results.join('\n'))
+            assertAll(
+                { assert process.success },
+                { assert process.out.psm_dir.size() == 2 },
+                { assert results.findAll { r -> !r.startsWith('MATCH') } == [] : results.join('\n') }
+            )
+        }
+    }
+}

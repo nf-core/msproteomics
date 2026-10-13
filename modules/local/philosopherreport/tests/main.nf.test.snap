@@ -1,0 +1,65 @@
+{
+    "philosopher_report - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    [
+                        "peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test_annotation.txt:md5,15dd7bbbfab14b16182b7cfb40d37dcc"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                
+            ],
+            [
+                [
+                    "PHILOSOPHERREPORT",
+                    "philosopher",
+                    "5.1.3"
+                ]
+            ],
+            [
+                [
+                    "PHILOSOPHERREPORT",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-07T22:03:43.133746658"
+    }
+}

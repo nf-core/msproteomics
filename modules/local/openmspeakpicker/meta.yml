@@ -1,0 +1,63 @@
+name: "openmspeakpicker"
+description: Finds mass spectrometric peaks in profile mass spectra. I.e., converts spectra in profile mode to centroided.
+keywords:
+  - peak
+  - OpenMS
+  - centroiding
+  - mzML
+tools:
+  - PeakPickerHiRes:
+      description: |
+        A tool for peak detection in profile data. Executes the peak picking with high_res algorithm.
+      homepage: https://abibuilder.cs.uni-tuebingen.de/archive/openms/Documentation/nightly/html/TOPP_PeakPickerHiRes.html
+      documentation: https://abibuilder.cs.uni-tuebingen.de/archive/openms/Documentation/nightly/html/TOPP_PeakPickerHiRes.html
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample information
+    - mzml_file:
+        type: file
+        description: Input profile data file.
+        pattern: "*.mzML"
+        ontologies: []
+output:
+  mzmls_picked:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - picked/${mzml_file.name}:
+          type: file
+          description: Output peak file
+          pattern: "*.mzML"
+          ontologies: []
+  versions_openms:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - openms:
+          type: string
+          description: The tool name
+      - cat .openms_peakpicker_version:
+          type: eval
+          description: The expression to obtain the version of the tool
+  log:
+    - "*.log":
+        type: file
+        description: log file
+        pattern: "*.log"
+        ontologies: []
+
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - openms:
+          type: string
+          description: The tool name
+      - cat .openms_peakpicker_version:
+          type: eval
+          description: The expression to obtain the version of the tool
+
+authors:
+  - "@daichengxin"

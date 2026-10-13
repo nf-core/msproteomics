@@ -1,0 +1,94 @@
+{
+    "-profile test_tmtq - starts with the bundled TMT6 workflow and reaches TMT-Integrator": {
+        "content": [
+            {
+                "CHECKCENTROID": [
+                    "fragpipe"
+                ],
+                "CHECKDBCONFIG": [
+                    "python"
+                ],
+                "FRAGPIPESAVEWORKFLOW": [
+                    "fragpipe"
+                ],
+                "FRAGPIPESDRF": [
+                    "python"
+                ],
+                "GENERATESDRFFROMSAMPLESHEET": [
+                    "python"
+                ],
+                "IONQUANT_ISOBARIC": [
+                    "fragpipe",
+                    "ionquant"
+                ],
+                "IONQUANT_MS1": [
+                    "fragpipe",
+                    "ionquant"
+                ],
+                "MSBOOSTER": [
+                    "fragpipe",
+                    "msbooster"
+                ],
+                "MSFRAGGER": [
+                    "fragpipe",
+                    "msfragger"
+                ],
+                "PARSEFRAGPIPEWORKFLOW": [
+                    "python"
+                ],
+                "PERCOLATOR": [
+                    "fragpipe",
+                    "percolator"
+                ],
+                "PHILOSOPHERDATABASE": [
+                    "fragpipe",
+                    "philosopher"
+                ],
+                "PHILOSOPHERFILTER": [
+                    "fragpipe",
+                    "philosopher"
+                ],
+                "PHILOSOPHERFILTER_LATER": [
+                    "fragpipe",
+                    "philosopher"
+                ],
+                "PROTEINPROPHET": [
+                    "fragpipe",
+                    "philosopher"
+                ],
+                "TMTINTEGRATOR": [
+                    "fragpipe",
+                    "tmtintegrator"
+                ],
+                "WRITE_FRAGGER_PARAMS": [
+                    "coreutils"
+                ]
+            },
+            [
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPESAVEWORKFLOW",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPESDRF",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:CHECKCENTROID",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_DATABASE:CHECKDBCONFIG",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_DATABASE:PHILOSOPHERDATABASE",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_INFERENCE:PHILOSOPHERFILTER",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_INFERENCE:PHILOSOPHERFILTER_LATER",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_INFERENCE:PROTEINPROPHET",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_QUANT:IONQUANT_ISOBARIC",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_QUANT:IONQUANT_MS1",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_QUANT:TMTINTEGRATOR",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSBOOSTER",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSFRAGGER",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:WRITE_FRAGGER_PARAMS",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_VALIDATE:PERCOLATOR",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:PARSEFRAGPIPEWORKFLOW",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:GENERATESDRFFROMSAMPLESHEET",
+                "NFCORE_MSPROTEOMICS:MULTIQC"
+            ]
+        ],
+        "timestamp": "2026-10-14T00:42:02.758199739",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

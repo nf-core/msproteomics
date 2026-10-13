@@ -1,0 +1,90 @@
+name: "philosopherdatabase"
+description: FragPipe database update (philosopher database --custom), run only with --add_philosopher_decoy / --add_philosopher_contaminants
+keywords:
+  - proteomics
+  - database
+  - decoy
+  - contaminant
+  - FASTA
+tools:
+  - philosopher:
+      description: "Philosopher database command adds reversed decoy sequences and common
+
+        contaminant proteins to a FASTA database for proteomics analysis.
+
+        "
+      homepage: https://philosopher.nesvilab.org/
+      documentation: https://github.com/Nesvilab/philosopher/wiki
+      tool_dev_url: https://github.com/Nesvilab/philosopher
+      doi: 10.1038/s41592-020-0912-y
+      licence:
+        - GPL-3.0
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample information
+    - fasta:
+        type: file
+        description: Protein sequence database in FASTA format
+        pattern: "*.{fasta,fas,fa}"
+output:
+  fasta:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - ${prefix}_philosopher.fasta:
+          type: file
+          description: FASTA database with decoys added
+          pattern: "*_philosopher.fasta"
+  log:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - philosopher_database.log:
+          type: file
+          description: Log file from philosopher database command
+          pattern: philosopher_database.log
+  versions_philosopher:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - philosopher:
+          type: string
+          description: The name of the tool
+      - fragpipeToolVersions().philosopher:
+          type: string
+          description: The Philosopher version bundled with FragPipe
+  versions_fragpipe:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - fragpipe:
+          type: string
+          description: The name of the tool
+      - cat .fragpipe_version:
+          type: eval
+          description: The expression to obtain the FragPipe version
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - philosopher:
+          type: string
+          description: The name of the tool
+      - fragpipeToolVersions().philosopher:
+          type: string
+          description: The Philosopher version bundled with FragPipe
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - fragpipe:
+          type: string
+          description: The name of the tool
+      - cat .fragpipe_version:
+          type: eval
+          description: The expression to obtain the FragPipe version
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

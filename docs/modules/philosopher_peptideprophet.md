@@ -10,13 +10,14 @@ This module parses a config file for `peptideprophet=` flags, initializes a Phil
 
 ## Inputs
 
-| Channel     | Type     | Description                                                               |
-| ----------- | -------- | ------------------------------------------------------------------------- |
-| meta        | val(map) | Sample/experiment metadata                                                |
-| pepxml      | path     | PepXML file from search engine (`*.pepXML`)                               |
-| mzml        | path     | mzML spectral file (used for base_name normalization)                     |
-| config_file | path     | Config file with `peptideprophet=flags` line from PARSE_FRAGPIPE_WORKFLOW |
-| fasta       | path     | Protein sequence database                                                 |
+| Channel     | Type        | Description                                                                       |
+| ----------- | ----------- | --------------------------------------------------------------------------------- |
+| meta        | val(map)    | Sample/experiment metadata                                                        |
+| pepxml      | path        | PepXML file from search engine (`*.pepXML`)                                       |
+| mzml        | path        | mzML spectral file (used for base_name normalization)                             |
+| config_file | path        | Config file with `peptideprophet=flags` line from PARSEFRAGPIPEWORKFLOW           |
+| fasta       | path        | Protein sequence database                                                         |
+| decoy_tag   | val(string) | Decoy protein prefix from the workflow `database.decoy-tag` (via `getDecoyTag()`) |
 
 ## Outputs
 
@@ -33,12 +34,11 @@ This module parses a config file for `peptideprophet=` flags, initializes a Phil
 | ---------------------- | ------------------------------------------------- | ------------------------------------------------------------------ |
 | ext.args               | ''                                                | Additional command-line arguments for `philosopher peptideprophet` |
 | ext.prefix             | `${meta.id}`                                      | Output directory name                                              |
-| ext.decoy_tag          | `rev_`                                            | Decoy protein prefix                                               |
 | ext.fragpipe_tools_dir | `/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools` | FragPipe tools directory                                           |
 
 ## Container
 
-`docker.io/fcyucn/fragpipe:24.0`
+The licensed FragPipe image given with `--fragpipe_container`.
 
 ## Usage
 

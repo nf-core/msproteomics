@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://raw.githubusercontent.com/nf-core/msproteomics/master/assets/schema_input.json",
+    "$id": "https://raw.githubusercontent.com/nf-core/msproteomics/main/assets/schema_input.json",
     "title": "nf-core/msproteomics pipeline - params.input schema",
     "description": "Schema for the input samplesheet CSV file",
     "type": "array",
@@ -11,27 +11,49 @@
                 "type": "string",
                 "pattern": "^\\S+$",
                 "errorMessage": "Sample name must be provided and cannot contain spaces",
-                "meta": ["id"]
+                "meta": ["id", "sample"]
             },
             "spectra": {
                 "type": "string",
-                "format": "file-path",
+                "format": "path",
                 "exists": true,
-                "pattern": "^\\S+\\.(raw|RAW|mzML|mzml|d|dia)$",
-                "errorMessage": "Mass spectrometry data file must be provided (.raw, .mzML, .d, or .dia)"
+                "pattern": "^\\S+\\.([Rr][Aa][Ww]|[Mm][Zz][Mm][Ll]|[Mm][Zz][Xx][Mm][Ll]|[Mm][Gg][Ff]|[Mm][Zz][Bb][Ii][Nn]|[Dd]|dia)(\\.gz|\\.tar|\\.tar\\.gz|\\.zip)?$",
+                "errorMessage": "Mass spectrometry data must be a .raw, .mzML, .mzXML, .mgf, .mzBIN or .dia file or a Bruker .d directory, optionally compressed (.gz, .tar, .tar.gz, .zip)"
             },
             "condition": {
                 "type": "string",
-                "errorMessage": "Experimental condition/group must be provided"
+                "errorMessage": "Condition must be a string; it only fills the TMT annotation / MSstats condition fields and does not drive grouping",
+                "meta": ["condition"]
             },
             "label": {
                 "type": "string",
-                "errorMessage": "TMT label channel (e.g., TMT126, TMT127N)"
+                "errorMessage": "TMT label channel (e.g., TMT126, TMT127N)",
+                "meta": ["label"]
             },
             "fraction": {
                 "type": "integer",
                 "minimum": 1,
-                "errorMessage": "Fraction identifier must be a positive integer"
+                "errorMessage": "Fraction identifier must be a positive integer",
+                "meta": ["fraction"]
+            },
+            "experiment": {
+                "type": "string",
+                "meta": ["experiment"],
+                "description": "FragPipe experiment (InputLcmsFile.experiment). Files are grouped by experiment_bioreplicate, or by experiment when bioreplicate is blank. Blank experiment and bioreplicate put every file in one group.",
+                "errorMessage": "Experiment must be a string (FragPipe replaces characters other than A-Z, a-z, 0-9 and _ with _)"
+            },
+            "bioreplicate": {
+                "type": "integer",
+                "meta": ["bioreplicate"],
+                "description": "FragPipe bioreplicate (InputLcmsFile.replicate, an Integer). When set, the group is <experiment>_<bioreplicate>, or exp_<bioreplicate> when experiment is blank.",
+                "errorMessage": "Bioreplicate must be an integer"
+            },
+            "data_type": {
+                "type": "string",
+                "enum": ["DDA", "DDA+", "DIA", "DIA-Quant", "DIA-Lib", "GPF-DIA"],
+                "meta": ["data_type"],
+                "description": "FragPipe data type of the LC-MS file (4th column of a FragPipe manifest, InputLcmsFile.dataType). When blank, FragPipe's InputLcmsFile.guessDataType() rule picks DDA, DIA or DDA+ from the file path.",
+                "errorMessage": "data_type must be one of FragPipe's data types: DDA, DDA+, DIA, DIA-Quant, DIA-Lib, GPF-DIA"
             }
         },
         "required": ["sample", "spectra"]

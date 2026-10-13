@@ -1,0 +1,60 @@
+nextflow_process {
+
+    name "Test Process WRITESUBMZML"
+    script "../main.nf"
+    process "WRITESUBMZML"
+    config "./nextflow.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "writesubmzml"
+
+    // CmdWriteSubMzml.java:97-130: argv, cwd <wd>/<group>, output <wd>/<stem>_sub.mzML
+    test("write_sub_mzml - stub named group") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            process {
+                """
+                ['A01.mzML', 'A01.mzBIN_all', 'psm.tsv'].each { n -> file("\${workDir}/\${n}").text = 'mock' }
+                input[0] = [[ id: 'A01', group: 'A', data_type: 'DDA' ], file("\${workDir}/A01.mzML"), file("\${workDir}/A01.mzBIN_all"), file("\${workDir}/psm.tsv"), '0.5']
+                """
+            }
+        }
+
+        then {
+            def log_lines = new File(process.out.log.get(0).get(1)).readLines()
+            assertAll(
+                { assert process.success },
+                { assert log_lines.indexOf('org.nesvilab.fragpipe.util.WriteSubMzml') > 0 },
+                { assert log_lines.takeRight(6) == ['{TASK_DIR}/lcms/A01.mzML', '{TASK_DIR}/A/psm.tsv', '{TASK_DIR}/A01_sub.mzML', '0.5', '1', 'cwd A'] : log_lines },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+
+    // Blank group: psm.tsv and cwd are the work dir itself (wd.resolve(""))
+    test("write_sub_mzml - stub blank group") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            process {
+                """
+                ['run.raw', 'run.mzBIN_all', 'psm.tsv'].each { n -> file("\${workDir}/\${n}").text = 'mock' }
+                input[0] = [[ id: 'run', group: '', data_type: 'DDA' ], file("\${workDir}/run.raw"), file("\${workDir}/run.mzBIN_all"), file("\${workDir}/psm.tsv"), '0.95']
+                """
+            }
+        }
+
+        then {
+            def log_lines = new File(process.out.log.get(0).get(1)).readLines()
+            assertAll(
+                { assert process.success },
+                { assert log_lines.takeRight(6) == ['{TASK_DIR}/lcms/run.raw', '{TASK_DIR}/psm.tsv', '{TASK_DIR}/run_sub.mzML', '0.95', '1', 'cwd .'] : log_lines },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}

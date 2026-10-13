@@ -1,11 +1,11 @@
-# FRAGPIPE_HEADLESS
+# FRAGPIPEHEADLESS
 
 Run FragPipe in headless mode as a single all-in-one process.
 
 ## Description
 
-FRAGPIPE_HEADLESS runs FragPipe in headless mode, producing results identical to the GUI.
-Unlike the FRAGPIPE module, this one takes raw manifest content as a val input and stages raw files into a subdirectory, generates the manifest from provided content, and updates the workflow file for the container environment by stripping developer-machine tool paths.
+FRAGPIPEHEADLESS runs FragPipe in headless mode, producing results identical to the GUI.
+Unlike the FRAGPIPE module, this one takes raw manifest content as a val input and stages raw files into a subdirectory, generates the manifest from provided content, and sets the workflow's `database.db-path` to the staged database; FragPipe finds its tools through `--config-tools-folder`, as in a user's headless run.
 Used in the main `msproteomics.nf` workflow as an alternative to the modular FRAGPIPE_WF subworkflow.
 
 ## Inputs
@@ -35,7 +35,7 @@ Used in the main `msproteomics.nf` workflow as an alternative to the modular FRA
 
 ## Container
 
-`docker.io/fcyucn/fragpipe:24.0`
+The licensed FragPipe image given with `--fragpipe_container`.
 
 ## Usage
 

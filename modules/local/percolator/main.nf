@@ -1,30 +1,44 @@
+include { percolatorCommands; shellQuote; fragpipeToolVersions } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
+include { shellArgs } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
+include { fragpipeLcmsName } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils'
+
 process PERCOLATOR {
     tag "${meta.id}"
     label 'process_medium'
 
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'docker://fcyucn/fragpipe:24.0' :
-        'docker.io/fcyucn/fragpipe:24.0' }"
-
     input:
-    tuple val(meta), path(pin_file), path(pepxml_files), path(mzml_file), val(percolator_cli)
-    val data_type  // 'DDA' or 'DIA' - affects PercolatorOutputToPepXML output format
-                   // Auto-overridden to 'DIA' when ranked pepXMLs detected (DDA+ ion mobility)
-
-    // percolator_cli: CLI string for Percolator (e.g., "--only-psms --no-terminate --post-processing-tdc --trainFDR 0.01 --testFDR 0.01")
-    // See percolator --help for all options. Common flags:
-    //   --only-psms: Only report PSM-level results (no peptide/protein inference)
-    //   --no-terminate: Don't stop on convergence (run all iterations)
-    //   --post-processing-tdc: Use target-decoy competition for final FDR estimation
-    //   --trainFDR <value>: FDR threshold for training (default 0.01)
-    //   --testFDR <value>: FDR threshold for testing/output (default 0.01)
+    // pin: MSFragger PIN (<stem>.pin); PercolatorOutputToPepXML always reads it (CmdPercolator.java:292)
+    // edited_pin: MSBooster <stem>_edited.pin, or [] when MSBooster did not run; Percolator reads it
+    //   instead of the MSFragger PIN when MSBooster ran (CmdPercolator.java:209-213)
+    // pepxml_files: MSFragger pepXML(s) of the file (<stem>.pepXML, or <stem>_rank<N>.pepXML for
+    //   DDA+/DIA; Crystal-C output carries the _c suffix)
+    // spectra: the searched LC-MS file; msfragger_mzml: MSFragger's <stem>_calibrated.mzML /
+    //   <stem>_uncalibrated.mzML ([] when none). FragPipe names <stem>_calibrated.mzML when
+    //   has_calibrated_mzml, <stem>_uncalibrated.mzML for .raw/.d, else the searched file
+    //   (CmdPercolator.java:219-224); PercolatorOutputToPepXML falls back to the files that
+    //   exist next to it (PercolatorOutputToPepXML.java:266-295), so all of them are staged.
+    // percolator_cli: workflow percolator.cmd-opts
+    // min_prob: PercolatorOutputToPepXML min probability as FragPipe prints it (Double.toString)
+    // keep_target_tsv / keep_decoy_tsv: false deletes the TSV like CmdPercolator.java:233-247
+    // has_crystalc: Crystal-C ran; the PIN/TSV basename drops the _c suffix (CmdPercolator.java:145-150)
+    // write_weights: Write sub mzML is on (tabRun.isWriteSubMzml(), FragpipeRun.java:1642); Percolator saves
+    //   <stripped>_percolator.weights for the second pass (CmdPercolator.java:180-183)
+    // init_weights: second pass, the first pass's <stem>_percolator.weights of the _sub.mzML input, [] when none
+    //   (CmdPercolator.java:185-201); staged in weights/
+    tuple val(meta), path(pin), path(edited_pin), path(pepxml_files), path(spectra), path(msfragger_mzml), val(has_calibrated_mzml), val(percolator_cli), val(min_prob), val(keep_target_tsv), val(keep_decoy_tsv), val(has_crystalc), val(write_weights), path(init_weights, stageAs: 'weights/*')
+    val decoy_tag    // decoy protein prefix from workflow database.decoy-tag (FragpipeRun.java:1442)
+    // meta.data_type: FragPipe data type of the searched file. PercolatorOutputToPepXML gets
+    // "DDA" only for DDA files, "DIA" for every other type (CmdPercolator.java:227, :297).
 
     output:
     tuple val(meta), path("${prefix}")                     , emit: results_dir
     tuple val(meta), path("${prefix}/interact-*.pep.xml")  , emit: pepxml
-    tuple val(meta), path("${prefix}/*_target_psms.tsv")   , emit: target_psms
-    tuple val(meta), path("${prefix}/*_decoy_psms.tsv")    , emit: decoy_psms
-    tuple val("${task.process}"), val('percolator'), eval("cat .percolator_version"), emit: versions_percolator, topic: versions
+    tuple val(meta), path("${prefix}/*_target_psms.tsv")   , emit: target_psms, optional: true
+    tuple val(meta), path("${prefix}/*_decoy_psms.tsv")    , emit: decoy_psms, optional: true
+    // in the task dir, not in ${prefix}: a file inside a published directory output is not published again on its own,
+    // and the weights are published to fragpipe/<group>/ (conf/modules.config)
+    tuple val(meta), path("*_percolator.weights")          , emit: weights, optional: true
+    tuple val("${task.process}"), val('percolator'), val(fragpipeToolVersions().percolator), emit: versions_percolator, topic: versions
     tuple val("${task.process}"), val('fragpipe'), eval("cat .fragpipe_version"), emit: versions_fragpipe, topic: versions
 
     when:
@@ -33,110 +47,55 @@ process PERCOLATOR {
     script:
     def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id}"
-    def basename = pin_file.baseName  // Use actual PIN filename (MSBOOSTER outputs clean names)
-    def min_prob = task.ext.min_prob ?: '0.5'
-    def decoy_tag = task.ext.decoy_tag ? "--protein-decoy-pattern ${task.ext.decoy_tag}" : ''
-    // percolator_cli passed directly from input - no defaults, caller must specify all flags
-    def tools_dir = task.ext.fragpipe_tools_dir ?: '/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools'
-
+    def cmds = percolatorCommands(meta, pin, edited_pin, pepxml_files, percolator_cli, args, min_prob, has_crystalc, decoy_tag, write_weights, init_weights, task)
+    def gdir = shellQuote(cmds.group_dir)
+    def target_tsv = "${cmds.stripped}_percolator_target_psms.tsv"
+    def decoy_tsv = "${cmds.stripped}_percolator_decoy_psms.tsv"
+    // the group dir holds the PIN(s) and pepXML(s) like FragPipe's (the task dir itself for the blank group)
+    def inputs = ([pin] + [edited_pin].flatten().findAll { f -> f } + [pepxml_files].flatten()).collect { f -> shellQuote(f.name) }
+    def link_inputs = cmds.group_dir == '.' ? '' : inputs.collect { name -> "ln -s \"\$PWD\"/${name} ${gdir}/${name}" }.join('\n    ')
+    def unlink_inputs = cmds.group_dir == '.' ? '' : "rm ${inputs.collect { name -> "${gdir}/${name}" }.join(' ')}"
+    def weights = "${cmds.stripped}_percolator.weights"
+    def outputs = cmds.interact.collect { name -> shellQuote(name) } + (keep_target_tsv ? [shellQuote(target_tsv)] : []) + (keep_decoy_tsv ? [shellQuote(decoy_tsv)] : [])
+    def move_outputs = cmds.group_dir == prefix ? '' : "mv ${outputs.collect { name -> "${gdir}/${name}" }.join(' ')} ${shellQuote(prefix)}/"
+    def drop_tsv = (keep_target_tsv ? [] : [target_tsv]) + (keep_decoy_tsv ? [] : [decoy_tsv])
     """
-
     export HOME=\$(pwd)
-    mkdir -p ${prefix}
+    mkdir -p ${prefix} ${gdir}
+    ${link_inputs}
 
-    TOOLS_DIR="${tools_dir}"
-
-    PERCOLATOR_SRC=\$(find "\$TOOLS_DIR" -path '*/percolator_*/linux/percolator' -type f 2>/dev/null | head -1 || true)
-    PERCOLATOR="\$(pwd)/percolator"
-    cp "\$PERCOLATOR_SRC" "\$PERCOLATOR"
-    chmod +x "\$PERCOLATOR"
-    # FragPipe JAR is in lib/ (sibling of tools/), not inside tools/ — search directly
-    FP_LIB="${tools_dir}/../lib"
-    FP_JAR=\$(find "\$FP_LIB" -name 'fragpipe*.jar' -type f 2>/dev/null | head -1 || true)
-
-    _ver=\$(\$PERCOLATOR --version 2>&1 | grep -oP 'version \\K[\\d.]+' | head -1 || true)
-
-    echo "\$_ver" > .percolator_version
-    _fp_ver=\$(echo "\$TOOLS_DIR" | grep -oP 'fragpipe-\\K[0-9]+\\.[0-9]+[0-9.]*' | head -1 || true)
-
-    echo "\$_fp_ver" > .fragpipe_version
-
-    # Determine output flags based on --only-psms presence (matching FragPipe CmdPercolator.java:157-175).
-    # When --only-psms is set, Percolator outputs PSM-level results (--results-psms/--decoy-results-psms).
-    # Otherwise, it outputs peptide-level results (--results-peptides/--decoy-results-peptides).
-    # Note: output filenames use _psms.tsv suffix regardless for downstream compatibility.
-    if echo "${percolator_cli} ${args}" | grep -q -- '--only-psms'; then
-        RESULTS_FLAG="--results-psms"
-        DECOY_FLAG="--decoy-results-psms"
-    else
-        RESULTS_FLAG="--results-peptides"
-        DECOY_FLAG="--decoy-results-peptides"
-    fi
-
-    # Run Percolator with user-specified flags
-    # --num-threads and --protein-decoy-pattern are added by the module
-    PERC_CMD="\$PERCOLATOR --num-threads ${task.cpus} ${decoy_tag} \$RESULTS_FLAG ${basename}_percolator_target_psms.tsv \$DECOY_FLAG ${basename}_percolator_decoy_psms.tsv ${percolator_cli} ${args} ${pin_file}"
-    printf '%s\\n' "\$PERC_CMD" > ${prefix}/percolator.log
-    \$PERC_CMD 2>&1 | tee -a ${prefix}/percolator.log
-
-    # PercolatorOutputToPepXML expects pepXML at ${basename}.pepXML (or ${basename}_rank1.pepXML
-    # for DDA+/DIA). Nextflow stages files with their original names, which may differ from
-    # basename (derived from PIN filename). Create symlinks so the Java code finds them.
-    for f in ${pepxml_files}; do
-        if [ ! -e "${basename}.pepXML" ] && [[ "\$f" == *.pepXML ]] && [[ "\$f" != *_rank*.pepXML ]]; then
-            ln -sf "\$f" "${basename}.pepXML"
-        fi
-        # Handle ranked pepXMLs (DDA+ ion mobility)
-        if [[ "\$f" == *_rank*.pepXML ]]; then
-            rank=\$(echo "\$f" | sed -n 's/.*_rank\\([0-9]*\\)\\.pepXML/\\1/p')
-            if [ -n "\$rank" ] && [ ! -e "${basename}_rank\${rank}.pepXML" ]; then
-                ln -sf "\$f" "${basename}_rank\${rank}.pepXML"
-            fi
-        fi
+    for part in ${shellQuote(cmds.percolator[0])} ${shellQuote(cmds.fragpipe_lib)}; do
+        [ -e "\$part" ] || { echo "ERROR: FragPipe component \$part not found (the FragPipe tools directory set in nextflow.config)" >&2; exit 1; }
     done
+    printf '%s\\n' ${shellQuote(cmds.fragpipe_version)} > .fragpipe_version
 
-    # Auto-detect effective data_type for perc2pepxml.
-    # DDA+ (ion mobility, e.g. Bruker timsTOF .d) produces ranked pepXMLs (_rank1.pepXML etc.)
-    # and requires DIA mode in perc2pepxml for per-rank processing
-    # (CmdPercolator.java: getDataType().contentEquals("DDA") returns false for "DDA+").
-    EFFECTIVE_DATA_TYPE="${data_type}"
-    if [ -f "${basename}_rank1.pepXML" ]; then
-        EFFECTIVE_DATA_TYPE="DIA"
-    fi
+    # Percolator, argv in CmdPercolator.java:152-213 order, run in the group dir (CmdPercolator.java:214)
+    perc_cmd=(${shellArgs(cmds.percolator)})
+    printf '%s\\n' "\${perc_cmd[*]}" > ${prefix}/percolator.log
+    (cd ${gdir} && "\${perc_cmd[@]}") 2>&1 | tee -a ${prefix}/percolator.log
 
-    # Convert Percolator output to pepXML format using FragPipe's converter
-    # Arguments: pin_file basename target_psms decoy_psms output_prefix data_type min_prob mzml_path
-    PEPXML_CMD="java \${JAVA_OPTS:-} -cp \"\$FP_JAR:\$FP_LIB/*\" org.nesvilab.fragpipe.tools.percolator.PercolatorOutputToPepXML ${pin_file} ${basename} ${basename}_percolator_target_psms.tsv ${basename}_percolator_decoy_psms.tsv interact-${basename} \$EFFECTIVE_DATA_TYPE ${min_prob} \$(pwd)/${mzml_file}"
-    printf '\\n%s\\n' "\$PEPXML_CMD" >> ${prefix}/percolator.log
-    \$PEPXML_CMD 2>&1 | tee -a ${prefix}/percolator.log
+    # PercolatorOutputToPepXML, argv in CmdPercolator.java:280-300 order, run in the group dir (CmdPercolator.java:228)
+    # -Duser.home: the container user has no passwd entry, so the JVM home would be "?" in the task dir
+    conv_cmd=(${shellQuote(cmds.converter[0])} -Duser.home="\$PWD" ${cmds.converter.drop(1).collect { token -> shellQuote(token) }.join(' ')} "\$PWD"/${shellQuote(fragpipeLcmsName(spectra.name, has_calibrated_mzml))})
+    printf '%s\\n' "\${conv_cmd[*]}" >> ${prefix}/percolator.log
+    (cd ${gdir} && "\${conv_cmd[@]}") 2>&1 | tee -a ${prefix}/percolator.log
 
-    shopt -s nullglob
-    for f in interact-*.pep.xml *_psms.tsv; do mv "\$f" "${prefix}/"; done
-    shopt -u nullglob
-
+    ${unlink_inputs}
+    ${drop_tsv ? "rm ${drop_tsv.collect { name -> "${gdir}/${shellQuote(name)}" }.join(' ')}" : ''}
+    ${move_outputs}
+    ${write_weights && cmds.group_dir != '.' ? "mv ${gdir}/${shellQuote(weights)} ." : ''}
     """
 
     stub:
     prefix = task.ext.prefix ?: "${meta.id}"
-    def basename = pin_file.baseName  // Use actual PIN filename
+    def cmds = percolatorCommands(meta, pin, edited_pin, pepxml_files, percolator_cli, task.ext.args ?: '', min_prob, has_crystalc, decoy_tag, write_weights, init_weights, task)
     """
     mkdir -p ${prefix}
-    # Create ranked interact files if ranked pepXMLs are present (DDA+ ion mobility)
-    if compgen -G "${basename}_rank*.pepXML" > /dev/null; then
-        for f in ${basename}_rank*.pepXML; do
-            rank=\$(echo "\$f" | sed -n 's/.*_rank\\([0-9]*\\).*/\\1/p')
-            touch "${prefix}/interact-${basename}_rank\${rank}.pep.xml"
-        done
-    else
-        touch ${prefix}/interact-${basename}.pep.xml
-    fi
-    touch ${prefix}/${basename}_percolator_target_psms.tsv
-    touch ${prefix}/${basename}_percolator_decoy_psms.tsv
-    touch ${prefix}/percolator.log
-    TOOLS_DIR="${task.ext.fragpipe_tools_dir ?: '/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools'}"
-    _fp_ver=\$(echo "\$TOOLS_DIR" | grep -oP 'fragpipe-\\K[0-9]+\\.[0-9]+[0-9.]*' | head -1 || true)
-    echo "\$_fp_ver" > .percolator_version
-    echo "\$_fp_ver" > .fragpipe_version
-
+    touch ${cmds.interact.collect { name -> "${prefix}/${name}" }.join(' ')}
+    ${keep_target_tsv ? "touch ${prefix}/${cmds.stripped}_percolator_target_psms.tsv" : ''}
+    ${keep_decoy_tsv ? "touch ${prefix}/${cmds.stripped}_percolator_decoy_psms.tsv" : ''}
+    ${write_weights ? "touch ${cmds.stripped}_percolator.weights" : ''}
+    printf '%s\\n' ${shellQuote(cmds.percolator.join(' '))} ${shellQuote(cmds.converter.join(' ') + " {CWD}/${fragpipeLcmsName(spectra.name, has_calibrated_mzml)}")} ${shellQuote("cwd ${cmds.group_dir}")} > ${prefix}/percolator.log
+    printf '%s\\n' ${shellQuote(cmds.fragpipe_version)} > .fragpipe_version
     """
 }

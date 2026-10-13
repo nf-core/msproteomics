@@ -1,4 +1,4 @@
-name: "proteinprophet"
+name: proteinprophet
 description: Statistical protein inference using ProteinProphet
 keywords:
   - proteomics
@@ -7,61 +7,91 @@ keywords:
   - probability
 tools:
   - proteinprophet:
-      description: |
-        ProteinProphet is a statistical model for protein inference from
-        peptide identifications. It handles shared peptides and computes
-        protein-level probabilities considering peptide degeneracy.
-      homepage: "https://proteinprophet.sourceforge.net/"
-      documentation: "http://tools.proteomecenter.org/wiki/index.php?title=Software:ProteinProphet"
-      doi: "10.1021/ac0341261"
-      licence: ["GPL-2.0"]
+      description: "ProteinProphet is a statistical model for protein inference from
 
+        peptide identifications. It handles shared peptides and computes
+
+        protein-level probabilities considering peptide degeneracy.
+
+        "
+      homepage: https://proteinprophet.sourceforge.net/
+      documentation: http://tools.proteomecenter.org/wiki/index.php?title=Software:ProteinProphet
+      doi: 10.1021/ac0341261
+      licence:
+        - GPL-2.0
 input:
   - - meta:
         type: map
-        description: Groovy Map containing sample information
+        description: Aggregate information
     - pepxml_files:
         type: file
-        description: PepXML files from Percolator or PeptideProphet
-        pattern: "*.pep.xml"
-    - config_cli:
+        description: Plain interact pepXMLs of every group
+    - filelist_paths:
+        type: list
+        description: FragPipe work-dir location of each pepXML, in FragPipe order
+    - proteinprophet_cli:
         type: string
-        description: |
-          ProteinProphet CLI options as a string (e.g., "--maxppmdiff 2000000").
-          Passed from PARSE_FRAGPIPE_WORKFLOW tool_configs.
-
+        description: protein-prophet.cmd-opts
+  - database:
+      type: file
+      description: The run's FASTA, staged so ProteinProphet can open the database named in the pepXML header (protein length, coverage)
+      pattern: "*.{fasta,fas,fa}"
 output:
   results_dir:
     - - meta:
           type: map
           description: Groovy Map containing sample information
-      - "${prefix}":
+      - ${prefix}:
           type: directory
           description: Directory containing ProteinProphet results and logs
   protxml:
     - - meta:
           type: map
           description: Groovy Map containing sample information
-      - "${prefix}/combined.prot.xml":
+      - ${prefix}/*.prot.xml:
           type: file
           description: ProtXML with protein inference results
-          pattern: "combined.prot.xml"
-  pepxml:
-    - - meta:
-          type: map
-          description: Groovy Map containing sample information
-      - pepxml_files:
-          type: file
-          description: |
-            Pass-through of input pepXML files. Used to synchronize downstream
-            processes that need both pepxml and protxml to be ready.
-          pattern: "*.pep.xml"
+          pattern: combined.prot.xml
+  versions_philosopher:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - philosopher:
+          type: string
+          description: The name of the tool
+      - fragpipeToolVersions().philosopher:
+          type: string
+          description: The Philosopher version bundled with FragPipe
+  versions_fragpipe:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - fragpipe:
+          type: string
+          description: The name of the tool
+      - cat .fragpipe_version:
+          type: eval
+          description: The expression to obtain the FragPipe version
+topics:
   versions:
-    - versions.yml:
-        type: file
-        description: File containing software versions
-        pattern: "versions.yml"
-
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - philosopher:
+          type: string
+          description: The name of the tool
+      - fragpipeToolVersions().philosopher:
+          type: string
+          description: The Philosopher version bundled with FragPipe
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - fragpipe:
+          type: string
+          description: The name of the tool
+      - cat .fragpipe_version:
+          type: eval
+          description: The expression to obtain the FragPipe version
 authors:
   - "@dongzehe"
 maintainers:

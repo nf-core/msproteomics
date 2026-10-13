@@ -15,39 +15,213 @@ nextflow_process {
         when {
             process {
                 """
-                def pin_file = file("\${workDir}/test.pin")
-                def pepxml_file = file("\${workDir}/test.pepXML")
-                def mzml_file = file("\${workDir}/test.mzML")
-                pin_file.text = "mock"
-                pepxml_file.text = "mock"
-                mzml_file.text = "mock"
-                // percolator_cli: Full CLI flags for Percolator
-                // --only-psms: Only report PSM-level results
-                // --no-terminate: Run all iterations
-                // --post-processing-tdc: Use target-decoy competition for FDR
-                def percolator_cli = "--only-psms --no-terminate --post-processing-tdc"
-
-                // Single tuple input: [meta, pin, pepxml, mzml, percolator_cli]
+                ['test.pin', 'test.pepXML', 'test.mzML'].each { n -> file("\${workDir}/\${n}").text = 'mock' }
                 input[0] = channel.of([
-                    [ id: 'test_sample', data_type: 'DDA' ],
-                    pin_file, pepxml_file, mzml_file, percolator_cli
+                    [ id: 'test_sample', group: 'exp_1', data_type: 'DDA' ],
+                    file("\${workDir}/test.pin"), [], file("\${workDir}/test.pepXML"), file("\${workDir}/test.mzML"), [], false,
+                    '--only-psms --no-terminate --post-processing-tdc', '0.5', false, false, false, false, []
                 ])
-                input[1] = 'DDA'
+                input[1] = 'DECOY_'
+                """
+            }
+        }
+
+        then {
+            def log_lines = new File(process.out.results_dir.get(0).get(1), 'percolator.log').readLines()
+            def tools = '/fragpipe_bin/fragpipe-24.0/fragpipe-24.0'
+            assertAll (
+                { assert process.success },
+                // CmdPercolator.java:152-213: cmd-opts, --num-threads, results flags, decoy pattern, PIN
+                { assert log_lines[0] == "${tools}/tools/percolator_3_7_1/linux/percolator --only-psms --no-terminate --post-processing-tdc --num-threads 2 --results-psms test_percolator_target_psms.tsv --decoy-results-psms test_percolator_decoy_psms.tsv --protein-decoy-pattern DECOY_ test.pin" : log_lines[0] },
+                // CmdPercolator.java:270-300: lib/* classpath and FragPipe's argument order
+                { assert log_lines[1].startsWith("java -cp ${tools}/lib/* org.nesvilab.fragpipe.tools.percolator.PercolatorOutputToPepXML test.pin test test_percolator_target_psms.tsv test_percolator_decoy_psms.tsv interact-test DDA 0.5 {CWD}/test.mzML") : log_lines[1] },
+                // keep-tsv-files=false: FragPipe deletes both TSVs (CmdPercolator.java:233-247)
+                { assert process.out.target_psms.size() == 0 && process.out.decoy_psms.size() == 0 },
+                // CmdPercolator.java:214,228: both run in the pepXML's dir, FragPipe's group dir <work dir>/<group>
+                { assert log_lines[2] == 'cwd exp_1' : log_lines[2] },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+
+    test("percolator - stub MSBooster PIN, Crystal-C basename and kept TSVs") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                ['s1.pin', 's1_edited.pin', 's1_c.pepXML', 's1.mzML'].each { n -> file("\${workDir}/\${n}").text = 'mock' }
+                input[0] = channel.of([
+                    [ id: 's1', group: 's1', data_type: 'DDA' ],
+                    file("\${workDir}/s1.pin"), file("\${workDir}/s1_edited.pin"), file("\${workDir}/s1_c.pepXML"), file("\${workDir}/s1.mzML"), [], false,
+                    '--no-terminate', '0.7', true, true, true, false, []
+                ])
+                input[1] = 'rev_'
+                """
+            }
+        }
+
+        then {
+            def log_lines = new File(process.out.results_dir.get(0).get(1), 'percolator.log').readLines()
+            assertAll (
+                { assert process.success },
+                // no --only-psms: peptide-level flags; MSBooster ran: <stripped>_edited.pin (CmdPercolator.java:157-175, :209-213)
+                { assert log_lines[0].endsWith('--num-threads 2 --results-peptides s1_percolator_target_psms.tsv --decoy-results-peptides s1_percolator_decoy_psms.tsv --protein-decoy-pattern rev_ s1_edited.pin') : log_lines[0] },
+                // Crystal-C: stripped basename for PIN/TSVs, _c basename for the interact file (CmdPercolator.java:145-150, :227)
+                { assert log_lines[1].contains('PercolatorOutputToPepXML s1.pin s1_c s1_percolator_target_psms.tsv s1_percolator_decoy_psms.tsv interact-s1_c DDA 0.7 {CWD}/s1.mzML') : log_lines[1] },
+                // group dir named like the output dir: the outputs stay where the tools wrote them
+                { assert log_lines[2] == 'cwd s1' : log_lines[2] },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+
+    // CmdPercolator.java:227 passes getDataType().contentEquals("DDA") to PercolatorOutputToPepXML,
+    // so DDA+ (and DIA, GPF-DIA, DIA-Lib) files are converted in DIA mode, DDA files in DDA mode.
+    // Ranked pepXMLs share one basename and give one interact file per rank (CmdPercolator.java:71-101).
+    ['DDA': 'DDA', 'DDA+': 'DIA', 'DIA': 'DIA', 'GPF-DIA': 'DIA'].each { data_type, converter_type ->
+        test("percolator - stub ${data_type} file converts as ${converter_type}") {
+            options "-stub"
+            tag "stub"
+
+            when {
+                process {
+                    """
+                    ['test.pin', 'test_rank1.pepXML', 'test_rank2.pepXML', 'test.mzML'].each { n -> file("\${workDir}/\${n}").text = 'mock' }
+                    input[0] = channel.of([
+                        [ id: 'test_sample', group: '', data_type: '${data_type}' ],
+                        file("\${workDir}/test.pin"), [], [file("\${workDir}/test_rank1.pepXML"), file("\${workDir}/test_rank2.pepXML")],
+                        file("\${workDir}/test.mzML"), [], false, '--only-psms', '0.5', false, false, false, false, []
+                    ])
+                    input[1] = 'rev_'
+                    """
+                }
+            }
+
+            then {
+                def log_lines = new File(process.out.results_dir.get(0).get(1), 'percolator.log').readLines()
+                assertAll (
+                    { assert process.success },
+                    { assert log_lines[1].contains(" test.pin test test_percolator_target_psms.tsv test_percolator_decoy_psms.tsv interact-test ${converter_type} 0.5 ") : log_lines[1] },
+                    { assert process.out.pepxml.get(0).get(1).collect { f -> new File(f.toString()).name } == ['interact-test_rank1.pep.xml', 'interact-test_rank2.pep.xml'] }
+                )
+            }
+        }
+    }
+
+    // CmdPercolator.java:219-224: _calibrated.mzML when calibrated mzML is written, _uncalibrated.mzML for .raw/.d
+    [['s2.mzML', ['s2_calibrated.mzML'], true, 's2_calibrated.mzML'], ['s2.d', ['s2_uncalibrated.mzML'], false, 's2_uncalibrated.mzML'], ['s2.mzML', [], false, 's2.mzML']].each { spectra, extra, has_cal, expected ->
+        test("percolator - stub spectra ${spectra} calibrated=${has_cal} writes ${expected}") {
+            options "-stub"
+            tag "stub"
+
+            when {
+                process {
+                    """
+                    (['s2.pin', 's2.pepXML', '${spectra}'] + ${extra.inspect()}).each { n -> file("\${workDir}/\${n}").text = 'mock' }
+                    input[0] = channel.of([
+                        [ id: 's2', group: 'g2', data_type: 'DDA' ],
+                        file("\${workDir}/s2.pin"), [], file("\${workDir}/s2.pepXML"), file("\${workDir}/${spectra}"),
+                        ${extra.inspect()}.collect { n -> file("\${workDir}/\${n}") }, ${has_cal}, '--only-psms', '0.5', false, false, false, false, []
+                    ])
+                    input[1] = 'rev_'
+                    """
+                }
+            }
+
+            then {
+                def log_lines = new File(process.out.results_dir.get(0).get(1), 'percolator.log').readLines()
+                assertAll (
+                    { assert process.success },
+                    { assert log_lines[1].endsWith(" DDA 0.5 {CWD}/${expected}") : log_lines[1] }
+                )
+            }
+        }
+    }
+
+    // Write sub mzML first pass: --weights <stripped>_percolator.weights (CmdPercolator.java:180-183), written
+    // in the group dir and kept with the Percolator results
+    test("percolator - stub Write sub mzML weights") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                ['w1.pin', 'w1.pepXML', 'w1.mzML'].each { n -> file("\${workDir}/\${n}").text = 'mock' }
+                input[0] = channel.of([
+                    [ id: 'w1', group: 'A', data_type: 'DDA' ],
+                    file("\${workDir}/w1.pin"), [], file("\${workDir}/w1.pepXML"), file("\${workDir}/w1.mzML"), [], false,
+                    '--only-psms', '0.5', false, false, false, true, []
+                ])
+                input[1] = 'rev_'
+                """
+            }
+        }
+
+        then {
+            def log_lines = new File(process.out.results_dir.get(0).get(1), 'percolator.log').readLines()
+            assertAll (
+                { assert process.success },
+                { assert log_lines[0].endsWith('--protein-decoy-pattern rev_ --weights w1_percolator.weights w1.pin') : log_lines[0] },
+                { assert process.out.weights.size() == 1 && file(process.out.weights[0][1]).name == 'w1_percolator.weights' },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+
+    // Write sub mzML second pass: --init-weights <task dir>/weights/<weights> --static --override (CmdPercolator.java:185-201)
+    test("percolator - stub second pass reads the weights") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                ['w1_sub.pin', 'w1_sub.pepXML', 'w1_sub.mzML', 'w1_percolator.weights'].each { n -> file("\${workDir}/\${n}").text = 'mock' }
+                input[0] = channel.of([
+                    [ id: 'w1_sub', group: 'A', data_type: 'DDA' ],
+                    file("\${workDir}/w1_sub.pin"), [], file("\${workDir}/w1_sub.pepXML"), file("\${workDir}/w1_sub.mzML"), [], false,
+                    '--only-psms', '0.5', false, false, false, false, file("\${workDir}/w1_percolator.weights")
+                ])
+                input[1] = 'rev_'
+                """
+            }
+        }
+
+        then {
+            def log_lines = new File(process.out.results_dir.get(0).get(1), 'percolator.log').readLines()
+            assertAll (
+                { assert process.success },
+                { assert log_lines[0].endsWith('--protein-decoy-pattern rev_ --init-weights {TASK_DIR}/weights/w1_percolator.weights --static --override w1_sub.pin') : log_lines[0] },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+
+    test("percolator - stub PIN not named after the pepXML fails") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                ['other.pin', 'test.pepXML', 'test.mzML'].each { n -> file("\${workDir}/\${n}").text = 'mock' }
+                input[0] = channel.of([
+                    [ id: 'test_sample', group: '', data_type: 'DDA' ],
+                    file("\${workDir}/other.pin"), [], file("\${workDir}/test.pepXML"), file("\${workDir}/test.mzML"), [], false,
+                    '--only-psms', '0.5', false, false, false, false, []
+                ])
+                input[1] = 'rev_'
                 """
             }
         }
 
         then {
             assertAll (
-                { assert process.success },
-                { assert snapshot(
-                    process.out.results_dir,
-                    process.out.pepxml,
-                    process.out.target_psms,
-                    process.out.decoy_psms,
-                    process.out.versions_percolator,
-                    process.out.versions_fragpipe
-                ).match() }
+                { assert process.failed },
+                { assert (process.stdout + process.stderr).any { line -> line.contains('FragPipe expects test.pin') } }
             )
         }
     }
@@ -58,19 +232,21 @@ nextflow_process {
         when {
             process {
                 """
-                // Use pre-computed files from test-datasets (real MSFragger output)
-                def pin_file = file("\${params.pipelines_testdata_base_path}/module_inputs/tmt_erwinia_subset.pin", checkIfExists: true)
-                def pepxml_file = file("\${params.pipelines_testdata_base_path}/module_inputs/tmt_erwinia_subset_msfragger.pepXML", checkIfExists: true)
-                def mzml_file = file("\${params.pipelines_testdata_base_path}/spectra/tmt_erwinia_subset.mzML", checkIfExists: true)
-                // percolator_cli: Full CLI flags for Percolator (matching FragPipe expert workflow)
+                // Real MSFragger output from test-datasets, staged under FragPipe's file names
+                // (one stem for PIN and pepXML, CmdPercolator.java:133-137)
+                def base = params.pipelines_testdata_base_path
+                def pin = file("\${base}/module_inputs/tmt_erwinia_subset.pin", checkIfExists: true)
+                def pepxml = file("\${base}/module_inputs/tmt_erwinia_subset_msfragger.pepXML", checkIfExists: true)
+                def mzml = file("\${base}/spectra/tmt_erwinia_subset.mzML", checkIfExists: true)
+                def staged_pepxml = file("\${workDir}/tmt_erwinia_subset.pepXML")
+                pepxml.copyTo(staged_pepxml)
                 // --trainFDR 0.5 --testFDR 0.5: relaxed for small test data (default 0.01 fails with few PSMs)
-                def percolator_cli = "--only-psms --no-terminate --post-processing-tdc --trainFDR 0.5 --testFDR 0.5"
-                // Single tuple input: [meta, pin, pepxml, mzml, percolator_cli]
                 input[0] = channel.of([
-                    [ id: 'tmt_erwinia_subset', data_type: 'DDA' ],
-                    pin_file, pepxml_file, mzml_file, percolator_cli
+                    [ id: 'tmt_erwinia_subset', group: 'tmt_1', data_type: 'DDA' ],
+                    pin, [], staged_pepxml, mzml, [], false,
+                    '--only-psms --no-terminate --post-processing-tdc --trainFDR 0.5 --testFDR 0.5', '0.5', true, true, false, false, []
                 ])
-                input[1] = 'DDA'
+                input[1] = 'rev_'
                 """
             }
         }
@@ -78,10 +254,11 @@ nextflow_process {
         then {
             assertAll (
                 { assert process.success },
-                // results_dir contains non-deterministic log; pepxml has random SVM seeds
-                { assert process.out.results_dir.size() > 0 },
+                { assert new File(process.out.results_dir.get(0).get(1), 'percolator.log').text.contains('--protein-decoy-pattern rev_') },
+                // PercolatorOutputToPepXML runs in the group dir and names <cwd>/<basename>.pepXML (PercolatorOutputToPepXML.java:406-450)
+                { assert new File(process.out.pepxml.get(0).get(1).toString()).readLines().take(20).any { line -> line.contains('<inputfile name="') && line.endsWith('/tmt_1/tmt_erwinia_subset.pepXML"/>') } },
+                // pepxml has random SVM seeds and an absolute spectra path
                 { assert process.out.pepxml.size() > 0 },
-                // Snapshot deterministic PSM outputs only
                 { assert snapshot(
                     process.out.target_psms,
                     process.out.decoy_psms,

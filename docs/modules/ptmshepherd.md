@@ -13,7 +13,7 @@ PTM-Shepherd is part of the FragPipe suite and uses multiple JAR dependencies in
 | Channel     | Type     | Description                                                        |
 | ----------- | -------- | ------------------------------------------------------------------ |
 | meta        | val(map) | Sample metadata map                                                |
-| psm_dirs    | path     | Directories containing `psm.tsv` files from PHILOSOPHER_FILTER     |
+| psm_dirs    | path     | Directories containing `psm.tsv` files from PHILOSOPHERFILTER      |
 | protxml     | path     | Combined protein inference file from PROTEINPROPHET (`*.prot.xml`) |
 | mzml_files  | path     | Mass spectrometry files (`*.mzML`, staged in `spectra/` directory) |
 | config_file | path     | PTM-Shepherd configuration file (`shepherd.config`)                |
@@ -41,7 +41,7 @@ PTM-Shepherd is part of the FragPipe suite and uses multiple JAR dependencies in
 
 ## Container
 
-`docker.io/fcyucn/fragpipe:24.0`
+The licensed FragPipe image given with `--fragpipe_container`.
 
 ## Usage
 

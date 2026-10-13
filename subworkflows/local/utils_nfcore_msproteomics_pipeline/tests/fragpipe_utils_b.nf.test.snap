@@ -1,0 +1,822 @@
+{
+    "tmtIntegratorCommands - named groups only, FPOP unmod report dir": {
+        "content": [
+            {
+                "config": "tmtintegrator:\n  output: {TASK_DIR}/fragpipe/tmt-report-unmod\n",
+                "psm_files": [
+                    "{TASK_DIR}/fragpipe/P1/psm.tsv"
+                ],
+                "stage": [
+                    "mkdir -p 'fragpipe/tmt-report-unmod'",
+                    "[ -f 'input_results/P1/psm.tsv' ] || { echo 'ERROR: group directory P1 has no psm.tsv' >&2; exit 1; }",
+                    "ln -s \"$(realpath 'input_results/P1')\" 'fragpipe/P1'"
+                ],
+                "jar": "/opt/fragpipe-24.0/tools/TMT-Integrator-6.1.3.jar",
+                "fragpipe_version": "24.0"
+            }
+        ],
+        "timestamp": "2026-10-07T10:27:10.60025805",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "ptmShepherdCommands - glyco mode with kl features adds IonQuant": {
+        "content": [
+            {
+                "config": "database = {TASK_DIR}/human_decoys.fasta\ndataset = dataset01 {TASK_DIR}/groups/workdir-root/psm.tsv {TASK_DIR}/spectra\ndataset = cancer {TASK_DIR}/groups/cancer/psm.tsv {TASK_DIR}/spectra\n\nglyco_lda_features = kl,ox\nglyco_residue_list = /opt/fragpipe-24.0/lib/../tools/Glycan_Databases/glycan_residues.txt\nrun_glyco_mode = true\nthreads = 32\n",
+                "config_arg": "\"{TASK_DIR}/shepherd.config\"",
+                "groups": [
+                    "workdir-root",
+                    "cancer"
+                ],
+                "glyco_files": [
+                    "/opt/fragpipe-24.0/lib/../tools/Glycan_Databases/glycan_residues.txt"
+                ],
+                "class_path": [
+                    "/opt/fragpipe-24.0/tools/ptmshepherd-3.0.11.jar",
+                    "{BATMASS_IO_JAR}",
+                    "/opt/fragpipe-24.0/tools/commons-math3-3.6.1.jar",
+                    "/opt/fragpipe-24.0/tools/hipparchus-1.8/hipparchus-core-1.8.jar",
+                    "/opt/fragpipe-24.0/tools/hipparchus-1.8/hipparchus-stat-1.8.jar",
+                    "{IONQUANT_JAR}"
+                ],
+                "thermo_dir": "{MSFRAGGER_DIR}/ext/thermo",
+                "glyco_mode": true,
+                "version": "3.0.11",
+                "fragpipe_version": "24.0"
+            }
+        ],
+        "timestamp": "2026-10-09T15:42:31.483996072",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "ptmProphetCommand - mod.pep.xml output": {
+        "content": [
+            {
+                "argv": [
+                    "/opt/fragpipe-24.0/tools/PTMProphet/PTMProphetParser-6.3.2",
+                    "KEEPOLD",
+                    "STATIC",
+                    "EM=1",
+                    "NIONS=b",
+                    "STY:79.966331",
+                    "MINPROB=0.5",
+                    "MAXTHREADS=1",
+                    "interact-A01.pep.xml",
+                    "interact-A01.mod.pep.xml"
+                ],
+                "output": "interact-A01.mod.pep.xml",
+                "input": "interact-A01.pep.xml",
+                "fragpipe_lib": "/opt/fragpipe-24.0/lib",
+                "ptmprophet_version": "6.3.2",
+                "fragpipe_version": "24.0"
+            }
+        ],
+        "timestamp": "2026-10-07T05:30:58.148880702",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "taskFileCommand - final newline": {
+        "content": [
+            "cat > 'fragpipe/conf.yml' <<TASK_FILE_END\na \\$x \\`y\\` \\\\\\\\ ${TASK_DIR}/r\nTASK_FILE_END"
+        ],
+        "timestamp": "2026-10-07T10:27:24.256255378",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "percolatorCommands - MSBooster edited PIN, DDA": {
+        "content": [
+            {
+                "percolator": [
+                    "/opt/fragpipe-24.0/tools/percolator_3_7_1/linux/percolator",
+                    "--only-psms",
+                    "--no-terminate",
+                    "--post-processing-tdc",
+                    "--num-threads",
+                    "32",
+                    "--results-psms",
+                    "run_C02_percolator_target_psms.tsv",
+                    "--decoy-results-psms",
+                    "run_C02_percolator_decoy_psms.tsv",
+                    "--protein-decoy-pattern",
+                    "rev_",
+                    "run_C02_edited.pin"
+                ],
+                "converter": [
+                    "java",
+                    "-cp",
+                    "/opt/fragpipe-24.0/lib/*",
+                    "org.nesvilab.fragpipe.tools.percolator.PercolatorOutputToPepXML",
+                    "run_C02.pin",
+                    "run_C02",
+                    "run_C02_percolator_target_psms.tsv",
+                    "run_C02_percolator_decoy_psms.tsv",
+                    "interact-run_C02",
+                    "DDA",
+                    "0.5"
+                ],
+                "group_dir": "C02_1",
+                "stripped": "run_C02",
+                "interact": [
+                    "interact-run_C02.pep.xml"
+                ],
+                "fragpipe_lib": "/opt/fragpipe-24.0/lib",
+                "fragpipe_version": "24.0"
+            }
+        ],
+        "timestamp": "2026-10-08T14:47:19.915609438",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "saintexpressCommand - empty cmd-opts adds no argument": {
+        "content": [
+            {
+                "argv": [
+                    "/opt/fragpipe-24.0/tools/SAINTexpress/SAINTexpress-int",
+                    "-R10",
+                    "-L100"
+                ],
+                "fragpipe_version": "24.0"
+            }
+        ],
+        "timestamp": "2026-10-07T05:44:16.041422261",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "philosopherFilterCommands - later group with protXML": {
+        "content": [
+            {
+                "group_dir": "D02",
+                "first_dir": "C02",
+                "is_first": false,
+                "annotate": [
+                    
+                ],
+                "filter": [
+                    "/opt/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9",
+                    "filter",
+                    "--sequential",
+                    "--picked",
+                    "--prot",
+                    "0.01",
+                    "--tag",
+                    "rev_",
+                    "--pepxml",
+                    "{WORKDIR}/D02",
+                    "--dbbin",
+                    "{WORKDIR}/C02",
+                    "--protxml",
+                    "{WORKDIR}/combined.prot.xml",
+                    "--probin",
+                    "{WORKDIR}/C02",
+                    "--razor"
+                ],
+                "report": [
+                    "/opt/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9",
+                    "report",
+                    "--msstats"
+                ],
+                "pepxml_names": [
+                    "interact-D02.pep.xml"
+                ],
+                "philosopher": "/opt/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9",
+                "fragpipe_version": "24.0"
+            }
+        ],
+        "timestamp": "2026-10-07T05:30:04.159354123",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "peptideProphetCommands - combined group": {
+        "content": [
+            {
+                "philosopher": "/opt/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9",
+                "group_dir": "saliva",
+                "run_dir": "saliva",
+                "peptideprophet": [
+                    "/opt/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9",
+                    "peptideprophet",
+                    "--nonparam",
+                    "--expectscore",
+                    "--decoy",
+                    "rev_",
+                    "--database",
+                    "{CWD}/human.fasta",
+                    "--combine",
+                    "a.pepXML",
+                    "b.pepXML"
+                ],
+                "rewrite": [
+                    "java",
+                    "-cp",
+                    "/opt/fragpipe-24.0/lib/*",
+                    "org.nesvilab.fragpipe.util.RewritePepxml"
+                ],
+                "interact": "interact.pep.xml",
+                "interact_path": "saliva/interact.pep.xml",
+                "lcms": [
+                    "a.mzML",
+                    "b.mzML"
+                ],
+                "run_names": [
+                    "a.pepXML",
+                    "b.pepXML",
+                    "a.mzML",
+                    "b.mzML"
+                ],
+                "fragpipe_lib": "/opt/fragpipe-24.0/lib",
+                "fragpipe_version": "24.0"
+            }
+        ],
+        "timestamp": "2026-10-09T03:22:34.585111857",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "peptideProphetDirLines - group dir when it fits, /tmp link for a long one": {
+        "content": [
+            "PP_GROUP_DIR=\"$PWD\"/'G'\nif [ $(( ${#PP_GROUP_DIR} + 1 + 55 )) -gt 255 ]; then\n    PP_LINK_DIR=\"$(mktemp -d /tmp/pp.XXXXXX)\"\n    trap 'rm -rf \"$PP_LINK_DIR\"' EXIT\n    ln -s \"$PP_GROUP_DIR\" \"$PP_LINK_DIR/g\"\n    PP_GROUP_DIR=\"$PP_LINK_DIR/g\"\nfi"
+        ],
+        "timestamp": "2026-10-08T18:31:40.598548492",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "proteinProphetCommand - default output": {
+        "content": [
+            {
+                "argv": [
+                    "/opt/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9",
+                    "proteinprophet",
+                    "--maxppmdiff",
+                    "2000000",
+                    "--output",
+                    "combined"
+                ],
+                "output": "combined.prot.xml",
+                "filelist": [
+                    "A01/interact-a.pep.xml",
+                    "B01/interact-b.pep.xml"
+                ],
+                "links": [
+                    [
+                        "pepxml_inputs/1/interact-a.pep.xml",
+                        "A01/interact-a.pep.xml"
+                    ],
+                    [
+                        "pepxml_inputs/2/interact-b.pep.xml",
+                        "B01/interact-b.pep.xml"
+                    ]
+                ],
+                "philosopher": "/opt/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9",
+                "philosopher_dir": "/opt/fragpipe-24.0/tools/Philosopher",
+                "fragpipe_version": "24.0"
+            }
+        ],
+        "timestamp": "2026-10-11T17:22:58.455784401",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "abacusCommand - two groups with TMT plex": {
+        "content": [
+            {
+                "argv": [
+                    "/opt/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9",
+                    "abacus",
+                    "--razor",
+                    "--reprint",
+                    "--tag",
+                    "rev_",
+                    "--protein",
+                    "--peptide",
+                    "--labels",
+                    "--plex",
+                    "16",
+                    "C02",
+                    "D02"
+                ],
+                "groups": [
+                    "C02",
+                    "D02"
+                ],
+                "fragpipe_version": "24.0"
+            }
+        ],
+        "timestamp": "2026-10-07T05:29:28.682134695",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "peptideProphetCommands - per-file pepXML": {
+        "content": [
+            {
+                "philosopher": "/opt/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9",
+                "group_dir": "A_1",
+                "run_dir": "A_1/fragpipe-A01.pepXML-temp",
+                "run_sub": "fragpipe-A01.pepXML-temp",
+                "peptideprophet": [
+                    "/opt/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9",
+                    "peptideprophet",
+                    "--nonparam",
+                    "--expectscore",
+                    "--decoyprobs",
+                    "--ppm",
+                    "--accmass",
+                    "--decoy",
+                    "rev_",
+                    "--database",
+                    "{CWD}/human.fasta",
+                    "../A01.pepXML"
+                ],
+                "rewrite": [
+                    "java",
+                    "-cp",
+                    "/opt/fragpipe-24.0/lib/*",
+                    "org.nesvilab.fragpipe.util.RewritePepxml"
+                ],
+                "interact": "interact-A01.pep.xml",
+                "interact_path": "A_1/interact-A01.pep.xml",
+                "lcms": [
+                    "A01_calibrated.mzML"
+                ],
+                "run_names": [
+                    "A01.pepXML",
+                    "A01_calibrated.mzML"
+                ],
+                "fragpipe_lib": "/opt/fragpipe-24.0/lib",
+                "fragpipe_version": "24.0"
+            }
+        ],
+        "timestamp": "2026-10-08T18:31:23.368574505",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "fragpipeToolVersions - FragPipe 24.0 tool versions": {
+        "content": [
+            {
+                "philosopher": "5.1.3",
+                "percolator": "3.07.1",
+                "saintexpress": "3.6.1",
+                "tmtintegrator": "6.1.3",
+                "ptmshepherd": "3.0.11",
+                "ptmprophet": "6.3.2",
+                "fragpipe_speclib": "0.1.58"
+            }
+        ],
+        "timestamp": "2026-10-07T22:34:09.150268127",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "speclibgenCommand - keyword calibration (CmdSpecLibGen.java:123-212)": {
+        "content": [
+            {
+                "argv": [
+                    "python3",
+                    "-u",
+                    "/opt/fragpipe-24.0/tools/speclib/gen_con_spec_lib.py",
+                    "{TASK_DIR}/db.fasta",
+                    "{TASK_DIR}",
+                    "unused",
+                    "{TASK_DIR}",
+                    "True",
+                    "unused",
+                    "use_easypqp",
+                    "noiRT:noIM",
+                    "16",
+                    "--max_delta_ppm 15.0 --decoy_prefix rev_",
+                    "--rt_lowess_fraction 0.0",
+                    "delete_intermediate_files",
+                    "{TASK_DIR}/filelist_speclibgen.txt"
+                ],
+                "filelist": "{TASK_DIR}/b.mzML\n{TASK_DIR}/a.mzML\n",
+                "script": "/opt/fragpipe-24.0/tools/speclib/gen_con_spec_lib.py",
+                "parse_mzml_cmd": "[java, -jar, -Dfile.encoding=UTF-8, -Xmx30G]{MSFRAGGER_JAR}",
+                "msfragger_jar": "{MSFRAGGER_JAR}",
+                "fragpipe_jar": "/opt/fragpipe-24.0/lib/fragpipe-24.0.jar",
+                "fragpipe_version": "24.0"
+            }
+        ],
+        "timestamp": "2026-10-08T14:55:51.612097697",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "percolatorCommands - rank pepXMLs after Crystal-C, DIA": {
+        "content": [
+            {
+                "percolator": [
+                    "/opt/fragpipe-24.0/tools/percolator_3_7_1/linux/percolator",
+                    "--no-terminate",
+                    "--seed",
+                    "1",
+                    "--num-threads",
+                    "8",
+                    "--results-peptides",
+                    "run_A01_percolator_target_psms.tsv",
+                    "--decoy-results-peptides",
+                    "run_A01_percolator_decoy_psms.tsv",
+                    "--protein-decoy-pattern",
+                    "rev_",
+                    "run_A01.pin"
+                ],
+                "converter": [
+                    "java",
+                    "-cp",
+                    "/opt/fragpipe-24.0/lib/*",
+                    "org.nesvilab.fragpipe.tools.percolator.PercolatorOutputToPepXML",
+                    "run_A01.pin",
+                    "run_A01_c",
+                    "run_A01_percolator_target_psms.tsv",
+                    "run_A01_percolator_decoy_psms.tsv",
+                    "interact-run_A01_c",
+                    "DIA",
+                    "0.5"
+                ],
+                "stripped": "run_A01",
+                "interact": [
+                    "interact-run_A01_c_rank1.pep.xml",
+                    "interact-run_A01_c_rank2.pep.xml"
+                ],
+                "fragpipe_lib": "/opt/fragpipe-24.0/lib",
+                "fragpipe_version": "24.0"
+            }
+        ],
+        "timestamp": "2026-10-07T05:29:14.35809449",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "tmtIntegratorCommands - blank group first, named groups by name": {
+        "content": [
+            {
+                "config": "tmtintegrator:\n  channel_num: 10\n  output: {TASK_DIR}/fragpipe/tmt-report\n  ref_tag: Bridge",
+                "psm_files": [
+                    "{TASK_DIR}/fragpipe/psm.tsv",
+                    "{TASK_DIR}/fragpipe/g1/psm.tsv",
+                    "{TASK_DIR}/fragpipe/g2/psm.tsv"
+                ],
+                "stage": [
+                    "mkdir -p 'fragpipe/tmt-report'",
+                    "[ -f 'input_results/workdir-root/psm.tsv' ] || { echo 'ERROR: group directory workdir-root has no psm.tsv' >&2; exit 1; }",
+                    "[ -f 'input_results/g1/psm.tsv' ] || { echo 'ERROR: group directory g1 has no psm.tsv' >&2; exit 1; }",
+                    "[ -f 'input_results/g2/psm.tsv' ] || { echo 'ERROR: group directory g2 has no psm.tsv' >&2; exit 1; }",
+                    "for f in 'input_results/workdir-root'/*; do ln -s \"$(realpath \"$f\")\" 'fragpipe'/\"$(basename \"$f\")\"; done",
+                    "ln -s \"$(realpath 'input_results/g1')\" 'fragpipe/g1'",
+                    "ln -s \"$(realpath 'input_results/g2')\" 'fragpipe/g2'"
+                ],
+                "jar": "/opt/fragpipe-24.0/tools/TMT-Integrator-6.1.3.jar",
+                "fragpipe_version": "24.0"
+            }
+        ],
+        "timestamp": "2026-10-07T10:27:06.88996704",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "goMemLimitGb - 64 GB task": {
+        "content": [
+            62
+        ],
+        "timestamp": "2026-10-07T05:30:26.79855088",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "iprophetCommand - pepXMLs at their group locations": {
+        "content": [
+            {
+                "argv": [
+                    "/opt/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9",
+                    "iprophet",
+                    "--decoy",
+                    "rev_",
+                    "--nonsp",
+                    "--output",
+                    "combined",
+                    "--threads",
+                    "32"
+                ],
+                "paths": [
+                    "A01/interact-a.pep.xml",
+                    "B01/interact-b.pep.xml"
+                ],
+                "links": [
+                    [
+                        "pepxml_inputs/1/interact-a.pep.xml",
+                        "A01/interact-a.pep.xml"
+                    ],
+                    [
+                        "pepxml_inputs/2/interact-b.pep.xml",
+                        "B01/interact-b.pep.xml"
+                    ]
+                ],
+                "fragpipe_version": "24.0"
+            }
+        ],
+        "timestamp": "2026-10-11T16:52:53.808881173",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "opairCommands - filelist and argv of one group": {
+        "content": [
+            {
+                "filelist": "{TASK_DIR}/spectra/run_calibrated.mzML\n",
+                "spectra": [
+                    "run_calibrated.mzML"
+                ],
+                "argv": [
+                    "-b 20.0",
+                    "-f /opt/fragpipe-24.0/lib/../tools/opair/Glycan_Mods/oxonium_filter.txt",
+                    "-t 48",
+                    "-r {TASK_DIR}/stce/filelist_opair.txt",
+                    "-s {TASK_DIR}/stce/psm.tsv",
+                    "-o {TASK_DIR}/stce",
+                    "-z "
+                ],
+                "tool_files": [
+                    "/opt/fragpipe-24.0/lib/../tools/opair/Glycan_Mods/oxonium_filter.txt"
+                ],
+                "dll": "/opt/fragpipe-24.0/tools/opair/CMD.dll",
+                "fragpipe_version": "24.0"
+            }
+        ],
+        "timestamp": "2026-10-09T03:53:03.147462486",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "ptmShepherdCommands - custom annotation file fills @ANNOTATION_FILE@": {
+        "content": [
+            {
+                "config": "database = {TASK_DIR}/human_decoys.fasta\ndataset = dataset01 {TASK_DIR}/groups/workdir-root/psm.tsv {TASK_DIR}/spectra\n\nannotation_file = {TASK_DIR}/annotation/my_annotations.tsv\nthreads = 32\n",
+                "config_arg": "\"{TASK_DIR}/shepherd.config\"",
+                "groups": [
+                    "workdir-root"
+                ],
+                "glyco_files": [
+                    
+                ],
+                "class_path": [
+                    "/opt/fragpipe-24.0/tools/ptmshepherd-3.0.11.jar",
+                    "{BATMASS_IO_JAR}",
+                    "/opt/fragpipe-24.0/tools/commons-math3-3.6.1.jar",
+                    "/opt/fragpipe-24.0/tools/hipparchus-1.8/hipparchus-core-1.8.jar",
+                    "/opt/fragpipe-24.0/tools/hipparchus-1.8/hipparchus-stat-1.8.jar"
+                ],
+                "thermo_dir": "{MSFRAGGER_DIR}/ext/thermo",
+                "glyco_mode": false,
+                "version": "3.0.11",
+                "fragpipe_version": "24.0"
+            }
+        ],
+        "timestamp": "2026-10-11T15:23:28.342989287",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "philosopherFilterCommands - blank first group without protXML": {
+        "content": [
+            {
+                "is_first": true,
+                "annotate": [
+                    "/opt/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9",
+                    "database",
+                    "--annotate",
+                    "{WORKDIR}/human.fasta",
+                    "--prefix",
+                    "rev_"
+                ],
+                "filter": [
+                    "/opt/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9",
+                    "filter",
+                    "--psm",
+                    "0.01",
+                    "--tag",
+                    "rev_",
+                    "--pepxml",
+                    "{WORKDIR}"
+                ],
+                "report": [
+                    "/opt/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9",
+                    "report"
+                ],
+                "pepxml_names": [
+                    "interact-a.pep.xml"
+                ],
+                "philosopher": "/opt/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9",
+                "fragpipe_version": "24.0"
+            }
+        ],
+        "timestamp": "2026-10-07T05:30:12.354864667",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "speclibgenCommand - user RT calibration file replaces the keyword": {
+        "content": [
+            {
+                "argv": [
+                    "python3",
+                    "-u",
+                    "/opt/fragpipe-24.0/tools/speclib/gen_con_spec_lib.py",
+                    "{TASK_DIR}/db.fasta",
+                    "{TASK_DIR}",
+                    "unused",
+                    "{TASK_DIR}",
+                    "True",
+                    "unused",
+                    "use_easypqp",
+                    "{TASK_DIR}/rt_calibration/my_irt.tsv:noIM",
+                    "16",
+                    "--max_delta_ppm 15.0 --decoy_prefix rev_",
+                    "--rt_lowess_fraction 0.0",
+                    "delete_intermediate_files",
+                    "{TASK_DIR}/filelist_speclibgen.txt"
+                ],
+                "filelist": "{TASK_DIR}/b.mzML\n{TASK_DIR}/a.mzML\n",
+                "script": "/opt/fragpipe-24.0/tools/speclib/gen_con_spec_lib.py",
+                "parse_mzml_cmd": "[java, -jar, -Dfile.encoding=UTF-8, -Xmx30G]{MSFRAGGER_JAR}",
+                "msfragger_jar": "{MSFRAGGER_JAR}",
+                "fragpipe_jar": "/opt/fragpipe-24.0/lib/fragpipe-24.0.jar",
+                "fragpipe_version": "24.0"
+            }
+        ],
+        "timestamp": "2026-10-08T14:55:58.666880371",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "saintexpressCommand - cmd-opts as one argument (CmdSaintExpress.java:84-90)": {
+        "content": [
+            {
+                "argv": [
+                    "/opt/fragpipe-24.0/tools/SAINTexpress/SAINTexpress-spc",
+                    "-R3",
+                    "-L100",
+                    "-f -x"
+                ],
+                "fragpipe_version": "24.0"
+            }
+        ],
+        "timestamp": "2026-10-07T05:44:10.016817655",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "taskFileCommand - no final newline": {
+        "content": [
+            "printf '%s' \"$(cat <<TASK_FILE_END\nout: ${TASK_DIR}/r\nTASK_FILE_END\n)\" > 'fragpipe/conf.yml'"
+        ],
+        "timestamp": "2026-10-07T10:27:28.112623181",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "philosopherFilterCommands - first group with protXML": {
+        "content": [
+            {
+                "group_dir": "C02",
+                "first_dir": "C02",
+                "is_first": true,
+                "annotate": [
+                    "/opt/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9",
+                    "database",
+                    "--annotate",
+                    "{WORKDIR}/human.fasta",
+                    "--prefix",
+                    "rev_"
+                ],
+                "filter": [
+                    "/opt/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9",
+                    "filter",
+                    "--sequential",
+                    "--picked",
+                    "--prot",
+                    "0.01",
+                    "--tag",
+                    "rev_",
+                    "--pepxml",
+                    "{WORKDIR}/C02",
+                    "--protxml",
+                    "{WORKDIR}/combined.prot.xml",
+                    "--razor"
+                ],
+                "report": [
+                    "/opt/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9",
+                    "report"
+                ],
+                "pepxml_names": [
+                    "interact-C02.pep.xml"
+                ],
+                "philosopher": "/opt/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9",
+                "fragpipe_version": "24.0"
+            }
+        ],
+        "timestamp": "2026-10-07T05:29:57.550610001",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "ptmShepherdCommands - plain mass-offset profile": {
+        "content": [
+            {
+                "config": "database = {TASK_DIR}/human_decoys.fasta\ndataset = dataset01 {TASK_DIR}/groups/workdir-root/psm.tsv {TASK_DIR}/spectra\ndataset = cancer {TASK_DIR}/groups/cancer/psm.tsv {TASK_DIR}/spectra\n\nhisto_bindivs = 5000\nthreads = 32\n",
+                "config_arg": "\"{TASK_DIR}/shepherd.config\"",
+                "groups": [
+                    "workdir-root",
+                    "cancer"
+                ],
+                "glyco_files": [
+                    
+                ],
+                "class_path": [
+                    "/opt/fragpipe-24.0/tools/ptmshepherd-3.0.11.jar",
+                    "{BATMASS_IO_JAR}",
+                    "/opt/fragpipe-24.0/tools/commons-math3-3.6.1.jar",
+                    "/opt/fragpipe-24.0/tools/hipparchus-1.8/hipparchus-core-1.8.jar",
+                    "/opt/fragpipe-24.0/tools/hipparchus-1.8/hipparchus-stat-1.8.jar"
+                ],
+                "thermo_dir": "{MSFRAGGER_DIR}/ext/thermo",
+                "glyco_mode": false,
+                "version": "3.0.11",
+                "fragpipe_version": "24.0"
+            }
+        ],
+        "timestamp": "2026-10-09T15:42:45.908556591",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "workdirWord - work-dir token": {
+        "content": [
+            "\"$PWD\"'/C02'"
+        ],
+        "timestamp": "2026-10-07T05:30:20.549687754",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "opairCommands - user oxonium file names the staged copy": {
+        "content": [
+            {
+                "filelist": "{TASK_DIR}/spectra/run_calibrated.mzML\n",
+                "spectra": [
+                    "run_calibrated.mzML"
+                ],
+                "argv": [
+                    "-b 20.0",
+                    "-f {TASK_DIR}/oxonium/my_oxonium.txt",
+                    "-m 0.05",
+                    "-t 48"
+                ],
+                "tool_files": [
+                    
+                ],
+                "dll": "/opt/fragpipe-24.0/tools/opair/CMD.dll",
+                "fragpipe_version": "24.0"
+            }
+        ],
+        "timestamp": "2026-10-11T23:28:38.140842317",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

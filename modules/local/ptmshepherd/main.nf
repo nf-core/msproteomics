@@ -1,27 +1,42 @@
+include { fragpipeJarLines; fragpipeTools; shellArgs } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
+include { ptmShepherdCommands; taskFileCommand; shellQuote; fragpipeToolVersions } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
+
+/*
+ * PTMSHEPHERD: PTM-Shepherd mass-shift profiling and glycan assignment (CmdPtmshepherd.java)
+ *
+ * Input:
+ *   - meta: aggregate metadata map
+ *   - psm_dirs: one directory per FragPipe group (named meta.id of the group), each with psm.tsv
+ *   - datasets: [dir_name, dataset_name] per group, in FragPipe's group order; the blank group's
+ *     dataset is "dataset01" (PtmshepherdParams.java:86)
+ *   - mzml_files: LC-MS files of all groups (one directory, as FragPipe requires)
+ *   - config_text: sorted property block from PARSEFRAGPIPEWORKFLOW (@THREADS@/@TOOLS_DIR@/@ANNOTATION_FILE@ tokens)
+ *   - annotation_file: the custom annotation file of ptmshepherd.annotation_file (annotation-custom/annotation-glyco
+ *     radio, PtmshepherdPanel.java:229-232), staged as annotation/<name>; [] when annotation_file is a keyword
+ *   - fasta: the database FragPipe searched
+ *
+ * Output:
+ *   - psm_dirs: copies of the group directories, psm.tsv as PTM-Shepherd rewrote it
+ *   - results_dir: ptm-shepherd-output/ (all of it)
+ *   - glyco_masses: ptm-shepherd-output/glyco_masses_list.txt (glycan assignment only), for AppendFile
+ *   - config: shepherd.config as run
+ */
 process PTMSHEPHERD {
     tag "${meta.id}"
     label 'process_high'
 
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'docker://fcyucn/fragpipe:24.0' :
-        'docker.io/fcyucn/fragpipe:24.0' }"
-
     input:
-    // psm_dirs: directories containing psm.tsv files from PHILOSOPHER_FILTER
-    // protxml: combined protein inference file from PROTEINPROPHET
-    // mzml_files: mass spec files for intensity extraction
-    // config_file: shepherd.config - PTMShepherd requires a config file (coupled with sample inputs)
-    tuple val(meta), path(psm_dirs), path(protxml), path(mzml_files, stageAs: 'spectra/*'), path(config_file)
-    path fasta  // protein database FASTA (shared resource, required by PTMShepherd config)
+    // config_text: shepherd.config property block from the workflow parser (@THREADS@, @TOOLS_DIR@, @ANNOTATION_FILE@ tokens)
+    tuple val(meta), path(psm_dirs, stageAs: 'input/*'), val(datasets), path(mzml_files, stageAs: 'spectra/*'), val(config_text), path(annotation_file, stageAs: 'annotation/*')
+    path fasta
 
     output:
-    tuple val(meta), path("${prefix}")                                  , emit: results_dir
-    tuple val(meta), path("${prefix}/global.profile.tsv")               , emit: global_profile, optional: true
-    tuple val(meta), path("${prefix}/global.modsummary.tsv")            , emit: global_modsummary, optional: true
-    tuple val(meta), path("${prefix}/*diagmine.tsv")                    , emit: diagmine, optional: true
-    tuple val(meta), path("${prefix}/*localization.tsv")                , emit: localization, optional: true
-    tuple val(meta), path("${prefix}/*glycoprofile.tsv")                , emit: glycoprofile, optional: true
-    tuple val("${task.process}"), val('ptmshepherd'), eval("cat .ptmshepherd_version"), emit: versions_ptmshepherd, topic: versions
+    tuple val(meta), path("groups/*", type: 'dir')                         , emit: psm_dirs
+    tuple val(meta), path("ptm-shepherd-output")                           , emit: results_dir
+    tuple val(meta), path("ptm-shepherd-output/glyco_masses_list.txt")     , emit: glyco_masses, optional: true
+    tuple val(meta), path("shepherd.config")                               , emit: config
+    tuple val(meta), path("ptmshepherd.log")                               , emit: log
+    tuple val("${task.process}"), val('ptmshepherd'), val(fragpipeToolVersions().ptmshepherd), emit: versions_ptmshepherd, topic: versions
     tuple val("${task.process}"), val('fragpipe'), eval("cat .fragpipe_version"), emit: versions_fragpipe, topic: versions
 
     when:
@@ -31,103 +46,55 @@ process PTMSHEPHERD {
     def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id}"
     def ram = task.memory ? Math.max(1, task.memory.toGiga() - 2) : 30
-    def tools_dir = task.ext.fragpipe_tools_dir ?: '/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools'
-
+    def cmds = ptmShepherdCommands(datasets, config_text, fasta.name, annotation_file, task)
+    // IonQuant joins the class path only for kl glyco features; the Thermo libraries are optional
+    def jar_lines = fragpipeJarLines(fragpipeTools(task), ['batmass_io'] + (cmds.class_path.contains('{IONQUANT_JAR}') ? ['ionquant'] : []), ['msfragger'])
     """
-
-    # Clean up files from previous attempts (Nextflow retries in same work dir,
-    # and bash -C noclobber prevents overwriting existing files)
-    rm -f .ptmshepherd_version .fragpipe_version shepherd.config 2>/dev/null || true
-    rm -rf ${prefix} ptm-shepherd-output 2>/dev/null || true
-
     export HOME=\$(pwd)
-    mkdir -p ${prefix}
+    TASK_DIR=\$(pwd)
 
-    TOOLS_DIR="${tools_dir}"
+    # PTM-Shepherd rewrites psm.tsv in place; work on copies so upstream task dirs stay untouched
+    mkdir -p groups
+    ${cmds.groups.collect { g -> "cp -rL ${shellQuote("input/${g}")} ${shellQuote("groups/${g}")}\n    test -f ${shellQuote("groups/${g}/psm.tsv")}" }.join('\n    ')}
 
-    PTMS_JAR=\$(find "\$TOOLS_DIR" -name 'ptmshepherd*.jar' -type f 2>/dev/null | head -1 || true)
-    BATMASS_JAR=\$(find "\$TOOLS_DIR" -name 'batmass-io*.jar' -type f 2>/dev/null | head -1 || true)
-    COMMONS_MATH_JAR=\$(find "\$TOOLS_DIR" -name 'commons-math3*.jar' -type f 2>/dev/null | head -1 || true)
-    HIPP_CORE_JAR=\$(find "\$TOOLS_DIR" -path '*/hipparchus-*/hipparchus-core*.jar' -type f 2>/dev/null | head -1 || true)
-    HIPP_STAT_JAR=\$(find "\$TOOLS_DIR" -path '*/hipparchus-*/hipparchus-stat*.jar' -type f 2>/dev/null | head -1 || true)
-    # IonQuant is optional for PTMShepherd (only needed for some features)
-    IONQUANT_JAR=\$(find "\$TOOLS_DIR" -name 'IonQuant*.jar' -type f 2>/dev/null | head -1 || true)
-    THERMO_DIR="${tools_dir}/../ext/thermo"
-    _ver=\$(ls "\$TOOLS_DIR"/ptmshepherd-*.jar 2>/dev/null | grep -oP 'ptmshepherd-\\K[\\d.]+' | head -1 || true)
+    # shepherd.config as PtmshepherdParams.createConfig() (CmdPtmshepherd runs it from the work dir)
+    ${taskFileCommand('shepherd.config', cmds.config)}
 
-    echo "\$_ver" >| .ptmshepherd_version
-    _fp_ver=\$(echo "\$TOOLS_DIR" | grep -oP 'fragpipe-\\K[0-9]+\\.[0-9]+[0-9.]*' | head -1 || true)
-
-    echo "\$_fp_ver" >| .fragpipe_version
-    CP="\$PTMS_JAR:\$BATMASS_JAR:\$COMMONS_MATH_JAR:\$HIPP_CORE_JAR:\$HIPP_STAT_JAR"
-    [ -n "\$IONQUANT_JAR" ] && CP="\$CP:\$IONQUANT_JAR"
-    NATIVE_FLAGS=""
-    [ -d "\$THERMO_DIR" ] && NATIVE_FLAGS="-Dlibs.thermo.dir=\$THERMO_DIR"
-
-    if [ -s "${config_file}" ]; then
-        # Config provided - copy and inject runtime params
-        cp "${config_file}" shepherd.config
-        sed -i '/^threads/d' shepherd.config
-        sed -i '/^database /d' shepherd.config
-        sed -i '/^dataset /d' shepherd.config
-        # Ensure file ends with a newline before appending runtime params
-        sed -i -e '\$a\\' shepherd.config
-    else
-        # No config provided - create minimal config with runtime params only
-        # PTMShepherd will use compiled-in defaults for algorithm parameters
-        cat > shepherd.config <<CONFIG
-# PTMShepherd defaults - no algorithm config provided
-CONFIG
-    fi
-    echo "threads = ${task.cpus}" >> shepherd.config
-
-    # PTMShepherd 3.0.11+ requires msfragger_massdiff_to_varmod (no compiled-in default).
-    # Inject 0 (disabled) when the config does not already set it.
-    if ! grep -q '^msfragger_massdiff_to_varmod' shepherd.config; then
-        echo "msfragger_massdiff_to_varmod = 0" >> shepherd.config
+    # Glycan definition files FragPipe takes from its tools dir (PTMSGlycanAssignPanel.java:131-134)
+    for GLYCO_FILE in ${cmds.glyco_files.collect { f -> shellQuote(f) }.join(' ')}; do
+        [ -f "\$GLYCO_FILE" ] || { echo "ERROR: glycan definition file \$GLYCO_FILE not found" >&2; exit 1; }
+    done
+    ${jar_lines}
+    for JAR in ${cmds.class_path.collect { j -> shellQuote(j) }.join(' ')}; do
+        [ -f "\$JAR" ] || { echo "ERROR: PTM-Shepherd class path jar \$JAR missing (the FragPipe tools directory set in nextflow.config)" >&2; exit 1; }
+    done
+    JAVA_ARGS=( "-Duser.home=\$PWD" "-Xmx${ram}G" )
+    # Thermo libraries ship next to the MSFragger jar (FragpipeRun.java:1348-1356)
+    if [ -d ${shellQuote(cmds.thermo_dir)} ]; then
+        JAVA_ARGS+=( ${shellQuote("-Dlibs.thermo.dir=${cmds.thermo_dir}")} )
     fi
 
-    # Add database path (PtmshepherdParams.java:72)
-    echo "database = \$(pwd)/${fasta}" >> shepherd.config
+    echo ${shellQuote(cmds.fragpipe_version)} > .fragpipe_version
 
-    # Build dataset lines from per-sample PSM directories (PtmshepherdParams.java:86-90)
-    # Format: dataset = <sample_name> <psm.tsv_path> <spectra_dir>
-    for PSM_DIR in ${psm_dirs}; do
-        SAMPLE_NAME=\$(basename "\$PSM_DIR")
-        if [ -f "\$PSM_DIR/psm.tsv" ]; then
-            echo "dataset = \$SAMPLE_NAME \$(pwd)/\$PSM_DIR/psm.tsv \$(pwd)/spectra" >> shepherd.config
-        fi
-    done
-
-    # Run PTMShepherd
-    export JAVA_OPTS="-Xmx${ram}G"
-    CMD="java \$JAVA_OPTS \$NATIVE_FLAGS -cp \\"\$CP\\" edu.umich.andykong.ptmshepherd.PTMShepherd shepherd.config ${args}"
-    printf '%s\\n' "\$CMD" >| ${prefix}/ptmshepherd.log
-    eval "\$CMD" 2>&1 | tee -a ${prefix}/ptmshepherd.log
-
-    # Move output files to prefix directory (all are optional depending on analysis type)
-    # PTMShepherd writes outputs to ptm-shepherd-output/ subdirectory
-    shopt -s nullglob
-    for f in ptm-shepherd-output/global.profile.tsv ptm-shepherd-output/global.modsummary.tsv \
-             ptm-shepherd-output/*diagmine.tsv ptm-shepherd-output/*localization.tsv ptm-shepherd-output/*glycoprofile.tsv \
-             global.profile.tsv global.modsummary.tsv *diagmine.tsv *localization.tsv *glycoprofile.tsv; do
-        [ -f "\$f" ] && mv "\$f" ${prefix}/
-    done
-    shopt -u nullglob
-
+    # CmdPtmshepherd.java:163 passes the config path wrapped in literal quotes (a ProcessBuilder, no shell: the
+    # element holds the quote characters; PTMShepherd.parseParamFile: replaceAll("['\"]", "") strips them)
+    CMD=( java "\${JAVA_ARGS[@]}" -cp ${shellQuote(cmds.class_path.join(':'))} edu.umich.andykong.ptmshepherd.PTMShepherd ${shellArgs([cmds.config_arg])} ${args} )
+    printf '%q ' "\${CMD[@]}" > ptmshepherd.log
+    printf '\\n' >> ptmshepherd.log
+    "\${CMD[@]}" 2>&1 | tee -a ptmshepherd.log
+    test -d ptm-shepherd-output
     """
 
     stub:
     prefix = task.ext.prefix ?: "${meta.id}"
+    def cmds = ptmShepherdCommands(datasets, config_text, fasta.name, annotation_file, task)
+    // the stub writes the config with paths relative to the task dir (deterministic snapshots)
     """
-    mkdir -p ${prefix}
-    touch ${prefix}/global.profile.tsv
-    touch ${prefix}/global.modsummary.tsv
-    touch ${prefix}/ptmshepherd.log
-    TOOLS_DIR="${task.ext.fragpipe_tools_dir ?: '/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools'}"
-    _fp_ver=\$(echo "\$TOOLS_DIR" | grep -oP 'fragpipe-\\K[0-9]+\\.[0-9]+[0-9.]*' | head -1 || true)
-    echo "\$_fp_ver" >| .ptmshepherd_version
-    echo "\$_fp_ver" >| .fragpipe_version
-
+    mkdir -p groups ptm-shepherd-output
+    ${cmds.groups.collect { g -> "cp -rL ${shellQuote("input/${g}")} ${shellQuote("groups/${g}")}" }.join('\n    ')}
+    ${taskFileCommand('shepherd.config', cmds.config.replace('{TASK_DIR}/', ''))}
+    touch ptm-shepherd-output/global.profile.tsv ptm-shepherd-output/global.modsummary.tsv ptmshepherd.log
+    ${cmds.glyco_mode ? 'touch ptm-shepherd-output/glyco_masses_list.txt' : ''}
+    echo ${shellQuote(cmds.fragpipe_version)} > .fragpipe_version
     """
 }

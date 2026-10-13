@@ -1,51 +1,55 @@
 # SPECLIBGEN
 
-Generates spectral libraries using EasyPQP via FragPipe-SpecLib.
+FragPipe's spectral library generation step: FragPipe's own `tools/speclib/gen_con_spec_lib.py` with the arguments of `CmdSpecLibGen`.
 
 ## Description
 
-SpecLibGen generates spectral libraries from database search results using EasyPQP (Easy Peptide Quantification Pipeline) within the FragPipe framework.
-It performs per-sample PSM conversion (`convertpsm`), then builds a unified spectral library (`library`), supporting RT calibration (noiRT, ciRT, Pierce_iRT, Biognosys_iRT, or custom file) and IM calibration.
-Output formats include TSV, Spectronaut (`.speclib`), and Parquet, with automatic fallback to ciRT if RT alignment fails.
+The task directory is FragPipe's group work directory.
+It holds `psm.tsv`, `peptide.tsv`, the validated pepXMLs and `filelist_speclibgen.txt` (one LC-MS path per line).
+`gen_con_spec_lib.py` converts the pepXMLs (`fragpipe-speclib convert --pepxml`, the FragPipe default) or, when the convert extras hold `--decoy_prefix`, the `psm.tsv` rows (`convertpsm`).
+It then aligns retention times (automatic reference run, Biognosys/ciRT/Pierce iRT or a user file, with the ciRT retry), builds the EasyPQP library and writes `library.tsv` with `easypqp_lib_export('Spectronaut')`.
+The process environment is FragPipe's: `PYTHONIOENCODING=utf-8`, `OMP_NUM_THREADS`, `FRAGPIPE_PARSE_MZML_CMD` and no `OPENMS_DATA_PATH`.
 
 ## Inputs
 
-| Channel       | Type                           | Description                                                                                                       |
-| ------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
-| meta          | val(map)                       | Sample/experiment metadata                                                                                        |
-| psm_files     | path (stageAs `psms/sample_*`) | Per-sample psm.tsv files from PHILOSOPHER_FILTER                                                                  |
-| peptide_files | path (stageAs `peps/sample_*`) | Per-sample peptide.tsv files from PHILOSOPHER_FILTER                                                              |
-| mzml_files    | path (stageAs `spectra/*`)     | Mass spec files for spectrum extraction                                                                           |
-| config_cli    | val(string)                    | Bash-sourceable KEY='value' lines (CONVERT_ARGS, FRAGMENT_TYPES, LIBRARY_ARGS, RT_CAL, IM_CAL, KEEP_INTERMEDIATE) |
-| fasta         | path                           | Protein sequence database                                                                                         |
+| Channel      | Type                              | Description                                                                                                |
+| ------------ | --------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| meta         | val(map)                          | Group metadata                                                                                             |
+| psm          | path (stageAs `psm.tsv`)          | The group's psm.tsv                                                                                        |
+| peptide      | path (stageAs `peptide.tsv`)      | The group's peptide.tsv                                                                                    |
+| pepxml_files | path                              | Validated `interact-*.pep.xml` or PTMProphet `*.mod.pep.xml`                                               |
+| spectra      | path (stageAs `spectra/*`)        | LC-MS files of `filelist_speclibgen.txt`                                                                   |
+| rt_cal_file  | path (stageAs `rt_calibration/*`) | User RT calibration file, `[]` otherwise                                                                   |
+| im_cal_file  | path (stageAs `im_calibration/*`) | User IM calibration file, `[]` otherwise                                                                   |
+| config_cli   | val(string)                       | `SPECLIB_RT_CAL`, `SPECLIB_IM_CAL`, `SPECLIB_CONVERT_ARGS`, `SPECLIB_LIBRARY_ARGS`, `SPECLIB_INTERMEDIATE` |
+| fasta        | path                              | Protein database with decoys                                                                               |
 
 ## Outputs
 
-| Channel             | Type             | Description                                                        |
-| ------------------- | ---------------- | ------------------------------------------------------------------ |
-| results_dir         | tuple(val, path) | Output directory `${prefix}` containing all spectral library files |
-| library_tsv         | tuple(val, path) | `${prefix}/library.tsv` spectral library in TSV format (optional)  |
-| library_speclib     | tuple(val, path) | `${prefix}/library.speclib` in speclib binary format (optional)    |
-| library_parquet     | tuple(val, path) | `${prefix}/library.parquet` in Parquet columnar format (optional)  |
-| versions_speclibgen | topic: versions  | SpecLibGen version                                                 |
-| versions_fragpipe   | topic: versions  | FragPipe version                                                   |
+| Channel             | Type             | Description                                                                  |
+| ------------------- | ---------------- | ---------------------------------------------------------------------------- |
+| library_tsv         | tuple(val, path) | `library.tsv`, the DIA-NN input                                              |
+| easypqp_files       | tuple(val, path) | `easypqp_files/` with `cmds.txt` and alignment PDFs                          |
+| filelists           | tuple(val, path) | `filelist_speclibgen.txt`, `filelist_easypqp_library.txt`                    |
+| argv                | tuple(val, path) | `speclibgen_argv.txt`, the command one argument per line                     |
+| intermediates       | tuple(val, path) | Calibration references, per-run PSM splits, EasyPQP intermediates (optional) |
+| versions_speclibgen | topic: versions  | FragPipe-SpecLib version                                                     |
+| versions_fragpipe   | topic: versions  | FragPipe version                                                             |
 
 ## Parameters
 
-| Parameter              | Default                                           | Description                                                    |
-| ---------------------- | ------------------------------------------------- | -------------------------------------------------------------- |
-| ext.args               | ''                                                | Additional command-line arguments appended to EasyPQP commands |
-| ext.prefix             | `${meta.id}`                                      | Output directory name                                          |
-| ext.fragpipe_tools_dir | `/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools` | FragPipe tools directory for binary discovery                  |
-| ext.decoy_tag          | `rev_`                                            | Decoy protein prefix                                           |
+| Parameter              | Default                                           | Description                                                       |
+| ---------------------- | ------------------------------------------------- | ----------------------------------------------------------------- |
+| ext.args               | (none)                                            | Not accepted: gen_con_spec_lib.py takes positional arguments only |
+| ext.fragpipe_tools_dir | `/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools` | FragPipe tools directory                                          |
 
 ## Container
 
-`docker.io/fcyucn/fragpipe:24.0`
+The FragPipe image given with `--fragpipe_container` (needs FragPipe-SpecLib's pinned Python packages).
 
 ## Usage
 
-Used in the `FRAGPIPE_SPECLIB` subworkflow (`subworkflows/local/fragpipe_speclib/main.nf`) for generating spectral libraries from DDA search results, which can then be used for DIA data analysis or targeted proteomics.
+Used in the `FRAGPIPE_SPECLIB` subworkflow (`subworkflows/local/fragpipe_speclib/main.nf`); `DIANNFRAGPIPE` quantifies DIA data with its `library.tsv`.
 
 ## References
 

@@ -1,0 +1,79 @@
+// The licensed FragPipe image reaches the pipeline only at runtime: --fragpipe_container sets
+// process.container (nextflow.config), which every FragPipe module without its own container
+// directive (MSFragger, IonQuant, ...) inherits. Nothing in the pipeline names the image.
+
+nextflow_pipeline {
+
+    name "Test runtime --fragpipe_container"
+    script "../main.nf"
+    config "./container_trace.config"
+    tag "pipeline"
+    tag "fragpipe_container"
+    profile "test_dda_lfq"
+
+    test("--fragpipe_container is the container of MSFragger and IonQuant tasks") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                input              = ss.toString()
+                database           = "${fixtures}/test.fasta"
+                fragpipe_container = 'quay.io/nf-core/ubuntu:20.04'
+                outdir             = "$outputDir"
+            }
+        }
+
+        then {
+            // nf-test's trace (meta/trace.csv) carries the extra fields of container_trace.config
+            def trace_lines = new File("${outputDir}/../meta/trace.csv").readLines()
+            def header = trace_lines[0].split('\t') as List
+            def rows = trace_lines.drop(1).collect { line -> def c = line.split('\t') as List; [c[header.indexOf('process')], c[header.indexOf('container')]] }
+            def licensed = rows.findAll { row -> row[0] ==~ /.*:(MSFRAGGER|IONQUANT)$/ }
+            assertAll(
+                { assert workflow.success },
+                { assert licensed*.get(0).unique().sort() == ['NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_QUANT:IONQUANT', 'NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSFRAGGER'] : licensed },
+                { assert licensed.every { row -> row[1] == 'quay.io/nf-core/ubuntu:20.04' } : licensed },
+                { assert snapshot(
+                    // tools of each process in the pipeline versions.yml (stub versions come from host tools, so only the names)
+                    new org.yaml.snakeyaml.Yaml().load(new File("$outputDir/pipeline_info/nf_core_msproteomics_software_mqc_versions.yml").text)
+                        .findAll { proc, _tools -> proc != 'Workflow' }.collectEntries { proc, tools -> [proc, tools.keySet().sort()] },
+                    rows.collect { row -> "${row[0]}\t${row[1]}" }.unique().sort()).match() }
+            )
+        }
+    }
+
+    test("without --fragpipe_container MSFragger and IonQuant tasks have no container") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                input    = ss.toString()
+                database = "${fixtures}/test.fasta"
+                outdir   = "$outputDir"
+            }
+        }
+
+        then {
+            // nf-test's trace (meta/trace.csv) carries the extra fields of container_trace.config
+            def trace_lines = new File("${outputDir}/../meta/trace.csv").readLines()
+            def header = trace_lines[0].split('\t') as List
+            def rows = trace_lines.drop(1).collect { line -> def c = line.split('\t') as List; [c[header.indexOf('process')], c[header.indexOf('container')]] }
+            def licensed = rows.findAll { row -> row[0] ==~ /.*:(MSFRAGGER|IONQUANT)$/ }
+            assertAll(
+                { assert workflow.success },
+                { assert licensed.size() > 0 },
+                { assert licensed.every { row -> row[1] == '-' } : licensed }
+            )
+        }
+    }
+}

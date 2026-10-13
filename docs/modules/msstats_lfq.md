@@ -1,10 +1,10 @@
-# MSSTATS_LFQ
+# MSSTATSLFQ
 
 Statistical analysis of label-free quantification data using MSstats.
 
 ## Description
 
-MSSTATS_LFQ performs statistical analysis of quantitative mass spectrometry-based proteomics experiments using the MSstats Bioconductor package.
+MSSTATSLFQ performs statistical analysis of quantitative mass spectrometry-based proteomics experiments using the MSstats Bioconductor package.
 It runs `msstats_plfq.R` with configurable contrast definitions, reference conditions, and quantification parameters to produce CSV results and optional PDF plots.
 This module fits at the end of the DIA pipeline for downstream statistical analysis of quantified proteins.
 

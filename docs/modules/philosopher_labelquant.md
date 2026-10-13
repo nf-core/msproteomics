@@ -1,19 +1,19 @@
-# PHILOSOPHER_LABELQUANT
+# PHILOSOPHERLABELQUANT
 
 Extracts TMT/isobaric reporter ion intensities from mzML spectra using Philosopher labelquant.
 
 ## Description
 
 This module runs Philosopher `labelquant` to extract TMT/isobaric reporter ion intensities from mzML spectra.
-It runs inside the results directory workspace (containing `.meta/` from PHILOSOPHER_FILTER or FREEQUANT), reading `.meta/` binaries and mzML files.
-The updated `.meta/` workspace is passed to downstream PHILOSOPHER_REPORT, which regenerates TSVs with TMT intensity columns.
+It runs inside the results directory workspace (containing `.meta/` from PHILOSOPHERFILTER or FREEQUANT), reading `.meta/` binaries and mzML files.
+The updated `.meta/` workspace is passed to downstream PHILOSOPHERREPORT, which regenerates TSVs with TMT intensity columns.
 
 ## Inputs
 
 | Channel     | Type        | Description                                                                                            |
 | ----------- | ----------- | ------------------------------------------------------------------------------------------------------ |
 | meta        | val(map)    | Sample/experiment metadata                                                                             |
-| results_dir | path        | Directory with psm.tsv and `.meta/` workspace from PHILOSOPHER_FILTER or FREEQUANT                     |
+| results_dir | path        | Directory with psm.tsv and `.meta/` workspace from PHILOSOPHERFILTER or FREEQUANT                      |
 | mzml_dir    | path        | Directory containing mzML files for the experiment/group                                               |
 | annot       | path        | TMT annotation file mapping channels to samples                                                        |
 | config_cli  | val(string) | Labelquant CLI flags (`--tol`, `--level`, `--plex`, `--brand`, `--minprob`, `--purity`, `--removelow`) |
@@ -36,12 +36,12 @@ The updated `.meta/` workspace is passed to downstream PHILOSOPHER_REPORT, which
 
 ## Container
 
-`docker.io/fcyucn/fragpipe:24.0`
+The licensed FragPipe image given with `--fragpipe_container`.
 
 ## Usage
 
 Used in the `FRAGPIPE_QUANT` subworkflow (`subworkflows/local/fragpipe_quant/main.nf`) for TMT reporter ion extraction.
-The output `.meta/` workspace is then passed to PHILOSOPHER_REPORT to generate final TSV files with quantification data.
+The output `.meta/` workspace is then passed to PHILOSOPHERREPORT to generate final TSV files with quantification data.
 
 ## References
 

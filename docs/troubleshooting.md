@@ -14,8 +14,7 @@
 - **"FASTA file not found"** — check that the `--database` path exists and is accessible from all compute nodes.
 - **"No decoy sequences detected"** — FragPipe headless mode requires decoy sequences.
   The pipeline adds them automatically, but if you provide a pre-processed database, ensure `rev_` prefix decoys are included.
-- **DIA-NN database selection** — the database is auto-selected for supported organisms (human, mouse, rat, yeast, zebrafish, drosophila, C. elegans, E. coli).
-  For other organisms, `--database` is required.
+- **Database** — `--database` or `--proteome` ([iProteomes](usage.md#iproteomes)) is required in every mode; `--organism` selects no database.
 
 ## Container and Licensing Errors
 
@@ -45,7 +44,7 @@
 
 - DIA-NN library generation is the most memory-intensive step.
   For large proteomes, allocate 32-64 GB.
-- See [nf-core resource tuning documentation](https://nf-co.re/docs/usage/configuration#tuning-workflow-resources) for general guidance.
+- See [nf-core resource tuning documentation](https://nf-co.re/docs/running/configuration/nextflow-for-your-system#customize-process-resources) for general guidance.
 
 ## Resume and Caching
 
@@ -58,7 +57,7 @@
 - **"No precursors identified"** — check that instrument m/z ranges match your data.
   Use `-c conf/instruments/bruker_flex.config` for timsTOF data.
 - **Library generation produces empty library** — verify input mzML files are not empty and contain MS2 spectra.
-- **Mass accuracy issues** — adjust `--diann_library_mass_acc` and `--diann_library_ms1_acc` for your instrument.
+- **Mass accuracy issues** — `--diann_library_mass_acc` / `--diann_library_ms1_acc` set the in-silico library accuracy; with `--diann_mass_acc_automatic false` the search uses `--fragment_mass_tolerance` (MS2) and `--precursor_mass_tolerance` (MS1), in ppm.
 
 ## FragPipe Specific Issues
 
@@ -79,6 +78,6 @@
 
 ## Getting Help
 
-- Check the [nf-core documentation](https://nf-co.re/docs/usage/) for general Nextflow/nf-core troubleshooting.
+- Check the [nf-core documentation](https://nf-co.re/docs/running/troubleshooting) for general Nextflow/nf-core troubleshooting.
 - Search or open an issue on [GitHub](https://github.com/nf-core/msproteomics/issues).
 - Join the [nf-core Slack](https://nf-co.re/join/slack) and ask in the `#msproteomics` channel.

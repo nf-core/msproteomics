@@ -5,6 +5,7 @@
                 [
                     {
                         "id": "tmt_erwinia_subset",
+                        "group": "tmt_1",
                         "data_type": "DDA"
                     },
                     "tmt_erwinia_subset_percolator_target_psms.tsv:md5,ae356599ab6e69da0d36fa043e7c43d1"
@@ -14,16 +15,148 @@
                 [
                     {
                         "id": "tmt_erwinia_subset",
+                        "group": "tmt_1",
                         "data_type": "DDA"
                     },
                     "tmt_erwinia_subset_percolator_decoy_psms.tsv:md5,b13a86a2fc4156c343e034cc4e4692fd"
                 ]
+            ],
+            [
+                [
+                    "PERCOLATOR",
+                    "percolator",
+                    "3.07.1"
+                ]
+            ],
+            [
+                [
+                    "PERCOLATOR",
+                    "fragpipe",
+                    "24.0"
+                ]
             ]
         ],
-        "timestamp": "2026-03-27T19:35:47.692349854",
+        "timestamp": "2026-10-09T01:37:21.076721269",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "percolator - stub Write sub mzML weights": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "w1",
+                            "group": "A",
+                            "data_type": "DDA"
+                        },
+                        [
+                            "interact-w1.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "percolator.log:md5,97be4adee525e8e94478446209bcba7a"
+                        ]
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "w1",
+                            "group": "A",
+                            "data_type": "DDA"
+                        },
+                        "interact-w1.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    
+                ],
+                "3": [
+                    
+                ],
+                "4": [
+                    [
+                        {
+                            "id": "w1",
+                            "group": "A",
+                            "data_type": "DDA"
+                        },
+                        "w1_percolator.weights:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "5": [
+                    [
+                        "PERCOLATOR",
+                        "percolator",
+                        "3.07.1"
+                    ]
+                ],
+                "6": [
+                    [
+                        "PERCOLATOR",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "decoy_psms": [
+                    
+                ],
+                "pepxml": [
+                    [
+                        {
+                            "id": "w1",
+                            "group": "A",
+                            "data_type": "DDA"
+                        },
+                        "interact-w1.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "results_dir": [
+                    [
+                        {
+                            "id": "w1",
+                            "group": "A",
+                            "data_type": "DDA"
+                        },
+                        [
+                            "interact-w1.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "percolator.log:md5,97be4adee525e8e94478446209bcba7a"
+                        ]
+                    ]
+                ],
+                "target_psms": [
+                    
+                ],
+                "versions_fragpipe": [
+                    [
+                        "PERCOLATOR",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "versions_percolator": [
+                    [
+                        "PERCOLATOR",
+                        "percolator",
+                        "3.07.1"
+                    ]
+                ],
+                "weights": [
+                    [
+                        {
+                            "id": "w1",
+                            "group": "A",
+                            "data_type": "DDA"
+                        },
+                        "w1_percolator.weights:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-10-11T07:45:20.29157654",
         "meta": {
             "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
+            "nextflow": "25.10.4"
         }
     },
     "percolator - from MSFRAGGER": {
@@ -67,68 +200,345 @@
             "nextflow": "25.10.2"
         }
     },
-    "percolator - stub": {
+    "percolator - stub MSBooster PIN, Crystal-C basename and kept TSVs": {
         "content": [
-            [
-                [
-                    {
-                        "id": "test_sample",
-                        "data_type": "DDA"
-                    },
+            {
+                "0": [
                     [
-                        "interact-test.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "percolator.log:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "test_percolator_decoy_psms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "test_percolator_target_psms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        {
+                            "id": "s1",
+                            "group": "s1",
+                            "data_type": "DDA"
+                        },
+                        [
+                            "interact-s1_c.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "percolator.log:md5,0f2a9fba7dd32430d3bca3020a872dc1",
+                            "s1_percolator_decoy_psms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "s1_percolator_target_psms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
                     ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "s1",
+                            "group": "s1",
+                            "data_type": "DDA"
+                        },
+                        "interact-s1_c.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "s1",
+                            "group": "s1",
+                            "data_type": "DDA"
+                        },
+                        "s1_percolator_target_psms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "3": [
+                    [
+                        {
+                            "id": "s1",
+                            "group": "s1",
+                            "data_type": "DDA"
+                        },
+                        "s1_percolator_decoy_psms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "4": [
+                    
+                ],
+                "5": [
+                    [
+                        "PERCOLATOR",
+                        "percolator",
+                        "3.07.1"
+                    ]
+                ],
+                "6": [
+                    [
+                        "PERCOLATOR",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "decoy_psms": [
+                    [
+                        {
+                            "id": "s1",
+                            "group": "s1",
+                            "data_type": "DDA"
+                        },
+                        "s1_percolator_decoy_psms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "pepxml": [
+                    [
+                        {
+                            "id": "s1",
+                            "group": "s1",
+                            "data_type": "DDA"
+                        },
+                        "interact-s1_c.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "results_dir": [
+                    [
+                        {
+                            "id": "s1",
+                            "group": "s1",
+                            "data_type": "DDA"
+                        },
+                        [
+                            "interact-s1_c.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "percolator.log:md5,0f2a9fba7dd32430d3bca3020a872dc1",
+                            "s1_percolator_decoy_psms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "s1_percolator_target_psms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ],
+                "target_psms": [
+                    [
+                        {
+                            "id": "s1",
+                            "group": "s1",
+                            "data_type": "DDA"
+                        },
+                        "s1_percolator_target_psms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions_fragpipe": [
+                    [
+                        "PERCOLATOR",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "versions_percolator": [
+                    [
+                        "PERCOLATOR",
+                        "percolator",
+                        "3.07.1"
+                    ]
+                ],
+                "weights": [
+                    
                 ]
-            ],
-            [
-                [
-                    {
-                        "id": "test_sample",
-                        "data_type": "DDA"
-                    },
-                    "interact-test.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "test_sample",
-                        "data_type": "DDA"
-                    },
-                    "test_percolator_target_psms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "test_sample",
-                        "data_type": "DDA"
-                    },
-                    "test_percolator_decoy_psms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                [
-                    "PERCOLATOR",
-                    "percolator",
-                    "24.0"
-                ]
-            ],
-            [
-                [
-                    "PERCOLATOR",
-                    "fragpipe",
-                    "24.0"
-                ]
-            ]
+            }
         ],
-        "timestamp": "2026-03-31T19:42:14.496164648",
+        "timestamp": "2026-10-10T20:48:27.139899991",
         "meta": {
             "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
+            "nextflow": "25.10.4"
+        }
+    },
+    "percolator - stub second pass reads the weights": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "w1_sub",
+                            "group": "A",
+                            "data_type": "DDA"
+                        },
+                        [
+                            "interact-w1_sub.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "percolator.log:md5,3ce708a4619738221db621b2dddeeed9"
+                        ]
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "w1_sub",
+                            "group": "A",
+                            "data_type": "DDA"
+                        },
+                        "interact-w1_sub.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    
+                ],
+                "3": [
+                    
+                ],
+                "4": [
+                    
+                ],
+                "5": [
+                    [
+                        "PERCOLATOR",
+                        "percolator",
+                        "3.07.1"
+                    ]
+                ],
+                "6": [
+                    [
+                        "PERCOLATOR",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "decoy_psms": [
+                    
+                ],
+                "pepxml": [
+                    [
+                        {
+                            "id": "w1_sub",
+                            "group": "A",
+                            "data_type": "DDA"
+                        },
+                        "interact-w1_sub.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "results_dir": [
+                    [
+                        {
+                            "id": "w1_sub",
+                            "group": "A",
+                            "data_type": "DDA"
+                        },
+                        [
+                            "interact-w1_sub.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "percolator.log:md5,3ce708a4619738221db621b2dddeeed9"
+                        ]
+                    ]
+                ],
+                "target_psms": [
+                    
+                ],
+                "versions_fragpipe": [
+                    [
+                        "PERCOLATOR",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "versions_percolator": [
+                    [
+                        "PERCOLATOR",
+                        "percolator",
+                        "3.07.1"
+                    ]
+                ],
+                "weights": [
+                    
+                ]
+            }
+        ],
+        "timestamp": "2026-10-11T01:39:42.23016992",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "percolator - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test_sample",
+                            "group": "exp_1",
+                            "data_type": "DDA"
+                        },
+                        [
+                            "interact-test.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "percolator.log:md5,e95ab02665dda16bde969dd6fe92d8e4"
+                        ]
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "test_sample",
+                            "group": "exp_1",
+                            "data_type": "DDA"
+                        },
+                        "interact-test.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    
+                ],
+                "3": [
+                    
+                ],
+                "4": [
+                    
+                ],
+                "5": [
+                    [
+                        "PERCOLATOR",
+                        "percolator",
+                        "3.07.1"
+                    ]
+                ],
+                "6": [
+                    [
+                        "PERCOLATOR",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "decoy_psms": [
+                    
+                ],
+                "pepxml": [
+                    [
+                        {
+                            "id": "test_sample",
+                            "group": "exp_1",
+                            "data_type": "DDA"
+                        },
+                        "interact-test.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "results_dir": [
+                    [
+                        {
+                            "id": "test_sample",
+                            "group": "exp_1",
+                            "data_type": "DDA"
+                        },
+                        [
+                            "interact-test.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "percolator.log:md5,e95ab02665dda16bde969dd6fe92d8e4"
+                        ]
+                    ]
+                ],
+                "target_psms": [
+                    
+                ],
+                "versions_fragpipe": [
+                    [
+                        "PERCOLATOR",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "versions_percolator": [
+                    [
+                        "PERCOLATOR",
+                        "percolator",
+                        "3.07.1"
+                    ]
+                ],
+                "weights": [
+                    
+                ]
+            }
+        ],
+        "timestamp": "2026-10-10T20:48:20.386032966",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
         }
     }
 }

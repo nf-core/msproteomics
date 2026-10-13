@@ -1,0 +1,38 @@
+// Golden check of subMzmlWeights on FragPipe 24.0's second-pass input folder (PXD001468/Basic-Search_submzml_secondpass):
+// FragPipe found <stem>_percolator.weights there (Percolator --init-weights, MSFragger --no-ptm-score-in-pin;
+// CmdPercolator.java:185-201, CmdMsfragger.java:612-630).
+// Run: GOLDEN_ROOT=<golden root> nf-test test subworkflows/local/utils_nfcore_msproteomics_pipeline/tests/golden_secondpass.nf.test
+nextflow_function {
+
+    name "Golden subMzmlWeights vs FragPipe 24.0"
+    script "../fragpipe_utils.nf"
+
+    tag "golden"
+    tag "fragpipe_utils"
+
+    test("PXD001468 Basic-Search_submzml_secondpass - the weights FragPipe used") {
+        function "subMzmlWeights"
+        when {
+            function {
+                """
+                assert System.getenv('GOLDEN_ROOT') : 'set GOLDEN_ROOT to the golden data root'
+                def input_dir = java.nio.file.Paths.get(System.getenv('GOLDEN_ROOT'), 'PXD001468', 'Basic-Search_submzml_secondpass', 'files', 'input')
+                input[0] = [ [[ id: 'b1906_293T_proteinID_01A_QE3_122212_sub', data_type: 'DDA' ], input_dir.resolve('b1906_293T_proteinID_01A_QE3_122212_sub.mzML')] ]
+                """
+            }
+        }
+        then {
+            def golden = new File("${System.getenv('GOLDEN_ROOT')}/PXD001468/Basic-Search_submzml_secondpass")
+            def manifest = new groovy.json.JsonSlurper().parse(new File(golden, 'manifest.json'))
+            def perc = manifest.steps.find { s -> s.cmd_name == 'Percolator' }.argv
+            def recorded = perc[perc.indexOf('--init-weights') + 1].replace('{LCMS_DIR}', "${golden.path}/files/input")
+            def meta = function.result[0][0]
+            assertAll(
+                { assert function.success },
+                { assert meta.sub_mzml_weights.collect { p -> p.toString() } == [java.nio.file.Paths.get(recorded).toAbsolutePath().normalize().toString()] : meta },
+                { assert meta.no_ptm_score_in_pin == true },
+                { assert manifest.steps.find { s -> s.cmd_name == 'MSFragger' }.argv[-1] == '--no-ptm-score-in-pin' }
+            )
+        }
+    }
+}

@@ -1,45 +1,10 @@
 {
-    "speclibgen - integration with test data": {
+    "speclibgen - stub - pepXML conversion (DIA_SpecLib_Quant)": {
         "content": [
             [
                 [
                     {
-                        "id": "speclibgen_test"
-                    },
-                    "library.tsv:md5,6b34d2e92534de98e4f4df962b00efeb"
-                ]
-            ],
-            [
-                
-            ],
-            [
-                
-            ]
-        ],
-        "timestamp": "2026-03-28T01:31:53.916458798",
-        "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
-        }
-    },
-    "speclibgen - stub": {
-        "content": [
-            [
-                [
-                    {
-                        "id": "test_speclibgen"
-                    },
-                    [
-                        "library.speclib:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "library.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "speclibgen.log:md5,d41d8cd98f00b204e9800998ecf8427e"
-                    ]
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "test_speclibgen"
+                        "id": "fragpipe"
                     },
                     "library.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
@@ -47,19 +12,18 @@
             [
                 [
                     {
-                        "id": "test_speclibgen"
+                        "id": "fragpipe"
                     },
-                    "library.speclib:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    [
+                        "cmds.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
                 ]
-            ],
-            [
-                
             ],
             [
                 [
                     "SPECLIBGEN",
-                    "speclibgen",
-                    "24.0"
+                    "fragpipe-speclib",
+                    "0.1.58"
                 ]
             ],
             [
@@ -70,10 +34,121 @@
                 ]
             ]
         ],
-        "timestamp": "2026-03-31T19:45:35.18981061",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
-        }
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-07T22:03:54.035087999"
+    },
+    "speclibgen - stub - psm.tsv conversion with glyco options (glyco-N-DIA)": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "fragpipe"
+                    },
+                    "library.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "fragpipe"
+                    },
+                    [
+                        "cmds.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    "SPECLIBGEN",
+                    "fragpipe-speclib",
+                    "0.1.58"
+                ]
+            ],
+            [
+                [
+                    "SPECLIBGEN",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-07T22:03:59.675716299"
+    },
+    "speclibgen - integration - pepXML conversion with test data": {
+        "content": [
+            [
+                [
+                    "SPECLIBGEN",
+                    "fragpipe-speclib",
+                    "0.1.58"
+                ]
+            ],
+            [
+                [
+                    "SPECLIBGEN",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-09T01:10:12.452849265"
+    },
+    "speclibgen - stub - user RT calibration file": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "fragpipe"
+                    },
+                    "library.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    "SPECLIBGEN",
+                    "fragpipe-speclib",
+                    "0.1.58"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-07T22:04:05.337484369"
+    },
+    "speclibgen - integration - psm.tsv conversion with test data": {
+        "content": [
+            [
+                [
+                    "SPECLIBGEN",
+                    "fragpipe-speclib",
+                    "0.1.58"
+                ]
+            ],
+            [
+                [
+                    "SPECLIBGEN",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-09T01:11:07.035317493"
     }
 }

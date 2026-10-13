@@ -1,0 +1,97 @@
+{
+    "export_matched_fragments - stub, groups found as FragPipe's manifest names them": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "fragpipe"
+                    },
+                    [
+                        [
+                            "psm.tsv:md5,0e6055e18693383377022d7cee38b3e2"
+                        ],
+                        [
+                            "psm.tsv:md5,f9157d71f780273af46973e2a2833355"
+                        ]
+                    ]
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-05T19:01:22.876945981"
+    },
+    "export_matched_fragments - stub, named groups get FragPipe work-dir layout": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "fragpipe"
+                    },
+                    [
+                        [
+                            "protein.tsv:md5,2e206615e29655874a0fe5b47e168ae2",
+                            "psm.tsv:md5,45ba1b56425996c1915fc25539db9e93"
+                        ],
+                        [
+                            "protein.tsv:md5,2e206615e29655874a0fe5b47e168ae2",
+                            "psm.tsv:md5,c32ab1efefd0522b84e704b7c70e78f3"
+                        ]
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "fragpipe"
+                    },
+                    [
+                        "psm.tsv:md5,45ba1b56425996c1915fc25539db9e93",
+                        "psm.tsv:md5,c32ab1efefd0522b84e704b7c70e78f3"
+                    ]
+                ]
+            ],
+            [
+                [
+                    "EXPORTMATCHEDFRAGMENTS",
+                    "fragannotator",
+                    "1.0.0"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-05T14:22:09.876489535"
+    },
+    "export_matched_fragments - stub, blank group is exported from the work-dir root": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "fragpipe"
+                    },
+                    [
+                        "psm.tsv:md5,10d7e8f527fbe346e8dd8ce87a213062"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "fragpipe"
+                    },
+                    "psm.tsv:md5,10d7e8f527fbe346e8dd8ce87a213062"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-05T14:22:14.777603795"
+    }
+}

@@ -15,16 +15,12 @@ nextflow_process {
         when {
             process {
                 """
-                def results_dir = file("\${workDir}/results")
-                results_dir.mkdirs()
-                def config_file = file("\${workDir}/results/multiqc_config.yml")
+                def stats = file("\${workDir}/sample1_ms_info.parquet")
+                stats.text = "mock"
+                def config_file = file("\${workDir}/multiqc_config.yml")
                 config_file.text = "mock"
 
-                def quantms_log = file("\${workDir}/quantms.log")
-                quantms_log.text = "mock"
-
-                input[0] = config_file
-                input[1] = quantms_log
+                input[0] = [ [ id:'experiment' ], [ stats ], config_file ]
                 """
             }
         }
@@ -32,11 +28,7 @@ nextflow_process {
         then {
             assertAll (
                 { assert process.success },
-                { assert snapshot(
-                    process.out.ch_pmultiqc_report,
-                    process.out.ch_pmultiqc_db,
-                    process.out.data
-                ).match() }
+                { assert snapshot(process.out).match() }
             )
         }
     }

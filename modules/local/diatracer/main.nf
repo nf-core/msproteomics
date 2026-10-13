@@ -1,3 +1,5 @@
+include { fragpipeTools; requireFragpipeLicenseAgreement; writeTextFile; fragpipeJarLines; shellArgs } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
+
 process DIATRACER {
     tag "${meta.id}"
     label 'process_high'
@@ -7,7 +9,6 @@ process DIATRACER {
     // d_file: Bruker .d directory
     // config_cli: diaTracer parameters as CLI string (coupled with sample inputs)
     tuple val(meta), path(d_file), val(config_cli)
-    path diatracer_dir // Unzipped diaTracer tool directory (optional). Pass [] when not using.
 
     output:
     tuple val(meta), path("${prefix}")                          , emit: results_dir
@@ -23,76 +24,38 @@ process DIATRACER {
     def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id}"
     def ram = task.memory ? Math.max(1, task.memory.toGiga() - 2) : 30
-    def basename = d_file.baseName.replaceAll(/\.d$/, '')
-    def tools_dir = task.ext.fragpipe_tools_dir ?: '/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools'
-    def agree_license = task.ext.agree_fragpipe_license_agreement ?: false
-
-    // diaTracer CLI parameters:
-    // --dFilePath: input .d file
-    // --workDir: output directory
-    // --threadNum: number of threads
-    // --writeInter: write intermediate files (0/1)
-    // --deltaApexIM: ion mobility tolerance
-    // --deltaApexRT: retention time tolerance (scans)
-    // --massDefectFilter: enable mass defect filter (0/1)
-    // --massDefectOffset: mass defect offset
-    // --ms1MS2Corr: MS1-MS2 correlation threshold
-    // --RFMax: max RF value
-
+    def tools = fragpipeTools(task)
+    def agreement = requireFragpipeLicenseAgreement(task)
+    // Argv as CmdDiaTracer.java:84-117 (headless run): the Bruker native libraries next to the MSFragger jar
+    // (CmdMsfragger.searchExtLibsBruker, CmdMsfragger.java:264-273), the license FragPipe finds in tools/..
+    // (FragpipeLocations.java:340-353, passed by path only); config_cli holds --writeInter ... --RFMax,
+    // then ext.args: tool arguments, not JVM options
+    // CmdDiaTracer.java:138: diaTracer writes <the .d path with ".d" replaced by "_diatracer.mzML"> next to the .d it is
+    // given, so the staged path (not its resolved target in the data) is passed and the mzML lands in the task dir
+    def mzml_name = d_file.name.replace('.d', '_diatracer.mzML')
     """
-
     export HOME=\$(pwd)
     mkdir -p ${prefix}
+    ${writeTextFile('I_AGREE_FRAGPIPE_LICENSE_AGREEMENT', agreement)}
+    ${fragpipeJarLines(tools, ['diatracer', 'msfragger'])}
+    echo "${tools.fragpipe_version}" > .fragpipe_version
 
-    # License gate
-    if [ "${agree_license}" != "true" ]; then
-        echo "ERROR: You must agree to the FragPipe license agreement before using this tool." >&2
-        echo "Set ext.agree_fragpipe_license_agreement = true in your Nextflow config." >&2
-        exit 1
-    fi
-    echo "INFO: User has set agree_fragpipe_license_agreement = true. Proceeding with licensed tool." >&2
-    echo "User agreed to FragPipe license agreement (agree_fragpipe_license_agreement=true)" > I_AGREE_FRAGPIPE_LICENSE_AGREEMENT
-
-    TOOLS_DIR="${tools_dir}"
-
-    # JAR discovery: prefer provided dir, fall back to tools_dir
-    if [ -d "${diatracer_dir}" ] && [ "\$(ls -A ${diatracer_dir} 2>/dev/null)" ]; then
-        DIATRACER_JAR=\$(find ${diatracer_dir} -maxdepth 1 -name "diaTracer*.jar" -type f 2>/dev/null | head -1 || true)
-    else
-        DIATRACER_JAR=\$(find "\$TOOLS_DIR" -name 'diaTracer*.jar' -type f 2>/dev/null | head -1 || true)
-    fi
-
-    # Version capture
-    _dt_ver=\$(java -jar "\$DIATRACER_JAR" --version 2>&1 | grep -oP 'diaTracer-\\K[\\d.]+' | head -1 || true)
-
-    echo "\$_dt_ver" > .diatracer_version
-    _fp_ver=\$(echo "\$TOOLS_DIR" | grep -oP 'fragpipe-\\K[0-9]+\\.[0-9]+[0-9.]*' | head -1 || true)
-
-    echo "\$_fp_ver" > .fragpipe_version
-
-    BRUKER_DIR="${tools_dir}/../ext/bruker"
-    NATIVE_FLAGS=""
-    [ -d "\$BRUKER_DIR" ] && NATIVE_FLAGS="-Dlibs.bruker.dir=\$BRUKER_DIR"
-
-    export JAVA_OPTS="-Xmx${ram}G"
-    CMD="java \$JAVA_OPTS \$NATIVE_FLAGS -jar \\"\$DIATRACER_JAR\\" --dFilePath ${d_file} --workDir ${prefix} --threadNum ${task.cpus} ${config_cli} ${args}"
-    printf '%s\\n' "\$CMD" > ${prefix}/diatracer.log
-    eval "\$CMD" 2>&1 | tee -a ${prefix}/diatracer.log
-
+    CMD=(java -Duser.home=\$PWD -Djava.awt.headless=true -Xmx${ram}G ${shellArgs(["-Dlibs.bruker.dir=${tools.bruker_dir}"])} -jar ${shellArgs([tools.diatracer_jar])} --license "${tools.license}" --dFilePath "\$(pwd)/${d_file}" --workDir "\$(pwd)/${prefix}" --threadNum ${task.cpus} ${config_cli} ${args})
+    printf '%s\\n' "\${CMD[*]}" > ${prefix}/diatracer.log
+    "\${CMD[@]}" 2>&1 | tee -a ${prefix}/diatracer.log
+    mv "${mzml_name}" ${prefix}/
     """
 
     stub:
     prefix = task.ext.prefix ?: "${meta.id}"
-    def basename = d_file.baseName.replaceAll(/\.d$/, '')
+    def mzml_name = d_file.name.replace('.d', '_diatracer.mzML')
+    def tools = fragpipeTools(task)
     """
     mkdir -p ${prefix}
-    touch ${prefix}/${basename}_diatracer.mzML
+    touch "${prefix}/${mzml_name}"
     touch ${prefix}/diatracer.log
     touch I_AGREE_FRAGPIPE_LICENSE_AGREEMENT
-    TOOLS_DIR="${task.ext.fragpipe_tools_dir ?: '/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools'}"
-    _fp_ver=\$(echo "\$TOOLS_DIR" | grep -oP 'fragpipe-\\K[0-9]+\\.[0-9]+[0-9.]*' | head -1 || true)
-    echo "\$_fp_ver" > .diatracer_version
-    echo "\$_fp_ver" > .fragpipe_version
-
+    echo "${tools.diatracer_version}" > .diatracer_version
+    echo "${tools.fragpipe_version}" > .fragpipe_version
     """
 }

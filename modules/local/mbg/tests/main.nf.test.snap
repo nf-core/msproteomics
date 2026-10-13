@@ -1,78 +1,99 @@
 {
-    "mbg - stub": {
+    "mbg - stub - group copy and fragpipe-files.fp-manifest": {
         "content": [
-            [
-                [
-                    {
-                        "id": "test_mbg"
-                    },
+            {
+                "0": [
                     [
-                        "mbg.log:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "sample_glycan_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "sample_mbg_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        {
+                            "id": "cancer",
+                            "group": "cancer"
+                        },
+                        [
+                            "psm.tsv:md5,9d8a287d77631fb4f51d7c3a0c45c339"
+                        ]
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "cancer",
+                            "group": "cancer"
+                        },
+                        "fragpipe-files.fp-manifest:md5,269267190721fc94deeac1154b7e4a63"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "cancer",
+                            "group": "cancer"
+                        },
+                        "mbg.log:md5,2b0ee663540510ee0c85e8ca4285c736"
+                    ]
+                ],
+                "3": [
+                    [
+                        "MBG",
+                        "mbg",
+                        "0.3.6"
+                    ]
+                ],
+                "4": [
+                    [
+                        "MBG",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "log": [
+                    [
+                        {
+                            "id": "cancer",
+                            "group": "cancer"
+                        },
+                        "mbg.log:md5,2b0ee663540510ee0c85e8ca4285c736"
+                    ]
+                ],
+                "manifest": [
+                    [
+                        {
+                            "id": "cancer",
+                            "group": "cancer"
+                        },
+                        "fragpipe-files.fp-manifest:md5,269267190721fc94deeac1154b7e4a63"
+                    ]
+                ],
+                "psm_dir": [
+                    [
+                        {
+                            "id": "cancer",
+                            "group": "cancer"
+                        },
+                        [
+                            "psm.tsv:md5,9d8a287d77631fb4f51d7c3a0c45c339"
+                        ]
+                    ]
+                ],
+                "versions_fragpipe": [
+                    [
+                        "MBG",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "versions_mbg": [
+                    [
+                        "MBG",
+                        "mbg",
+                        "0.3.6"
                     ]
                 ]
-            ],
-            [
-                [
-                    {
-                        "id": "test_mbg"
-                    },
-                    "sample_mbg_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "test_mbg"
-                    },
-                    "sample_glycan_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                [
-                    "MBG",
-                    "mbg",
-                    "24.0"
-                ]
-            ],
-            [
-                [
-                    "MBG",
-                    "fragpipe",
-                    "24.0"
-                ]
-            ]
+            }
         ],
-        "timestamp": "2026-03-31T19:40:12.347520662",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
-        }
-    },
-    "mbg - integration with test data": {
-        "content": [
-            [
-                [
-                    {
-                        "id": "mbg_test"
-                    },
-                    [
-                        "mbg.log:md5,5a53e32a484cc3469d28b7f256803dd3"
-                    ]
-                ]
-            ],
-            [
-                
-            ],
-            [
-                
-            ]
-        ],
-        "timestamp": "2026-03-28T02:02:50.4747555",
-        "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
-        }
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-05T14:48:55.087106757"
     }
 }

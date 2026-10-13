@@ -13,7 +13,7 @@ Used within the FRAGPIPE_GLYCO subworkflow for glycoproteomics analysis.
 | Channel       | Type        | Description                                                   |
 | ------------- | ----------- | ------------------------------------------------------------- |
 | meta          | val(map)    | Sample metadata map                                           |
-| psm_file      | path        | PSM file from PHILOSOPHER_FILTER (`psm.tsv`)                  |
+| psm_file      | path        | PSM file from PHILOSOPHERFILTER (`psm.tsv`)                   |
 | manifest_file | path        | FragPipe manifest file listing input files (`*.fp-manifest`)  |
 | config_cli    | val(string) | MBG parameters as CLI string (e.g., `--maxq 0.01 --mztol 10`) |
 | residue_db    | path        | Glycan residues database file (shared resource)               |
@@ -39,7 +39,7 @@ Used within the FRAGPIPE_GLYCO subworkflow for glycoproteomics analysis.
 
 ## Container
 
-`docker.io/fcyucn/fragpipe:24.0`
+The licensed FragPipe image given with `--fragpipe_container`.
 
 ## Usage
 

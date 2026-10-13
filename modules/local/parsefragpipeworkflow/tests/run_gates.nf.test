@@ -1,0 +1,715 @@
+// FragPipe 24.0 run decisions of PARSEFRAGPIPEWORKFLOW on edited bundled workflows
+// (RC-05, RC-22, RC-33, RC-37) and Write sub mzML.
+// FP = FragPipe-GUI/src/main/java/org/nesvilab/fragpipe/ at tag 24.0.
+// Each test copies a verbatim FragPipe workflow from tests/fixtures/fragpipe_workflows/ and
+// flips the keys under test, so the expected value follows from the cited FragPipe line only.
+// The parser runs for real under -stub (it is pure Python).
+
+nextflow_process {
+
+    name "Test Process PARSEFRAGPIPEWORKFLOW - FragPipe run gates"
+    script "../main.nf"
+    process "PARSEFRAGPIPEWORKFLOW"
+    config "./nextflow.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "parse_fragpipe_workflow"
+    tag "stub"
+
+    test("RC-22 - run-psm-validation is respected") {
+        options "-stub"
+
+        when {
+            process {
+                """
+                // FP/tools/percolator/PercolatorPanel.java:64-67, FP/tools/pepproph/PepProphPanel.java:63-66:
+                //   isRun() = psmValidation.isRun() && checkRun
+                // Without validation ProteinProphet reads the MSFragger pepXML (FP/FragpipeRun.java:1519-1521,
+                // :1677), which FRAGPIPE_VALIDATE passes through, so the run still has input downstream.
+                def src = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text
+                def off = file("\${workDir}/psmval_off.workflow")
+                off.text = src
+                    .replace('run-psm-validation=true', 'run-psm-validation=false')
+                    .replace('peptide-prophet.run-peptide-prophet=false', 'peptide-prophet.run-peptide-prophet=true')
+                // FP/tools/PSMValidation.java:76-77 new UiCheck("Run PSM validation", null, true): absent key = true
+                def absent = file("\${workDir}/psmval_absent.workflow")
+                absent.text = src.readLines().findAll { line -> !line.startsWith('run-psm-validation=') }.join('\\n') + '\\n'
+                // FP/tabs/TabMsfragger.java:570-571 new UiCheck("Run MSFragger", null, true): absent key = true
+                def noFragger = file("\${workDir}/msfragger_absent.workflow")
+                noFragger.text = src.readLines().findAll { line -> !line.startsWith('msfragger.run-msfragger=') }.join('\\n') + '\\n'
+                input[0] = channel.of(
+                    [ [ id: 'off' ], off, ['DDA'] ],
+                    [ [ id: 'absent' ], absent, ['DDA'] ],
+                    [ [ id: 'msfragger_absent' ], noFragger, ['DDA'] ]
+                )
+                """
+            }
+        }
+
+        then {
+            def cfg = process.out.tool_configs_json.collectEntries { meta, json -> [meta.id, new groovy.json.JsonSlurper().parse(new File(json.toString()))] }
+            def runs = cfg.collectEntries { id, c -> [id, ['msfragger', 'percolator', 'peptideprophet', 'proteinprophet'].collectEntries { t -> [t, c[t].run] }] }
+            assertAll(
+                { assert process.success },
+                { assert runs.off == [msfragger: true, percolator: false, peptideprophet: false, proteinprophet: true] : runs.off },
+                // LFQ-MBR.workflow: percolator.run-percolator=true, peptide-prophet.run-peptide-prophet=false
+                { assert runs.absent == [msfragger: true, percolator: true, peptideprophet: false, proteinprophet: true] : runs.absent },
+                { assert runs.msfragger_absent == [msfragger: true, percolator: true, peptideprophet: false, proteinprophet: true] : runs.msfragger_absent },
+                { assert snapshot(runs).match() }
+            )
+        }
+    }
+
+    test("Audit A1 - absent percolator.run-percolator keeps percolator.cmd-opts") {
+        options "-stub"
+
+        when {
+            process {
+                """
+                // FP/tools/percolator/PercolatorPanel.java:134 new UiRadio("Run Percolator", null, true): absent key = selected;
+                // FP/cmd/CmdPercolator.java:118 setCmdLineParams(percolatorCmd), :152 addFreeCommandLineParams pass cmd-opts.
+                // A FragPipe 24.0 --dry-run without the key plans percolator --only-psms --no-terminate --post-processing-tdc.
+                def src = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text
+                def absent = file("\${workDir}/percolator_absent.workflow")
+                absent.text = src.readLines().findAll { line -> !line.startsWith('percolator.run-percolator=') }.join('\\n') + '\\n'
+                input[0] = channel.of(
+                    [ [ id: 'explicit' ], file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true), ['DDA'] ],
+                    [ [ id: 'absent' ], absent, ['DDA'] ]
+                )
+                """
+            }
+        }
+
+        then {
+            def cfg = process.out.tool_configs_json.collectEntries { meta, json -> [meta.id, new groovy.json.JsonSlurper().parse(new File(json.toString()))] }
+            def perc = cfg.collectEntries { id, c -> [id, [run: c.percolator.run, args: c.percolator.args]] }
+            assertAll(
+                { assert process.success },
+                { assert perc.absent == [run: true, args: '--only-psms --no-terminate --post-processing-tdc'] : perc.absent },
+                { assert perc.absent == perc.explicit : perc },
+                { assert snapshot(perc).match() }
+            )
+        }
+    }
+
+    test("Audit A2 - run-validation-tab=false disables the Validation tab tools") {
+        options "-stub"
+
+        when {
+            process {
+                """
+                // FP/tabs/TabValidation.java:58-59, :94 setEnablementUpdater(this, pContent, checkRun): Crystal-C, MSBooster,
+                // PSM validation, PTMProphet, ProteinProphet and Report are disabled (isRun() = isEnabledAndChecked).
+                // A FragPipe 24.0 --dry-run of LFQ-MBR with the tab off plans MSFragger and IonQuant only.
+                def wf = file("\${workDir}/validation_off.workflow")
+                wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text
+                    .replace('run-validation-tab=true', 'run-validation-tab=false')
+                    .replace('quantitation.run-label-free-quant=true', 'quantitation.run-label-free-quant=false')
+                input[0] = [ [ id: 'validation_off' ], wf, ['DDA'] ]
+                """
+            }
+        }
+
+        then {
+            def cfg = new groovy.json.JsonSlurper().parse(new File(process.out.tool_configs_json[0][1].toString()))
+            def runs = ['msfragger', 'crystalc', 'msbooster', 'percolator', 'peptideprophet', 'ptmprophet', 'proteinprophet', 'filter', 'ionquant'].collectEntries { t -> [t, cfg[t].run] }
+            assertAll(
+                { assert process.success },
+                { assert runs == [msfragger: true, crystalc: false, msbooster: false, percolator: false, peptideprophet: false, ptmprophet: false, proteinprophet: false, filter: false, ionquant: false] : runs },
+                { assert snapshot(runs).match() }
+            )
+        }
+    }
+
+    test("Audit A2 - run-validation-tab=false with IonQuant fails: no psm.tsv") {
+        options "-stub"
+
+        when {
+            process {
+                """
+                // FragPipe still plans IonQuant on <group>/psm.tsv (FP/cmd/CmdIonquant.java:318), which Report never writes.
+                def wf = file("\${workDir}/validation_off_ionquant.workflow")
+                wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text
+                    .replace('run-validation-tab=true', 'run-validation-tab=false')
+                input[0] = [ [ id: 'validation_off_ionquant' ], wf, ['DDA'] ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.failed },
+                { assert (process.stdout + process.stderr).join('\n').contains('ERROR: Philosopher report does not run (phi-report.run-report=false or run-validation-tab=false)') },
+                { assert (process.stdout + process.stderr).join('\n').contains('these tools read it: ionquant') }
+            )
+        }
+    }
+
+    test("RC-22 - run-msfragger=false fails: msproteomics cannot reuse a FragPipe work directory") {
+        options "-stub"
+
+        when {
+            process {
+                """
+                // FP/FragpipeRun.java:1456 new CmdMsfragger(tabMsf.isRun(), ...); :1519-1521 refill the MSFragger
+                // outputs of the work directory for later stages even when MSFragger does not run.
+                def wf = file("\${workDir}/msfragger_off.workflow")
+                wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text
+                    .replace('msfragger.run-msfragger=true', 'msfragger.run-msfragger=false')
+                input[0] = [ [ id: 'msfragger_off' ], wf, ['DDA'] ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.failed },
+                { assert (process.stdout + process.stderr).join('\n').contains('ERROR: MSFragger is disabled (msfragger.run-msfragger=false).') }
+            )
+        }
+    }
+
+    test("RC-05 - label-free quant gate, --prot 0.01 before the dont-use-protXML strip, TMT modlist") {
+        options "-stub"
+
+        when {
+            process {
+                """
+                def fx = "${baseDir}/tests/fixtures/fragpipe_workflows"
+                def lfq = file("\${fx}/LFQ-MBR.workflow", checkIfExists: true).text
+                def tmt = file("\${fx}/TMT10.workflow", checkIfExists: true).text
+                // dont-use-prot-proph-file=true with label-free IonQuant on:
+                // FP/cmd/CmdPhilosopherFilter.java:86-96 rewrites --prot 0.01, then strips --sequential and --prot
+                def nopx = file("\${workDir}/lfq_dont_use_protxml.workflow")
+                nopx.text = lfq.replace('phi-report.dont-use-prot-proph-file=false', 'phi-report.dont-use-prot-proph-file=true')
+                // blank filter text: CmdPhilosopherFilter.java:83 skips the rewrite; :114 still appends --razor
+                def blank = file("\${workDir}/lfq_blank_filter.workflow")
+                blank.text = lfq.readLines().collect { line -> line.startsWith('phi-report.filter=') ? 'phi-report.filter=' : line }.join('\\n') + '\\n'
+                // TMT with "Run MS1 quant" on: label-free IonQuant is its own command (FP/FragpipeRun.java:1845-1846)
+                def tmtLfq = file("\${workDir}/tmt10_lfq.workflow")
+                tmtLfq.text = tmt.replace('quantitation.run-label-free-quant=false', 'quantitation.run-label-free-quant=true')
+                // label-free IonQuant on: --prot 0.05 is rewritten to --prot 0.01 (CmdPhilosopherFilter.java:86-88)
+                def prot05 = file("\${workDir}/lfq_prot005.workflow")
+                prot05.text = lfq.replace('phi-report.filter=--sequential --prot 0.01 --picked', 'phi-report.filter=--sequential --prot 0.05 --picked')
+                // label-free IonQuant on and no --prot: --prot 0.01 is appended (CmdPhilosopherFilter.java:89-91)
+                def noProt = file("\${workDir}/lfq_no_prot.workflow")
+                noProt.text = lfq.replace('phi-report.filter=--sequential --prot 0.01 --picked', 'phi-report.filter=--sequential --picked')
+                input[0] = channel.of(
+                    [ [ id: 'prot05' ], prot05, ['DDA'] ],
+                    [ [ id: 'no_prot' ], noProt, ['DDA'] ],
+                    // Nonspecific-HLA.workflow: phi-report.filter=--sequential --prot 1,
+                    // quantitation.run-label-free-quant=false -> no rewrite, --prot 1 kept
+                    [ [ id: 'hla' ], file("\${fx}/Nonspecific-HLA.workflow", checkIfExists: true), ['DDA'] ],
+                    [ [ id: 'nopx' ], nopx, ['DDA'] ],
+                    [ [ id: 'blank' ], blank, ['DDA'] ],
+                    [ [ id: 'tmt10' ], file("\${fx}/TMT10.workflow", checkIfExists: true), ['DDA'] ],
+                    [ [ id: 'tmt10_lfq' ], tmtLfq, ['DDA'] ]
+                )
+                """
+            }
+        }
+
+        then {
+            def cfg = process.out.tool_configs_json.collectEntries { meta, json -> [meta.id, new groovy.json.JsonSlurper().parse(new File(json.toString()))] }
+            def legacyFilter = process.out.all_configs.collectEntries { meta, dir ->
+                [meta.id, new File("${dir}/phi-report.config").readLines().find { line -> line.startsWith('filter=') }]
+            }
+            assertAll(
+                { assert process.success },
+                // LFQ-MBR.workflow: phi-report.filter=--sequential --prot 0.01 --razor ... ; razor/sequential/prot all gone
+                // (--razor is never in the options: PHILOSOPHERFILTER appends it after --protxml, CmdPhilosopherFilter.java:107-115)
+                { assert cfg.nopx.ionquant.run == true },
+                { assert !(cfg.nopx.filter.args =~ /--prot|--sequential|--razor/) : cfg.nopx.filter.args },
+                { assert cfg.blank.filter.args == '' },
+                { assert cfg.prot05.filter.args == '--sequential --prot 0.01 --picked' },
+                { assert cfg.no_prot.filter.args == '--sequential --picked --prot 0.01' },
+                { assert cfg.hla.ionquant.run == false && cfg.hla.filter.args == '--sequential --prot 1' },
+                // legacy phi-report.config carries the same filter flags as tool_configs.json
+                { assert cfg.collect { id, c -> legacyFilter[id] == "filter=${c.filter.args}" }.every() : legacyFilter },
+                // TMT10.workflow: quantitation.run-label-free-quant=false -> no label-free IonQuant, but the
+                // TMT passes keep the modlist (FP/FragpipeRun.java:1852-1855 builds modMassSet unconditionally,
+                // used at :1991 and :2018)
+                { assert cfg.tmt10.ionquant.run == false },
+                { assert cfg.tmt10.ionquant_ms1.modmasses == ['15.9949', '42.0106', '57.02146', '229.16293'] },
+                { assert cfg.tmt10.ionquant_isobaric.modmasses == ['15.9949', '42.0106', '57.02146', '229.16293'] },
+                { assert cfg.tmt10_lfq.ionquant.run == true && cfg.tmt10_lfq.ionquant_ms1.run == true },
+                { assert snapshot(cfg.collectEntries { id, c -> [id, [ionquant: c.ionquant.run, filter: c.filter.args]] }).match() }
+            )
+        }
+    }
+
+    test("RC-05 - label-free quant radio buttons start as FragPipe's when their keys are absent") {
+        options "-stub"
+
+        when {
+            process {
+                """
+                // FP/tools/ionquant/QuantPanelLabelfree.java:222-223 builds FreeQuant then IonQuant in one
+                // ButtonGroup; UiRadio("FreeQuant (deprecated)", null, true) (:234), UiRadio("IonQuant", null, false) (:259).
+                def src = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text.readLines()
+                def drop = { keys -> src.findAll { line -> !keys.any { k -> line.startsWith(k + '=') } }.join('\\n') + '\\n' }
+                def both = file("\${workDir}/no_radio_keys.workflow")
+                both.text = drop.call(['freequant.run-freequant', 'ionquant.run-ionquant'])
+                def ionOnly = file("\${workDir}/ionquant_key_only.workflow")
+                ionOnly.text = drop.call(['freequant.run-freequant'])
+                input[0] = channel.of(
+                    [ [ id: 'no_radio_keys' ], both, ['DDA'] ],
+                    [ [ id: 'ionquant_key_only' ], ionOnly, ['DDA'] ]
+                )
+                """
+            }
+        }
+
+        then {
+            def cfg = process.out.tool_configs_json.collectEntries { meta, json -> [meta.id, new groovy.json.JsonSlurper().parse(new File(json.toString()))] }
+            def runs = cfg.collectEntries { id, c -> [id, [freequant: c.freequant.run, ionquant: c.ionquant.run]] }
+            assertAll(
+                { assert process.success },
+                { assert runs.no_radio_keys == [freequant: true, ionquant: false] : runs.no_radio_keys },
+                // LFQ-MBR.workflow: ionquant.run-ionquant=true selects IonQuant, which deselects FreeQuant
+                { assert runs.ionquant_key_only == [freequant: false, ionquant: true] : runs.ionquant_key_only },
+                { assert snapshot(runs).match() }
+            )
+        }
+    }
+
+    test("RC-05 - IonQuant --modlist: detailed mass offsets, none with O-Pair") {
+        options "-stub"
+
+        when {
+            process {
+                """
+                // FP/FragpipeRun.java:1852-1855 modMassSet; TabMsfragger.java:1705-1750 (mods with sites,
+                // |mass| > 0.01; detailed offsets when use_detailed_offsets); IonQuant gets
+                // oPairPanel.isRun() ? null : modMassSet (FragpipeRun.java:1885), no --modlist for null
+                // (CmdIonquant.java:346-357).
+                def src = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text
+                def detailed = file("\${workDir}/detailed_offsets.workflow")
+                detailed.text = src
+                    .replace('msfragger.use_detailed_offsets=false', 'msfragger.use_detailed_offsets=true')
+                    .replace('msfragger.mass_offsets_detailed=', 'msfragger.mass_offsets_detailed=0.00000(aa\\\\=);-43.98980(aa\\\\=DE);15.99490(aa\\\\=M)')
+                def opair = file("\${workDir}/opair.workflow")
+                opair.text = src.replace('opair.run-opair=false', 'opair.run-opair=true')
+                input[0] = channel.of(
+                    [ [ id: 'lfq' ], file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true), ['DDA'] ],
+                    [ [ id: 'detailed' ], detailed, ['DDA'] ],
+                    [ [ id: 'opair' ], opair, ['DDA'] ]
+                )
+                """
+            }
+        }
+
+        then {
+            def cfg = process.out.tool_configs_json.collectEntries { meta, json -> [meta.id, new groovy.json.JsonSlurper().parse(new File(json.toString()))] }
+            assertAll(
+                { assert process.success },
+                // LFQ-MBR.workflow: enabled var mods 15.9949 M, 42.0106 [^; fixed 57.02146 C; mass_offsets=0
+                { assert cfg.lfq.ionquant.modmasses == ['15.9949', '42.0106', '57.02146'] },
+                { assert cfg.detailed.ionquant.modmasses == ['-43.9898', '15.9949', '42.0106', '57.02146'] },
+                { assert cfg.opair.ionquant.run == true && cfg.opair.ionquant.modmasses == null },
+                { assert snapshot(cfg.collectEntries { id, c -> [id, c.ionquant.modmasses] }).match() }
+            )
+        }
+    }
+
+    test("RC-05 - empty mod mass set still passes --modlist with an empty file") {
+        options "-stub"
+
+        when {
+            process {
+                """
+                // FP/cmd/CmdIonquant.java:346-357 passes --modlist with an empty file when modMassSet is empty
+                def wf = file("\${workDir}/no_mods.workflow")
+                wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text.readLines().collect { line ->
+                    line.startsWith('msfragger.table.var-mods=') ? 'msfragger.table.var-mods=' :
+                        line.startsWith('msfragger.table.fix-mods=') ? 'msfragger.table.fix-mods=' : line
+                }.join('\\n') + '\\n'
+                input[0] = [ [ id: 'no_mods' ], wf, ['DDA'] ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                // FragPipe writes modmasses_ionquant.txt even when the set is empty and passes --modlist
+                // (CmdIonquant.java:340-357, FragpipeRun.java:1852-1855); IONQUANT writes the empty file
+                { assert process.success },
+                { assert process.out.tool_configs_json.collect { _meta, json -> new groovy.json.JsonSlurper().parse(new File(json.toString())).ionquant.modmasses } == [[]] }
+            )
+        }
+    }
+
+    test("RC-33 - PTM-Shepherd runs for glycan assignment alone") {
+        options "-stub"
+
+        when {
+            process {
+                """
+                // FP/FragpipeRun.java:2096 isRunShepherd = ptmshepherdPanel.isRun() || ptmsGlycanPanel.isRun()
+                // glyco-N-LFQ.workflow: ptmshepherd.run-shepherd=false, ptmshepherd.run_glyco_mode=true
+                def fx = "${baseDir}/tests/fixtures/fragpipe_workflows"
+                def none = file("\${workDir}/glyco_off.workflow")
+                none.text = file("\${fx}/glyco-N-LFQ.workflow", checkIfExists: true).text
+                    .replace('ptmshepherd.run_glyco_mode=true', 'ptmshepherd.run_glyco_mode=false')
+                input[0] = channel.of(
+                    [ [ id: 'glyco' ], file("\${fx}/glyco-N-LFQ.workflow", checkIfExists: true), ['DDA'] ],
+                    [ [ id: 'none' ], none, ['DDA'] ]
+                )
+                """
+            }
+        }
+
+        then {
+            def cfg = process.out.tool_configs_json.collectEntries { meta, json -> [meta.id, new groovy.json.JsonSlurper().parse(new File(json.toString()))] }
+            assertAll(
+                { assert process.success },
+                { assert cfg.glyco.ptmshepherd.run == true },
+                { assert cfg.glyco.ptmshepherd.args.readLines().contains('glyco_only_mode = true') },
+                { assert cfg.none.ptmshepherd.run == false },
+                { assert snapshot(cfg.collectEntries { id, c -> [id, c.ptmshepherd.run] }).match() }
+            )
+        }
+    }
+
+    test("Audit A4 - msfragger.digest-only=true fails: FragPipe skips the search") {
+        options "-stub"
+
+        when {
+            process {
+                """
+                // FP/tabs/TabMsfragger.java:1932-1934 isRun() = isEnabledAndChecked(checkRun) && !isDigestOnly()
+                def wf = file("\${workDir}/digest_only.workflow")
+                wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text
+                    .replace('msfragger.digest-only=false', 'msfragger.digest-only=true')
+                input[0] = [ [ id: 'digest_only' ], wf, ['DDA'] ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.failed },
+                { assert (process.stdout + process.stderr).join('\n').contains('ERROR: MSFragger digest only was enabled (msfragger.digest-only=true)') }
+            )
+        }
+    }
+
+    test("Audit A5 - FreeQuant with phi-report.run-report=false fails: report of an unfiltered workspace") {
+        options "-stub"
+
+        when {
+            process {
+                """
+                // FP/FragpipeRun.java:1690 DbAnnotate, :1701 Filter on reportPanel.isRun(); :1767 Report on reportPanel.isRun() || isRunFreeQuant()
+                def wf = file("\${workDir}/freequant_report_off.workflow")
+                wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text
+                    .replace('freequant.run-freequant=false', 'freequant.run-freequant=true')
+                    .replace('ionquant.run-ionquant=true', 'ionquant.run-ionquant=false')
+                    .replace('phi-report.run-report=true', 'phi-report.run-report=false')
+                input[0] = [ [ id: 'freequant_report_off' ], wf, ['DDA'] ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.failed },
+                { assert (process.stdout + process.stderr).join('\n').contains('ERROR: FreeQuant runs without the Philosopher report panel') }
+            )
+        }
+    }
+
+    test("RC-37 - Skyline fails like FragPipe on Linux") {
+        options "-stub"
+
+        when {
+            process {
+                """
+                // FP/tools/skyline/SkylinePanel.java:332-345 (null path off Windows), FP/cmd/CmdSkyline.java:80-89
+                def wf = file("\${workDir}/skyline.workflow")
+                wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text
+                    .replace('skyline.run-skyline=false', 'skyline.run-skyline=true')
+                input[0] = [ [ id: 'skyline' ], wf, ['DDA'] ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.failed },
+                { assert (process.stdout + process.stderr).join('\n').contains('ERROR: Skyline was requested but no installed version could be found!') }
+            )
+        }
+    }
+
+    test("RC-37 - Transfer learning fails") {
+        options "-stub"
+
+        when {
+            process {
+                """
+                // FP/FragpipeRun.java:2254-2256 (CmdTransferLearning, CmdMsfraggerDigest);
+                // FP/cmd/CmdTransferLearning.java:123-147 needs an external server credential file
+                def wf = file("\${workDir}/transfer_learning.workflow")
+                wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/DIA_SpecLib_Quant.workflow", checkIfExists: true).text
+                    .replace('transfer-learning.run-transfer-learning=false', 'transfer-learning.run-transfer-learning=true')
+                input[0] = [ [ id: 'tl' ], wf, ['DDA'] ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.failed },
+                { assert (process.stdout + process.stderr).join('\n').contains('ERROR: Transfer learning was enabled (transfer-learning.run-transfer-learning=true)') }
+            )
+        }
+    }
+
+    // FP/FragpipeRun.java:2388-2391 runs CmdWriteSubMzml when tab-run.write_sub_mzml=true (TabRun.java:220-221,
+    // :487-488); the Run tab turns "Print decoys" on (TabRun.java:240-243), so Report gets --decoys
+    test("Write sub mzML runs with its threshold and report decoys") {
+        options "-stub"
+
+        when {
+            process {
+                """
+                def wf = file("\${workDir}/write_sub_mzml.workflow")
+                wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text
+                    .replace('tab-run.write_sub_mzml=false', 'tab-run.write_sub_mzml=true')
+                input[0] = [ [ id: 'sub' ], wf, ['DDA'] ]
+                """
+            }
+        }
+
+        then {
+            def json = new groovy.json.JsonSlurper().parse(new File(process.out.tool_configs_json[0][1].toString()))
+            assertAll(
+                { assert process.success },
+                { assert json.writesubmzml == [run: true, args: '', config_type: 'cli', prob_threshold: '0.5'] },
+                { assert json.filter.report_args.tokenize().contains('--decoys') },
+                { assert snapshot(json.writesubmzml, json.filter.report_args).match() }
+            )
+        }
+    }
+
+    // CmdWriteSubMzml.java:77-80: FragPipe stops for DIA, GPF-DIA, DIA-Lib or DDA+ files
+    test("Write sub mzML with DIA files fails like FragPipe") {
+        options "-stub"
+
+        when {
+            process {
+                """
+                def wf = file("\${workDir}/write_sub_mzml_dia.workflow")
+                wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text
+                    .replace('tab-run.write_sub_mzml=false', 'tab-run.write_sub_mzml=true')
+                input[0] = [ [ id: 'sub_dia' ], wf, ['DDA', 'DIA'] ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.failed },
+                { assert (process.stdout + process.stderr).join('\n').contains('ERROR: Write sub mzML was enabled but there are non-DDA data types.') }
+            )
+        }
+    }
+
+    test("audit B - MSBooster with an open search fails") {
+        options "-stub"
+
+        when {
+            process {
+                """
+                // FP/cmd/CmdMSBooster.java:107-111: Da units, lower < -3 and upper > 3 (TabMsfragger.isOpenSearch)
+                def wf = file("\${workDir}/msbooster_with_an_open_search_fails.workflow")
+                wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text
+                    .replace('msfragger.precursor_mass_lower=-20', 'msfragger.precursor_mass_lower=-150')
+                    .replace('msfragger.precursor_mass_units=1', 'msfragger.precursor_mass_units=0')
+                    .replace('msfragger.precursor_mass_upper=20', 'msfragger.precursor_mass_upper=500')
+                input[0] = [ [ id: 'refused' ], wf, ['DDA'] ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.failed },
+                { assert (process.stdout + process.stderr).join('\n').contains("ERROR: MSBooster is incompatible with open search. Please disable MSBooster.") },
+                { assert snapshot((process.stdout + process.stderr).collect { l -> l.trim() }.findAll { l -> l.startsWith('ERROR: ') }.unique()).match() }
+            )
+        }
+    }
+
+    test("audit B - MSBooster without a prediction fails") {
+        options "-stub"
+
+        when {
+            process {
+                """
+                // FP/cmd/CmdMSBooster.java:113-116
+                def wf = file("\${workDir}/msbooster_without_a_prediction_fails.workflow")
+                wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text
+                    .replace('msbooster.predict-rt=true', 'msbooster.predict-rt=false')
+                    .replace('msbooster.predict-spectra=true', 'msbooster.predict-spectra=false')
+                input[0] = [ [ id: 'refused' ], wf, ['DDA'] ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.failed },
+                { assert (process.stdout + process.stderr).join('\n').contains("ERROR: At least one of <b>Predict RT</b> or <b>Predict spectra</b> must be enabled if you want to run MSBooster.") },
+                { assert snapshot((process.stdout + process.stderr).collect { l -> l.trim() }.findAll { l -> l.startsWith('ERROR: ') }.unique()).match() }
+            )
+        }
+    }
+
+    test("audit B - MSBooster Koina model without a Koina URL fails") {
+        options "-stub"
+
+        when {
+            process {
+                """
+                // FP/cmd/CmdMSBooster.java:121-124
+                def wf = file("\${workDir}/msbooster_koina_model_without_a_koina_ur.workflow")
+                wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text
+                    .replace('msbooster.rt-model=DIA-NN', 'msbooster.rt-model=Prosit_2019_irt')
+                input[0] = [ [ id: 'refused' ], wf, ['DDA'] ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.failed },
+                { assert (process.stdout + process.stderr).join('\n').contains("ERROR: Koina URL is required for non DIA-NN models") },
+                { assert snapshot((process.stdout + process.stderr).collect { l -> l.trim() }.findAll { l -> l.startsWith('ERROR: ') }.unique()).match() }
+            )
+        }
+    }
+
+    test("audit B - Percolator without pin and pepXML output fails") {
+        options "-stub"
+
+        when {
+            process {
+                """
+                // FP/FragpipeRun.java:252-256
+                def wf = file("\${workDir}/percolator_without_pin_and_pepxml_output.workflow")
+                wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text
+                    .replace('msfragger.output_format=pepXML_pin', 'msfragger.output_format=pepXML')
+                input[0] = [ [ id: 'refused' ], wf, ['DDA'] ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.failed },
+                { assert (process.stdout + process.stderr).join('\n').contains("ERROR: Percolator was enabled but MSFragger's output formats did not contain pin or pepXML") },
+                { assert snapshot((process.stdout + process.stderr).collect { l -> l.trim() }.findAll { l -> l.startsWith('ERROR: ') }.unique()).match() }
+            )
+        }
+    }
+
+    test("audit B - labile mode with remainder masses and no localize_delta_mass fails") {
+        options "-stub"
+
+        when {
+            process {
+                """
+                // FP/cmd/CmdMsfragger.java:418-427
+                def wf = file("\${workDir}/labile_mode_with_remainder_masses_and_no.workflow")
+                wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text
+                    .replace('msfragger.labile_search_mode=off', 'msfragger.labile_search_mode=labile')
+                    .replace('msfragger.remainder_fragment_masses=', 'msfragger.remainder_fragment_masses=203.0794')
+                input[0] = [ [ id: 'refused' ], wf, ['DDA'] ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.failed },
+                { assert (process.stdout + process.stderr).join('\n').contains("ERROR: Fragment remainder masses are specified for MSFragger, but localize_delta_mass is disabled.") },
+                { assert snapshot((process.stdout + process.stderr).collect { l -> l.trim() }.findAll { l -> l.startsWith('ERROR: ') }.unique()).match() }
+            )
+        }
+    }
+
+    test("audit B - an enabled variable modification with invalid sites fails") {
+        options "-stub"
+
+        when {
+            process {
+                """
+                // FP/cmd/CmdMsfragger.java:331-335, pattern [A-Znc\\[\\]\\^\\*]+
+                def wf = file("\${workDir}/an_enabled_variable_modification_with_in.workflow")
+                wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text
+                    .replace('msfragger.table.var-mods=15.9949,M,true,3;', 'msfragger.table.var-mods=15.9949,m1,true,3;')
+                input[0] = [ [ id: 'refused' ], wf, ['DDA'] ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.failed },
+                { assert (process.stdout + process.stderr).join('\n').contains("ERROR: Invalid variable modification sites: m1.") },
+                { assert snapshot((process.stdout + process.stderr).collect { l -> l.trim() }.findAll { l -> l.startsWith('ERROR: ') }.unique()).match() }
+            )
+        }
+    }
+
+    test("audit B - malformed ptmshepherd.varmod_masses fails even with PTM-Shepherd off") {
+        options "-stub"
+
+        when {
+            process {
+                """
+                // FP/tools/ptmshepherd/PtmshepherdPanel.java:816-829, FP/FragpipeRun.java:2113-2122
+                def wf = file("\${workDir}/malformed_ptmshepherd_varmod_masses_fail.workflow")
+                wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text
+                    .replace('ptmshepherd.varmod_masses=', 'ptmshepherd.varmod_masses=Hex:')
+                input[0] = [ [ id: 'refused' ], wf, ['DDA'] ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.failed },
+                { assert (process.stdout + process.stderr).join('\n').contains("ERROR: There are errors in PTM-Shepherd configuration panel on Report tab") },
+                { assert snapshot((process.stdout + process.stderr).collect { l -> l.trim() }.findAll { l -> l.startsWith('ERROR: ') }.unique()).match() }
+            )
+        }
+    }
+
+    test("audit B - IonQuant text value with whitespace fails") {
+        options "-stub"
+
+        when {
+            process {
+                """
+                // FP/cmd/CmdIonquant.java:303-304 adds each value as one argv element
+                def wf = file("\${workDir}/ionquant_text_value_with_whitespace_fail.workflow")
+                wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text
+                    .replace('ionquant.excludemods=', 'ionquant.excludemods=M15.9949; STY79.96633')
+                input[0] = [ [ id: 'refused' ], wf, ['DDA'] ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.failed },
+                { assert (process.stdout + process.stderr).join('\n').contains("ERROR: ionquant.excludemods='M15.9949; STY79.96633' contains whitespace") },
+                { assert snapshot((process.stdout + process.stderr).collect { l -> l.trim() }.findAll { l -> l.startsWith('ERROR: ') }.unique()).match() }
+            )
+        }
+    }
+}

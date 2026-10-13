@@ -1,23 +1,35 @@
+include { opairCommands; taskDirArg; taskFileCommand; shellQuote } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
+include { textFileCommand } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/write_text_file'
+
+/*
+ * OPAIR: O-Pair O-glycan localization for one FragPipe group (CmdOPair.java)
+ *
+ * Input:
+ *   - meta: group metadata map (meta.id = group directory name)
+ *   - psm_dir: the group directory with psm.tsv (copied: O-Pair writes its results into psm.tsv)
+ *   - spectra: the group's LC-MS files as FragPipe lists them (<base>_calibrated.mzML,
+ *     <base>_uncalibrated.mzML or the input file, CmdOPair.java:107-114)
+ *   - pairs: PairScans <base>.pairs files ([] for single scan type); O-Pair finds them next to
+ *     the listed spectra after stripping _calibrated/_uncalibrated
+ *   - oxonium_file: the user's oxonium ion definitions file (opair.oxonium_filtering_file, "-f", CmdOPair.java:178-180)
+ *     or [] for FragPipe's default in the tools dir (CmdOPair.java:171-177)
+ *   - filelist: spectra file names, in FragPipe's order, for filelist_opair.txt
+ *   - argv: O-Pair argv from PARSEFRAGPIPEWORKFLOW (one token per flag, @TOKENS@ filled here (@OXONIUM_FILE@ = the staged oxonium file))
+ *
+ * Output:
+ *   - psm_dir: the group directory: psm.tsv with O-Pair results, filelist_opair.txt, O-Pair output
+ *   - log: opair.log
+ */
 process OPAIR {
     tag "${meta.id}"
     label 'process_high'
 
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'docker://fcyucn/fragpipe:24.0' :
-        'docker.io/fcyucn/fragpipe:24.0' }"
-
     input:
-    // O-Pair performs O-glycoproteomics analysis
-    // psm_file: psm.tsv from PHILOSOPHER_FILTER
-    // mzml_files: mass spec files
-    // config_cli: O-Pair parameters as CLI string (coupled with sample inputs)
-    tuple val(meta), path(psm_file), path(mzml_files, stageAs: 'spectra/*'), val(config_cli)
-    path(glycan_db)  // glycan database file (shared resource)
+    tuple val(meta), path(psm_dir, stageAs: 'input/*'), path(spectra, stageAs: 'spectra/*'), path(pairs, stageAs: 'spectra/*'), path(oxonium_file, stageAs: 'oxonium/*'), val(filelist), val(argv)
 
     output:
-    tuple val(meta), path("${prefix}")                              , emit: results_dir
-    tuple val(meta), path("${prefix}/*_opair_results.tsv")          , emit: results, optional: true
-    tuple val(meta), path("${prefix}/*_opair_glycoforms.tsv")       , emit: glycoforms, optional: true
+    tuple val(meta), path("${meta.id}", type: 'dir'), emit: psm_dir
+    tuple val(meta), path("opair.log")               , emit: log
     tuple val("${task.process}"), val('opair'), eval("cat .opair_version"), emit: versions_opair, topic: versions
     tuple val("${task.process}"), val('fragpipe'), eval("cat .fragpipe_version"), emit: versions_fragpipe, topic: versions
 
@@ -27,86 +39,50 @@ process OPAIR {
     script:
     def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id}"
-    def tools_dir = task.ext.fragpipe_tools_dir ?: '/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools'
-
-    // O-Pair CLI parameters:
-    // -b: product PPM tolerance
-    // -c: precursor PPM tolerance
-    // -f: oxonium filter rules file
-    // -m: min oxonium intensity
-    // -g: O-glycan database file
-    // -x: glycan residues file
-    // -y: glycan mods file
-    // -n: max number of glycans
-    // -z: allowed sites (e.g., STY)
-    // -t: number of threads
-    // -i: min isotope
-    // -j: max isotope
-    // -r: file list
-    // -s: psm file
-    // -o: output directory
-
+    // staged as input/<name>: compare the last path element
+    if (psm_dir.toString().tokenize("/").last() != meta.id) {
+        error("OPAIR: group directory ${psm_dir} does not match meta.id ${meta.id}")
+    }
+    def cmds = opairCommands(meta.id, filelist, argv, oxonium_file, task)
     """
-
     export HOME=\$(pwd)
-    mkdir -p ${prefix}
+    TASK_DIR=\$(pwd)
 
-    TOOLS_DIR="${tools_dir}"
+    # O-Pair rewrites psm.tsv: run it on a copy of the group directory
+    cp -rL ${shellQuote("input/${meta.id}")} ${shellQuote(meta.id)}
+    test -f ${shellQuote("${meta.id}/psm.tsv")}
 
-    # Discover O-Pair DLL
-    OPAIR_DLL="${tools_dir}/opair/CMD.dll"
-    [ ! -f "\$OPAIR_DLL" ] && echo "WARNING: O-Pair DLL not found at \$OPAIR_DLL" >&2
-    _fp_ver=\$(echo "\$TOOLS_DIR" | grep -oP 'fragpipe-\\K[0-9]+\\.[0-9]+[0-9.]*' | head -1 || true)
+    # filelist_opair.txt in the group directory, absolute paths (CmdOPair.java:100-117)
+    for NAME in ${cmds.spectra.collect { n -> shellQuote(n) }.join(' ')}; do
+        test -e "spectra/\$NAME"
+    done
+    ${taskFileCommand("${meta.id}/filelist_opair.txt", cmds.filelist)}
 
-    echo "\$_fp_ver" > .opair_version
+    [ -f ${shellQuote(cmds.dll)} ] || { echo ${shellQuote("ERROR: Could not find O-Pair executable file ${cmds.dll}")} >&2; exit 1; }
+    # FragPipe stops when the glycan definition files are missing (CmdOPair.java:150-190)
+    for TOOL_FILE in ${cmds.tool_files.collect { f -> shellQuote(f) }.join(' ')}; do
+        [ -f "\$TOOL_FILE" ] || { echo "ERROR: O-Pair file \$TOOL_FILE not found" >&2; exit 1; }
+    done
 
-    echo "\$_fp_ver" > .fragpipe_version
+    echo ${shellQuote(cmds.fragpipe_version)} > .fragpipe_version
+    cp .fragpipe_version .opair_version
 
-    # O-Pair expects Glycan_Mods/glycan_residues.txt and glycan_mods.txt relative to its
-    # DLL directory (GlobalVariables.cs:61). The container stores these files in
-    # tools/Glycan_Databases/ instead of tools/opair/Glycan_Mods/. Rather than relying on
-    # symlinks (which can fail with read-only container filesystems), pass the paths
-    # explicitly via -x (glycan residues) and -y (glycan mods) CLI flags.
-    GLYCAN_SRC="\$TOOLS_DIR/Glycan_Databases"
-    GLYCAN_RESIDUES_FLAG=""
-    GLYCAN_MODS_FLAG=""
-    if [ -d "\$GLYCAN_SRC" ]; then
-        [ -f "\$GLYCAN_SRC/glycan_residues.txt" ] && GLYCAN_RESIDUES_FLAG="-x \$GLYCAN_SRC/glycan_residues.txt"
-        [ -f "\$GLYCAN_SRC/glycan_mods.txt" ] && GLYCAN_MODS_FLAG="-y \$GLYCAN_SRC/glycan_mods.txt"
-    fi
-
-    # Create file list for O-Pair
-    find spectra -type f -name "*.mzML" > ${prefix}/filelist_opair.txt
-
-    # Run O-Pair
-    CMD="dotnet \$OPAIR_DLL -t ${task.cpus} -s ${psm_file} -r ${prefix}/filelist_opair.txt -o ${prefix} -g ${glycan_db} \$GLYCAN_RESIDUES_FLAG \$GLYCAN_MODS_FLAG ${config_cli} ${args}"
-    printf '%s\\n' "\$CMD" > ${prefix}/opair.log
-    dotnet "\$OPAIR_DLL" \\
-        -t ${task.cpus} \\
-        -s ${psm_file} \\
-        -r ${prefix}/filelist_opair.txt \\
-        -o ${prefix} \\
-        -g ${glycan_db} \\
-        \$GLYCAN_RESIDUES_FLAG \\
-        \$GLYCAN_MODS_FLAG \\
-        ${config_cli} \\
-        ${args} \\
-        2>&1 | tee -a ${prefix}/opair.log
-
+    # FragPipe runs O-Pair from its work dir with one argv token per flag ("-b 20.0")
+    CMD=( dotnet ${shellQuote(cmds.dll)} ${cmds.argv.collect { t -> taskDirArg(t) }.join(' ')} ${args} )
+    printf '%q ' "\${CMD[@]}" > opair.log
+    printf '\\n' >> opair.log
+    "\${CMD[@]}" 2>&1 | tee -a opair.log
     """
 
     stub:
     prefix = task.ext.prefix ?: "${meta.id}"
+    def cmds = opairCommands(meta.id, filelist, argv, oxonium_file, task)
+    // relative paths in the stub (deterministic snapshots); the log holds the filled argv, {TASK_DIR} unexpanded
     """
-    mkdir -p ${prefix}
-    touch ${prefix}/sample_opair_results.tsv
-    touch ${prefix}/sample_opair_glycoforms.tsv
-    touch ${prefix}/opair.log
-    TOOLS_DIR="${task.ext.fragpipe_tools_dir ?: '/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools'}"
-    _fp_ver=\$(echo "\$TOOLS_DIR" | grep -oP 'fragpipe-\\K[0-9]+\\.[0-9]+[0-9.]*' | head -1 || true)
-
-    echo "\$_fp_ver" > .opair_version
-    echo "\$_fp_ver" > .fragpipe_version
-
+    cp -rL ${shellQuote("input/${meta.id}")} ${shellQuote(meta.id)}
+    ${taskFileCommand("${meta.id}/filelist_opair.txt", cmds.filelist.replace('{TASK_DIR}/', ''))}
+    ${textFileCommand('opair.log', cmds.argv.collect { t -> "${t}\n" }.join(''))}
+    echo ${shellQuote(cmds.fragpipe_version)} > .fragpipe_version
+    cp .fragpipe_version .opair_version
     """
 }

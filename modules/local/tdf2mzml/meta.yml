@@ -11,29 +11,44 @@ tools:
       homepage: https://github.com/mafreitas/tdf2mzml
       documentation: https://github.com/mafreitas/tdf2mzml
 input:
-  - meta:
-      type: map
-      description: Groovy Map containing sample information
-  - rawfile:
-      type: file
-      description: Bruker raw file archived using tar
-      pattern: "*.d.tar"
+  - - meta:
+        type: map
+        description: Groovy Map containing sample information
+    - rawfile:
+        type: file
+        description: Bruker raw file archived using tar
+        pattern: "*.d.tar"
+        ontologies: []
 output:
-  - mzmls_converted:
-      type: tuple
-      description: Tuple of meta map and converted mzML file
-      pattern: "*.mzML"
-  - dotd_files:
-      type: tuple
-      description: Tuple of meta map and renamed .d directory
-      pattern: "*.d"
-  - versions:
-      type: file
-      description: File containing software versions
-      pattern: "versions.yml"
-  - log:
-      type: file
-      description: Log file from conversion
-      pattern: "*.log"
+  mzmls_converted:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - ${rawfile.baseName}.mzML:
+          type: file
+          description: Converted mzML file
+          pattern: "*.mzML"
+          ontologies: []
+  log:
+    - "*.log":
+        type: file
+        description: Log file from conversion
+        pattern: "*.log"
+        ontologies: []
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies: []
+
+topics:
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies: []
+
 authors:
   - "@jspaezp"

@@ -1,0 +1,7 @@
+{
+    "rt_cal": "noiRT",
+    "im_cal": "noIM",
+    "convert_args": "--max_delta_unimod 0.02 --max_delta_ppm 15.0 --fragment_types [\\'b\\',\\'y\\',]",
+    "library_args": "--rt_lowess_fraction 0.0",
+    "intermediate": "delete_intermediate_files"
+}

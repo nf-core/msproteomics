@@ -1,0 +1,606 @@
+// Workflow-level stub tests for MSPROTEOMICS_DIANN (RC-41, RC-43).
+// Stub runs build every DIA-NN command line exactly as the real run does, so the
+// assertions read the generated .command.sh files and the experimental design.
+
+nextflow_workflow {
+
+    name "Test Workflow MSPROTEOMICS_DIANN"
+    script "../diann.nf"
+    workflow "MSPROTEOMICS_DIANN"
+
+    tag "workflows"
+    tag "msproteomics_diann"
+
+    // Task scripts (.command.sh) of this test run, keyed by process name (last ':' segment),
+    // located through the run's trace file (hash -> work directory).
+    def taskScripts = { String output_dir ->
+        def scripts = [:].withDefault { [] }
+        def work = new File("${output_dir}/../work")
+        new File("${output_dir}/../meta/trace.csv").readLines().drop(1).each { line ->
+            def cols = line.split('\t')
+            def (prefix, suffix) = cols[1].tokenize('/')
+            def task_dir = new File(work, prefix).listFiles().find { d -> d.name.startsWith(suffix) }
+            def process = cols[3].replaceAll(/ \(.*\)$/, '').tokenize(':')[-1]
+            scripts[process] << new File(task_dir, '.command.sh').text
+        }
+        scripts
+    }
+
+    test("G1.3/G1.5/G1.14 - user tolerances reach DIA-NN, every file is in the design") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                mode                          = 'diann'
+                input                         = ss.toString()
+                database                      = "${fixtures}/test.fasta"
+                diann_mass_acc_automatic      = false
+                diann_scan_window_automatic   = false
+                diann_scan_window             = 9
+                precursor_mass_tolerance      = 7
+                fragment_mass_tolerance       = 13
+                outdir                        = "$outputDir"
+            }
+        }
+
+        then {
+            def scripts = taskScripts(outputDir)
+            def preliminary = scripts['DIANN_PRELIMINARYANALYSIS']
+            def individual  = scripts['DIANN_INDIVIDUALANALYSIS']
+            def expdesign = new File("${outputDir}/../work").listFiles().collectMany { d ->
+                def found = []
+                d.eachFileRecurse { f -> if (f.name == 'experimental_design.tsv' && !java.nio.file.Files.isSymbolicLink(f.toPath())) { found << f } }
+                found
+            }.collect { f -> f.text }.unique()
+            assertAll(
+                { assert workflow.success },
+                { assert preliminary.size() == 4 },
+                { assert preliminary.every { cmd -> cmd.contains('--mass-acc 13') && cmd.contains('--mass-acc-ms1 7') && cmd.contains('--window 9') } : preliminary },
+                { assert individual.size() == 4 },
+                { assert individual.every { cmd -> cmd.contains('--mass-acc 13 --mass-acc-ms1 7 --window 9') } : individual },
+                { assert !individual.any { cmd -> cmd.contains('null') } },
+                { assert expdesign.size() == 1 },
+                { assert snapshot(expdesign[0], scripts.keySet().sort(), scripts.collectEntries { k, v -> [k, v.size()] }.sort()).match() }
+            )
+        }
+    }
+
+    test("G1.11 - automatic mass accuracy takes the empirical-library log settings") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                mode     = 'diann'
+                input    = ss.toString()
+                database = "${fixtures}/test.fasta"
+                outdir   = "$outputDir"
+            }
+        }
+
+        then {
+            def individual = taskScripts(outputDir)['DIANN_INDIVIDUALANALYSIS']
+            assertAll(
+                { assert workflow.success },
+                // DIANN stub log: Mass accuracy = 20ppm, MS1 accuracy = 10ppm, Scan window = 8
+                { assert individual.size() == 4 && individual.every { cmd -> cmd.contains('--mass-acc 20 --mass-acc-ms1 10 --window 8') } : individual }
+            )
+        }
+    }
+
+    test("G1.4 - skip preliminary analysis uses diann_empirical_assembly_lib") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                def lib = new File("${outputDir}/my_empirical.speclib")
+                lib.text = "lib"
+                def log = new File("${outputDir}/my_empirical.log.txt")
+                log.text = "[0:01] Averaged recommended settings for this experiment: Mass accuracy = 11ppm, MS1 accuracy = 6ppm, Scan window = 5\n"
+                mode                            = 'diann'
+                input                           = ss.toString()
+                database                        = "${fixtures}/test.fasta"
+                diann_skip_preliminary_analysis = true
+                diann_empirical_assembly_lib    = lib.toString()
+                diann_empirical_assembly_log    = log.toString()
+                outdir                          = "$outputDir"
+            }
+        }
+
+        then {
+            def scripts = taskScripts(outputDir)
+            assertAll(
+                { assert workflow.success },
+                { assert !scripts.containsKey('DIANN_PRELIMINARYANALYSIS') },
+                { assert !scripts.containsKey('DIANN_ASSEMBLEEMPIRICALLIBRARY') },
+                { assert scripts['DIANN_INDIVIDUALANALYSIS'].size() == 4 },
+                { assert scripts['DIANN_INDIVIDUALANALYSIS'].every { cmd -> cmd.contains('my_empirical.speclib') && cmd.contains('--mass-acc 11 --mass-acc-ms1 6 --window 5') } }
+            )
+        }
+    }
+
+    test("G1.23 - diaphos variant searches Phospho (STY)") {
+        options "-stub"
+        tag "stub"
+        config "../../conf/variants/diaphos.config"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                mode     = 'diann'
+                input    = ss.toString()
+                database = "${fixtures}/test.fasta"
+                outdir   = "$outputDir"
+            }
+        }
+
+        then {
+            // QUANTMSUTILS_DIANNCFG is tagged with its enzyme + modification combination
+            def cfg = workflow.trace.tasks().collect { task -> task.name }.findAll { name -> name.contains('QUANTMSUTILS_DIANNCFG') }
+            assertAll(
+                { assert workflow.success },
+                { assert cfg == ['MSPROTEOMICS_DIANN:DIA_PROTEOMICS_ANALYSIS:QUANTMSUTILS_DIANNCFG (Trypsin_P__Oxidation__M__Phospho__S__Phospho__T__Phospho__Y_)'] : cfg }
+            )
+        }
+    }
+
+    test("G1.15/G1.16 - compressed, Bruker and Thermo inputs reach DIA-NN under their own names") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/spectra_formats.csv").text.replace('${FIXTURES}', fixtures)
+                mode               = 'diann'
+                input              = ss.toString()
+                database           = "${fixtures}/test.fasta"
+                openms_peakpicking = true
+                outdir             = "$outputDir"
+            }
+        }
+
+        then {
+            def final_quant = taskScripts(outputDir)['DIANN_FINALQUANTIFICATION']
+            assertAll(
+                { assert workflow.success },
+                { assert final_quant.size() == 1 },
+                { assert ['bruker.d', 'dia.mzML', 'thermo.mzML', 'bruker2.d'].every { name -> final_quant[0].contains("--f ${name}") } : final_quant }
+            )
+        }
+    }
+
+    test("iProteomes - the hosted DIA-NN library is searched when the settings equal the recorded ones") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def store = "${fixtures}/iproteomes"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                mode            = 'diann'
+                input           = ss.toString()
+                database        = null
+                proteome        = 'mouse'
+                iproteomes_base = store
+                outdir          = "$outputDir"
+                iproteomes      = [mouse: entry]
+            }
+        }
+
+        then {
+            def scripts = taskScripts(outputDir)
+            assertAll(
+                { assert workflow.success },
+                { assert !scripts.containsKey('DIANN_INSILICOLIBRARYGENERATION') },
+                { assert scripts['DIANN_PRELIMINARYANALYSIS'].every { cmd -> cmd.contains('--lib test.predicted.speclib') } : scripts['DIANN_PRELIMINARYANALYSIS'] }
+            )
+        }
+    }
+
+    test("iProteomes - an entry without a DIA-NN library has it built from the iProteome fasta") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def store = "${fixtures}/iproteomes"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                mode            = 'diann'
+                input           = ss.toString()
+                database        = null
+                proteome        = 'mouse'
+                iproteomes_base = store
+                outdir          = "$outputDir"
+                iproteomes      = [mouse: entry.findAll { k, v -> k != 'diann_speclib' }]
+            }
+        }
+
+        then {
+            def scripts = taskScripts(outputDir)
+            assertAll(
+                { assert workflow.success },
+                { assert scripts['DIANN_INSILICOLIBRARYGENERATION'].size() == 1 },
+                { assert scripts['DIANN_INSILICOLIBRARYGENERATION'][0].contains('touch test_Trypsin_P__Oxidation__M_.predicted.speclib') : scripts['DIANN_INSILICOLIBRARYGENERATION'] }
+            )
+        }
+    }
+
+    test("iProteomes - --database searches the user FASTA and the pipeline builds the library") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def store = "${fixtures}/iproteomes"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                mode            = 'diann'
+                input           = ss.toString()
+                database        = null
+                proteome        = 'mouse'
+                iproteomes_base = store
+                outdir          = "$outputDir"
+                iproteomes      = [mouse: entry]
+                database        = "${fixtures}/iproteomes/test_decoys_contam.fasta"
+            }
+        }
+
+        then {
+            def scripts = taskScripts(outputDir)
+            assertAll(
+                { assert workflow.success },
+                { assert scripts['DIANN_INSILICOLIBRARYGENERATION'].size() == 1 },
+                { assert scripts['DIANN_INSILICOLIBRARYGENERATION'][0].contains('touch test_decoys_contam_Trypsin_P__Oxidation__M_.predicted.speclib') : scripts['DIANN_INSILICOLIBRARYGENERATION'] }
+            )
+        }
+    }
+
+    test("iProteomes - --diann_speclib wins over the hosted library") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def store = "${fixtures}/iproteomes"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                mode            = 'diann'
+                input           = ss.toString()
+                database        = null
+                proteome        = 'mouse'
+                iproteomes_base = store
+                outdir          = "$outputDir"
+                iproteomes      = [mouse: entry]
+                new File("${outputDir}/user.speclib").text = 'stub'
+                diann_speclib   = "${outputDir}/user.speclib"
+            }
+        }
+
+        then {
+            def scripts = taskScripts(outputDir)
+            assertAll(
+                { assert workflow.success },
+                { assert scripts['DIANN_PRELIMINARYANALYSIS'].every { cmd -> cmd.contains('--lib user.speclib') } : scripts['DIANN_PRELIMINARYANALYSIS'] }
+            )
+        }
+    }
+
+    test("iProteomes - --save_reference publishes the library the pipeline built") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def store = "${fixtures}/iproteomes"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                mode            = 'diann'
+                input           = ss.toString()
+                database        = null
+                proteome        = 'mouse'
+                iproteomes_base = store
+                outdir          = "$outputDir"
+                iproteomes      = [mouse: entry.findAll { k, v -> k != 'diann_speclib' }]
+                save_reference  = true
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert new File("${outputDir}/proteome/diann").list().any { name -> name.endsWith('.predicted.speclib') } }
+            )
+        }
+    }
+
+    test("iProteomes - the pipeline built library is not published without --save_reference") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def store = "${fixtures}/iproteomes"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                mode            = 'diann'
+                input           = ss.toString()
+                database        = null
+                proteome        = 'mouse'
+                iproteomes_base = store
+                outdir          = "$outputDir"
+                iproteomes      = [mouse: entry.findAll { k, v -> k != 'diann_speclib' }]
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert !new File("${outputDir}/proteome").exists() }
+            )
+        }
+    }
+
+    test("iProteomes - library settings differing from the recorded ones fail") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def store = "${fixtures}/iproteomes"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                mode            = 'diann'
+                input           = ss.toString()
+                database        = null
+                proteome        = 'mouse'
+                iproteomes_base = store
+                outdir          = "$outputDir"
+                iproteomes      = [mouse: entry]
+                enzyme          = 'Trypsin'
+                allowed_missed_cleavages = 2
+            }
+        }
+
+        then {
+            def output = (workflow.stdout + workflow.stderr).join('\n')
+            assertAll(
+                { assert workflow.failed },
+                { assert output.contains("enzyme library='K*,R*' run='!*P,K*,R*'") : output }
+            )
+        }
+    }
+
+    test("iProteomes - a declared missing DIA-NN library fails") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def store = "${fixtures}/iproteomes"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                mode            = 'diann'
+                input           = ss.toString()
+                database        = null
+                proteome        = 'mouse'
+                iproteomes_base = store
+                outdir          = "$outputDir"
+                iproteomes      = [mouse: entry + [diann_speclib: 'absent.speclib']]
+            }
+        }
+
+        then {
+            def output = (workflow.stdout + workflow.stderr).join('\n')
+            assertAll(
+                { assert workflow.failed },
+                { assert output.contains("is missing or unreadable") : output }
+            )
+        }
+    }
+
+    test("iProteomes - a declared empty DIA-NN library fails") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def store = "${fixtures}/iproteomes"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                mode            = 'diann'
+                input           = ss.toString()
+                database        = null
+                proteome        = 'mouse'
+                iproteomes_base = store
+                outdir          = "$outputDir"
+                iproteomes      = [mouse: entry + [diann_speclib: '']]
+            }
+        }
+
+        then {
+            def output = (workflow.stdout + workflow.stderr).join('\n')
+            assertAll(
+                { assert workflow.failed },
+                { assert output.contains("declares 'diann_speclib' but its path is empty") : output }
+            )
+        }
+    }
+
+    test("iProteomes - an unknown --proteome fails") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def store = "${fixtures}/iproteomes"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                mode            = 'diann'
+                input           = ss.toString()
+                database        = null
+                proteome        = 'mouse'
+                iproteomes_base = store
+                outdir          = "$outputDir"
+                iproteomes      = [mouse: entry]
+                proteome        = 'rat'
+            }
+        }
+
+        then {
+            def output = (workflow.stdout + workflow.stderr).join('\n')
+            assertAll(
+                { assert workflow.failed },
+                { assert output.contains("is not an iProteome") : output }
+            )
+        }
+    }
+
+    test("iProteomes - --proteome without --iproteomes_base fails") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def store = "${fixtures}/iproteomes"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                mode            = 'diann'
+                input           = ss.toString()
+                database        = null
+                proteome        = 'mouse'
+                iproteomes_base = store
+                outdir          = "$outputDir"
+                iproteomes      = [mouse: entry]
+                iproteomes_base = null
+            }
+        }
+
+        then {
+            def output = (workflow.stdout + workflow.stderr).join('\n')
+            assertAll(
+                { assert workflow.failed },
+                { assert output.contains("needs --iproteomes_base") : output }
+            )
+        }
+    }
+
+    test("iProteomes - neither --database nor --proteome fails") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def store = "${fixtures}/iproteomes"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                mode            = 'diann'
+                input           = ss.toString()
+                database        = null
+                proteome        = 'mouse'
+                iproteomes_base = store
+                outdir          = "$outputDir"
+                iproteomes      = [mouse: entry]
+                proteome        = null
+            }
+        }
+
+        then {
+            def output = (workflow.stdout + workflow.stderr).join('\n')
+            assertAll(
+                { assert workflow.failed },
+                { assert output.contains("Needs a protein FASTA") : output }
+            )
+        }
+    }
+
+    test("--diann_speclib skips in-silico library generation") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                def lib = new File("${outputDir}/prebuilt_lib.tsv")
+                lib.text = "PrecursorMz\tProductMz\tLibraryIntensity\tModifiedPeptide\tPrecursorCharge\tProteinId\n"
+                mode          = 'diann'
+                input         = ss.toString()
+                database      = "${fixtures}/test.fasta"
+                diann_speclib = lib.toString()
+                outdir        = "$outputDir"
+            }
+        }
+
+        then {
+            def scripts = taskScripts(outputDir)
+            assertAll(
+                { assert workflow.success },
+                { assert !scripts.containsKey('QUANTMSUTILS_DIANNCFG') },
+                { assert !scripts.containsKey('DIANN_INSILICOLIBRARYGENERATION') },
+                { assert scripts['DIANN_PRELIMINARYANALYSIS'].size() == 4 },
+                { assert scripts['DIANN_PRELIMINARYANALYSIS'].every { cmd -> cmd.contains('--lib prebuilt_lib.tsv') } : scripts['DIANN_PRELIMINARYANALYSIS'] },
+                { assert scripts['DIANN_FINALQUANTIFICATION'].size() == 1 }
+            )
+        }
+    }
+}

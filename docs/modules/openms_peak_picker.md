@@ -1,10 +1,10 @@
-# OPENMS_PEAK_PICKER
+# OPENMSPEAKPICKER
 
 Centroid peak picking using OpenMS PeakPickerHiRes.
 
 ## Description
 
-OPENMS_PEAK_PICKER converts profile-mode mass spectra to centroid mode using the PeakPickerHiRes algorithm from OpenMS.
+OPENMSPEAKPICKER converts profile-mode mass spectra to centroid mode using the PeakPickerHiRes algorithm from OpenMS.
 Centroided spectra are required by most downstream proteomics analysis tools (database search, quantification, etc.).
 This module supports in-memory or low-memory processing modes and configurable MS levels for peak picking.
 
@@ -34,7 +34,7 @@ This module supports in-memory or low-memory processing modes and configurable M
 
 ## Container
 
-`ghcr.io/bigbio/openms-tools-thirdparty:2025.04.14`
+`quay.io/biocontainers/openms:3.5.0--h78fb946_0` (bioconda OpenMS 3.5.0; `environment.yml`)
 
 ## Usage
 

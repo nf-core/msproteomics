@@ -1,0 +1,81 @@
+name: "splitfasta"
+description: Split a FASTA database into M chunks at protein boundaries for parallel MSFragger search
+keywords:
+  - proteomics
+  - FASTA
+  - split
+  - database
+  - msfragger
+tools:
+  - split_fasta:
+      description: |
+        Python script that splits a FASTA file into M chunks at protein boundaries
+        using memory-mapped I/O. Replicates get_fasta_offsets() and set_up_directories()
+        from FragPipe's msfragger_pep_split.py for split-database search.
+      homepage: "https://fragpipe.nesvilab.org/"
+      documentation: "https://fragpipe.nesvilab.org/docs/tutorial_split_db.html"
+      tool_dev_url: "https://github.com/Nesvilab/FragPipe"
+      licence: ["Academic"]
+
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample/experiment information
+    - fasta:
+        type: file
+        description: Protein sequence database in FASTA format
+        pattern: "*.{fasta,fas,fa}"
+  - num_chunks:
+      type: integer
+      description: Number of chunks to split the FASTA into (>= 1)
+
+output:
+  fasta_chunks:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample/experiment information
+      - "split_db/*/*.fasta":
+          type: file
+          description: Split FASTA chunks in numbered subdirectories
+          pattern: "split_db/{0,1,...}/*.fasta"
+  versions_python:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - python:
+          type: string
+          description: The tool name
+      - python3 --version 2>&1 | sed "s/Python //":
+          type: eval
+          description: The expression to obtain the version of the tool
+
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - python:
+          type: string
+          description: The tool name
+      - python3 --version 2>&1 | sed "s/Python //":
+          type: eval
+          description: The expression to obtain the version of the tool
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"
+containers:
+  conda:
+    linux/amd64:
+      lock_file: modules/local/splitfasta/.conda-lock/linux_amd64-bd-27a817c2c0890658_1.txt
+  docker:
+    linux/amd64:
+      name: community.wave.seqera.io/library/python:3.12.13--27a817c2c0890658
+      build_id: bd-27a817c2c0890658_1
+      scan_id: sc-e07391e6e5fbddf7_1
+  singularity:
+    linux/amd64:
+      name: oras://community.wave.seqera.io/library/python:3.12.13--7eb61448497e5133
+      build_id: bd-7eb61448497e5133_1
+      https: https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/37/370b76e81fbff1ab2427ad3a246bca8a4aa578a68216a5e800dceaedf7bcfa40/data

@@ -1,0 +1,70 @@
+name: "checkdbconfig"
+description: Replicates FragPipe's database decoy check (FragpipeRun.checkDbConfig) before any FDR tool runs
+keywords:
+  - proteomics
+  - fragpipe
+  - database
+  - decoy
+  - fasta
+tools:
+  - check_db_config:
+      description: |
+        Custom Python script that counts FASTA entries whose first header field starts
+        with the workflow decoy tag and fails with FragPipe's headless error messages when
+        the decoy share is 0, 100 %, or outside 40-60 % (databases of 1 GiB or more are
+        not inspected, as in FragPipe).
+      homepage: "https://github.com/Nesvilab/FragPipe"
+      documentation: "https://github.com/Nesvilab/FragPipe"
+      tool_dev_url: "https://github.com/Nesvilab/FragPipe"
+      licence: ["MIT"]
+
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing database information
+    - fasta:
+        type: file
+        description: Protein database in FASTA format
+        pattern: "*.{fasta,fas,fa}"
+  - decoy_tag:
+      type: string
+      description: |
+        Decoy protein prefix from the workflow `database.decoy-tag`, extracted once
+        from PARSEFRAGPIPEWORKFLOW tool_configs.json via getDecoyTag() (e.g., "rev_").
+
+output:
+  fasta:
+    - - meta:
+          type: map
+          description: Groovy Map containing database information
+      - "fasta, includeInputs: true":
+          type: file
+          description: The input database, unchanged, emitted only when it passes the check
+          pattern: "*.{fasta,fas,fa}"
+  versions_python:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - python:
+          type: string
+          description: The name of the tool
+      - python3 --version 2>&1 | sed "s/Python //":
+          type: eval
+          description: The expression to obtain the version of the tool
+
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - python:
+          type: string
+          description: The name of the tool
+      - python3 --version 2>&1 | sed "s/Python //":
+          type: eval
+          description: The expression to obtain the version of the tool
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

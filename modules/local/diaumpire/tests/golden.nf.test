@@ -1,0 +1,68 @@
+// Golden differential test: DIAUMPIRE vs FragPipe 24.0 (step DIA-Umpire, dia_cptac_subset/DIA_DIA-Umpire_SpecLib_Quant_perfile).
+// Input is FragPipe's own DIA mzML; the DIA-Umpire-SE settings template comes from parse_fragpipe_workflow.py (tool_configs.json,
+// as the pipeline passes it). Compares the java argv, the umpire-se.params the module writes (FragPipe's work/umpire-se.params)
+// and the pseudo-spectra <name>_Q1/_Q2/_Q3.mzML byte for byte. The manifest records no input or output of DIA-Umpire
+// (io_convention_not_implemented), so the files are compared as pairs.
+// Run: FRAGPIPE_CONTAINER=<licensed image> GOLDEN_ROOT=<golden root> nf-test test modules/local/diaumpire/tests/golden.nf.test
+nextflow_process {
+
+    name "Golden DIAUMPIRE vs FragPipe 24.0"
+    script "../main.nf"
+    process "DIAUMPIRE"
+    config "./golden.config"
+
+    tag "golden"
+    tag "diaumpire"
+
+    test("dia_cptac_subset DIA-Umpire-SE - argv, umpire-se.params and Q1-Q3 pseudo-spectra reproduce FragPipe's") {
+
+        when {
+            params {
+                golden_set = "${System.getenv('GOLDEN_ROOT')}/dia_cptac_subset/DIA_DIA-Umpire_SpecLib_Quant_perfile"
+            }
+            process {
+                """
+                assert System.getenv('GOLDEN_ROOT') : 'set GOLDEN_ROOT to the golden data root'
+                def golden = file(params.golden_set, checkIfExists: true)
+                def configs = new File("\${workDir}/parser")
+                configs.mkdirs()
+                def proc = ['python3', "\${baseDir}/modules/local/parsefragpipeworkflow/resources/usr/bin/parse_fragpipe_workflow.py",
+                            '--workflow', "\${golden}/files/work/fragpipe.workflow", '--data-types', 'DIA', '--output-json', '--outdir', configs.path].execute()
+                proc.waitForProcessOutput(System.out, System.err)
+                assert proc.exitValue() == 0
+                def umpire_params = new groovy.json.JsonSlurper().parse(new File(configs, 'tool_configs.json')).diaumpire.args + '\\n'
+                input[0] = channel.of([ [ id: 'dia_cptac_subset', data_type: 'DIA' ], file("\${golden}/files/input/dia_cptac_subset.mzML", checkIfExists: true), umpire_params ])
+                """
+            }
+        }
+
+        then {
+            def golden   = new File(params.golden_set)
+            def manifest = new groovy.json.JsonSlurper().parse(new File(golden, 'manifest.json'))
+            def step     = manifest.steps.find { s -> s.cmd_name == 'DIA-Umpire' && s.argv.contains('dia_umpire_se.DIA_Umpire_SE') }
+            def outDir   = new File(process.out.results_dir[0][1].toString())
+            def taskDir  = outDir.parentFile
+            // the params file the module wrote is a bare name in its task dir; FragPipe's is absolute in its work dir
+            def tokens   = new File(outDir, 'diaumpire.log').readLines()[0].split(' ').collect { t -> t == 'umpire-se.params' ? new File(taskDir, t).path : t }
+            def cmdFile  = new File(outputDir, 'step.cmd'); cmdFile.text = tokens.join(' ')
+            def outs     = new File(outputDir, 'outs'); outs.mkdirs()
+            // the step's work dir is not logged; the module's task dir stands for FragPipe's work dir
+            def argvCheck = ['python3', "${baseDir}/bin/golden_step_check.py", '--golden', golden.path, '--steps', "${step.step_index}",
+                '--actual-cwd', '/nonexistent', '--actual-workdir', taskDir.path, '--actual-outdir', outs.path,
+                '--actual-argv', "${step.step_index}=${cmdFile.path}", '--argv-only', '--json', new File(outputDir, 'golden_report.json').path].execute()
+            def argvOut = new StringBuffer(); argvCheck.waitForProcessOutput(argvOut, argvOut); println argvOut
+            def cmp = ['python3', "${baseDir}/bin/golden_compare.py", 'pairs', '--expected-prefix', manifest.roots['{WORKDIR}'], '--expected-prefix', manifest.roots['{LCMS_DIR}'], '--actual-prefix', taskDir.path,
+                '--pair', 'umpire-se.params', "${golden}/files/work/umpire-se.params".toString(), new File(taskDir, 'umpire-se.params').path]
+            ['Q1', 'Q2', 'Q3'].each { q ->
+                cmp += ['--pair', "dia_cptac_subset_${q}.mzML".toString(), "${golden}/files/work/dia_cptac_subset_${q}.mzML".toString(), new File(outDir, "dia_cptac_subset_${q}.mzML").path]
+            }
+            def compare = cmp.execute()
+            def cmpOut = new StringBuffer(); compare.waitForProcessOutput(cmpOut, cmpOut); println cmpOut
+            assertAll(
+                { assert process.success },
+                { assert argvCheck.exitValue() == 0 : "argv comparison failed:\n${argvOut}" },
+                { assert compare.exitValue() == 0 : "output comparison failed:\n${cmpOut}" }
+            )
+        }
+    }
+}

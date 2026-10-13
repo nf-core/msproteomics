@@ -1,0 +1,76 @@
+name: "msstatslfq"
+description: A module to performance proteomics statistical analysis using MSstats tool.
+keywords:
+  - MSstats
+  - Downstream Analysis
+  - statistics
+  - label-free quantification
+tools:
+  - MSstats:
+      description: |
+        An R package for statistical analysis of quantitative mass spectrometry-based proteomics experiments.
+      homepage: https://github.com/Vitek-Lab/MSstats
+      documentation: https://www.bioconductor.org/packages/release/bioc/manuals/MSstats/man/MSstats.pdf
+input:
+  - msstats_csv_input:
+      type: file
+      description: MSstats input file with analysis results for statistical downstream analysis in MSstats.
+      pattern: "out_msstats.csv"
+      ontologies: []
+  - contrasts:
+      type: string
+      description: Contrasts to test, "pairwise" or an explicit contrast list
+  - ref_condition:
+      type: string
+      description: Reference (control) condition, empty string for none
+  - remove_one_feat_prot:
+      type: boolean
+      description: Passed to MSstats as removeOneFeatProts
+  - remove_few_measurements:
+      type: boolean
+      description: Passed to MSstats as removeFewMeasurements
+  - feature_subset_protein:
+      type: string
+      description: MSstats featureSubset, e.g. "top3" or "all"
+  - quant_summary_method:
+      type: string
+      description: MSstats summaryMethod, "TMP" or "linear"
+  - threshold:
+      type: float
+      description: Adjusted p-value threshold
+output:
+  pdf:
+    - "*.pdf":
+        type: file
+        description: MSstats plots (optional, their generation is unstable with auto-contrasts)
+        pattern: "*.pdf"
+        ontologies: []
+  msstats_csv:
+    - "*.csv":
+        type: file
+        description: csv file with results of statistical testing
+        pattern: "*.csv"
+        ontologies: []
+  log:
+    - "*.log":
+        type: file
+        description: log file
+        pattern: "*.log"
+        ontologies: []
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies: []
+
+topics:
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies: []
+
+authors:
+  - "@daichengxin"

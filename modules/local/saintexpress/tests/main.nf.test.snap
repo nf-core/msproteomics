@@ -1,30 +1,102 @@
 {
     "saintexpress - stub": {
         "content": [
-            [
-                [
-                    {
-                        "id": "test_saint"
-                    },
+            {
+                "0": [
                     [
-                        "list.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "saintexpress.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        {
+                            "id": "fragpipe"
+                        },
+                        [
+                            "bait.dat:md5,17404a596cbd0d1e6c7d23fcd845ab82",
+                            "inter.dat:md5,17404a596cbd0d1e6c7d23fcd845ab82",
+                            "list.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "prey.dat:md5,17404a596cbd0d1e6c7d23fcd845ab82",
+                            "saintexpress.log:md5,f3e5429052b8d08cd6bac8165688fd61"
+                        ]
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        "list.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    [
+                        "SAINTEXPRESS",
+                        "saintexpress",
+                        "3.6.1"
+                    ]
+                ],
+                "3": [
+                    [
+                        "SAINTEXPRESS",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "results_dir": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        [
+                            "bait.dat:md5,17404a596cbd0d1e6c7d23fcd845ab82",
+                            "inter.dat:md5,17404a596cbd0d1e6c7d23fcd845ab82",
+                            "list.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "prey.dat:md5,17404a596cbd0d1e6c7d23fcd845ab82",
+                            "saintexpress.log:md5,f3e5429052b8d08cd6bac8165688fd61"
+                        ]
+                    ]
+                ],
+                "results_list": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        "list.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions_fragpipe": [
+                    [
+                        "SAINTEXPRESS",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "versions_saintexpress": [
+                    [
+                        "SAINTEXPRESS",
+                        "saintexpress",
+                        "3.6.1"
                     ]
                 ]
-            ],
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-07T05:44:45.819649048"
+    },
+    "saintexpress - integration int mode from a REPRINT table": {
+        "content": [
             [
                 [
                     {
-                        "id": "test_saint"
+                        "id": "fragpipe"
                     },
-                    "list.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    "list.txt:md5,1c3256f3b9310ed95edbf88fa412ac1c"
                 ]
             ],
             [
                 [
                     "SAINTEXPRESS",
                     "saintexpress",
-                    "24.0"
+                    "3.6.1"
                 ]
             ],
             [
@@ -35,11 +107,11 @@
                 ]
             ]
         ],
-        "timestamp": "2026-03-31T19:44:48.116251018",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
-        }
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-05T19:00:08.924148819"
     },
     "saintexpress - integration with test data": {
         "content": [
@@ -50,12 +122,26 @@
                     },
                     "list.txt:md5,7f615498f2b4cfb486460c990104d2a8"
                 ]
+            ],
+            [
+                [
+                    "SAINTEXPRESS",
+                    "saintexpress",
+                    "3.6.1"
+                ]
+            ],
+            [
+                [
+                    "SAINTEXPRESS",
+                    "fragpipe",
+                    "24.0"
+                ]
             ]
         ],
-        "timestamp": "2026-03-27T19:38:56.906895438",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.2"
-        }
+        },
+        "timestamp": "2026-03-27T19:38:56.906895438"
     }
 }

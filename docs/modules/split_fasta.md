@@ -1,4 +1,4 @@
-# SPLIT_FASTA
+# SPLITFASTA
 
 Splits a FASTA database into M chunks at protein boundaries for parallel MSFragger search.
 
@@ -32,7 +32,7 @@ Each chunk is written to a numbered subdirectory under `split_db/`.
 
 ## Container
 
-`quay.io/biocontainers/python:3.12`
+`community.wave.seqera.io/library/python:3.12.13--27a817c2c0890658`
 
 ## Usage
 

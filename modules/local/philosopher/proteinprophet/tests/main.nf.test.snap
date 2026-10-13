@@ -1,52 +1,81 @@
 {
     "proteinprophet - stub": {
         "content": [
-            [
-                [
-                    {
-                        "id": "test"
-                    },
+            {
+                "0": [
                     [
-                        "combined.prot.xml:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "proteinprophet.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        {
+                            "id": "combined"
+                        },
+                        [
+                            "combined.prot.xml:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "filelist_proteinprophet.txt:md5,c4f5f24783a1eb5cb270561304dc44d9",
+                            "proteinprophet.log:md5,c6fb6229aa65fcd4403dd60397dcd17f"
+                        ]
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "combined"
+                        },
+                        "combined.prot.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    [
+                        "PROTEINPROPHET",
+                        "philosopher",
+                        "5.1.3"
+                    ]
+                ],
+                "3": [
+                    [
+                        "PROTEINPROPHET",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "protxml": [
+                    [
+                        {
+                            "id": "combined"
+                        },
+                        "combined.prot.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "results_dir": [
+                    [
+                        {
+                            "id": "combined"
+                        },
+                        [
+                            "combined.prot.xml:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "filelist_proteinprophet.txt:md5,c4f5f24783a1eb5cb270561304dc44d9",
+                            "proteinprophet.log:md5,c6fb6229aa65fcd4403dd60397dcd17f"
+                        ]
+                    ]
+                ],
+                "versions_fragpipe": [
+                    [
+                        "PROTEINPROPHET",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "versions_philosopher": [
+                    [
+                        "PROTEINPROPHET",
+                        "philosopher",
+                        "5.1.3"
                     ]
                 ]
-            ],
-            [
-                [
-                    {
-                        "id": "test"
-                    },
-                    "combined.prot.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "test"
-                    },
-                    "interact-test.pep.xml:md5,17404a596cbd0d1e6c7d23fcd845ab82"
-                ]
-            ],
-            [
-                [
-                    "PROTEINPROPHET",
-                    "philosopher",
-                    ""
-                ]
-            ],
-            [
-                [
-                    "PROTEINPROPHET",
-                    "fragpipe",
-                    "24.0"
-                ]
-            ]
+            }
         ],
-        "timestamp": "2026-03-31T19:43:29.876409427",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
-        }
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-05T18:56:55.58027511"
     }
 }

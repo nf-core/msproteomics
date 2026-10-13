@@ -1,0 +1,82 @@
+// FragPipe 24.0 golden comparison: O-Pair on PXD017646 2019_09_16_StcEmix_35trig_EThcD25_rep2 with the
+// bundled glyco-O-Pair.workflow. Inputs are FragPipe's own: the Report psm.tsv of a run with O-Pair off
+// (GOLDEN_ROOT PXD017646/glyco-O-Pair-report_perfile work/<group>; O-Pair rewrites psm.tsv in place, so the O-Pair run keeps no copy),
+// MSFragger's <base>_calibrated.mzML and PairScans' <base>.pairs (glyco-O-Pair_perfile_det files/input). The argv comes
+// from the parser on the run's fragpipe.workflow. Expected: the O-Pair run's <group>/psm.tsv
+// (glyco-O-Pair_perfile_det files/work). FragPipe ran (golden log):
+//   dotnet <tools>/opair/CMD.dll "-b 20.0" "-c 20.0" "-f <tools>/opair/Glycan_Mods/oxonium_filter.txt" "-m 0.05"
+//     "-g HexNAc(1),..." "-x ..." "-y ..." "-n 4" "-z " "-t 48" "-i 0" "-j 2" "-r ..." "-s ..." "-o ..."
+//
+// Stock O-Pair 1.1.10 breaks ties between equally scored glycan placements in a random order (it builds
+// its glycan boxes in a Parallel.ForEach, GlycanBox.cs:105-115), so two identical runs differ in up to 13
+// of 514 PSMs. glyco-O-Pair_perfile_det is a FragPipe run with a PTMLocalization.dll that builds the boxes
+// in enumeration order (the order of stock O-Pair with -t 1); this test runs the same DLL and expects
+// psm.tsv to match exactly. The DLL is given at runtime, like FRAGPIPE_CONTAINER: OPAIR_DET_DLL is its local
+// path, mounted over <tools>/opair/PTMLocalization.dll (golden.config), md5 01fca5e12c419a45880c5b610bcd0175.
+// The stock capture (glyco-O-Pair_perfile) is one of stock O-Pair's random outcomes and is not compared here.
+
+nextflow_process {
+
+    name "Test Process OPAIR against FragPipe 24.0"
+    script "../main.nf"
+    process "OPAIR"
+    config "./golden.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "opair"
+    tag "integration"
+    tag "golden"
+
+    setup {
+        run("PARSEFRAGPIPEWORKFLOW") {
+            script "../../parsefragpipeworkflow/main.nf"
+            process {
+                """
+                input[0] = channel.of([ [ id: 'opair' ], file((System.getenv('GOLDEN_ROOT') + '/PXD017646/glyco-O-Pair_perfile_det/files/work') + '/fragpipe.workflow', checkIfExists: true), ['DDA'] ])
+                """
+            }
+        }
+    }
+
+    test("opair - PXD017646 glyco-O-Pair reproduces FragPipe's psm.tsv") {
+
+        when {
+            process {
+                """
+                def inp = (System.getenv('GOLDEN_ROOT') + '/PXD017646/glyco-O-Pair_perfile_det/files/input')
+                def base = '2019_09_16_StcEmix_35trig_EThcD25_rep2'
+                input[0] = PARSEFRAGPIPEWORKFLOW.out.tool_configs_json.map { _m, json ->
+                    def argv = new groovy.json.JsonSlurper().parseText(json.text).opair.args
+                    [ [ id: 'stce', group: 'stce' ],
+                      file((System.getenv('GOLDEN_ROOT') + '/PXD017646/glyco-O-Pair-report_perfile/files/work') + '/stce', checkIfExists: true),
+                      [ file("\${inp}/\${base}_calibrated.mzML", checkIfExists: true) ],
+                      [ file("\${inp}/\${base}.pairs", checkIfExists: true) ],
+                      [],
+                      [ "\${base}_calibrated.mzML".toString() ],
+                      argv ]
+                }
+                """
+            }
+        }
+
+        then {
+            def dll = System.getenv('OPAIR_DET_DLL')
+            assert dll : 'OPAIR_DET_DLL is not set: give the deterministic PTMLocalization.dll (stock O-Pair breaks ties at random)'
+            def dllMd5 = new File(dll).bytes.md5()
+            println "OPAIR_DET_DLL ${dll} md5 ${dllMd5}"
+            def read = { String f -> new File(f).readLines().collect { l -> l.split('\t', -1) as List } }
+            def mine = read(process.out.psm_dir[0][1].toString() + '/psm.tsv')
+            def ref = read((System.getenv('GOLDEN_ROOT') + '/PXD017646/glyco-O-Pair_perfile_det/files/work') + '/stce/psm.tsv')
+            def differ = [mine.drop(1), ref.drop(1)].transpose().findAll { x, y -> x != y }.collect { x, y -> x[0] }
+            assertAll(
+                { assert process.success },
+                { assert dllMd5 == '01fca5e12c419a45880c5b610bcd0175' },
+                { assert mine[0] == ref[0] },
+                { assert mine.size() == ref.size() },
+                { assert differ.isEmpty() : "PSMs differ from FragPipe: ${differ}" },
+                { assert path(process.out.log[0][1]).readLines()[0].contains('-b\\ 20.0') }
+            )
+        }
+    }
+}

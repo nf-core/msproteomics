@@ -10,13 +10,20 @@ keywords:
   - filtering
 components:
   - proteinprophet
-  - philosopher/filter
+  - philosopherfilter
+  - iprophet
+  - philosopherabacus
 input:
   - ch_pepxml:
       type: channel
       description: |
         Validated pepXML files from all samples.
         Structure: [ val(meta), path(pepxml) ]
+  - ch_pepxml_group:
+      type: channel
+      description: |
+        Every pepXML of a group dir (validated + PTMProphet).
+        Structure: [ val(meta), path(pepxml(s)) ]
   - ch_fasta:
       type: channel
       description: |
@@ -42,6 +49,11 @@ output:
       description: |
         Per-sample results directories from Philosopher Filter containing PSM, peptide, and protein tables.
         Structure: [ val(meta), path(results_dir) ]
+  - workspace:
+      type: channel
+      description: |
+        Workspace.
+        Structure: [ val(meta), path(.meta) ] per FragPipe group
   - psms:
       type: channel
       description: |
@@ -67,11 +79,36 @@ output:
       description: |
         Passthrough pepXML files (ProteinProphet does not modify pepXML).
         Structure: [ val(meta), path(pepxml) ]
-  - versions:
-      type: file
+  - combined_pepxml:
+      type: channel
       description: |
-        File containing software versions.
-        Structure: [ path(versions.yml) ]
+        Combined pepxml.
+        Structure: [ val(meta), path(combined.pep.xml) ]
+  - reprint_spc:
+      type: channel
+      description: |
+        Reprint spc.
+        Structure: [ val(meta), path(reprint.spc.tsv) ]
+  - reprint_int:
+      type: channel
+      description: |
+        Reprint int.
+        Structure: [ val(meta), path(reprint.int.tsv) ]
+  - combined_protein:
+      type: channel
+      description: |
+        Combined protein.
+        Structure: [ val(meta), path(combined_protein.tsv) ]
+  - combined_peptide:
+      type: channel
+      description: |
+        Combined peptide.
+        Structure: [ val(meta), path(combined_peptide.tsv) ]
+  - versions:
+      type: channel
+      description: |
+        Software versions (topic tuples).
+        Structure: [ val(process), val(tool), val(version) ]
 authors:
   - "@dongzehe"
 maintainers:

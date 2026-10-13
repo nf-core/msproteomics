@@ -8,162 +8,220 @@ nextflow_workflow {
     tag "subworkflows"
     tag "subworkflows_local"
     tag "fragpipe_glyco"
+    tag "pairscans"
+    tag "opair"
+    tag "ptmshepherd"
+    tag "mbg"
 
-    test("fragpipe_glyco - stub with mbg") {
+    test("fragpipe_glyco - stub - PairScans then O-Pair on calibrated mzML; IonQuant input is O-Pair's group copy") {
         options "-stub"
         tag "stub"
 
         when {
             workflow {
                 """
-                def psm_file = file("\${workDir}/sample_psm.tsv")
-                psm_file.text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
-
-                def mzml_file = file("\${workDir}/sample.mzML")
-                mzml_file.text = "<?xml version='1.0'?><mzML></mzML>"
-
-                def manifest_file = file("\${workDir}/manifest.fp-manifest")
-                manifest_file.text = "/path/to/sample.mzML\\tsample1\\texperiment\\tDDA"
-
-                def residue_db = file("\${workDir}/glycan_residues.txt")
-                residue_db.text = "HexNAc\\t203.0794\\tN"
-                def glycan_mod_db = file("\${workDir}/glycan_mods.txt")
-                glycan_mod_db.text = "Hex\\t162.0528"
-                def oglycan_db = file("\${workDir}/oglycan.txt")
-                oglycan_db.text = "HexNAc(1)\\t203.0794"
-
-                // Tool configs: mbg enabled
-                def tool_configs = [
-                    mbg:   [run: true, args: '--maxq 0.01 --minpsms 2'],
-                    opair: [run: false, args: '']
+                def g1 = file("\${workDir}/g1")
+                g1.mkdirs()
+                file("\${g1}/psm.tsv").text = "Spectrum\\nB.1.1.2\\n"
+                def mzml_b = file("\${workDir}/B.mzML")
+                mzml_b.text = "mock"
+                def mzml_a = file("\${workDir}/A.mzML")
+                mzml_a.text = "mock"
+                def cal_a = file("\${workDir}/A_calibrated.mzML")
+                cal_a.text = "mock"
+                def cal_b = file("\${workDir}/B_calibrated.mzML")
+                cal_b.text = "mock"
+                def fasta = file("\${workDir}/db.fasta")
+                fasta.text = ">sp|P1|A\\nPEPTIDEK\\n"
+                def configs = [
+                    pairscans  : [run: true, args: ['HCD', 'ETD', 'false', 'false']],
+                    opair      : [run: true, spectra: 'calibrated', args: ['-b 20.0', '-r @FILELIST@', '-s @PSM@', '-o @OUTDIR@']],
+                    ptmshepherd: [run: false, args: ''],
+                    mbg        : [run: false, args: '']
                 ]
+                def meta_a = [ id: 'A', group: 'g1', experiment: 'g1', bioreplicate: null, data_type: 'DDA' ]
+                def meta_b = [ id: 'B', group: 'g1', experiment: 'g1', bioreplicate: null, data_type: 'DDA' ]
 
-                input[0] = channel.of([[ id: 'sample' ], psm_file])
-                input[1] = channel.of([[ id: 'sample' ], mzml_file])
-                input[2] = channel.of(manifest_file)
-                input[3] = channel.of([residue_db, glycan_mod_db, oglycan_db])
-                input[4] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[0] = channel.of([[ id: 'g1', group: 'g1' ], g1])
+                input[1] = channel.of([meta_b, mzml_b], [meta_a, mzml_a])
+                input[2] = channel.of([meta_b, mzml_b], [meta_a, mzml_a])
+                input[3] = channel.of([meta_a, cal_a], [meta_b, cal_b])
+                input[4] = channel.empty()
+                input[5] = channel.value(fasta)
+                input[6] = channel.value(groovy.json.JsonOutput.toJson(configs))
+                input[7] = [ id: 'fragpipe' ]
                 """
             }
         }
 
         then {
+            def opair_dir = workflow.out.opair_dirs[0][1].toString()
             assertAll(
                 { assert workflow.success },
-                { assert snapshot(
-                    workflow.out.mbg_results,
-                    workflow.out.mbg_glycan,
-                    workflow.out.opair_results,
-                    workflow.out.opair_glycoforms,
-                    workflow.out.mbg_dir,
-                    workflow.out.opair_dir
-                ).match() }
+                { assert workflow.out.pairs.size() == 2 },
+                // CmdOPair: every file of the group, sorted, as <base>_calibrated.mzML
+                { assert new File("${opair_dir}/filelist_opair.txt").readLines() == ['spectra/A_calibrated.mzML', 'spectra/B_calibrated.mzML'] },
+                // the group IonQuant reads is O-Pair's copy
+                { assert workflow.out.psm_dirs.size() == 1 },
+                { assert workflow.out.psm_dirs[0][1].toString() == opair_dir },
+                { assert snapshot(workflow.out.psm_dirs.collect { m, d -> m }, workflow.out.pairs.collect { m, p -> new File(p.toString()).name }.sort()).match() }
             )
         }
     }
 
-    test("fragpipe_glyco - stub with opair") {
+    // CmdOPair.java:178-180: the user's oxonium file is checked at staging (checkIfExists) and named by the -f token
+    test("fragpipe_glyco - stub - O-Pair user oxonium file is staged") {
         options "-stub"
         tag "stub"
 
         when {
             workflow {
                 """
-                def psm_file = file("\${workDir}/sample_psm.tsv")
-                psm_file.text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
-
-                def mzml_file = file("\${workDir}/sample.mzML")
-                mzml_file.text = "<?xml version='1.0'?><mzML></mzML>"
-
-                def manifest_file = file("\${workDir}/manifest.fp-manifest")
-                manifest_file.text = "/path/to/sample.mzML\\tsample1\\texperiment\\tDDA"
-
-                def residue_db = file("\${workDir}/glycan_residues.txt")
-                residue_db.text = "HexNAc\\t203.0794\\tN"
-                def glycan_mod_db = file("\${workDir}/glycan_mods.txt")
-                glycan_mod_db.text = "Hex\\t162.0528"
-                def oglycan_db = file("\${workDir}/oglycan.txt")
-                oglycan_db.text = "HexNAc(1)\\t203.0794"
-
-                // Tool configs: opair enabled
-                def tool_configs = [
-                    mbg:   [run: false, args: ''],
-                    opair: [run: true, args: '-b 20 -c 10']
+                def g1 = file("\${workDir}/g1")
+                g1.mkdirs()
+                file("\${g1}/psm.tsv").text = "Spectrum\\nA.1.1.2\\n"
+                def mzml_a = file("\${workDir}/A.mzML")
+                mzml_a.text = "mock"
+                def cal_a = file("\${workDir}/A_calibrated.mzML")
+                cal_a.text = "mock"
+                def fasta = file("\${workDir}/db.fasta")
+                fasta.text = ">sp|P1|A\\nPEPTIDEK\\n"
+                def oxo = file("\${workDir}/my_oxonium.txt")
+                oxo.text = "204.0867\\tHexNAc\\n"
+                def configs = [
+                    pairscans  : [run: false, args: []],
+                    opair      : [run: true, spectra: 'calibrated', oxonium_file: oxo.toString(), args: ['-b 20.0', '-f @OXONIUM_FILE@', '-r @FILELIST@', '-s @PSM@', '-o @OUTDIR@']],
+                    ptmshepherd: [run: false, args: ''],
+                    mbg        : [run: false, args: '']
                 ]
+                def meta_a = [ id: 'A', group: 'g1', experiment: 'g1', bioreplicate: null, data_type: 'DDA' ]
 
-                input[0] = channel.of([[ id: 'sample_op' ], psm_file])
-                input[1] = channel.of([[ id: 'sample_op' ], mzml_file])
-                input[2] = channel.of(manifest_file)
-                input[3] = channel.of([residue_db, glycan_mod_db, oglycan_db])
-                input[4] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[0] = channel.of([[ id: 'g1', group: 'g1' ], g1])
+                input[1] = channel.of([meta_a, mzml_a])
+                input[2] = channel.of([meta_a, mzml_a])
+                input[3] = channel.of([meta_a, cal_a])
+                input[4] = channel.empty()
+                input[5] = channel.value(fasta)
+                input[6] = channel.value(groovy.json.JsonOutput.toJson(configs))
+                input[7] = [ id: 'fragpipe' ]
                 """
             }
         }
 
         then {
+            def opair_dir = workflow.out.opair_dirs[0][1].toString()
+            // the OPAIR task stages the file as oxonium/my_oxonium.txt and "-f" names it; the stub's log holds the filled argv
+            def staged = false
+            def opair_log = []
+            new File(workDir.toString()).eachFileRecurse { f ->
+                if (f.name == '.command.run' && f.text.contains('oxonium/my_oxonium.txt')) { staged = true }
+                if (f.name == 'opair.log') { opair_log = f.readLines() }
+            }
             assertAll(
                 { assert workflow.success },
-                { assert snapshot(
-                    workflow.out.mbg_results,
-                    workflow.out.mbg_glycan,
-                    workflow.out.opair_results,
-                    workflow.out.opair_glycoforms,
-                    workflow.out.mbg_dir,
-                    workflow.out.opair_dir
-                ).match() }
+                { assert new File("${opair_dir}/filelist_opair.txt").readLines() == ['spectra/A_calibrated.mzML'] },
+                { assert workflow.out.psm_dirs[0][1].toString() == opair_dir },
+                { assert staged : 'the OPAIR task stages oxonium/my_oxonium.txt' },
+                { assert opair_log.contains('-f {TASK_DIR}/oxonium/my_oxonium.txt') : opair_log },
+                { assert snapshot(opair_log).match() }
             )
         }
     }
 
-    test("fragpipe_glyco - stub with both") {
+    test("fragpipe_glyco - stub - PTM-Shepherd glyco then MBG: MBG reads PTM-S copies, manifest in file-table order") {
         options "-stub"
         tag "stub"
 
         when {
             workflow {
                 """
-                def psm_file = file("\${workDir}/sample_psm.tsv")
-                psm_file.text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
-
-                def mzml_file = file("\${workDir}/sample.mzML")
-                mzml_file.text = "<?xml version='1.0'?><mzML></mzML>"
-
-                def manifest_file = file("\${workDir}/manifest.fp-manifest")
-                manifest_file.text = "/path/to/sample.mzML\\tsample1\\texperiment\\tDDA"
-
-                def residue_db = file("\${workDir}/glycan_residues.txt")
-                residue_db.text = "HexNAc\\t203.0794\\tN"
-                def glycan_mod_db = file("\${workDir}/glycan_mods.txt")
-                glycan_mod_db.text = "Hex\\t162.0528"
-                def oglycan_db = file("\${workDir}/oglycan.txt")
-                oglycan_db.text = "HexNAc(1)\\t203.0794"
-
-                // Tool configs: both enabled
-                def tool_configs = [
-                    mbg:   [run: true, args: '--maxq 0.01'],
-                    opair: [run: true, args: '-b 20']
+                def cancer = file("\${workDir}/cancer")
+                cancer.mkdirs()
+                file("\${cancer}/psm.tsv").text = "Spectrum\\nCANCER-3.1.1.2\\n"
+                def saliva = file("\${workDir}/saliva")
+                saliva.mkdirs()
+                file("\${saliva}/psm.tsv").text = "Spectrum\\nSALIVA-1.1.1.2\\n"
+                def mzml_s = file("\${workDir}/SALIVA-1.mzML")
+                mzml_s.text = "mock"
+                def mzml_c = file("\${workDir}/CANCER-3.mzML")
+                mzml_c.text = "mock"
+                def fasta = file("\${workDir}/db.fasta")
+                fasta.text = ">sp|P1|A\\nPEPTIDEK\\n"
+                def configs = [
+                    pairscans  : [run: false, args: []],
+                    opair      : [run: false, args: ''],
+                    ptmshepherd: [run: true, args: 'run_glyco_mode = true\\nthreads = @THREADS@'],
+                    mbg        : [run: true, im_ms: false, args: ['--match', '--psm', '@PSM@', '--manifest', '@MANIFEST@', '--toaddresiduals', 'HexNAc(1)', '--nopasef', '@NOPASEF@']]
                 ]
+                def meta_s = [ id: 'SALIVA-1', group: 'saliva', experiment: 'saliva', bioreplicate: null, data_type: 'DDA' ]
+                def meta_c = [ id: 'CANCER-3', group: 'cancer', experiment: 'cancer', bioreplicate: null, data_type: 'DDA' ]
 
-                input[0] = channel.of([[ id: 'sample_both' ], psm_file])
-                input[1] = channel.of([[ id: 'sample_both' ], mzml_file])
-                input[2] = channel.of(manifest_file)
-                input[3] = channel.of([residue_db, glycan_mod_db, oglycan_db])
-                input[4] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[0] = channel.of([[ id: 'cancer', group: 'cancer' ], cancer], [[ id: 'saliva', group: 'saliva' ], saliva])
+                input[1] = channel.of([meta_s, mzml_s], [meta_c, mzml_c])   // file-table order: SALIVA-1 first
+                input[2] = channel.of([meta_c, mzml_c], [meta_s, mzml_s])
+                input[3] = channel.empty()
+                input[4] = channel.empty()
+                input[5] = channel.value(fasta)
+                input[6] = channel.value(groovy.json.JsonOutput.toJson(configs))
+                input[7] = [ id: 'fragpipe' ]
+                """
+            }
+        }
+
+        then {
+            def manifest = new File(workflow.out.mbg_manifest[0][1].toString()).text
+            def mbg_dirs = workflow.out.mbg_dirs.collect { m, d -> d.toString() }.sort()
+            assertAll(
+                { assert workflow.success },
+                { assert workflow.out.glyco_masses.size() == 1 },
+                { assert manifest == "spectra/SALIVA-1.mzML\tsaliva\t\tDDA\nspectra/CANCER-3.mzML\tcancer\t\tDDA" },
+                // IonQuant gets MBG's copies, one per group
+                { assert workflow.out.psm_dirs.collect { m, d -> d.toString() }.sort() == mbg_dirs },
+                { assert mbg_dirs.size() == 2 },
+                // --nopasef: no .d / .raw file and the IM-MS radio off -> regular MS (TabWorkflow.getInputDataType)
+                { assert new File(workflow.out.mbg_log[0][1].toString()).readLines().takeRight(2) == ['--nopasef', 'true'] },
+                { assert snapshot(workflow.out.psm_dirs.collect { m, d -> m }.sort { m -> m.id }).match() }
+            )
+        }
+    }
+
+    test("fragpipe_glyco - stub - O-Pair needs a calibrated mzML MSFragger did not write") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                def g1 = file("\${workDir}/g1")
+                g1.mkdirs()
+                file("\${g1}/psm.tsv").text = "Spectrum\\nA.1.1.2\\n"
+                def mzml_a = file("\${workDir}/A.mzML")
+                mzml_a.text = "mock"
+                def fasta = file("\${workDir}/db.fasta")
+                fasta.text = ">sp|P1|A\\nPEPTIDEK\\n"
+                def configs = [
+                    pairscans  : [run: false, args: []],
+                    opair      : [run: true, spectra: 'calibrated', args: ['-b 20.0']],
+                    ptmshepherd: [run: false, args: ''],
+                    mbg        : [run: false, args: '']
+                ]
+                def meta_a = [ id: 'A', group: 'g1', experiment: 'g1', bioreplicate: null, data_type: 'DDA' ]
+                input[0] = channel.of([[ id: 'g1', group: 'g1' ], g1])
+                input[1] = channel.of([meta_a, mzml_a])
+                input[2] = channel.of([meta_a, mzml_a])
+                input[3] = channel.empty()
+                input[4] = channel.empty()
+                input[5] = channel.value(fasta)
+                input[6] = channel.value(groovy.json.JsonOutput.toJson(configs))
+                input[7] = [ id: 'fragpipe' ]
                 """
             }
         }
 
         then {
             assertAll(
-                { assert workflow.success },
-                { assert snapshot(
-                    workflow.out.mbg_results,
-                    workflow.out.mbg_glycan,
-                    workflow.out.opair_results,
-                    workflow.out.opair_glycoforms,
-                    workflow.out.mbg_dir,
-                    workflow.out.opair_dir
-                ).match() }
+                { assert workflow.failed },
+                { assert (workflow.stdout + workflow.stderr).any { line -> line.contains('O-Pair lists the calibrated mzML of A.mzML, but MSFragger did not write one') } }
             )
         }
     }

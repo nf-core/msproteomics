@@ -1,0 +1,114 @@
+name: "philosopherabacus"
+description: Philosopher abacus multi-experiment report (combined_protein/peptide.tsv and REPRINT tables) as FragPipe CmdPhilosopherAbacus runs it
+keywords:
+  - proteomics
+  - fragpipe
+  - philosopher
+tools:
+  - philosopher:
+      description: Philosopher toolkit bundled with FragPipe 24.0
+      homepage: https://philosopher.nesvilab.org/
+      licence:
+        - GPL-3.0
+input:
+  - - meta:
+        type: map
+        description: Groovy Map with aggregate information
+    - group_workspaces:
+        type: directory
+        description: Each group's .meta workspace after filter/report, in group name order
+    - group_names:
+        type: list
+        description: Group directory names in the same order
+    - protxml:
+        type: file
+        description: combined.prot.xml
+    - combined_pepxml:
+        type: file
+        description: iProphet combined.pep.xml for --peptide, or []
+    - abacus_cli:
+        type: string
+        description: Abacus options from PARSEFRAGPIPEWORKFLOW
+    - plex:
+        type: integer
+        description: TMT plex for --labels --plex, 0 otherwise
+output:
+  results_dir:
+    - - meta:
+          type: map
+          description: Groovy Map with aggregate information
+      - ${prefix}:
+          type: directory
+          description: Abacus outputs and abacus.log
+  reprint_spc:
+    - - meta:
+          type: map
+          description: Groovy Map with aggregate information
+      - ${prefix}/reprint.spc.tsv:
+          type: file
+          description: REPRINT spectral counts
+  reprint_int:
+    - - meta:
+          type: map
+          description: Groovy Map with aggregate information
+      - ${prefix}/reprint.int.tsv:
+          type: file
+          description: REPRINT intensities
+  combined_protein:
+    - - meta:
+          type: map
+          description: Groovy Map with aggregate information
+      - ${prefix}/combined_protein.tsv:
+          type: file
+          description: Combined protein report
+  combined_peptide:
+    - - meta:
+          type: map
+          description: Groovy Map with aggregate information
+      - ${prefix}/combined_peptide.tsv:
+          type: file
+          description: Combined peptide report
+  versions_philosopher:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - philosopher:
+          type: string
+          description: The name of the tool
+      - fragpipeToolVersions().philosopher:
+          type: string
+          description: The Philosopher version bundled with FragPipe
+  versions_fragpipe:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - fragpipe:
+          type: string
+          description: The name of the tool
+      - cat .fragpipe_version:
+          type: eval
+          description: The expression to obtain the FragPipe version
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - philosopher:
+          type: string
+          description: The name of the tool
+      - fragpipeToolVersions().philosopher:
+          type: string
+          description: The Philosopher version bundled with FragPipe
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - fragpipe:
+          type: string
+          description: The name of the tool
+      - cat .fragpipe_version:
+          type: eval
+          description: The expression to obtain the FragPipe version
+authors:
+  - "@an-altosian"
+maintainers:
+  - "@an-altosian"

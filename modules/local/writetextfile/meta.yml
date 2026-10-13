@@ -1,0 +1,57 @@
+name: "writetextfile"
+description: Write a text file whose body was built by Groovy helpers or the workflow parser, so tool modules receive it as a path
+keywords:
+  - text
+  - file
+  - here-doc
+tools:
+  - coreutils:
+      description: GNU coreutils (cat, printf)
+      homepage: https://www.gnu.org/software/coreutils/
+      licence:
+        - GPL-3.0-or-later
+input:
+  - - meta:
+        type: map
+        description: Metadata map carried to the output
+    - name:
+        type: string
+        description: File name to write
+    - text:
+        type: string
+        description: File body, written byte for byte
+output:
+  file:
+    - - meta:
+          type: map
+          description: Metadata map
+      - ${name}:
+          type: file
+          description: The written file
+  versions_coreutils:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - coreutils:
+          type: string
+          description: The tool name
+      - "cat --version | sed -n '1s/.* //p'":
+          type: eval
+          description: The expression to obtain the version of the tool
+
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - coreutils:
+          type: string
+          description: The tool name
+      - "cat --version | sed -n '1s/.* //p'":
+          type: eval
+          description: The expression to obtain the version of the tool
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

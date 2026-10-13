@@ -1,3 +1,13 @@
+// SPECLIBGEN runs FragPipe's tools/speclib/gen_con_spec_lib.py with CmdSpecLibGen's argv
+// (FP = FragPipe-GUI/src/main/java/org/nesvilab/fragpipe/, FP/cmd/CmdSpecLibGen.java:122-202):
+//   [0] python3 [1] -u [2] gen_con_spec_lib.py [3] fasta [4] wd (pepXML dir) [5] unused [6] wd (output)
+//   [7] True [8] unused [9] use_easypqp [10] RT:IM [11] threads [12] convert extras [13] library extras
+//   [14] keep/delete_intermediate_files [15] filelist_speclibgen.txt
+// The *.json fixtures are PARSEFRAGPIPEWORKFLOW's speclibgen.argv_parts for the bundled FragPipe 24.0
+// workflows (tests/fixtures/fragpipe_workflows/, data type DIA): convert_pepxml.json from DIA_SpecLib_Quant,
+// convert_psm.json from glyco-N-DIA. gen_con_spec_lib.py picks psm.tsv conversion when the convert
+// extras hold --decoy_prefix (gen_con_spec_lib.py:125-126), else pepXML conversion (:553-570).
+
 nextflow_process {
 
     name "Test Process SPECLIBGEN"
@@ -5,47 +15,54 @@ nextflow_process {
     process "SPECLIBGEN"
 
     tag "modules"
-    tag "modules_nfcore"
+    tag "modules_local"
     tag "speclibgen"
 
-    test("speclibgen - stub") {
+    test("speclibgen - stub - pepXML conversion (DIA_SpecLib_Quant)") {
         options "-stub"
         tag "stub"
 
         when {
             process {
                 """
-                def psm_file = file("\${workDir}/psm.tsv")
-                psm_file.text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
-                def pep_file = file("\${workDir}/peptide.tsv")
-                pep_file.text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
-                def mzml_file = file("\${workDir}/test.mzML")
-                mzml_file.text = "mock"
-                def fasta_file = file("\${workDir}/test.fasta")
-                fasta_file.text = ">PROT1\\nPEPTIDEK"
-                // SpecLibGen config as bash-sourceable string
-                def config_cli = "CONVERT_ARGS='--max_delta_unimod 0.02 --max_delta_ppm 15'; FRAGMENT_TYPES='[\\\"b\\\",\\\"y\\\"]'; LIBRARY_ARGS='--rt_lowess_fraction 0'; RT_CAL='noiRT'; IM_CAL='noIM'; KEEP_INTERMEDIATE='false'"
-
+                def psm = file("\${workDir}/psm.tsv")
+                psm.text = "Spectrum\\tPeptide\\nrun1.00001.00001.2\\tPEPTIDEK\\n"
+                def peptide = file("\${workDir}/peptide.tsv")
+                peptide.text = "Peptide\\nPEPTIDEK\\n"
+                def pepxml = file("\${workDir}/interact-run1.pep.xml")
+                pepxml.text = "<msms_pipeline_analysis/>"
+                def mzml = file("\${workDir}/run1.mzML")
+                mzml.text = "<mzML/>"
+                def fasta = file("\${workDir}/db.fasta")
+                fasta.text = ">rev_P1\\nKEDITPEP\\n>P1\\nPEPTIDEK\\n"
                 input[0] = channel.of([
-                    [ id: 'test_speclibgen' ],
-                    [ psm_file ],
-                    [ pep_file ],
-                    [ mzml_file ],
-                    config_cli
+                    [ id: 'fragpipe' ], psm, peptide, [ pepxml ], [ mzml ], [], [],
+                    new groovy.json.JsonSlurper().parse(file("\${baseDir}/modules/local/speclibgen/tests/convert_pepxml.json", checkIfExists: true).toFile())
                 ])
-                input[1] = fasta_file
+                input[1] = fasta
                 """
             }
         }
 
         then {
-            assertAll (
+            def argv = path(process.out.argv.get(0).get(1)).readLines()
+            assertAll(
                 { assert process.success },
+                { assert argv[0..2] == ['python3', '-u', '/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools/speclib/gen_con_spec_lib.py'] },
+                { assert argv[3].endsWith('/db.fasta') },
+                { assert argv[4] == argv[6] && argv[5] == 'unused' && argv[7] == 'True' && argv[8] == 'unused' && argv[9] == 'use_easypqp' },
+                { assert argv[10] == 'noiRT:noIM' },
+                // CmdSpecLibGen.java:160-168: no --decoy_prefix -> pepXML conversion; %s of doubles; trimmed
+                { assert argv[12] == /--max_delta_unimod 0.02 --max_delta_ppm 15.0 --fragment_types [\'b\',\'y\',]/ },
+                { assert argv[13] == '--rt_lowess_fraction 0.0' },
+                { assert argv[14] == 'delete_intermediate_files' },
+                { assert argv[15] == argv[4] + '/filelist_speclibgen.txt' },
+                // the LC-MS files sit in the work dir, FragPipe's <dir>/<name> lines (CmdSpecLibGen.java:172-202)
+                { assert path(process.out.filelists.get(0).get(1).find { f -> f.toString().endsWith('filelist_speclibgen.txt') }).readLines() == ["${argv[4]}/run1.mzML".toString()] },
+                { assert argv.size() == 16 },
                 { assert snapshot(
-                    process.out.results_dir,
                     process.out.library_tsv,
-                    process.out.library_speclib,
-                    process.out.library_parquet,
+                    process.out.easypqp_files,
                     process.out.versions_speclibgen,
                     process.out.versions_fragpipe
                 ).match() }
@@ -53,59 +70,152 @@ nextflow_process {
         }
     }
 
-    // KNOWN ISSUE: The convertpsm step fails with:
-    //   AttributeError: 'numpy.ndarray' object has no attribute 'itertuples'
-    // Root cause: FragPipe-SpecLib <= 0.1.58 (bundled in fcyucn/fragpipe:24.0)
-    // uses np.array_split(DataFrame, nthreads) which converts DataFrame chunks to
-    // numpy arrays when nthreads > 1. Fixed in FragPipe-SpecLib commit e035d1df
-    // (2026-02-27) but the container predates this fix.
-    // This test will pass once the container is rebuilt with updated FragPipe-SpecLib.
-    test("speclibgen - integration with test data") {
-        tag "integration"
+    test("speclibgen - stub - psm.tsv conversion with glyco options (glyco-N-DIA)") {
+        options "-stub"
+        tag "stub"
 
         when {
             process {
                 """
-                // Use real psm.tsv from test-datasets directly (PSMs already reference
-                // tmt_erwinia_subset as the spectrum file basename)
-                def remote_psm = file("\${params.pipelines_testdata_base_path}/module_inputs/psm.tsv", checkIfExists: true)
-                def psm_file = file("\${workDir}/psm.tsv")
-                psm_file.text = remote_psm.text
-                // Use real peptide.tsv from test-datasets
-                def remote_pep = file("\${params.pipelines_testdata_base_path}/module_inputs/peptide.tsv", checkIfExists: true)
-                def pep_file = file("\${workDir}/peptide.tsv")
-                pep_file.text = remote_pep.text
-                // mzML and FASTA are large files — keep remote
-                def mzml_file = file("\${params.pipelines_testdata_base_path}/spectra/tmt_erwinia_subset.mzML", checkIfExists: true)
-                def fasta_file = file("\${params.pipelines_testdata_base_path}/databases/erwinia_carotovora.fasta", checkIfExists: true)
-                // SpecLibGen config as bash-sourceable string
-                def config_cli = "CONVERT_ARGS='--max_delta_unimod 0.02 --max_delta_ppm 15'; FRAGMENT_TYPES='[\\\"b\\\",\\\"y\\\"]'; LIBRARY_ARGS='--rt_lowess_fraction 0'; RT_CAL='noiRT'; IM_CAL='noIM'; KEEP_INTERMEDIATE='false'"
-
+                def psm = file("\${workDir}/psm.tsv")
+                psm.text = "Spectrum\\tPeptide\\nrun1.00001.00001.2\\tPEPTIDEK\\n"
+                def peptide = file("\${workDir}/peptide.tsv")
+                peptide.text = "Peptide\\nPEPTIDEK\\n"
+                def pepxml = file("\${workDir}/interact-run1.pep.xml")
+                pepxml.text = "<msms_pipeline_analysis/>"
+                def mzml1 = file("\${workDir}/run1.mzML")
+                mzml1.text = "<mzML/>"
+                def mzml2 = file("\${workDir}/run0.mzML")
+                mzml2.text = "<mzML/>"
+                def fasta = file("\${workDir}/db.fasta")
+                fasta.text = ">rev_P1\\nKEDITPEP\\n>P1\\nPEPTIDEK\\n"
                 input[0] = channel.of([
-                    [ id: 'speclibgen_test' ],
-                    [ psm_file ],
-                    [ pep_file ],
-                    [ mzml_file ],
-                    config_cli
+                    [ id: 'fragpipe' ], psm, peptide, [ pepxml ], [ mzml1, mzml2 ], [], [],
+                    new groovy.json.JsonSlurper().parse(file("\${baseDir}/modules/local/speclibgen/tests/convert_psm.json", checkIfExists: true).toFile())
                 ])
-                input[1] = fasta_file
+                input[1] = fasta
                 """
             }
         }
 
         then {
-            assertAll (
+            def argv = path(process.out.argv.get(0).get(1)).readLines()
+            def filelist = path(process.out.filelists.get(0).get(1).find { f -> f.toString().endsWith('filelist_speclibgen.txt') }).readLines()
+            assertAll(
                 { assert process.success },
-                // results_dir contains non-deterministic PDF — check existence only
-                { assert process.out.results_dir.size() > 0 },
-                // Snapshot deterministic library outputs only
+                { assert argv[10] == 'noiRT:noIM' },
+                // CmdSpecLibGen.java:165-167: --decoy_prefix, --labile_mods nglyc+, --max_glycan_q with psm.tsv conversion
+                { assert argv[12] == /--max_delta_unimod 0.02 --max_delta_ppm 15.0 --fragment_types [\'b\',\'y\',] --decoy_prefix rev_ --labile_mods nglyc+ --max_glycan_q 0.01/ },
+                { assert argv[13] == '--rt_lowess_fraction 0.0' },
+                // one absolute LC-MS path per line, in the given LC-MS table order (CmdSpecLibGen.java:189-202)
+                { assert filelist.collect { line -> new File(line).name } == ['run1.mzML', 'run0.mzML'] },
+                { assert filelist.every { line -> line.startsWith('/') } },
                 { assert snapshot(
                     process.out.library_tsv,
-                    process.out.library_speclib,
-                    process.out.library_parquet,
+                    process.out.easypqp_files,
                     process.out.versions_speclibgen,
                     process.out.versions_fragpipe
                 ).match() }
+            )
+        }
+    }
+
+    test("speclibgen - stub - user RT calibration file") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def psm = file("\${workDir}/psm.tsv")
+                psm.text = "Spectrum\\tPeptide\\nrun1.00001.00001.2\\tPEPTIDEK\\n"
+                def peptide = file("\${workDir}/peptide.tsv")
+                peptide.text = "Peptide\\nPEPTIDEK\\n"
+                def pepxml = file("\${workDir}/interact-run1.pep.xml")
+                pepxml.text = "<msms_pipeline_analysis/>"
+                def mzml = file("\${workDir}/run1.mzML")
+                mzml.text = "<mzML/>"
+                def fasta = file("\${workDir}/db.fasta")
+                fasta.text = ">rev_P1\\nKEDITPEP\\n>P1\\nPEPTIDEK\\n"
+                def rt_file = file("\${workDir}/my_irt.tsv")
+                rt_file.text = "modified_peptide\\tprecursor_charge\\tirt\\nPEPTIDEK\\t2\\t10.0\\n"
+                // the parser leaves rt_cal empty and emits rt_cal_file for "User provided RT calibration file"
+                def config = new groovy.json.JsonSlurper().parse(file("\${baseDir}/modules/local/speclibgen/tests/convert_pepxml.json", checkIfExists: true).toFile()) + [rt_cal: '']
+                input[0] = channel.of([[ id: 'fragpipe' ], psm, peptide, [ pepxml ], [ mzml ], rt_file, [], config])
+                input[1] = fasta
+                """
+            }
+        }
+
+        then {
+            def argv = path(process.out.argv.get(0).get(1)).readLines()
+            assertAll(
+                { assert process.success },
+                // argv[8] is "<calibration file>:<IM option>" (CmdSpecLibGen.java:151-152)
+                { assert argv[10] == argv[4] + '/rt_calibration/my_irt.tsv:noIM' },
+                { assert snapshot(process.out.library_tsv, process.out.versions_speclibgen).match() }
+            )
+        }
+    }
+
+    test("speclibgen - integration - pepXML conversion with test data") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                def psm = file("\${params.pipelines_testdata_base_path}/module_inputs/psm.tsv", checkIfExists: true)
+                def peptide = file("\${params.pipelines_testdata_base_path}/module_inputs/peptide.tsv", checkIfExists: true)
+                def pepxml = file("\${params.pipelines_testdata_base_path}/module_inputs/interact-tmt_erwinia_subset.pep.xml", checkIfExists: true)
+                def mzml = file("\${params.pipelines_testdata_base_path}/spectra/tmt_erwinia_subset.mzML", checkIfExists: true)
+                def fasta = file("\${params.pipelines_testdata_base_path}/databases/erwinia_carotovora.fasta", checkIfExists: true)
+                input[0] = channel.of([
+                    [ id: 'fragpipe' ], psm, peptide, [ pepxml ], [ mzml ], [], [],
+                    new groovy.json.JsonSlurper().parse(file("\${baseDir}/modules/local/speclibgen/tests/convert_pepxml.json", checkIfExists: true).toFile())
+                ])
+                input[1] = fasta
+                """
+            }
+        }
+
+        then {
+            def library = path(process.out.library_tsv.get(0).get(1)).readLines()
+            assertAll(
+                { assert process.success },
+                // easypqp_lib_export('Spectronaut') columns (gen_con_spec_lib.py:371-433)
+                { assert ['FragmentType', 'AverageExperimentalRetentionTime', 'AllMappedProteins', 'Proteotypic'].every { column -> library[0].split('\\t').contains(column) } },
+                { assert library.size() > 1 },
+                { assert snapshot(process.out.versions_speclibgen, process.out.versions_fragpipe).match() }
+            )
+        }
+    }
+
+    test("speclibgen - integration - psm.tsv conversion with test data") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                def psm = file("\${params.pipelines_testdata_base_path}/module_inputs/psm.tsv", checkIfExists: true)
+                def peptide = file("\${params.pipelines_testdata_base_path}/module_inputs/peptide.tsv", checkIfExists: true)
+                def pepxml = file("\${params.pipelines_testdata_base_path}/module_inputs/interact-tmt_erwinia_subset.pep.xml", checkIfExists: true)
+                def mzml = file("\${params.pipelines_testdata_base_path}/spectra/tmt_erwinia_subset.mzML", checkIfExists: true)
+                def fasta = file("\${params.pipelines_testdata_base_path}/databases/erwinia_carotovora.fasta", checkIfExists: true)
+                // psm.tsv conversion without glyco: convert-psm=true, Regular labile mode, max_glycan_q 1.0
+                def parts = new groovy.json.JsonSlurper().parse(file("\${baseDir}/modules/local/speclibgen/tests/convert_psm.json", checkIfExists: true).toFile())
+                def config = parts + [convert_args: parts.convert_args.replace(' --labile_mods nglyc+ --max_glycan_q 0.01', ' --max_glycan_q 1.0')]
+                input[0] = channel.of([[ id: 'fragpipe' ], psm, peptide, [ pepxml ], [ mzml ], [], [], config])
+                input[1] = fasta
+                """
+            }
+        }
+
+        then {
+            def library = path(process.out.library_tsv.get(0).get(1)).readLines()
+            assertAll(
+                { assert process.success },
+                { assert library.size() > 1 },
+                { assert snapshot(process.out.versions_speclibgen, process.out.versions_fragpipe).match() }
             )
         }
     }

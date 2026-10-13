@@ -1,0 +1,343 @@
+// iProteomes: --proteome resolution for MSPROTEOMICS_FRAGPIPE.
+// Priority: --database > the iProteome (fragpipe_fasta searched as given, or fasta) > error.
+nextflow_workflow {
+
+    name "Test Workflow MSPROTEOMICS_FRAGPIPE - iProteomes"
+    script "../fragpipe.nf"
+    workflow "MSPROTEOMICS_FRAGPIPE"
+
+    tag "workflows"
+    tag "msproteomics_fragpipe"
+    tag "iproteomes"
+
+    // Task scripts (.command.sh) of this test run, keyed by process name (last ':' segment),
+    // located through the run's trace file (hash -> work directory).
+    def taskScripts = { String output_dir ->
+        def scripts = [:].withDefault { [] }
+        def work = new File("${output_dir}/../work")
+        new File("${output_dir}/../meta/trace.csv").readLines().drop(1).each { line ->
+            def cols = line.split('\t')
+            def (prefix, suffix) = cols[1].tokenize('/')
+            def task_dir = new File(work, prefix).listFiles().find { d -> d.name.startsWith(suffix) }
+            def process = cols[3].replaceAll(/ \(.*\)$/, '').tokenize(':')[-1]
+            scripts[process] << new File(task_dir, '.command.sh').text
+        }
+        scripts
+    }
+
+    test("the hosted FragPipe database is searched as given") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def store = "${fixtures}/iproteomes"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta']
+                input           = ss.toString()
+                database        = null
+                proteome        = 'mouse'
+                iproteomes_base = store
+                fragpipe_workflow = "${fixtures}/fragpipe_workflows/LFQ-MBR.workflow"
+                fragpipe_mode     = 'pipeline'
+                add_philosopher_decoy        = false
+                add_philosopher_contaminants = false
+                iproteomes      = [mouse: entry]
+                outdir          = "$outputDir"
+            }
+        }
+
+        then {
+            def scripts = taskScripts(outputDir)
+            assertAll(
+                { assert workflow.success },
+                { assert !scripts.containsKey('PHILOSOPHERDATABASE') : 'the hosted database already has decoys and contaminants' },
+                { assert scripts['CHECKDBCONFIG'].size() == 1 },
+                { assert scripts['CHECKDBCONFIG'][0].contains('decoy check skipped for test_decoys_contam.fasta') : scripts['CHECKDBCONFIG'] }
+            )
+        }
+    }
+
+    test("--add_philosopher_decoy updates the plain iProteome fasta") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def store = "${fixtures}/iproteomes"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta']
+                input           = ss.toString()
+                database        = null
+                proteome        = 'mouse'
+                iproteomes_base = store
+                fragpipe_workflow = "${fixtures}/fragpipe_workflows/LFQ-MBR.workflow"
+                fragpipe_mode     = 'pipeline'
+                add_philosopher_decoy        = false
+                add_philosopher_contaminants = false
+                iproteomes      = [mouse: entry]
+                add_philosopher_decoy        = true
+                add_philosopher_contaminants = true
+                outdir          = "$outputDir"
+            }
+        }
+
+        then {
+            def scripts = taskScripts(outputDir)
+            assertAll(
+                { assert workflow.success },
+                { assert scripts['PHILOSOPHERDATABASE'].size() == 1 },
+                { assert scripts['PHILOSOPHERDATABASE'][0].contains('--custom test.fasta') : scripts['PHILOSOPHERDATABASE'] }
+            )
+        }
+    }
+
+    test("an entry without fragpipe_fasta searches its fasta as given") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def store = "${fixtures}/iproteomes"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta']
+                input           = ss.toString()
+                database        = null
+                proteome        = 'mouse'
+                iproteomes_base = store
+                fragpipe_workflow = "${fixtures}/fragpipe_workflows/LFQ-MBR.workflow"
+                fragpipe_mode     = 'pipeline'
+                add_philosopher_decoy        = false
+                add_philosopher_contaminants = false
+                iproteomes      = [mouse: entry.findAll { k, v -> k != 'fragpipe_fasta' }]
+                outdir          = "$outputDir"
+            }
+        }
+
+        then {
+            def scripts = taskScripts(outputDir)
+            assertAll(
+                { assert workflow.success },
+                { assert !scripts.containsKey('PHILOSOPHERDATABASE') },
+                { assert scripts['CHECKDBCONFIG'][0].contains('decoy check skipped for test.fasta ') : scripts['CHECKDBCONFIG'] }
+            )
+        }
+    }
+
+    test("--database wins over the iProteome") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def store = "${fixtures}/iproteomes"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta']
+                input           = ss.toString()
+                database        = null
+                proteome        = 'mouse'
+                iproteomes_base = store
+                fragpipe_workflow = "${fixtures}/fragpipe_workflows/LFQ-MBR.workflow"
+                fragpipe_mode     = 'pipeline'
+                add_philosopher_decoy        = false
+                add_philosopher_contaminants = false
+                iproteomes      = [mouse: entry]
+                database        = "${fixtures}/test.fasta"
+                outdir          = "$outputDir"
+            }
+        }
+
+        then {
+            def scripts = taskScripts(outputDir)
+            assertAll(
+                { assert workflow.success },
+                { assert scripts['CHECKDBCONFIG'][0].contains('decoy check skipped for test.fasta ') : scripts['CHECKDBCONFIG'] }
+            )
+        }
+    }
+
+    test("a declared empty fragpipe_fasta fails") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def store = "${fixtures}/iproteomes"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta']
+                input           = ss.toString()
+                database        = null
+                proteome        = 'mouse'
+                iproteomes_base = store
+                fragpipe_workflow = "${fixtures}/fragpipe_workflows/LFQ-MBR.workflow"
+                fragpipe_mode     = 'pipeline'
+                add_philosopher_decoy        = false
+                add_philosopher_contaminants = false
+                iproteomes      = [mouse: entry + [fragpipe_fasta: '']]
+                outdir          = "$outputDir"
+            }
+        }
+
+        then {
+            def output = (workflow.stdout + workflow.stderr).join('\n')
+            assertAll(
+                { assert workflow.failed },
+                { assert output.contains("declares 'fragpipe_fasta' but its path is empty") : output }
+            )
+        }
+    }
+
+    test("a declared missing fragpipe_fasta fails") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def store = "${fixtures}/iproteomes"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta']
+                input           = ss.toString()
+                database        = null
+                proteome        = 'mouse'
+                iproteomes_base = store
+                fragpipe_workflow = "${fixtures}/fragpipe_workflows/LFQ-MBR.workflow"
+                fragpipe_mode     = 'pipeline'
+                add_philosopher_decoy        = false
+                add_philosopher_contaminants = false
+                iproteomes      = [mouse: entry + [fragpipe_fasta: 'absent.fasta']]
+                outdir          = "$outputDir"
+            }
+        }
+
+        then {
+            def output = (workflow.stdout + workflow.stderr).join('\n')
+            assertAll(
+                { assert workflow.failed },
+                { assert output.contains("is missing or unreadable") : output }
+            )
+        }
+    }
+
+    test("an unknown --proteome fails") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def store = "${fixtures}/iproteomes"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta']
+                input           = ss.toString()
+                database        = null
+                proteome        = 'mouse'
+                iproteomes_base = store
+                fragpipe_workflow = "${fixtures}/fragpipe_workflows/LFQ-MBR.workflow"
+                fragpipe_mode     = 'pipeline'
+                add_philosopher_decoy        = false
+                add_philosopher_contaminants = false
+                iproteomes      = [mouse: entry]
+                proteome        = 'rat'
+                outdir          = "$outputDir"
+            }
+        }
+
+        then {
+            def output = (workflow.stdout + workflow.stderr).join('\n')
+            assertAll(
+                { assert workflow.failed },
+                { assert output.contains("is not an iProteome") : output }
+            )
+        }
+    }
+
+    test("--proteome without --iproteomes_base fails") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def store = "${fixtures}/iproteomes"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta']
+                input           = ss.toString()
+                database        = null
+                proteome        = 'mouse'
+                iproteomes_base = store
+                fragpipe_workflow = "${fixtures}/fragpipe_workflows/LFQ-MBR.workflow"
+                fragpipe_mode     = 'pipeline'
+                add_philosopher_decoy        = false
+                add_philosopher_contaminants = false
+                iproteomes      = [mouse: entry]
+                iproteomes_base = null
+                outdir          = "$outputDir"
+            }
+        }
+
+        then {
+            def output = (workflow.stdout + workflow.stderr).join('\n')
+            assertAll(
+                { assert workflow.failed },
+                { assert output.contains("needs --iproteomes_base") : output }
+            )
+        }
+    }
+
+    test("neither --database nor --proteome fails") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def store = "${fixtures}/iproteomes"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta']
+                input           = ss.toString()
+                database        = null
+                proteome        = 'mouse'
+                iproteomes_base = store
+                fragpipe_workflow = "${fixtures}/fragpipe_workflows/LFQ-MBR.workflow"
+                fragpipe_mode     = 'pipeline'
+                add_philosopher_decoy        = false
+                add_philosopher_contaminants = false
+                iproteomes      = [mouse: entry]
+                proteome        = null
+                outdir          = "$outputDir"
+            }
+        }
+
+        then {
+            def output = (workflow.stdout + workflow.stderr).join('\n')
+            assertAll(
+                { assert workflow.failed },
+                { assert output.contains("Needs a protein FASTA") : output }
+            )
+        }
+    }
+}

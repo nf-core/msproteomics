@@ -1,78 +1,80 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
 name: "fragpipe_glyco"
-description: Glycoproteomics analysis with mass-based glycan matching (MBG) and O-glycoproteomics site localization (OPair)
+description: FragPipe glyco chain between Philosopher Report and IonQuant - PairScans, O-Pair, PTM-Shepherd (with AppendFile masses) and MBG, each on a copy of the group psm.tsv
 keywords:
   - proteomics
   - glycoproteomics
-  - glycan
-  - mbg
   - opair
-  - o-glycosylation
+  - ptmshepherd
+  - mbg
 components:
-  - mbg
+  - pairscans
   - opair
+  - ptmshepherd
+  - mbg
+  - fragpipe_ptm
 input:
-  - ch_psm_files:
+  - ch_results_dir:
       type: channel
-      description: |
-        PSM tables from PHILOSOPHER_FILTER for glycan matching.
-        Structure: [ val(meta), path(psm.tsv) ]
+      description: "Philosopher Report group directories. Structure: [ val(meta), path(group_dir) ]"
+  - ch_lcms:
+      type: channel
+      description: "LC-MS files in FragPipe file-table order. Structure: [ val(meta), path(spectra) ]"
   - ch_mzml:
       type: channel
-      description: |
-        Spectra files in mzML format for OPair analysis.
-        Structure: [ val(meta), path(mzml) ]
-  - ch_manifest:
+      description: "LC-MS files MSFragger searched. Structure: [ val(meta), path(spectra) ]"
+  - ch_calibrated_mzml:
       type: channel
-      description: |
-        FragPipe manifest file for MBG.
-        Structure: path(manifest.fp-manifest)
-  - ch_glycan_dbs:
+      description: "MSFragger _calibrated.mzML. Structure: [ val(meta), path(mzml) ]"
+  - ch_uncalibrated_mzml:
       type: channel
-      description: |
-        Glycan database files. Pass Channel.empty() when glyco is not enabled.
-        Structure: tuple path(residue_db), path(glycan_mod_db), path(oglycan_db)
+      description: "MSFragger _uncalibrated.mzML. Structure: [ val(meta), path(mzml) ]"
+  - ch_fasta:
+      type: channel
+      description: "Searched database. Structure: path(fasta)"
   - ch_tool_configs:
       type: channel
-      description: |
-        Parsed JSON tool configuration map controlling which glyco tools to run.
-        Structure: val(tool_configs_map)
+      description: "PARSEFRAGPIPEWORKFLOW tool_configs.json text. Structure: val(json)"
+  - aggregate_meta:
+      type: map
+      description: Meta map of aggregate outputs
 output:
-  - mbg_results:
+  - modlist_append:
       type: channel
-      description: |
-        MBG glycan matching results.
-        Structure: [ val(meta), path(*_mbg*.tsv) ]
-  - mbg_glycan:
+      description: "glyco_masses_list.txt for IonQuant AppendFile, or []. Structure: path(file)"
+  - psm_dirs:
       type: channel
-      description: |
-        MBG glycan-level results.
-        Structure: [ val(meta), path(*_glycan*.tsv) ]
-  - opair_results:
+      description: "Group directories after the chain (IonQuant/SpecLibGen input). Structure: [ val(meta), path(group_dir) ]"
+  - ptm_results:
       type: channel
-      description: |
-        OPair O-glycoproteomics results.
-        Structure: [ val(meta), path(*_opair_results.tsv) ]
-  - opair_glycoforms:
+      description: "ptm-shepherd-output. Structure: [ val(meta), path(dir) ]"
+  - glyco_masses:
       type: channel
-      description: |
-        OPair glycoform assignment results.
-        Structure: [ val(meta), path(*_opair_glycoforms.tsv) ]
-  - mbg_dir:
+      description: "Structure: [ val(meta), path(glyco_masses_list.txt) ]"
+  - shepherd_config:
       type: channel
-      description: |
-        MBG results directory.
-        Structure: [ val(meta), path(results_dir) ]
-  - opair_dir:
+      description: "Structure: [ val(meta), path(shepherd.config) ]"
+  - pairs:
       type: channel
-      description: |
-        OPair results directory.
-        Structure: [ val(meta), path(results_dir) ]
+      description: "Structure: [ val(meta), path(*.pairs) ]"
+  - opair_dirs:
+      type: channel
+      description: "Structure: [ val(meta), path(group_dir) ]"
+  - mbg_dirs:
+      type: channel
+      description: "Structure: [ val(meta), path(group_dir) ]"
+  - mbg_manifest:
+      type: channel
+      description: "Structure: [ val(meta), path(fragpipe-files.fp-manifest) ]"
+  - mbg_log:
+      type: channel
+      description: "Structure: [ val(meta), path(mbg.log) ]"
+  - opair_log:
+      type: channel
+      description: "Structure: [ val(meta), path(opair.log) ]"
   - versions:
-      type: file
-      description: |
-        File containing software versions.
-        Structure: [ path(versions.yml) ]
+      type: channel
+      description: Versions (topic channel also used)
 authors:
   - "@dongzehe"
 maintainers:

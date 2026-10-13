@@ -26,13 +26,13 @@ nextflow_workflow {
 
                 // ch_file: [sample_meta, path(file)]
                 ch_input = channel.of(
-                    [ [ id:'sample1' ], mzml1 ],
-                    [ [ id:'sample2' ], mzml2 ]
+                    [ [ id: 'sample1', group: 'sample1', data_type: 'DDA' ], mzml1 ],
+                    [ [ id: 'sample2', group: 'sample2', data_type: 'DDA' ], mzml2 ]
                 )
                 // ch_database: [meta, fasta]
                 ch_database = channel.of([ [ id:'database' ], fasta ])
                 // ch_workflow_file: [meta, path(workflow_file)]
-                def wf_file = file("\${projectDir}/modules/local/fragpipe/resources/workflows/TMT-labelcheck-229.workflow")
+                def wf_file = file("\${projectDir}/assets/TMT-labelcheck-229.workflow")
                 ch_workflow_file = channel.of([ [ id:'labelcheck_workflow' ], wf_file ])
                 // TMT type
                 tmt_type = 'TMT10'
@@ -65,6 +65,40 @@ nextflow_workflow {
                     workflow.out.html_report_combined,
                     workflow.out.summary_combined
                 ).match() }
+            )
+        }
+    }
+
+    // The MSFragger tab exists whatever the workflow names: without msfragger.* keys FragPipe searches
+    // with the closed-search defaults (TabMsfragger.java:515-517)
+    test("TMT label check - workflow without msfragger settings searches with FragPipe's defaults") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            workflow {
+                """
+                def mzml1 = file("\${workDir}/sample1.mzML")
+                def fasta = file("\${workDir}/test.fasta")
+                mzml1.text = "mock"
+                fasta.text = ">test\\nMKFLVL"
+                def wf_file = file("\${workDir}/no_msfragger.workflow")
+                wf_file.text = file("\${projectDir}/assets/TMT-labelcheck-229.workflow").readLines()
+                    .findAll { line -> !line.startsWith('msfragger.') }.join('\\n')
+                input[0] = channel.of([ [ id: 'sample1', group: '', data_type: 'DDA' ], mzml1 ])
+                input[1] = channel.of([ [ id:'database' ], fasta ])
+                input[2] = channel.of([ [ id:'labelcheck_workflow' ], wf_file ])
+                input[3] = 'TMT10'
+                input[4] = channel.empty()
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert workflow.trace.succeeded().any { task -> task.name.contains(':MSFRAGGER (') } },
+                { assert snapshot(workflow.out.pepxml, workflow.out.psms).match() }
             )
         }
     }
