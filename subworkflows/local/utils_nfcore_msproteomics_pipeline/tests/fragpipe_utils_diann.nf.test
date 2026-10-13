@@ -36,6 +36,26 @@ nextflow_function {
         }
     }
 
+    test("lfqExperimentAnnotation - an empty LC-MS path stops with the manifest row") {
+        function "lfqExperimentAnnotation"
+        when {
+            function {
+                """
+                input[0] = [
+                    ['/data/exp_a_1.mzML', '', null, 'DIA'],
+                    ['', '', null, 'DIA']
+                ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains('lfqExperimentAnnotation: a manifest row has an empty LC-MS file path') } : function.stdout }
+            )
+        }
+    }
+
     test("lfqExperimentAnnotation - experiment groups in TreeMap order, GPF-DIA / DIA-Lib skipped") {
         function "lfqExperimentAnnotation"
         when {

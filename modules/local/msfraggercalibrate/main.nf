@@ -19,7 +19,7 @@
  *   - log: MSFragger console output (msfragger_calibrate.log)
  *   - versions: Software versions
  */
-include { fragpipeJavaMemGb; fragpipeTools; requireFragpipeLicenseAgreement; writeTextFile; rawSymlinksToFiles; setFragpipeParamValues; shellArgs; fragpipeJarLines } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
+include { fragpipeJavaMemGb; fragpipeTools; requireFragpipeLicenseAgreement; writeTextFile; setFragpipeParamValues; shellArgs; fragpipeJarLines; rawLinkCopies } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
 
 process MSFRAGGERCALIBRATE {
     tag "${meta.id}"
@@ -62,6 +62,7 @@ process MSFRAGGERCALIBRATE {
         '{TASK_DIR}/calibrate_fragger.params', '--license', tools.license, '--split1', spectra.name]
     def log_argv = argv.collect { word -> word == tools.license ? '<license>' : word }
     """
+    ${rawLinkCopies(spectra)}
     export HOME=\$(pwd)
     ${writeTextFile('I_AGREE_FRAGPIPE_LICENSE_AGREEMENT', agreement)}
     ${fragpipeJarLines(tools, ['msfragger'])}
@@ -69,7 +70,6 @@ process MSFRAGGERCALIBRATE {
 
     ${writeTextFile('calibrate_fragger.params', calibrate_params)}
 
-    ${rawSymlinksToFiles(spectra)}
 
     CMD=(${shellArgs(argv)} ${args})
     LOG=(${shellArgs(log_argv)} ${args})

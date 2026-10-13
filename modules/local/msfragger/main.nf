@@ -14,7 +14,7 @@
  *   - license_agreement: I_AGREE_FRAGPIPE_LICENSE_AGREEMENT
  *   - versions_msfragger / versions_fragpipe: versions (topic: versions)
  */
-include { fragpipeJavaMemGb; msfraggerPartialArgs; fragpipeTools; requireFragpipeLicenseAgreement; writeTextFile; rawSymlinksToFiles; setFragpipeParamValues; shellArgs; msfraggerStubFiles; msfraggerTrailingArgv; fragpipeJarLines } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
+include { fragpipeJavaMemGb; msfraggerPartialArgs; fragpipeTools; requireFragpipeLicenseAgreement; writeTextFile; setFragpipeParamValues; shellArgs; msfraggerStubFiles; msfraggerTrailingArgv; fragpipeJarLines; rawLinkCopies } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
 
 process MSFRAGGER {
     tag "${meta.id}"
@@ -83,13 +83,13 @@ process MSFRAGGER {
         "{TASK_DIR}/${prefix}/${params_name}", '--license', tools.license] + spectra.collect { f -> f.name } + msfraggerTrailingArgv(params_text, meta) + partial
     def log_argv = argv.collect { word -> word == tools.license ? '<license>' : word }
     """
+    ${rawLinkCopies(spectra)}
     export HOME=\$(pwd)
     mkdir -p ${prefix}
     ${writeTextFile('I_AGREE_FRAGPIPE_LICENSE_AGREEMENT', agreement)}
     ${fragpipeJarLines(tools, ['msfragger'])}
     echo "${tools.fragpipe_version}" > .fragpipe_version
 
-    ${rawSymlinksToFiles(spectra)}
 
     ${writeTextFile("${prefix}/${params_name}", fragger_params)}
 
@@ -108,9 +108,9 @@ process MSFRAGGER {
     def tools = fragpipeTools(task)
     def spectra = mzml_files instanceof List ? mzml_files : [mzml_files]
     """
+    ${rawLinkCopies(spectra)}
     mkdir -p ${prefix}
     ${writeTextFile("${prefix}/${params_name}", params_text)}
-    ${rawSymlinksToFiles(spectra)}
     touch ${msfraggerStubFiles(spectra, fasta.name, params_text, prefix).collect { f -> "'${f}'" }.join(' ')}
     touch ${prefix}/msfragger.log
     touch I_AGREE_FRAGPIPE_LICENSE_AGREEMENT

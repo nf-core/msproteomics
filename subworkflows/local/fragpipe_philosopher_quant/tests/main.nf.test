@@ -164,7 +164,7 @@ nextflow_workflow {
             def reports = workflow.out.report_results_dir.collect { item -> [item[0].id, new File(item[1].toString()).list().sort()] }.sort { item -> item[0] }
             def ionquant_cmd = workflow.trace.tasks().find { task -> task.name.endsWith(':IONQUANT (fragpipe)') }
             def staged = []
-            new File("${launchDir}/work").eachFileRecurse { f -> if (f.name == '.command.run' && f.text.contains("### name: 'QUANT_CHAIN:FRAGPIPE_QUANT:IONQUANT (fragpipe)'")) staged = f.readLines().findAll { l -> l.contains('cp -fRL ') && (l.trim().endsWith(' p1') || l.trim().endsWith(' p2')) }.collect { l -> l.trim().split(' ')[-2] } }
+            new File("${launchDir}/work").eachFileRecurse { f -> if (f.name == '.command.run' && f.text.contains("### name: 'QUANT_CHAIN:FRAGPIPE_QUANT:IONQUANT (fragpipe)'")) staged = f.readLines().findAll { l -> l.trim() ==~ /ln -s(fn)? \S+ p[12]/ }.collect { l -> l.trim().split(' ')[-2] } }
             def report_dirs = workflow.out.report_results_dir.collect { item -> item[1].toString() }
             assertAll(
                 { assert workflow.success },

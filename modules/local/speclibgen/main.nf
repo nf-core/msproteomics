@@ -1,4 +1,4 @@
-include { fragpipeJarLines; fragpipeTools } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
+include { fragpipeJarLines; fragpipeTools; rawLinkCopies } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
 include { speclibgenCommand; taskDirArg; taskFileCommand; shellQuote; fragpipeToolVersions; javaXmxGb } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
 
 process SPECLIBGEN {
@@ -41,6 +41,7 @@ process SPECLIBGEN {
     def ram = javaXmxGb(task, 2)
     def cmd = speclibgenCommand(argv_parts, fasta.name, spectra, rt_cal_file, im_cal_file, ram, task)
     """
+    ${rawLinkCopies(spectra)}
     export HOME=\$(pwd)
     TASK_DIR=\$(pwd)
     ${fragpipeJarLines(fragpipeTools(task), ['msfragger'])}

@@ -14,7 +14,7 @@
  *   - manifest: fragpipe-files.fp-manifest given to MBG
  *   - log: mbg.log
  */
-include { fragpipeTools; fragpipeManifestText; writeTextFile; fillArgvTokens; shellArgs; fragpipeJarLines } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
+include { fragpipeTools; fragpipeManifestText; writeTextFile; fillArgvTokens; shellArgs; fragpipeJarLines; rawLinkCopies } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
 include { javaXmxGb } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
 
 process MBG {
@@ -66,6 +66,7 @@ process MBG {
     // memory limit that default is too small for IonQuant's index (OutOfMemoryError on 2 Q Exactive
     // runs at 64 GB), so the heap is the task memory - a resource setting, not an algorithm one.
     """
+    ${rawLinkCopies(spectra)}
     export HOME=\$(pwd)
     echo "${tools.mbg_version}" > .mbg_version
     echo "${tools.fragpipe_version}" > .fragpipe_version

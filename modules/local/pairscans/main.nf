@@ -1,4 +1,4 @@
-include { fragpipeJarLines; fragpipeTools; shellArgs } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
+include { fragpipeJarLines; fragpipeTools; shellArgs; rawLinkCopies } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
 include { pairScansCommands; shellQuote; javaXmxGb } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
 include { textFileCommand } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/write_text_file'
 
@@ -38,6 +38,7 @@ process PAIRSCANS {
     def cmds = pairScansCommands(spectra.toString(), pairscans_args, task)
     def is_raw = spectra.name.toLowerCase().endsWith('.raw')
     """
+    ${rawLinkCopies(spectra)}
     export HOME=\$(pwd)
     ${fragpipeJarLines(fragpipeTools(task), ['batmass_io'], ['msfragger'])}
     for JAR in ${cmds.jars.collect { j -> shellQuote(j) }.join(' ')}; do

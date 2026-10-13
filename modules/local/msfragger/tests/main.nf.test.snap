@@ -72,7 +72,7 @@
             "nextflow": "25.10.4"
         }
     },
-    "msfragger - stub staged RAW symlink is replaced by the file": {
+    "msfragger - stub staged RAW is a real file": {
         "content": [
             [
                 [

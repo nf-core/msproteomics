@@ -11,7 +11,7 @@
  *   - q1_spectra / q2_spectra / q3_spectra / mgf_spectra: the pseudo-spectra
  *   - versions_diaumpire / versions_fragpipe: versions (topic: versions)
  */
-include { fragpipeTools; setFragpipeParamValues; writeTextFile; rawSymlinksToFiles; fragpipeJarLines; shellArgs } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
+include { fragpipeTools; setFragpipeParamValues; writeTextFile; fragpipeJarLines; shellArgs; rawLinkCopies } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
 include { javaXmxGb } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
 
 process DIAUMPIRE {
@@ -55,6 +55,7 @@ process DIAUMPIRE {
     // java -Xmx<ram>G -Dlibs.thermo.dir=<dir> -cp <jars> dia_umpire_se.DIA_Umpire_SE <lcms file> <params file>
     // (batmass-io-1.36.6 of the FragPipe 24.0 release jar; the tag-24.0 source says 1.36.5)
     """
+    ${rawLinkCopies(dia_file)}
     export HOME=\$(pwd)
     mkdir -p ${prefix}
     echo "${tools.diaumpire_version}" > .diaumpire_version
@@ -62,7 +63,6 @@ process DIAUMPIRE {
 
     ${writeTextFile('umpire-se.params', params_text)}
 
-    ${rawSymlinksToFiles(dia_file)}
     ${fragpipeJarLines(tools, ['msfragger', 'batmass_io'])}
 
     CMD=(java -Duser.home=\$PWD -Xmx${ram}G ${shellArgs(["-Dlibs.thermo.dir=${tools.thermo_dir}"])} ${args} -cp ${shellArgs(["${tools.diaumpire_jar}:${tools.batmass_io_jar}"])} dia_umpire_se.DIA_Umpire_SE ${dia_file} umpire-se.params)

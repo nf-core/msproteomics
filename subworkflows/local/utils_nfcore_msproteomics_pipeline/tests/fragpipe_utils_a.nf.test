@@ -272,8 +272,78 @@ nextflow_function {
         }
     }
 
-    test("rawSymlinksToFiles - only .raw files (any case) are copied over their links") {
-        function "rawSymlinksToFiles"
+    test("linkCopies - each staged link is replaced by a copy of its file") {
+        function "linkCopies"
+        when {
+            function {
+                """
+                input[0] = ['a.pepXML', 'raw_files/b.raw']
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == "[ ! -L \"a.pepXML\" ] || { cp -rL \"a.pepXML\" \"a.pepXML.copy\" && rm \"a.pepXML\" && mv \"a.pepXML.copy\" \"a.pepXML\"; }\n[ ! -L \"raw_files/b.raw\" ] || { cp -rL \"raw_files/b.raw\" \"raw_files/b.raw.copy\" && rm \"raw_files/b.raw\" && mv \"raw_files/b.raw.copy\" \"raw_files/b.raw\"; }" }
+            )
+        }
+    }
+
+    test("linkCopies - a name with a single quote stays one shell word") {
+        function "linkCopies"
+        when {
+            function {
+                """
+                input[0] = "it's.pin"
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == "[ ! -L \"it's.pin\" ] || { cp -rL \"it's.pin\" \"it's.pin.copy\" && rm \"it's.pin\" && mv \"it's.pin.copy\" \"it's.pin\"; }" }
+            )
+        }
+    }
+
+    test("linkCopies - a staged directory is copied whole and replaces its link") {
+        function "linkCopies"
+        when {
+            function {
+                """
+                input[0] = 'raw_files/run.raw'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == "[ ! -L \"raw_files/run.raw\" ] || { cp -rL \"raw_files/run.raw\" \"raw_files/run.raw.copy\" && rm \"raw_files/run.raw\" && mv \"raw_files/run.raw.copy\" \"raw_files/run.raw\"; }" }
+            )
+        }
+    }
+
+    test("linkCopiesWhenPathContains - the copy runs only when the input's path in dir contains the needle") {
+        function "linkCopiesWhenPathContains"
+        when {
+            function {
+                """
+                input[0] = ['a.pepXML', 'b.pepXML']
+                input[1] = 'grp'
+                input[2] = 'interact'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == "case \"\$PWD\"/\"grp/a.pepXML\" in *\"interact\"*) [ ! -L \"a.pepXML\" ] || { cp -rL \"a.pepXML\" \"a.pepXML.copy\" && rm \"a.pepXML\" && mv \"a.pepXML.copy\" \"a.pepXML\"; } ;; esac\ncase \"\$PWD\"/\"grp/b.pepXML\" in *\"interact\"*) [ ! -L \"b.pepXML\" ] || { cp -rL \"b.pepXML\" \"b.pepXML.copy\" && rm \"b.pepXML\" && mv \"b.pepXML.copy\" \"b.pepXML\"; } ;; esac" }
+            )
+        }
+    }
+
+    test("rawLinkCopies - only .raw files (any case) are copied") {
+        function "rawLinkCopies"
         when {
             function {
                 """
@@ -284,13 +354,13 @@ nextflow_function {
         then {
             assertAll(
                 { assert function.success },
-                { assert function.result == "[ ! -L 'a.RAW' ] || cp --remove-destination \"\$(readlink -f 'a.RAW')\" 'a.RAW'\n[ ! -L 'c.raw' ] || cp --remove-destination \"\$(readlink -f 'c.raw')\" 'c.raw'" }
+                { assert function.result == "[ ! -L \"a.RAW\" ] || { cp -rL \"a.RAW\" \"a.RAW.copy\" && rm \"a.RAW\" && mv \"a.RAW.copy\" \"a.RAW\"; }\n[ ! -L \"c.raw\" ] || { cp -rL \"c.raw\" \"c.raw.copy\" && rm \"c.raw\" && mv \"c.raw.copy\" \"c.raw\"; }" }
             )
         }
     }
 
-    test("rawSymlinksToFiles - no .raw file gives no line") {
-        function "rawSymlinksToFiles"
+    test("rawLinkCopies - no .raw file gives no line") {
+        function "rawLinkCopies"
         when {
             function {
                 """
@@ -777,6 +847,24 @@ nextflow_function {
             assertAll(
                 { assert function.success },
                 { assert function.result == ['C02/a.pin', 'b.pin'] }
+            )
+        }
+    }
+
+    // MSBooster writes <pin>_edited.pin next to the PIN's canonical path: the PIN itself moves, no link
+    test("msboosterPinStaging - PINs become files, grouped PINs move into their group directory") {
+        function "msboosterPinStaging"
+        when {
+            function {
+                """
+                input[0] = ['C02/a.pin', 'b.pin']
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == "[ ! -L \"a.pin\" ] || { cp -rL \"a.pin\" \"a.pin.copy\" && rm \"a.pin\" && mv \"a.pin.copy\" \"a.pin\"; }\n[ ! -L \"b.pin\" ] || { cp -rL \"b.pin\" \"b.pin.copy\" && rm \"b.pin\" && mv \"b.pin.copy\" \"b.pin\"; }\nmkdir -p \"C02\" && mv \"a.pin\" \"C02/a.pin\"" }
             )
         }
     }

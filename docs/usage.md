@@ -394,6 +394,20 @@ The pipeline loads configuration files automatically based on the `--mode` param
 2. `--tmt_type` selects the TMT plex (TMT6, TMT10, TMT11, TMT16, TMT18, TMTPRO); the correct labelcheck workflow file is auto-selected
 3. `conf/instruments/*.config` -- instrument-specific overrides applied via `-c`
 
+## Input Files Are Never Written
+
+Every task writes only inside its own work directory: no task writes into, or next to, your input files.
+Inputs reach a task as links (local and HPC runs) or through Fusion (Seqera Platform), so a write next to an input would land in your data directory or input bucket.
+Where a FragPipe tool rewrites or misreads an input (Thermo `.raw` files read by batmass-io, MSBooster's PIN files, a PeptideProphet pepXML whose path contains `interact`), the task works on its own copy of that file.
+
+To check this on your own data with docker, mount the task inputs read-only in a custom config (`-c`); a task that tried to write an input would then fail:
+
+```groovy
+docker.writableInputMounts = false
+```
+
+The pipeline's own docker tests run this way (`tests/nextflow.config`).
+
 ## Custom Configuration
 
 ### Resource Requests

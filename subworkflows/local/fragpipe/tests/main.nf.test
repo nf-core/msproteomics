@@ -569,8 +569,9 @@ database.decoy-tag = rev_
         then {
             def tasks = workflow.trace.tasks().collect { t -> t.name.tokenize(' ')[0].tokenize(':').last() }
             def iq_dir = new File(workflow.out.ionquant_dir[0][1].toString()).parentFile
-            // the group directory IonQuant staged (stageInMode copy: `cp -fRL <source> cancer` in .command.run)
-            def iq_input = new File(iq_dir, '.command.run').readLines().find { line -> line.trim() ==~ /cp -fRL \S+ cancer/ }?.trim()?.tokenize(' ')?.getAt(2)
+            // the group directory IonQuant staged: `ln -s <source> cancer` in .command.run (`ln -sfn` from Nextflow 26,
+            // SimpleFileCopyStrategy.stageInCommand); the task then replaces the link by a copy, so the line is the record
+            def iq_input = new File(iq_dir, '.command.run').readLines().find { line -> line.trim() ==~ /ln -s(fn)? \S+ cancer/ }?.trim()?.tokenize(' ')?.getAt(-2)
             def mbg_dir = workflow.out.glyco_psm_dirs[0][1].toString()
             assertAll (
                 { assert workflow.success },
@@ -622,9 +623,9 @@ database.decoy-tag = rev_
         then {
             def tasks = workflow.trace.tasks().collect { t -> t.name.tokenize(' ')[0].tokenize(':').last() }
             def ptms_dir = new File(workflow.out.ptm_results[0][1].toString()).parentFile
-            // the group directory PTM-Shepherd staged (stageInMode copy: `cp -fRL <source> input/cancer` in .command.run)
-            def tokens = new File(ptms_dir, '.command.run').readLines().find { line -> line.contains('cp -fRL ') && line.trim().endsWith(' input/cancer') }.trim().tokenize(' ')
-            def source = new File(tokens[tokens.indexOf('-fRL') + 1])
+            // the group directory PTM-Shepherd staged: `ln -s <source> input/cancer` in .command.run (`ln -sfn` from Nextflow 26)
+            def tokens = new File(ptms_dir, '.command.run').readLines().find { line -> line.trim() ==~ /ln -s(fn)? \S+ input\/cancer/ }.trim().tokenize(' ')
+            def source = new File(tokens[-2])
             def task_dir = source
             while (task_dir != null && !new File(task_dir, '.command.run').exists()) { task_dir = task_dir.parentFile }
             def producer = new File(task_dir, '.command.run').readLines().find { line -> line.startsWith('### name:') }

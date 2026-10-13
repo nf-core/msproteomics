@@ -611,8 +611,8 @@ def tmtIntegratorCommands(group_dirs, root_group_dir, config_text, work_dir, rep
     def checks = (root ? [root] : []) + named
     def stage = ["mkdir -p ${shellQuote("${work_dir}/${report_dir}")}"] +
         checks.collect { n -> "[ -f ${shellQuote("input_results/${n}/psm.tsv")} ] || { echo ${shellQuote("ERROR: group directory ${n} has no psm.tsv")} >&2; exit 1; }" } +
-        (root ? ["for f in ${shellQuote("input_results/${root}")}/*; do ln -s \"\$(realpath \"\$f\")\" ${shellQuote(work_dir)}/\"\$(basename \"\$f\")\"; done"] : []) +
-        named.collect { n -> "ln -s \"\$(realpath ${shellQuote("input_results/${n}")})\" ${shellQuote("${work_dir}/${n}")}" }
+        (root ? ["for f in ${shellQuote("input_results/${root}")}/*; do ln -s \"\$PWD/\$f\" ${shellQuote(work_dir)}/; done"] : []) +
+        named.collect { n -> "ln -s \"\$PWD\"/${shellQuote("input_results/${n}")} ${shellQuote("${work_dir}/${n}")}" }
     def tools = fragpipeTools(task)
     return [
         config          : config.toString(),

@@ -257,6 +257,11 @@ It mounts `$OPAIR_DET_DLL` over the image's `tools/opair/PTMLocalization.dll`, c
 
 Each golden test has its own `golden.config` next to it: it runs the tools in `$FRAGPIPE_CONTAINER` with docker and pins the tested processes to the threads and memory of the golden FragPipe run.
 
+A task may write only inside its work dir: under Fusion a write next to the resolved target of a staged link, or inside a staged directory such as a Bruker `.d`, lands in the input bucket.
+`tests/nextflow.config` sets `docker.writableInputMounts = false`, so every docker test (stub, golden, integration) mounts its inputs read-only and fails on such a write (the setting has no effect under Fusion or AWS Batch); `tests/lib/read_only_inputs.nf.test` (tags `stub`, `integration`) checks that the setting catches both cases.
+A module replaces exactly the staged links its tool misreads or writes through by copies (`linkCopies`, `rawLinkCopies`, `linkCopiesWhenPathContains` in `fragpipe_utils_a.nf`): Thermo `.raw` files (batmass-io under Mono), MSBooster's PINs, PeptideProphet's pepXMLs whose path contains `interact`; every other input stays a link.
+`tests/python/test_tasks_know_only_workdir.py` fails on link resolution (`readlink`, `realpath`, canonical paths, `projectDir`/`launchDir`, `new File(`) in modules, their helpers and the scripts tasks run, on `params.` in modules, on an unlisted path-like `val` input, on a module with LC-MS inputs and no `.raw` copies, and on any unlisted `stageInMode`.
+
 Each test (`modules/**/tests/golden.nf.test`) selects its steps from the manifest, stages the golden inputs, runs the module, and calls `tests/tools/golden_step_check.py`, which fails on any of:
 
 - argv differences after path normalization (step work dir, FragPipe install and external inputs become placeholders; argument order and flags are compared as is);

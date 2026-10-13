@@ -14,7 +14,7 @@
  *   - log: check_centroid.log, the command line followed by the tool output
  *   - versions: FragPipe version (topic: versions)
  */
-include { fragpipeTools; fragpipeJarLines; shellArgs } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
+include { fragpipeTools; fragpipeJarLines; shellArgs; rawLinkCopies } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
 include { javaXmxGb } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
 
 process CHECKCENTROID {
@@ -42,6 +42,7 @@ process CHECKCENTROID {
     // Class path: lib/fragpipe-<version>.jar and the batmass-io jar its build names (ToolingUtils.BATMASS_IO_JAR:
     // batmass-io-1.36.5 in the FragPipe 24.0 release, 1.36.6 in FragPipePlus; fragpipeJarLines)
     """
+    ${rawLinkCopies(lcms)}
     export HOME=\$(pwd)
     echo "${tools.fragpipe_version}" > .fragpipe_version
     ${fragpipeJarLines(tools, ['batmass_io'])}

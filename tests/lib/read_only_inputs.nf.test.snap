@@ -1,0 +1,19 @@
+{
+    "writes next to the resolved target or inside a staged dir fail, a write in the task dir does not": {
+        "content": [
+            [
+                "run.d",
+                "run.d/analysis.tdf",
+                "spectra.mzML"
+            ],
+            [
+                "spectra.mzML.out"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-08T16:22:03.997424709"
+    }
+}

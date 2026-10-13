@@ -27,7 +27,7 @@
  *     MSBooster_plots/), under the PINs' deepest common directory (msboosterOutputDir)
  *   - versions: MSBooster and FragPipe versions (topic: versions)
  */
-include { fragpipeTools; msboosterParamsText; msboosterPinPaths; msboosterOutputDir; msboosterPinStaging; writeTextFile; fragpipeJarLines; shellArgs } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
+include { fragpipeTools; msboosterParamsText; msboosterPinPaths; msboosterOutputDir; msboosterPinStaging; writeTextFile; fragpipeJarLines; shellArgs; rawLinkCopies } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
 include { javaXmxGb } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
 
 process MSBOOSTER {
@@ -71,6 +71,7 @@ process MSBOOSTER {
     // renamePin = 1 writes <base>_edited.pin next to each PIN. It keeps that name: Percolator reads
     // <base>_edited.pin and PercolatorOutputToPepXML reads <base>.pin (CmdPercolator.java:209-213, :292).
     """
+    ${rawLinkCopies(mzml_files)}
     export HOME=\$(pwd)
     mkdir -p ${prefix}
     ${fragpipeJarLines(tools, ['msbooster', 'batmass_io'])}

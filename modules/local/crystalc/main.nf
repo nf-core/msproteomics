@@ -18,7 +18,7 @@
  *   - results_dir / pepxml_filtered: <pepXML base>_c.pepXML
  *   - versions: Crystal-C and FragPipe versions (topic: versions)
  */
-include { fragpipeTools; crystalcParamsName; crystalcRuntimeParams; heredocText; rawSymlinksToFiles; fragpipeJarLines; shellArgs } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
+include { fragpipeTools; crystalcParamsName; crystalcRuntimeParams; heredocText; fragpipeJarLines; shellArgs; rawLinkCopies } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
 include { javaXmxGb } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
 
 process CRYSTALC {
@@ -53,6 +53,7 @@ process CRYSTALC {
     // FragPipe 24.0 class path (CmdCrystalc.JAR_CRYSTALC_NAME, JAR_DEPS) and the Thermo libraries next to the
     // MSFragger jar (FragpipeRun.java:1348-1356, CmdCrystalc.java:205-208), all in the FragPipe image
     """
+    ${rawLinkCopies(lcms_file)}
     export HOME=\$(pwd)
     mkdir -p ${prefix}
     echo "${tools.fragpipe_version}" > .fragpipe_version
@@ -64,7 +65,6 @@ process CRYSTALC {
 ${runtime_params}
 FP_EOF
 
-    ${rawSymlinksToFiles(lcms_file)}
     ${fragpipeJarLines(tools, ['msfragger', 'batmass_io'])}
 
     CMD=(java -Duser.home=\$PWD ${shellArgs(["-Dlibs.thermo.dir=${tools.thermo_dir}"])} -Xmx${ram}G -cp ${shellArgs(["${tools.crystalc_jar}:${tools.batmass_io_jar}:${tools.grppr_jar}"])} crystalc.Run ${params_file} ${pepxml_file} ${args})

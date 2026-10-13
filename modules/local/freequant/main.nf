@@ -62,8 +62,10 @@ process FREEQUANT {
     # The group work dir with the workspace Filter left (FragPipe runs FreeQuant there, no re-init)
     mkdir -p ${prefix}
     cp -rL ${results_dir}/. ${prefix}/
-    # Philosopher keeps the workspace's absolute paths in the .meta workspace binary; point them at this copy
-    philosopher_relocate_workspace.py ${prefix}
+    # Philosopher keeps the workspace's absolute paths in the .meta workspace binary; point them at this copy, and its
+    # Temp dir (in the task that made the workspace) at one in this task
+    mkdir -p phi_temp
+    philosopher_relocate_workspace.py "\$PWD"/${prefix} "\$PWD/phi_temp"
 
     # philosopher freequant <opts> --dir <LC-MS dir> in the group dir (CmdFreequant.java:108-128).
     # FragPipe's --raw is unreachable: FreeQuant takes only mzML (CmdFreequant.java:44, checked in
@@ -71,6 +73,7 @@ process FREEQUANT {
     CMD=(\$PHILOSOPHER freequant ${config_cli} --dir "\${WORK_DIR}/lcms_files" ${args})
     printf '%s\\n' "\${CMD[*]}" > \${WORK_DIR}/freequant.log
     (cd ${prefix} && "\${CMD[@]}") 2>&1 | tee -a \${WORK_DIR}/freequant.log
+    rm -rf phi_temp
 
     """
 

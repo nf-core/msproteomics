@@ -1,0 +1,49 @@
+// A task writes only inside its work dir: with Fusion (or any symlinked staging) a write next to the
+// resolved target of a staged link, or inside a staged directory, lands in the input location.
+// tests/nextflow.config sets docker.writableInputMounts = false so every docker test (golden,
+// integration) fails on such a write; this test checks that the setting catches both cases and still
+// lets a task write next to a staged link. Needs docker; tagged stub too: the processes have no stub block, so -stub runs these same scripts.
+nextflow_workflow {
+
+    name "Test read-only input mounts"
+    script "./read_only_inputs.nf"
+    workflow "READ_ONLY_INPUTS"
+    config "./read_only_inputs.config"
+
+    tag "integration"
+    tag "stub"
+    tag "read_only_inputs"
+
+    test("writes next to the resolved target or inside a staged dir fail, a write in the task dir does not") {
+
+        when {
+            workflow {
+                """
+                def inputs = file("\${launchDir}/ro_inputs")
+                inputs.resolve('run.d').mkdirs()
+                inputs.resolve('run.d/analysis.tdf').text = 'tdf\\n'
+                inputs.resolve('spectra.mzML').text = 'mzML\\n'
+                input[0] = channel.value(inputs.resolve('spectra.mzML'))
+                input[1] = channel.value(inputs.resolve('run.d'))
+                """
+            }
+        }
+
+        then {
+            def inputs = new File("${launchDir}/ro_inputs")
+            def listing = []
+            inputs.eachFileRecurse { f -> listing << inputs.toPath().relativize(f.toPath()).toString() }
+            def errors = []
+            new File("${launchDir}/work").eachFileRecurse { f -> if (f.name == '.command.err') errors << f.text }
+            assertAll(
+                { assert workflow.success },
+                { assert workflow.out.next_to_link.collect { f -> file(f).name } == ['spectra.mzML.out'] },
+                { assert workflow.out.next_to_target == [] },
+                { assert workflow.out.inside_dir == [] },
+                { assert errors.count { e -> e.contains('Read-only file system') } == 2 : errors },
+                { assert listing.sort() == ['run.d', 'run.d/analysis.tdf', 'spectra.mzML'] : listing },
+                { assert snapshot(listing.sort(), workflow.out.next_to_link.collect { f -> file(f).name }).match() }
+            )
+        }
+    }
+}

@@ -25,7 +25,7 @@
  *   - log: console output of the export
  *   - versions: FragAnnotator version (TabRun.FRAG_ANNOTATOR, TabRun.java:96: FragAnnotator-1.0.0.jar; its pom.properties says 1.0.0)
  */
-include { fragpipeTools; matchedFragmentsStaging; matchedFragmentsCollect; fragpipeJarLines; shellArgs } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
+include { fragpipeTools; matchedFragmentsStaging; matchedFragmentsCollect; fragpipeJarLines; shellArgs; rawLinkCopies } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
 
 process EXPORTMATCHEDFRAGMENTS {
     tag "${meta.id}"
@@ -59,6 +59,7 @@ process EXPORTMATCHEDFRAGMENTS {
     // FragAnnotator exits 0 when it finds no manifest or cannot read the results (ResultProcessor); FragPipe
     // then goes on with the psm.tsv files unchanged, and so does this module.
     """
+    ${rawLinkCopies(spectra)}
     export HOME=\$(pwd)
     echo "${tools.fragannotator_version}" > .fragannotator_version
     ${fragpipeJarLines(tools, ['batmass_io'])}

@@ -51,8 +51,10 @@ process PHILOSOPHERLABELQUANT {
 
     mkdir -p ${prefix}
     cp -rL ${results_dir}/. ${prefix}/
-    # Philosopher keeps the workspace's absolute paths in the .meta workspace binary; point them at this copy
-    philosopher_relocate_workspace.py ${prefix}
+    # Philosopher keeps the workspace's absolute paths in the .meta workspace binary; point them at this copy, and its
+    # Temp dir (in the task that made the workspace) at one in this task
+    mkdir -p phi_temp
+    philosopher_relocate_workspace.py "\$PWD"/${prefix} "\$PWD/phi_temp"
     cp lcms_files/${annotation_name} ${prefix}/
 
     # philosopher labelquant <opts> --annot <abs> --brand <type> --dir <LC-MS dir> in the group dir
@@ -60,6 +62,7 @@ process PHILOSOPHERLABELQUANT {
     CMD=("\$PHILOSOPHER" labelquant ${config_cli} --annot "\${WORK_DIR}"/lcms_files/${shellQuote(annotation_name)} --brand ${shellQuote(brand)} --dir "\${WORK_DIR}/lcms_files" ${args})
     printf '%s\\n' "\${CMD[*]}" > labelquant.log
     (cd ${prefix} && "\${CMD[@]}") 2>&1 | tee -a labelquant.log
+    rm -rf phi_temp
     """
 
     stub:

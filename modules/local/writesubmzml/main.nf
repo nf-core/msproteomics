@@ -24,7 +24,7 @@
  *   - log: write_sub_mzml.log, the command line followed by the tool output
  *   - versions: FragPipe version (topic: versions)
  */
-include { fragpipeTools; writeSubMzmlArgv; shellArgs; rawSymlinksToFiles; fragpipeJarLines; hashSetClassPathLines } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
+include { fragpipeTools; writeSubMzmlArgv; shellArgs; fragpipeJarLines; hashSetClassPathLines; rawLinkCopies } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
 include { javaXmxGb; shellQuote } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
 
 process WRITESUBMZML {
@@ -55,7 +55,7 @@ process WRITESUBMZML {
     # FragPipe's work-dir layout: the group's psm.tsv in <wd>/<group>, the LC-MS file with its .mzBIN_all
     mkdir -p ${shellQuote(cmd.group_dir)}
     ln -s "\$PWD/group_psm/psm.tsv" ${shellQuote(cmd.psm)}
-    ${rawSymlinksToFiles("lcms/${lcms.name.tokenize('/').last()}")}
+    ${rawLinkCopies(lcms)}
     ${fragpipeJarLines(tools, ['msfragger', 'batmass_io'])}
     ${hashSetClassPathLines(cmd.classpath_words)}
 
