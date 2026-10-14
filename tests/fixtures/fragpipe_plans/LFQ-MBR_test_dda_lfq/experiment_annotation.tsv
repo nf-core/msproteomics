@@ -1,0 +1,3 @@
+file	sample	sample_name	condition	replicate
+/plan/raw_files/dda_silac_subset.mzML	control_1	control_1	control	1
+/plan/raw_files/dda_silac_subset_2.mzML	treatment_1	treatment_1	treatment	1

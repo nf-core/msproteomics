@@ -104,6 +104,8 @@ Each page is named after the module directory under `modules/local` (the process
 | ------------------------------------------------- | ----------------------------------------------------------------------- |
 | [fragpipeheadless](fragpipeheadless.md)           | Run FragPipe in headless mode as a single all-in-one process            |
 | [parsefragpipeworkflow](parsefragpipeworkflow.md) | Parse FragPipe workflow files into per-tool configuration files         |
+| [fragpipeplan](fragpipeplan.md)                   | FragPipe's configured run (headless --write-plan, experimental)         |
+| [plantotoolconfigs](plantotoolconfigs.md)         | Tool configs from FragPipe's plan (experimental)                        |
 | [fragpipesaveworkflow](fragpipesaveworkflow.md)   | Write FragPipe's saved UI state (`fragpipe.workflow`) for a run         |
 | [fragpipesecondpass](fragpipesecondpass.md)       | FragPipe's second-pass workflow and manifest after a Write sub mzML run |
 | [writesubmzml](writesubmzml.md)                   | FragPipe "Write sub mzML": the scans no confident PSM explains          |

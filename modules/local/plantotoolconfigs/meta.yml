@@ -1,0 +1,106 @@
+name: plantotoolconfigs
+description: Tool configs (PARSEFRAGPIPEWORKFLOW's tool_configs.json and configs/ params) from FragPipe's configured run (headless --write-plan work dir).
+keywords:
+  - FragPipe
+  - proteomics
+  - planning
+tools:
+  - python:
+      description: Python runs bin/plan_to_tool_configs.py, which reads FragPipe's work dir (run log, config files, run files).
+      homepage: https://www.python.org/
+      documentation: https://docs.python.org/3/
+input:
+  - - meta:
+        type: map
+        description: Plan id map, e.g. [ id:'plan' ]
+    - workdir:
+        type: directory
+        description: FragPipe's work dir from FRAGPIPEPLAN (FragPipe headless --write-plan)
+output:
+  tool_configs_json:
+    - - meta:
+          type: map
+          description: Plan id map
+      - tool_configs.json:
+          type: file
+          description: Run flag, args and tool fields per FragPipe tool
+          pattern: "tool_configs.json"
+  msfragger_config:
+    - - meta:
+          type: map
+          description: Plan id map
+      - configs/{fragger,fragger_dda}.params:
+          type: file
+          description: MSFragger params of the DDA files, as FragPipe wrote them
+          pattern: "configs/{fragger,fragger_dda}.params"
+  msfragger_dia_config:
+    - - meta:
+          type: map
+          description: Plan id map
+      - configs/fragger_dia.params:
+          type: file
+          description: MSFragger params of the DIA files
+          pattern: "configs/fragger_dia.params"
+  msfragger_gpfdia_config:
+    - - meta:
+          type: map
+          description: Plan id map
+      - configs/fragger_gpfdia.params:
+          type: file
+          description: MSFragger params of the GPF-DIA files
+          pattern: "configs/fragger_gpfdia.params"
+  msfragger_dda_plus_config:
+    - - meta:
+          type: map
+          description: Plan id map
+      - configs/fragger_dda_plus.params:
+          type: file
+          description: MSFragger params of the DDA+ files
+          pattern: "configs/fragger_dda_plus.params"
+  msbooster_config:
+    - - meta:
+          type: map
+          description: Plan id map
+      - configs/msbooster.config:
+          type: file
+          description: MSBooster params without the run-time keys; empty when MSBooster does not run
+          pattern: "configs/msbooster.config"
+  versions_python:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - python:
+          type: string
+          description: The name of the tool
+      - python3 --version 2>&1 | sed "s/Python //":
+          type: eval
+          description: The expression to obtain the version of the tool
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - python:
+          type: string
+          description: The name of the tool
+      - python3 --version 2>&1 | sed "s/Python //":
+          type: eval
+          description: The expression to obtain the version of the tool
+authors:
+  - "@an-altosian"
+maintainers:
+  - "@an-altosian"
+containers:
+  conda:
+    linux/amd64:
+      lock_file: modules/local/plantotoolconfigs/.conda-lock/linux_amd64-bd-27a817c2c0890658_1.txt
+  docker:
+    linux/amd64:
+      name: community.wave.seqera.io/library/python:3.12.13--27a817c2c0890658
+      build_id: bd-27a817c2c0890658_1
+      scan_id: sc-e07391e6e5fbddf7_1
+  singularity:
+    linux/amd64:
+      name: oras://community.wave.seqera.io/library/python:3.12.13--7eb61448497e5133
+      build_id: bd-7eb61448497e5133_1
+      https: https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/37/370b76e81fbff1ab2427ad3a246bca8a4aa578a68216a5e800dceaedf7bcfa40/data

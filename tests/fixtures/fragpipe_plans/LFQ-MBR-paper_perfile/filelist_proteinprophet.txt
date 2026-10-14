@@ -1,0 +1,6 @@
+/plan/fp_work/human_1/interact-a11849_human_90min_hrMS2.pep.xml
+/plan/fp_work/human_2/interact-a11850_human_90min_hrMS2.pep.xml
+/plan/fp_work/human_3/interact-a11851_human_90min_hrMS2.pep.xml
+/plan/fp_work/humanyeast_21/interact-a11869_human_yaeast_90min_hrMS2.pep.xml
+/plan/fp_work/humanyeast_22/interact-a11870_human_yaeast_90min_hrMS2.pep.xml
+/plan/fp_work/humanyeast_23/interact-a11871_human_yaeast_90min_hrMS2.pep.xml

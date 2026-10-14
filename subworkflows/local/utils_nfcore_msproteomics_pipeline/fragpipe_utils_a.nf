@@ -1259,3 +1259,81 @@ def msfraggerPartialArgs(meta) {
 def labelquantAnnotationName(meta) {
     return "${meta.group}_annotation.txt".toString()
 }
+
+/**
+ * Map of the files FRAGPIPEPLAN stages to their original paths, for bin/fragpipe_portable.py
+ * ("<kind>\t<path relative to the task dir>\t<original path>" lines): each LC-MS file at its
+ * headlessLayout place (kind lcms), the database, and each TMT annotation, whose original place is the
+ * directory of its group's LC-MS files (FragPipe reads it next to them, TmtiPanel.java:868-880).
+ *
+ * @param layout      headlessLayout() result
+ * @param rows        [file name, experiment, bioreplicate, data type, group] per LC-MS file
+ * @param sources     LC-MS file name -> original path (s3:// kept)
+ * @param database    staged database name
+ * @param database_source original database path
+ * @return map file text
+ */
+def planSourceMapText(Map layout, rows, Map sources, database, database_source) {
+    def moved = layout.moves.collectEntries { m -> [m[0], m[1]] }
+    def lines = rows.collect { row ->
+        def name = row[0].toString()
+        if (!sources.containsKey(name)) {
+            error("planSourceMapText: no original path for ${name}")
+        }
+        def staged = moved["raw_files/${name}".toString()] ?: "raw_files/${name}".toString()
+        "lcms\t${staged}\t${sources[name]}"
+    }
+    lines << "file\t${database}\t${database_source}".toString()
+    layout.annotations.each { a ->
+        def dir = a[0].substring(0, a[0].lastIndexOf('/'))
+        def origins = rows.findAll { row ->
+            def staged = moved["raw_files/${row[0]}".toString()] ?: "raw_files/${row[0]}".toString()
+            staged.substring(0, staged.lastIndexOf('/')) == dir
+        }.collect { row -> sources[row[0].toString()].toString().substring(0, sources[row[0].toString()].toString().lastIndexOf('/')) }.unique()
+        if (origins.size() != 1) {
+            error("planSourceMapText: the LC-MS files next to ${a[0]} come from ${origins}, so the annotation has no single original place")
+        }
+        lines << "file\t${a[0]}\t${origins[0]}/${a[0].substring(a[0].lastIndexOf('/') + 1)}".toString()
+    }
+    return lines.collect { l -> "${l}\n" }.join('')
+}
+
+/**
+ * FRAGPIPEPLAN's FragPipe run: the run.workflow it writes and the plan argv. --write-plan (a dry run) configures
+ * every tool as a real run does (the config files and FragPipe's run files land in fp_work/, with the log
+ * listing every command) and runs none of them.
+ * The workflow is FRAGPIPE_HEADLESS's (headlessWorkflowText); the tools come from --config-tools-folder.
+ * Threads: the workflow's workflow.threads unless ext.args has --threads (Fragpipe.java:508-514).
+ * --msfragger-per-file: msproteomics searches each LC-MS file in its own MSFRAGGER task, so the plan uses
+ * FragPipe's per-file MSFragger search.
+ *
+ * @param task          Task (ext.fragpipe_tools_dir)
+ * @param workflow_text the user's .workflow text
+ * @param database      staged database name
+ * @param mem_gb        Java heap and FragPipe --ram in GB
+ * @return Map with workflow (run.workflow text), argv (java words, {TASK_DIR} for the task dir), options (the
+ *         FragPipe options of the plan run) and tools (fragpipeTools)
+ */
+def fragpipePlanCommand(task, workflow_text, database, mem_gb) {
+    def tools = fragpipeTools(task)
+    // the one place that names FragPipe's plan options (FRAGPIPEPLAN checks FragPipe's --help lists them);
+    // user.home = the task dir: a fresh FragPipe UI cache per run, so no panel values carry over
+    def options = ['--write-plan', '--msfragger-per-file']
+    def argv = ['java', '-Duser.home={TASK_DIR}', '-Djava.awt.headless=true', "-Xmx${mem_gb}G",
+                '-cp', "${tools.fragpipe_lib}/*", 'org.nesvilab.fragpipe.FragPipeMain', '--headless'] + options + [
+                '--workflow', 'run.workflow', '--manifest', 'manifest.fp-manifest', '--workdir', '{TASK_DIR}/fp_work', '--ram', mem_gb,
+                '--config-tools-folder', tools.tools_dir]
+    return [workflow: headlessWorkflowText(workflow_text, database), argv: argv.collect { w -> w.toString() }, options: options, tools: tools]
+}
+
+/**
+ * FRAGPIPEPLAN stub: the run log of a dry run with no commands, in the format FragpipeRun prints
+ * (LCMS files, FragpipeRun.java:368; "<N> commands to execute:", :412; the dry-run line, :477).
+ *
+ * @param layout headlessLayout() result
+ * @return log text, paths under {TASK_DIR}
+ */
+def dryRunStubLogText(Map layout) {
+    def files = layout.manifest.readLines().collect { l -> def c = l.split('\t', -1); "  Experiment/Group: ${c[1]}\n  - ${c[0]}\t${c[3]}\n" }
+    return "LCMS files:\n${files.join('')}\n0 commands to execute:\n~~~~~~~~~~~~~~~~~~~~~~\n\nIt's a dry-run, not running the commands.\n"
+}

@@ -1,0 +1,78 @@
+nextflow_workflow {
+
+    name "Test Subworkflow FRAGPIPE_TOOL_CONFIGS"
+    script "../main.nf"
+    workflow "FRAGPIPE_TOOL_CONFIGS"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "fragpipe_tool_configs"
+    tag "parse_fragpipe_workflow"
+    tag "fragpipe_plan"
+    tag "plan_to_tool_configs"
+
+    test("parser - tool configs from the workflow file") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            params {
+                fragpipe_planner = 'parser'
+            }
+            workflow {
+                """
+                def spectra = file("\${workDir}/a.mzML"); spectra.text = 'mock'
+                input[0] = channel.of([[id: 'a', data_type: 'DDA', experiment: 'exp', bioreplicate: 1, group: 'exp_1'], spectra])
+                input[1] = channel.of([[id: 'fragpipe_config'], file("\${projectDir}/assets/LFQ-MBR.workflow", checkIfExists: true)])
+                input[2] = channel.of([[id: 'db'], file("\${projectDir}/tests/fixtures/test.fasta", checkIfExists: true)])
+                input[3] = channel.value([])
+                input[4] = params.fragpipe_planner
+                """
+            }
+        }
+
+        then {
+            def configs = new groovy.json.JsonSlurper().parse(new File(workflow.out.tool_configs_json[0][1].toString()))
+            assertAll(
+                { assert workflow.success },
+                { assert workflow.trace.tasks()*.name.collect { n -> n.replaceAll(/ \(.*/, '') } == ['FRAGPIPE_TOOL_CONFIGS:PARSEFRAGPIPEWORKFLOW'] },
+                { assert configs.msfragger.run && configs.ionquant.run },
+                { assert snapshot(workflow.out.msfragger_config.collect { m, f -> file(f).name }).match() }
+            )
+        }
+    }
+
+    test("plan - FragPipe's plan through PLANTOTOOLCONFIGS") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            params {
+                fragpipe_planner = 'plan'
+            }
+            workflow {
+                """
+                def spectra = file("\${workDir}/a.mzML"); spectra.text = 'mock'
+                input[0] = channel.of([[id: 'a', data_type: 'DDA', experiment: 'exp', bioreplicate: 1, group: 'exp_1'], spectra])
+                input[1] = channel.of([[id: 'fragpipe_config'], file("\${projectDir}/assets/LFQ-MBR.workflow", checkIfExists: true)])
+                input[2] = channel.of([[id: 'db'], file("\${projectDir}/tests/fixtures/test.fasta", checkIfExists: true)])
+                input[3] = channel.value([])
+                input[4] = params.fragpipe_planner
+                """
+            }
+        }
+
+        then {
+            // the stub plan holds no steps, so no tool runs except the database entry, which always carries the run's decoy tag (as in the parser)
+            def configs = new groovy.json.JsonSlurper().parse(new File(workflow.out.tool_configs_json[0][1].toString()))
+            assertAll(
+                { assert workflow.success },
+                { assert workflow.trace.tasks()*.name.collect { n -> n.replaceAll(/ \(.*/, '') }.sort() == ['FRAGPIPE_TOOL_CONFIGS:FRAGPIPEPLAN', 'FRAGPIPE_TOOL_CONFIGS:PLANTOTOOLCONFIGS'] },
+                { assert configs.findAll { t, c -> c.run }.keySet() == ['database'] as Set },
+                { assert path(workflow.out.msbooster_config[0][1]).text == '' },
+                { assert workflow.out.msfragger_config == [] },
+                { assert snapshot(configs.database).match() }
+            )
+        }
+    }
+}

@@ -6,7 +6,7 @@
     workflow configuration.
 
     This subworkflow composes focused subworkflows:
-    1. PARSEFRAGPIPEWORKFLOW - Parse workflow file for tool configs
+    1. FRAGPIPE_TOOL_CONFIGS - Tool configs from the workflow file (parser) or FragPipe's plan (--fragpipe_planner)
     2. FRAGPIPE_DATABASE - Database preparation (or use prebuilt)
     3. FRAGPIPE_CONVERT - Optional DIA preprocessing (DIA-Umpire, diaTracer)
     4. FRAGPIPE_SEARCH - MSFragger search with native calibration
@@ -30,12 +30,12 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-// Import config parser
-include { PARSEFRAGPIPEWORKFLOW } from '../../../modules/local/parsefragpipeworkflow/main'
-include { CHECKCENTROID } from '../../../modules/local/checkcentroid/main'
+// Tool configs: workflow parser or FragPipe's exported plan (--fragpipe_planner)
+include { FRAGPIPE_TOOL_CONFIGS    } from '../fragpipe_tool_configs/main'
+include { CHECKCENTROID           } from '../../../modules/local/checkcentroid/main'
 
 // Import utility functions
-include { shouldRunTool; requireToolField; msboosterFraggerParamsType; checkTimsTofTools; fragpipeWorkflowProperties; checkCentroidFile; getMsfraggerNumSlices; checkFpopTools; parseFragpipeWorkflowTemplates } from '../utils_nfcore_msproteomics_pipeline/fragpipe_utils'
+include { shouldRunTool; requireToolField; msboosterFraggerParamsType; checkTimsTofTools; fragpipeWorkflowProperties; checkCentroidFile; getMsfraggerNumSlices; checkFpopTools } from '../utils_nfcore_msproteomics_pipeline/fragpipe_utils'
 
 // Import subworkflows
 include { FRAGPIPE_DATABASE                                    } from '../fragpipe_database/main'
@@ -72,20 +72,14 @@ workflow FRAGPIPE {
     //
     // STEP 1: Parse workflow config to get tool run flags and args
     //
-    // FragPipe adjusts the tools to the data types of all manifest files, DIA-Quant included
-    // (TabWorkflow.adjustToolsBasedOnDataTypes), so the parser gets them with the workflow.
-    ch_data_types = ch_file
-        .map { meta, _spectra -> meta.data_type }
-        .unique()
-        .toSortedList()
-    PARSEFRAGPIPEWORKFLOW(ch_workflow_file.combine(ch_data_types.map { data_types -> [data_types] }), parseFragpipeWorkflowTemplates(projectDir))
+    FRAGPIPE_TOOL_CONFIGS(ch_file, ch_workflow_file, ch_decoy_db, ch_annotation, params.fragpipe_planner)
 
     // Read tool configs JSON as a string value channel.
     // Strings avoid the Groovy Map-as-named-parameter bug in channel operators.
     // Use splitText to avoid blocking I/O inside map{} on cloud executors.
     // FragPipe aborts when Crystal-C, FreeQuant or LabelQuant would run on timsTOF data
     // (FragpipeRun.java:2420-2443, see checkTimsTofTools).
-    ch_tool_configs = PARSEFRAGPIPEWORKFLOW.out.tool_configs_json
+    ch_tool_configs = FRAGPIPE_TOOL_CONFIGS.out.tool_configs_json
         .map { _meta, json_file -> json_file }
         .splitText()
         .collect()
@@ -95,23 +89,24 @@ workflow FRAGPIPE {
         .map { configs, names, im_ms -> checkTimsTofTools(configs, names, im_ms) }
         .first()
 
-    // Extract config files from PARSEFRAGPIPEWORKFLOW as value channels.
+    // Extract config files from FRAGPIPE_TOOL_CONFIGS as value channels.
     // These are params files for tools that use them (MSFragger, MSBooster, etc.).
     // The parser writes one config per tool prefix present in the workflow file, and the four
-    // MSFragger params files always.
+    // MSFragger params files always; the planner writes the params files FragPipe wrote.
     // MSFragger params per data type: [[params_type, path], ...] (CmdMsfragger.java:444-457); the parser
-    // writes all four, with FragPipe's closed-search defaults when the workflow has no msfragger.* keys.
-    ch_fragger_params = PARSEFRAGPIPEWORKFLOW.out.msfragger_config.map { _meta, params_file -> ['DDA', params_file] }
-        .mix(PARSEFRAGPIPEWORKFLOW.out.msfragger_dia_config.map { _meta, params_file -> ['DIA', params_file] })
-        .mix(PARSEFRAGPIPEWORKFLOW.out.msfragger_gpfdia_config.map { _meta, params_file -> ['GPF-DIA', params_file] })
-        .mix(PARSEFRAGPIPEWORKFLOW.out.msfragger_dda_plus_config.map { _meta, params_file -> ['DDA+', params_file] })
+    // writes all four, with FragPipe's closed-search defaults when the workflow has no msfragger.* keys;
+    // the planner one per data type of the manifest.
+    ch_fragger_params = FRAGPIPE_TOOL_CONFIGS.out.msfragger_config.map { _meta, params -> ['DDA', params] }
+        .mix(FRAGPIPE_TOOL_CONFIGS.out.msfragger_dia_config.map { _meta, params -> ['DIA', params] })
+        .mix(FRAGPIPE_TOOL_CONFIGS.out.msfragger_gpfdia_config.map { _meta, params -> ['GPF-DIA', params] })
+        .mix(FRAGPIPE_TOOL_CONFIGS.out.msfragger_dda_plus_config.map { _meta, params -> ['DDA+', params] })
         .toList()
         // empty only when PARSEFRAGPIPEWORKFLOW failed: the run then stops with the parser's error, which
         // a NullPointerException on sets[0] downstream would hide
         .filter { sets -> !sets.isEmpty() }
 
-    ch_msbooster_params = PARSEFRAGPIPEWORKFLOW.out.msbooster_config
-        .map { _meta, params_file -> params_file }
+    ch_msbooster_params = FRAGPIPE_TOOL_CONFIGS.out.msbooster_config
+        .map { _meta, params -> params }
         .first()
 
 

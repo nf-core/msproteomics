@@ -97,4 +97,42 @@ nextflow_workflow {
             )
         }
     }
+
+    test("fragpipe_inference - stub single group: no Abacus or iProphet although the workflow turns them on") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                ['interact-a.pep.xml', 'db.fasta'].each { n -> file("\${workDir}/\${n}").text = 'mock' }
+                // the parser's entries for a workflow with Abacus on (Open-crystalc): it has no manifest, so it leaves
+                // FragPipe's "more than one experiment group" condition (FragpipeRun.java:1785-1789) to this subworkflow
+                def tool_configs = [
+                    database:       [run: true, decoy_tag: 'rev_'],
+                    proteinprophet: [run: false],
+                    filter:         [run: true, args: '--picked', dont_use_protxml: true, report_args: '', report_args_single_group: '--msstats'],
+                    abacus:         [run: true, args: '--picked --razor --reprint --tag rev_ --protein'],
+                    iprophet:       [run: true, args: '--decoy rev_ --nonsp --output combined'],
+                    ionquant:       [run: false], freequant: [run: false], labelquant: [run: false], saintexpress: [run: false]
+                ]
+                input[0] = channel.of([[ id: 'a', group: 'A01', experiment: 'A01', bioreplicate: null, data_type: 'DDA', spectra_name: 'a.mzML' ], file("\${workDir}/interact-a.pep.xml")])
+                input[1] = channel.of([[ id: 'a', group: 'A01', experiment: 'A01', bioreplicate: null, data_type: 'DDA', spectra_name: 'a.mzML' ], file("\${workDir}/interact-a.pep.xml")])
+                input[2] = file("\${workDir}/db.fasta")
+                input[3] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[4] = [ id: 'fragpipe' ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                // FragPipe's open search + Crystal-C workflow runs no Abacus (Execution order: ... PhilosopherReport, PTMShepherd)
+                { assert workflow.out.reprint_spc.size() == 0 },
+                { assert workflow.out.combined_pepxml.size() == 0 },
+                { assert snapshot(workflow.out.psms, workflow.out.reprint_spc, workflow.out.combined_pepxml).match() }
+            )
+        }
+    }
 }

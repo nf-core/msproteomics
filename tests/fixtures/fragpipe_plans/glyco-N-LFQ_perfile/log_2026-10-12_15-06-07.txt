@@ -1,0 +1,168 @@
+System OS: Linux, Architecture: amd64
+Java Info: 17.0.18, OpenJDK 64-Bit Server VM, Ubuntu
+.NET Core Info: 6.0.36
+15:06:06 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineRunner.exe
+
+15:06:06 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineRunner.exe
+
+15:06:06 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineDailyRunner.exe
+Version info:
+FragPipe version 24.0
+DIA-Umpire version 2.3.3
+diaTracer version 2.2.1
+MSFragger version 4.4.1
+Crystal-C version 1.5.10
+MSBooster version 1.4.14
+Percolator version 3.7.1
+PTMProphet version 6.3.2
+Metaproteomics version 1.0.1
+Philosopher version 5.1.3-RC9
+PTM-Shepherd version 3.0.11
+IonQuant version 1.11.20
+TMT-Integrator version 6.1.3
+FragPipe-SpecLib version 0.1.58
+DIA-NN version 1.8.2 beta 8
+Skyline version N/A
+Pandas version 2.3.3
+Numpy version 1.26.4
+15:06:06 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineDailyRunner.exe
+
+
+LCMS files:
+  Experiment/Group: cancer
+  (if "spectral library generation" is enabled, all files will be analyzed together)
+  - /plan/raw_files/CANCER-3.raw	DDA
+  Experiment/Group: saliva
+  (if "spectral library generation" is enabled, all files will be analyzed together)
+  - /plan/raw_files/SALIVA-1.raw	DDA
+
+
+15:06:06 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineRunner.exe
+15:06:06 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineRunner.exe
+15:06:06 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineDailyRunner.exe
+15:06:06 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineDailyRunner.exe
+29 commands to execute:
+CheckCentroid
+java -Xmx64G -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/tools/batmass-io-1.36.5.jar org.nesvilab.fragpipe.util.CheckCentroid /plan/raw_files/CANCER-3.raw 48
+WorkspaceCleanInit [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --clean --nocheck
+WorkspaceCleanInit [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --init --nocheck --temp /tmp/7ecd6f4f-0fd3-4235-aa17-57c6384a6056
+WorkspaceCleanInit [Work dir: /plan/fp_work/cancer]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --clean --nocheck
+WorkspaceCleanInit [Work dir: /plan/fp_work/cancer]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --init --nocheck --temp /tmp/ea5993f2-0178-4934-b4b9-a9a9d8c4d2d0
+WorkspaceCleanInit [Work dir: /plan/fp_work/saliva]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --clean --nocheck
+WorkspaceCleanInit [Work dir: /plan/fp_work/saliva]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --init --nocheck --temp /tmp/4bb8bedf-3363-4ad0-9645-96502cbd1ad9
+MSFragger [Work dir: /plan/fp_work]
+java -jar -Dfile.encoding=UTF-8 -Xmx64G @ROOT@/fragpipe-24.0/tools/MSFragger-4.4.1/MSFragger-4.4.1.jar /plan/fp_work/fragger.params --license {LICENSE} /plan/raw_files/CANCER-3.raw
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CANCER-3.pepXML /plan/fp_work/cancer/CANCER-3.pepXML
+MSFragger move tsv
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CANCER-3.tsv /plan/fp_work/cancer/CANCER-3.tsv
+MSFragger [Work dir: /plan/fp_work]
+java -jar -Dfile.encoding=UTF-8 -Xmx64G @ROOT@/fragpipe-24.0/tools/MSFragger-4.4.1/MSFragger-4.4.1.jar /plan/fp_work/fragger.params --license {LICENSE} /plan/raw_files/SALIVA-1.raw
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/SALIVA-1.pepXML /plan/fp_work/saliva/SALIVA-1.pepXML
+MSFragger move tsv
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/SALIVA-1.tsv /plan/fp_work/saliva/SALIVA-1.tsv
+PeptideProphet [Work dir: /plan/fp_work/saliva]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 peptideprophet --nonparam --expectscore --decoyprobs --masswidth 4000.0 --glyc --decoy rev_ --database /plan/human_decoys.fasta --combine SALIVA-1.pepXML
+PeptideProphet [Work dir: /plan/fp_work/cancer]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 peptideprophet --nonparam --expectscore --decoyprobs --masswidth 4000.0 --glyc --decoy rev_ --database /plan/human_decoys.fasta --combine CANCER-3.pepXML
+Rewrite pepxml [Work dir: /plan/fp_work/cancer]
+java -cp @ROOT@/fragpipe-24.0/lib/* org.nesvilab.fragpipe.util.RewritePepxml /plan/fp_work/cancer/interact.pep.xml /plan/raw_files/CANCER-3_uncalibrated.mzML
+Rewrite pepxml [Work dir: /plan/fp_work/saliva]
+java -cp @ROOT@/fragpipe-24.0/lib/* org.nesvilab.fragpipe.util.RewritePepxml /plan/fp_work/saliva/interact.pep.xml /plan/raw_files/SALIVA-1_uncalibrated.mzML
+ProteinProphet [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 proteinprophet --maxppmdiff 2000000 --output combined /plan/fp_work/filelist_proteinprophet.txt
+PhilosopherDbAnnotate [Work dir: /plan/fp_work/cancer]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 database --annotate /plan/human_decoys.fasta --prefix rev_
+PhilosopherFilter [Work dir: /plan/fp_work/cancer]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 filter --sequential --prot 0.01 --tag rev_ --pepxml /plan/fp_work/cancer --protxml /plan/fp_work/combined.prot.xml --razor
+PhilosopherFilter [Work dir: /plan/fp_work/saliva]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 filter --sequential --prot 0.01 --tag rev_ --pepxml /plan/fp_work/saliva --dbbin /plan/fp_work/cancer --protxml /plan/fp_work/combined.prot.xml --probin /plan/fp_work/cancer --razor
+PhilosopherReport [Work dir: /plan/fp_work/cancer]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 report
+PhilosopherReport [Work dir: /plan/fp_work/saliva]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 report
+PTMShepherd [Work dir: /plan/fp_work]
+java -Xmx64G -Dlibs.thermo.dir=@ROOT@/fragpipe-24.0/tools/MSFragger-4.4.1/ext/thermo -cp @ROOT@/fragpipe-24.0/tools/ptmshepherd-3.0.11.jar:@ROOT@/fragpipe-24.0/tools/batmass-io-1.36.5.jar:@ROOT@/fragpipe-24.0/tools/commons-math3-3.6.1.jar:@ROOT@/fragpipe-24.0/tools/hipparchus-1.8/hipparchus-core-1.8.jar:@ROOT@/fragpipe-24.0/tools/hipparchus-1.8/hipparchus-stat-1.8.jar edu.umich.andykong.ptmshepherd.PTMShepherd "/plan/fp_work/shepherd.config"
+WorkspaceClean [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --clean --nocheck
+WorkspaceClean [Work dir: /plan/fp_work/cancer]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --clean --nocheck
+WorkspaceClean [Work dir: /plan/fp_work/saliva]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --clean --nocheck
+AppendFile
+java -cp @ROOT@/fragpipe-24.0/lib/* org.nesvilab.fragpipe.util.AppendToFile /plan/fp_work/modmasses_ionquant.txt /plan/fp_work/ptm-shepherd-output/glyco_masses_list.txt
+IonQuant [Work dir: /plan/fp_work]
+java -Djava.awt.headless=true -Xmx64G -Dlibs.bruker.dir=@ROOT@/fragpipe-24.0/tools/MSFragger-4.4.1/ext/bruker -Dlibs.thermo.dir=@ROOT@/fragpipe-24.0/tools/MSFragger-4.4.1/ext/thermo -cp @ROOT@/fragpipe-24.0/tools/jfreechart-1.5.3.jar:@ROOT@/fragpipe-24.0/tools/IonQuant-1.11.20.jar ionquant.IonQuant --license {LICENSE} --threads 48 --perform-ms1quant 1 --perform-isoquant 0 --isotol 20.0 --isolevel 2 --isotype tmt10 --ionmobility 0 --site-reports 1 --msstats 1 --minexps 1 --mbr 1 --maxlfq 1 --requantify 1 --mztol 10 --imtol 0.05 --rttol 0.4 --mbrmincorr 0 --mbrrttol 1 --mbrimtol 0.05 --mbrtoprun 10 --ionfdr 0.01 --proteinfdr 1 --peptidefdr 1 --normalization 1 --minisotopes 2 --intensitymode 2 --minscans 1 --writeindex 0 --tp 0 --minfreq 0 --minions 1 --locprob 0 --uniqueness 0 --multidir . --filelist /plan/fp_work/filelist_ionquant.txt --modlist /plan/fp_work/modmasses_ionquant.txt
+~~~~~~~~~~~~~~~~~~~~~~
+
+Execution order:
+
+    Cmd: [START], Work dir: [/plan/fp_work]
+    Cmd: [CheckCentroid], Work dir: [/plan/fp_work]
+    Cmd: [WorkspaceCleanInit], Work dir: [/plan/fp_work]
+    Cmd: [WorkspaceCleanInit], Work dir: [/plan/fp_work/cancer]
+    Cmd: [WorkspaceCleanInit], Work dir: [/plan/fp_work/saliva]
+    Cmd: [MSFragger], Work dir: [/plan/fp_work]
+    Cmd: [PeptideProphet], Work dir: [/plan/fp_work]
+    Cmd: [ProteinProphet], Work dir: [/plan/fp_work]
+    Cmd: [PhilosopherDbAnnotate], Work dir: [/plan/fp_work]
+    Cmd: [PhilosopherFilter], Work dir: [/plan/fp_work]
+    Cmd: [PhilosopherReport], Work dir: [/plan/fp_work]
+    Cmd: [PTMShepherd], Work dir: [/plan/fp_work]
+    Cmd: [WorkspaceClean], Work dir: [/plan/fp_work]
+    Cmd: [WorkspaceClean], Work dir: [/plan/fp_work/cancer]
+    Cmd: [WorkspaceClean], Work dir: [/plan/fp_work/saliva]
+    Cmd: [AppendFile], Work dir: [/plan/fp_work]
+    Cmd: [IonQuant], Work dir: [/plan/fp_work]
+
+~~~~~~~~~~~~~~~~~~~~~~
+
+~~~~~~Sample of /plan/human_decoys.fasta~~~~~~~
+>contaminant_A2A4G1 TREMBL:A2A4G1 Tax_Id=10090 Gene_Symbol=Krt15 Keratin complex 1, acidic, gene 15
+>rev_sp|O14926|FSCN2_HUMAN Fascin-2 OS=Homo sapiens OX=9606 GN=FSCN2 PE=1 SV=1
+>rev_sp|P08588|ADRB1_HUMAN Beta-1 adrenergic receptor OS=Homo sapiens OX=9606 GN=ADRB1 PE=1 SV=2
+>rev_sp|P42685|FRK_HUMAN Tyrosine-protein kinase FRK OS=Homo sapiens OX=9606 GN=FRK PE=1 SV=1
+>rev_sp|Q13163|MP2K5_HUMAN Dual specificity mitogen-activated protein kinase kinase 5 OS=Homo sapiens OX=9606 GN=MAP2K5 PE=1 SV=2
+>rev_sp|Q5TZJ5|S31A1_HUMAN Spermatogenesis-associated protein 31A1 OS=Homo sapiens OX=9606 GN=SPATA31A1 PE=3 SV=1
+>rev_sp|Q86XE0|SNX32_HUMAN Sorting nexin-32 OS=Homo sapiens OX=9606 GN=SNX32 PE=1 SV=1
+>rev_sp|Q8TDE3|RNAS8_HUMAN Ribonuclease 8 OS=Homo sapiens OX=9606 GN=RNASE8 PE=1 SV=1
+>rev_sp|Q99614|TTC1_HUMAN Tetratricopeptide repeat protein 1 OS=Homo sapiens OX=9606 GN=TTC1 PE=1 SV=1
+>rev_sp|Q9NR63|CP26B_HUMAN Cytochrome P450 26B1 OS=Homo sapiens OX=9606 GN=CYP26B1 PE=1 SV=1
+>rev_sp|Q9Y5G8|PCDG5_HUMAN Protocadherin gamma-A5 OS=Homo sapiens OX=9606 GN=PCDHGA5 PE=2 SV=1
+>sp|O43164|PJA2_HUMAN E3 ubiquitin-protein ligase Praja-2 OS=Homo sapiens OX=9606 GN=PJA2 PE=1 SV=4
+>sp|P0CG35|TB15B_HUMAN Thymosin beta-15B OS=Homo sapiens OX=9606 GN=TMSB15B PE=1 SV=1
+>sp|P48736|PK3CG_HUMAN Phosphatidylinositol 4,5-bisphosphate 3-kinase catalytic subunit gamma isoform OS=Homo sapiens OX=9606 GN=PIK3CG PE=1 SV=3
+>sp|Q13901|C1D_HUMAN Nuclear nucleic acid-binding protein C1D OS=Homo sapiens OX=9606 GN=C1D PE=1 SV=1
+>sp|Q684P5|RPGP2_HUMAN Rap1 GTPase-activating protein 2 OS=Homo sapiens OX=9606 GN=RAP1GAP2 PE=1 SV=2
+>sp|Q8IW03|SIAH3_HUMAN Seven in absentia homolog 3 OS=Homo sapiens OX=9606 GN=SIAH3 PE=1 SV=3
+>sp|Q8WVE7|T170A_HUMAN Transmembrane protein 170A OS=Homo sapiens OX=9606 GN=TMEM170A PE=1 SV=1
+>sp|Q9BRK3|MXRA8_HUMAN Matrix remodeling-associated protein 8 OS=Homo sapiens OX=9606 GN=MXRA8 PE=1 SV=1
+>sp|Q9NV70|EXOC1_HUMAN Exocyst complex component 1 OS=Homo sapiens OX=9606 GN=EXOC1 PE=1 SV=4
+>sp|Q9YNA8|GAK19_HUMAN Endogenous retrovirus group K member 19 Gag polyprotein OS=Homo sapiens OX=9606 GN=ERVK-19 PE=1 SV=3
+~~~~~~~~~~~~~~~~~~~~~~
+
+
+It's a dry-run, not running the commands.
+
+
+Please cite:
+(Any searches) MSFragger: ultrafast and comprehensive peptide identification in mass spectrometry–based proteomics. Nat Methods. 14:513 (2017)
+(Any searches) Fast deisotoping algorithm and its implementation in the MSFragger search engine. J Proteome Res. 20:498 (2021)
+(timsTOF ddaPASEF) Fast quantitative analysis of timsTOF PASEF data with MSFragger and IonQuant. Mol Cell Proteomics. 19:1575 (2020)
+(Open search) Identification of modified peptides using localization-aware open search. Nat Commun. 11:4065 (2020)
+(Glyco search) Fast and comprehensive N- and O-glycoproteomics analysis with MSFragger-Glyco. Nat Methods. 17:1125 (2020)
+(Labile search) MSFragger-Labile: A Flexible Method to Improve Labile PTM Analysis in Proteomics. Mol Cell Proteomics. 22:100538 (2023)
+(DDA+ search) MSFragger-DDA+ enhances peptide identification sensitivity with full isolation window search. Nat Commun. 16:3329 (2025)
+(PSM validation with PeptideProphet)Empirical statistical model to estimate the accuracy of peptide identifications made by MS/MS and database search. Anal Chem. 74:5383 (2002)
+(Protein inference with ProteinProphet)A statistical model for identifying proteins by tandem mass spectrometry. Anal Chem. 75:4646 (2003)
+(FDR filtering and reporting) Philosopher: a versatile toolkit for shotgun proteomics data analysis. Nat Methods. 17:869 (2020)
+(Glycan identification and FDR control) Multiattribute glycan identification and FDR control for Glycoproteomics. Mol Cell Proteomics.21:100105 (2022)
+(Label-free/isotopic-labeling quantification) IonQuant Enables Accurate and Sensitive Label-Free Quantification With FDR-Controlled Match-Between-Runs. Mol Cell Proteomics. 20:100077 (2021)
+(Visualization with FragPipe-PDV) PDV: an integrative proteomics data viewer. Bioinformatics. 35(7):1249 (2019)

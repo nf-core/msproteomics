@@ -122,7 +122,7 @@ FRAGPIPE_INFERENCE ───────── ProteinProphet protein-level infe
   └──► FRAGPIPE_EXPORT ───── FPOP, Metaproteomics; SAINTexpress (optional post-run, downstream/)
 ```
 
-The first step parses the `.workflow` configuration file (`PARSEFRAGPIPEWORKFLOW`) to determine which tools are enabled and extract their parameters.
+The first step, **FRAGPIPE_TOOL_CONFIGS**, determines which tools are enabled and their parameters: by parsing the `.workflow` file (`PARSEFRAGPIPEWORKFLOW`, `--fragpipe_planner parser`, default), or from FragPipe's own configured run (`FRAGPIPEPLAN` runs `fragpipe --headless --write-plan`, `PLANTOTOOLCONFIGS` reads its work dir; `--fragpipe_planner plan`). Both give the same outputs.
 Only enabled tools actually execute -- the workflow dynamically adapts to whatever the `.workflow` file specifies.
 
 **FRAGPIPE_DATABASE** checks the database decoys the way FragPipe headless does (`CHECKDBCONFIG`); the FASTA is searched as given.

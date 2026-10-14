@@ -1806,4 +1806,76 @@ nextflow_function {
             )
         }
     }
+
+    // FRAGPIPEPLAN's script: stub runs never build it, so this is where its calls are checked
+    test("fragpipePlanCommand - run.workflow with the database path only, --write-plan --msfragger-per-file argv with the image's tools") {
+        function "fragpipePlanCommand"
+        when {
+            function {
+                """
+                input[0] = [ext: [fragpipe_tools_dir: '/fp/fragpipe-24.0/tools']]
+                input[1] = 'workflow.threads=4\\ndatabase.db-path=/old/db.fasta'
+                input[2] = 'db.fasta'
+                input[3] = 14
+                """
+            }
+        }
+        then {
+            def r = function.result
+            assertAll(
+                { assert function.success },
+                { assert r.workflow == 'workflow.threads=4\ndatabase.db-path={TASK_DIR}/db.fasta\n' },
+                { assert r.argv == ['java', '-Duser.home={TASK_DIR}', '-Djava.awt.headless=true', '-Xmx14G',
+                                    '-cp', '/fp/fragpipe-24.0/lib/*', 'org.nesvilab.fragpipe.FragPipeMain', '--headless', '--write-plan', '--msfragger-per-file',
+                                    '--workflow', 'run.workflow', '--manifest', 'manifest.fp-manifest', '--workdir', '{TASK_DIR}/fp_work', '--ram', '14',
+                                    '--config-tools-folder', '/fp/fragpipe-24.0/tools'] : r.argv },
+                { assert r.options == ['--write-plan', '--msfragger-per-file'] },
+                { assert r.tools.tools_dir == '/fp/fragpipe-24.0/tools' }
+            )
+        }
+    }
+
+    test("planSourceMapText - LC-MS files at their layout place, database, TMT annotation next to its group's originals") {
+        function "planSourceMapText"
+        when {
+            function {
+                """
+                def rows = [['p1.mzML', 'plex1', null, 'DDA', 'plex1'], ['p2.mzML', 'plex1', null, 'DDA', 'plex1']]
+                input[0] = [moves: [['raw_files/p1.mzML', 'raw_files/plex1/p1.mzML'], ['raw_files/p2.mzML', 'raw_files/plex1/p2.mzML']], annotations: [['raw_files/plex1/plex1_annotation.txt', '126 S1\\n']]]
+                input[1] = rows
+                input[2] = ['p1.mzML': 's3://b/run/p1.mzML', 'p2.mzML': 's3://b/run/p2.mzML']
+                input[3] = 'db.fasta'
+                input[4] = '/data/db.fasta'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'lcms\traw_files/plex1/p1.mzML\ts3://b/run/p1.mzML\nlcms\traw_files/plex1/p2.mzML\ts3://b/run/p2.mzML\nfile\tdb.fasta\t/data/db.fasta\nfile\traw_files/plex1/plex1_annotation.txt\ts3://b/run/plex1_annotation.txt\n' }
+            )
+        }
+    }
+
+    test("planSourceMapText - a TMT group with files from two directories has no single annotation place") {
+        function "planSourceMapText"
+        when {
+            function {
+                """
+                def rows = [['p1.mzML', 'plex1', null, 'DDA', 'plex1'], ['p2.mzML', 'plex1', null, 'DDA', 'plex1']]
+                input[0] = [moves: [['raw_files/p1.mzML', 'raw_files/plex1/p1.mzML'], ['raw_files/p2.mzML', 'raw_files/plex1/p2.mzML']], annotations: [['raw_files/plex1/plex1_annotation.txt', '126 S1\\n']]]
+                input[1] = rows
+                input[2] = ['p1.mzML': 's3://b/a/p1.mzML', 'p2.mzML': 's3://b/b/p2.mzML']
+                input[3] = 'db.fasta'
+                input[4] = '/data/db.fasta'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { l -> l.contains('has no single original place') } }
+            )
+        }
+    }
 }

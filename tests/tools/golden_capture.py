@@ -4,7 +4,7 @@
 Layout written (nothing is overwritten; an existing target is an error)::
 
     <root>/<dataset>/<workflow>/
-        manifest.json               step manifest (tests/tools/fragpipe_log_to_manifest.py)
+        manifest.json               step manifest (bin/fragpipe_log_to_manifest.py)
                                     plus a "golden" block: layout + sha256 per file
         fragpipe_log.redacted.txt   the FragPipe log with license material removed
         files/work/...              FragPipe work dir   ({WORKDIR})
@@ -29,6 +29,8 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+# the FragPipe log reader is in bin/: FRAGPIPEPLAN and PLANTOTOOLCONFIGS run it too
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "bin"))
 import fragpipe_log_to_manifest as fpm  # noqa: E402
 
 LAYOUT = {"{WORKDIR}": "files/work", "{LCMS_DIR}": "files/input", "{DB_DIR}": "files/db"}
@@ -36,7 +38,7 @@ NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 # A license file or license argument. Plain "licens" is not used: protein
 # descriptions such as "DNA replication licensing factor" contain it.
 LICENSE_REF_RE = re.compile(rb"licen[cs]e\.dat|(?<![\w-])-+licen[cs]e|licen[cs]e[ _-]?(key|file|path)", re.IGNORECASE)
-# Redaction placeholders (tests/tools/fragpipe_log_to_manifest.py): a license flag whose value is a
+# Redaction placeholders (bin/fragpipe_log_to_manifest.py): a license flag whose value is a
 # placeholder, or a bare placeholder token.
 LICENSE_PLACEHOLDER_RE = re.compile(rb"(?<![\w-])-+licen[cs]e[\w.-]*(?:=| +)\{LICENSE(?:_PATH)?\}|\{LICENSE(?:_PATH)?\}", re.IGNORECASE)
 

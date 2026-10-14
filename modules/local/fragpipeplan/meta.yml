@@ -1,0 +1,100 @@
+name: fragpipeplan
+description: FragPipe's configured run for a workflow and manifest (work dir with the run log and every tool's config files), from FragPipe headless --write-plan; no tool runs.
+keywords:
+  - FragPipe
+  - proteomics
+  - planning
+tools:
+  - fragpipe:
+      description: |
+        FragPipe orchestrates MSFragger, Philosopher, IonQuant and other tools. With --write-plan
+        it configures the run as a real run would, writes every tool's config files and logs every command,
+        without running them (needs a FragPipe build with --write-plan and --msfragger-per-file (Nesvilab/FragPipe#2907)).
+      homepage: https://fragpipe.nesvilab.org/
+      documentation: https://fragpipe.nesvilab.org/docs/tutorial_fragpipe.html
+input:
+  - - meta:
+        type: map
+        description: Plan id map, e.g. [ id:'plan' ]
+    - raw_files:
+        type: file
+        description: LC-MS files of the manifest, staged into raw_files/ (FragPipe only checks they exist)
+        pattern: "raw_files/*"
+    - database:
+        type: file
+        description: FASTA protein database (FragPipe counts entries and decoys)
+        pattern: "*.{fasta,fa,fas}"
+    - workflow_text:
+        type: string
+        description: FragPipe .workflow text; headlessWorkflowText sets database.db-path
+    - manifest_rows:
+        type: list
+        description: "[file name, experiment, bioreplicate, data type, FragPipe group] per LC-MS file"
+    - annotation_rows:
+        type: list
+        description: "[group, channel, sample name] per TMT channel, [] for label-free"
+output:
+  workdir:
+    - - meta:
+          type: map
+          description: Plan id map
+      - fp_work:
+          type: directory
+          description: FragPipe's work dir after --write-plan (run log log_*.txt, tool config files, fragpipe.workflow, fragpipe-files.fp-manifest, fragpipe.job)
+  manifest:
+    - - meta:
+          type: map
+          description: Plan id map
+      - manifest.fp-manifest:
+          type: file
+          description: The manifest FragPipe read
+          pattern: "manifest.fp-manifest"
+  portable_log:
+    - - meta:
+          type: map
+          description: Plan id map
+      - portable/log_*.txt:
+          type: file
+          description: The run log, licence redacted, inputs at their original paths, @WORKDIR@ and @TOOLS_DIR@
+          pattern: "log_*.txt"
+  portable_workflow:
+    - - meta:
+          type: map
+          description: Plan id map
+      - portable/fragpipe.workflow:
+          type: file
+          description: FragPipe's saved workflow, made portable the same way
+          pattern: "fragpipe.workflow"
+  portable_manifest:
+    - - meta:
+          type: map
+          description: Plan id map
+      - portable/fragpipe-files.fp-manifest:
+          type: file
+          description: FragPipe's saved manifest, made portable the same way
+          pattern: "fragpipe-files.fp-manifest"
+  versions_fragpipe:
+    - - "${task.process}":
+          type: string
+          description: The name of the process
+      - "fragpipe":
+          type: string
+          description: The name of the tool
+      - "cat .fragpipe_version":
+          type: eval
+          description: The expression to obtain the version of the tool
+topics:
+  versions:
+    - - "${task.process}":
+          type: string
+          description: The name of the process
+      - "fragpipe":
+          type: string
+          description: The name of the tool
+      - "cat .fragpipe_version":
+          type: eval
+          description: The expression to obtain the version of the tool
+authors:
+  - "@an-altosian"
+maintainers:
+  - "@an-altosian"

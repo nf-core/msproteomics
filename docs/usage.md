@@ -254,6 +254,18 @@ The `--fragpipe_mode` parameter controls execution mode:
 - `pipeline` (default): Modular Nextflow subworkflow execution
 - `headless`: Single-process FragPipe headless execution
 
+In pipeline mode, `--fragpipe_planner` chooses where the tool settings come from:
+
+- `parser` (default): the pipeline's `.workflow` parser (PARSEFRAGPIPEWORKFLOW).
+- `plan` (experimental, hidden): FragPipe itself configures the run (`fragpipe --headless --write-plan --msfragger-per-file`, FRAGPIPEPLAN), and PLANTOTOOLCONFIGS reads its work dir.
+  It needs a FragPipe release with the plan options proposed in [Nesvilab/FragPipe#2907](https://github.com/Nesvilab/FragPipe/pull/2907): `--write-plan` (write the tool config files and the commands, run no tool) and `--msfragger-per-file`.
+  No FragPipe release has them yet (FragPipe 24.0 does not), so the image passed with `--fragpipe_container` must be built from that change.
+  FRAGPIPEPLAN checks FragPipe's `--help` for both options first; with any other FragPipe it stops with an error that names the missing option.
+  It also needs a FASTA with decoys before the run, so it does not combine with `--add_philosopher_decoy` / `--add_philosopher_contaminants`.
+  The plan run's redacted log and FragPipe's saved workflow and manifest are published under `fragpipe/plan/`.
+
+The default `parser` runs on released FragPipe 24.0.
+
 ### SAINTexpress
 
 SAINTexpress is an optional post-run step, not part of FragPipe's run: FragPipe runs it only from its Downstream tab's own Run button (`TabDownstream.java:114-145,220`), and `FragpipeRun.java` has no SAINTexpress step.
@@ -280,6 +292,7 @@ The task then fails with SAINTexpress's output and names the step; add control e
 | `--fragpipe_workflow` | FragPipe `.workflow` file or workflow name (FragPipe mode) | `assets/LFQ-MBR.workflow`                |
 | `--tmt_mode`          | TMT analysis mode: `labelcheck` or `quant` (FragPipe mode) | None                                     |
 | `--fragpipe_mode`     | FragPipe execution mode: `pipeline` or `headless`          | `pipeline`                               |
+| `--fragpipe_planner`  | Tool settings from the `parser` or FragPipe's `plan`       | `parser`                                 |
 
 ## Container Requirements
 
