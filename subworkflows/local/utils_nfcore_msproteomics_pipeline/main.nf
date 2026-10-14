@@ -95,8 +95,28 @@ workflow PIPELINE_INITIALISATION {
         nextflow_cli_args
     )
 
+    checkFragpipePlanner(params)
+
     emit:
     versions    = ch_versions
+}
+
+/**
+ * Stops a FragPipe run that --fragpipe_planner plan cannot plan before it starts: FragPipe's dry run
+ * needs the searched FASTA (with decoys) before the run, so FragPipe's database update
+ * (--add_philosopher_decoy / --add_philosopher_contaminants) works with --fragpipe_planner parser only.
+ * --fragpipe_mode headless runs FragPipe whole and takes no tool configs, so it takes no planner either.
+ *
+ * @param pipeline_params the pipeline params
+ */
+def checkFragpipePlanner(pipeline_params) {
+    def update = pipeline_params.add_philosopher_decoy || pipeline_params.add_philosopher_contaminants
+    if (pipeline_params.mode == 'fragpipe' && pipeline_params.fragpipe_planner == 'plan' && update) {
+        error("--fragpipe_planner plan needs the searched FASTA before the run; FragPipe's database update (--add_philosopher_decoy / --add_philosopher_contaminants) works with --fragpipe_planner parser only")
+    }
+    if (pipeline_params.mode == 'fragpipe' && pipeline_params.fragpipe_planner == 'plan' && pipeline_params.fragpipe_mode == 'headless') {
+        error("--fragpipe_planner plan plans the pipeline's own FragPipe steps; --fragpipe_mode headless runs FragPipe whole and uses no planner")
+    }
 }
 
 /*

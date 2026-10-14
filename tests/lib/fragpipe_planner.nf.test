@@ -1,0 +1,68 @@
+// In tests/lib (not tests/): a failure-path pipeline test with no outputs, which nf-core pipelines lint nf_test_content would ask to snapshot versions.yml (as tests/lib/read_only_inputs.nf.test).
+// --fragpipe_planner plan needs the searched FASTA before the run: FragPipe's database update
+// (--add_philosopher_decoy / --add_philosopher_contaminants) stops the run in PIPELINE_INITIALISATION.
+
+nextflow_pipeline {
+
+    name "Test --fragpipe_planner checks"
+    script "../../main.nf"
+    tag "pipeline"
+    tag "fragpipe_planner"
+    profile "test_dda_lfq"
+
+    test("plan with FragPipe's database update stops before any task") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                input                 = ss.toString()
+                database              = "${fixtures}/test.fasta"
+                add_philosopher_decoy = true
+                fragpipe_planner      = 'plan'
+                outdir                = "$outputDir"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.failed },
+                { assert workflow.trace.tasks().size() == 0 },
+                { assert (workflow.stdout + workflow.stderr).any { line -> line.contains('--fragpipe_planner plan needs the searched FASTA before the run') } }
+            )
+        }
+    }
+
+    test("plan with --fragpipe_mode headless stops before any task") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                input                 = ss.toString()
+                database              = "${fixtures}/test.fasta"
+                fragpipe_mode         = 'headless'
+                add_philosopher_decoy        = false
+                add_philosopher_contaminants = false
+                fragpipe_planner      = 'plan'
+                outdir                = "$outputDir"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.failed },
+                { assert workflow.trace.tasks().size() == 0 },
+                { assert (workflow.stdout + workflow.stderr).any { line -> line.contains('--fragpipe_mode headless runs FragPipe whole and uses no planner') } }
+            )
+        }
+    }
+}

@@ -204,6 +204,10 @@ It is skipped with `--skip_post_msstats`.
     - `fragpipe-second-pass.workflow`: the run's workflow rewritten for the second pass.
     - `fragpipe-files-second-pass.fp-manifest`: the manifest of the `_sub.mzML` files.
     - `<group>/<sample>_percolator.weights`: Percolator's feature weights, where the second pass finds them.
+  - `plan/` (`--fragpipe_planner plan`, experimental): FragPipe's own `--write-plan` run (FRAGPIPEPLAN), with every input at its original path, FragPipe's work dir as `@WORKDIR@` and its tools dir as `@TOOLS_DIR@`:
+    - `log_<time>.txt`: FragPipe's run log, listing every command the run starts, with the licence redacted.
+    - `fragpipe.workflow`: the workflow FragPipe saved for the plan run.
+    - `fragpipe-files.fp-manifest`: the manifest FragPipe read.
 - `experiment_annotation.tsv`: FragPipe's experiment annotation of the run (IonQuant or, for isobaric labels, LabelQuant), at the results root.
 
 </details>

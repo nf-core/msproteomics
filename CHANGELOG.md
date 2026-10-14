@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `--fragpipe_planner plan` (experimental, hidden): the FragPipe tool configs from FragPipe's own `--write-plan` run (FRAGPIPEPLAN, PLANTOTOOLCONFIGS); needs a FragPipe release with `--write-plan` ([Nesvilab/FragPipe#2907](https://github.com/Nesvilab/FragPipe/pull/2907)). The default, `parser`, runs on FragPipe 24.0.
 - `main.nf` follows the nf-core template: `PIPELINE_INITIALISATION` (nf-schema parameter and samplesheet validation, `--help`, `--version`), the `NFCORE_MSPROTEOMICS` named workflow, a pipeline-level `MULTIQC` with software versions from the `versions` topic, and `PIPELINE_COMPLETION` (summary and email); none of these ran before.
 - `PMULTIQC` runs in the DIA workflow when `--enable_pmultiqc` is set (the default); the module existed but was never called.
 - iProteomes: `--proteome <key>` selects a versioned reference proteome from `conf/iproteomes.config` (paths under `--iproteomes_base`) with its FASTA and, when the run's settings match, a hosted DIA-NN library and FragPipe decoy database.

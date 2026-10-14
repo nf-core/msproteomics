@@ -9,6 +9,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "bin"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import fragpipe_log_to_manifest as fpm  # noqa: E402

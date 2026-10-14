@@ -39,6 +39,7 @@ import json
 import os
 import re
 import sys
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -48,9 +49,11 @@ LICENSE_PATH = "{LICENSE_PATH}"
 LICENSE_RE = re.compile(r"licen[cs]", re.IGNORECASE)
 # A license-named flag: any number of dashes, licence/license (any case), optional
 # suffix (-key, file, ...), optional "=value".
-LICENSE_FLAG_RE = re.compile(r"(?P<flag>-+licen[cs]e[\w.-]*)(?P<eq>=(?P<val>.*))?", re.IGNORECASE)
+LICENSE_FLAG_RE = re.compile(r"(?P<flag>-+(?:licen[cs]e[\w.-]*|key))(?P<eq>=(?P<val>.*))?", re.IGNORECASE)
 # A bare license flag name (no value), e.g. "--license" or "-licence-file": not confidential.
 LICENSE_FLAG_NAME_RE = re.compile(r'(?<![\w-])-+licen[cs]e[\w.-]*(?=$|[\s"=,\]])', re.IGNORECASE)
+# a key flag (--key X, --key=X), redacted as a license flag
+KEY_FLAG_RE = re.compile(r"(?<![\w-])-+key(?=$|[\s=])", re.IGNORECASE)
 LICENSE_PATH_RE = re.compile(r'[^ "\'=:]*licen[cs]e\.dat', re.IGNORECASE)
 # First token of a command: a path (absolute, relative, home, quoted, drive letter).
 EXEC_PATH_RE = re.compile(r'^("?(/|\./|\.\./|~/)|"?[A-Za-z]:\\)')
@@ -63,6 +66,7 @@ FINISHED_RE = re.compile(r"^Process '(?P<name>.+)' finished, exit code: (?P<code
 ALL_DONE_RE = re.compile(r"ALL JOBS DONE IN ")
 SECTION_RULE_RE = re.compile(r"^~{3,}$")
 CONFIG_START = "~~~~~~~~~ fragpipe.config ~~~~~~~~~"
+DRY_RUN_LINE = "It's a dry-run, not running the commands."
 UUID_RE = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
 FRAGPIPE_JAR_RE = re.compile(r"(?P<root>/[^:\s\"]+)/lib/fragpipe-[0-9][0-9.]*\.jar")
 
@@ -212,50 +216,57 @@ class LogFormatError(Exception):
 # ---------------------------------------------------------------- redaction
 
 
-def _redact_token(tok: str) -> str:
-    """Redact a non-flag token that mentions a license, keeping its non-license prefix."""
-    if not contains_license_material(tok):
-        return tok
-    m = LICENSE_PATH_RE.search(tok)
-    if m:  # e.g. -Dkey=/opt/fp/license.dat -> -Dkey={LICENSE_PATH}
-        return LICENSE_PATH_RE.sub(LICENSE_PATH, tok)
-    return LICENSE_ARG
+def _redact_element(arg: str) -> str:
+    """Redact an argument that mentions a license, keeping a non-license prefix up to its last '=' (the whole
+    value is replaced, spaces included: -Dk=/secret dir/license.dat -> -Dk={LICENSE_PATH})."""
+    if not contains_license_material(arg):
+        return arg
+    m = LICENSE_PATH_RE.search(arg)
+    start = arg.rfind("=", 0, m.start()) + 1 if m else arg.rfind("=") + 1
+    return arg[:start] + (LICENSE_PATH if m else LICENSE_ARG)
+
+
+def _printed(argv: list[str]) -> str:
+    """FragPipe's console form of an argv (FragpipeRun.java:1181-1183)."""
+    return " ".join(f'"{e}"' if WHITESPACE_RE.search(e) else e for e in argv)
 
 
 def redact_command(line: str) -> str:
-    """Redact license material in a command line token by token; argv shape is kept.
+    """Redact license material in a command line argument by argument; the argv shape is kept.
 
-    ``-license X`` / ``--Licence X`` / ``--license-key X`` (any dashes, case,
-    spelling): the flag is kept and the value token becomes ``{LICENSE}``.
-    ``--license=X`` becomes ``--license={LICENSE}``. An empty value (two spaces)
-    stays an empty argument and the following token is redacted too, so nothing
-    is merged, dropped or leaked. The value is redacted even when it starts with
-    ``-``: a license value cannot be told apart from an option, and leaking one
-    is worse than masking an option of a malformed command. Any other token mentioning a license
-    is replaced in place (``license.dat`` paths by ``{LICENSE_PATH}``).
+    The line is read as FragPipe prints it (split_command: an argument with whitespace in double quotes), so a
+    quoted value with spaces is one argument and is redacted whole. ``-license X`` / ``--Licence X`` /
+    ``--license-key X`` / ``--key X`` (any dashes, case, spelling): the flag is kept and the value becomes
+    ``{LICENSE}``; ``--license=X`` / ``--key=X`` keep the flag and ``=`` (``{LICENSE_PATH}`` for a license.dat path). An empty value (two spaces) stays an empty argument and the next one is redacted too, so nothing is
+    merged, dropped or leaked. The value is redacted even when it starts with ``-``: a license value cannot be
+    told apart from an option, and leaking one is worse than masking an option of a malformed command. Any
+    other argument mentioning a license is replaced (from its last ``=``) by ``{LICENSE}`` / ``{LICENSE_PATH}``.
     """
-    toks = line.split(" ")
-    out = list(toks)
+    args = split_command(line)
+    out = list(args)
     i = 0
-    while i < len(toks):
-        t = toks[i]
+    while i < len(args):
+        t = args[i]
         m = LICENSE_FLAG_RE.fullmatch(t)
         if m:
             if m.group("eq") is not None:
-                out[i] = f"{m.group('flag')}={LICENSE_ARG if m.group('val') not in (LICENSE_ARG, LICENSE_PATH) else m.group('val')}"
+                val = m.group("val")
+                if val not in (LICENSE_ARG, LICENSE_PATH):
+                    val = LICENSE_PATH if LICENSE_PATH_RE.search(val) else LICENSE_ARG
+                out[i] = f"{m.group('flag')}={val}"
                 i += 1
                 continue
             j = i + 1
-            while j < len(toks) and toks[j] == "":
+            while j < len(args) and args[j] == "":
                 j += 1  # empty value argument(s): keep them, redact the next value too
-            if j < len(toks):
-                out[j] = toks[j] if toks[j] in (LICENSE_ARG, LICENSE_PATH) else LICENSE_ARG
+            if j < len(args) and args[j] not in (LICENSE_ARG, LICENSE_PATH):
+                out[j] = LICENSE_ARG
             i = j + 1
             continue
         if t not in (LICENSE_ARG, LICENSE_PATH):
-            out[i] = _redact_token(t)
+            out[i] = _redact_element(t)
         i += 1
-    return " ".join(out)
+    return _printed(out)
 
 
 def is_command_line(line: str, after_step_header: bool = False) -> bool:
@@ -283,7 +294,7 @@ def redact_line(line: str, after_step_header: bool = False) -> str | None:
     a non-command informational line that mentions a license is dropped (``None``).
     Already-scrubbed placeholders are kept as they are.
     """
-    if not LICENSE_RE.search(line.replace(LICENSE_ARG, "").replace(LICENSE_PATH, "")):
+    if not LICENSE_RE.search(line.replace(LICENSE_ARG, "").replace(LICENSE_PATH, "")) and not KEY_FLAG_RE.search(line):
         return line
     if is_command_line(line, after_step_header):
         red = redact_command(line)
@@ -353,6 +364,85 @@ def split_command(line: str) -> list[str]:
     return out
 
 
+class AmbiguousCommand(LogFormatError):
+    """A printed command line that more than one argv prints as."""
+
+
+WHITESPACE_RE = re.compile(r"\s")
+
+
+def _edge_quote(arg: str) -> bool:
+    """A spaced argument with a word that ends (or, after the first word, starts) with a quote."""
+    words = arg.split(" ")
+    return any(w.endswith('"') for w in words[:-1]) or any(w.startswith('"') for w in words[1:])
+
+
+def known_like(arg: str, known: frozenset[str]) -> bool:
+    """An argument FragPipe built from a known string: the string itself or the string in the literal quotes
+    FragPipe wraps some values in (CmdPtmshepherd.java:163 the config path, CmdMetaproteomics.java:102 the
+    host name, CmdSkyline.java:139-143)."""
+    return arg in known or (len(arg) >= 2 and arg[0] == arg[-1] == '"' and arg[1:-1] in known)
+
+
+def command_decodings(line: str, known: frozenset[str] = frozenset(), limit: int = 8) -> list[list[str]]:
+    """Every argv (up to ``limit``) of FragPipe 24.0's shape that prints as ``line`` (FragpipeRun.java:1181-1183).
+
+    FragPipe joins the elements with single spaces and wraps an element in double quotes only when it
+    holds whitespace (``Pattern.matches(".*\\s.*", e)``), escaping nothing. So a printed word without
+    whitespace is an element as it is, and a run of words from one starting with a quote to one ending
+    with a quote is one wrapped element when its inside holds whitespace. The literal quotes FragPipe 24.0
+    puts in an argument come in pairs around a whole value (CmdPtmshepherd.java:163,
+    CmdMetaproteomics.java:102, CmdSkyline.java:139-143), so an element on its own holds an even number of
+    quotes, and a spaced element has no word with a quote at an inner edge unless it is a known string
+    (``known``: the run's free text, e.g. a cmd-opts value of its fragpipe.workflow).
+    """
+    toks = line.split(" ")
+    n = len(toks)
+    ways: list[list[list[str]]] = [[] for _ in range(n)] + [[[]]]
+    for i in range(n - 1, -1, -1):
+        out: list[list[str]] = []
+        t = toks[i]
+        if not WHITESPACE_RE.search(t) and t.count('"') % 2 == 0:
+            out += [[t] + rest for rest in ways[i + 1]]
+        if t.startswith('"'):
+            for j in range(i, n):
+                joined = " ".join(toks[i : j + 1])
+                inner = joined[1:-1]
+                if (len(joined) >= 2 and joined.endswith('"') and WHITESPACE_RE.search(inner)
+                        and (not _edge_quote(inner) or known_like(inner, known))):
+                    out += [[inner] + rest for rest in ways[j + 1]]
+                if len(out) >= limit:
+                    break
+        ways[i] = out[:limit]
+    return ways[0]
+
+
+def decode_command(line: str, known: frozenset[str] = frozenset()) -> list[str]:
+    """The one argv FragPipe printed as ``line``; AmbiguousCommand when the console and ``known`` cannot tell.
+
+    When several argvs print as the line (``""Homo sapiens""`` is the element ``"Homo sapiens"`` or the two
+    elements ``""Homo`` and ``sapiens""``), the readings are told apart by what FragPipe built the line from:
+    an element only some readings have must be a known string (``known_like``) or hold no quote. It stops
+    when no reading or more than one is left.
+    """
+    readings = command_decodings(line, known)
+    found = readings
+    if len(readings) > 1:
+        counts = [Counter(r) for r in readings]
+        common = counts[0].copy()
+        for c in counts[1:]:
+            common &= c
+        found = [r for r, c in zip(readings, counts) if all(known_like(e, known) or '"' not in e for e in (c - common))]
+    if len(found) == 1:
+        return found[0]
+    if len(readings) > 1:
+        a, b = (found if len(found) > 1 else readings)[:2]
+        diff = next(k for k, (x, y) in enumerate(zip(a, b)) if x != y)
+        raise AmbiguousCommand(f"argument {diff + 1} reads as {a[diff]!r} or {b[diff]!r}, and the run has "
+                               f"{'no value' if not found else 'a value'} for {'either' if not found else 'both'}")
+    raise AmbiguousCommand(f"no argv FragPipe builds from the run's values prints as {line!r}")
+
+
 class Normalizer:
     """Replace absolute paths with placeholders, longest root first.
 
@@ -392,20 +482,56 @@ def _parse_header(line: str) -> tuple[str, str | None]:
     return m.group("name"), m.group("wd")
 
 
-def parse_log(text: str) -> dict:
-    """Parse the log text into a raw structure (no filesystem access)."""
-    lines = redact_lines(text.replace("\r\n", "\n").split("\n"))
+# A logback line of another FragPipe thread (headless error dialogs log, SwingUtils.java:1110-1115, e.g. the
+# FragpipeLocations.java:334 "Missing assets" check) can land inside a console block
+LOGBACK_LINE_RE = re.compile(r"\d{2}:\d{2}:\d{2} (TRACE|DEBUG|INFO|WARN|ERROR): ")
 
-    # LCMS files
+
+def _lcms_lines(lines: list[str], start: int) -> tuple[list[str], list[str]]:
+    """The console lines of the LCMS block from ``start`` with other threads' log output taken out, and the
+    lines that had to be rejoined. A logback line (headless error dialogs log from other threads,
+    SwingUtils.java:1110-1115, e.g. the FragpipeLocations.java:334 "Missing assets" check) either fills a
+    line of its own, or starts in the middle of a console line and ends it: the console line then goes on
+    at the start of the next line."""
+    out: list[str] = []
+    rejoined: list[str] = []
+    carry = None
+    i = start
+    while i < len(lines) and (lines[i].strip() or carry is not None):
+        s = lines[i]
+        m = LOGBACK_LINE_RE.search(s)
+        if m and m.start() == 0 and carry is None:
+            i += 1
+            continue
+        if m:
+            carry = (carry or "") + s[: m.start()]
+            rejoined.append(s)
+            i += 1
+            continue
+        out.append((carry or "") + s)
+        carry = None
+        i += 1
+    if carry is not None:
+        raise LogFormatError(f"LCMS files section ends inside a line split by another thread's log output: {rejoined[-1]!r}")
+    return out, rejoined
+
+
+def _lcms_section(lines: list[str], lcms_paths: frozenset[str] | None = None) -> list[dict]:
+    """The ``LCMS files:`` block (FragpipeRun.java:368, createLcmsFilesString), other threads' log lines taken out.
+
+    A console line that another thread's log output split is rejoined only when ``lcms_paths`` (the paths of the
+    manifest FragPipe read) is given, and every LC-MS path read must then be one of them; otherwise it stops."""
     try:
         i = lines.index("LCMS files:")
     except ValueError as e:
         raise LogFormatError("no 'LCMS files:' section") from e
+    block, rejoined = _lcms_lines(lines, i + 1)
+    if rejoined and lcms_paths is None:
+        raise LogFormatError(f"another thread's log output splits a line of the LCMS files section, and no manifest "
+                             f"is given to check the rejoined path against: {rejoined[0]!r}")
     lcms: list[dict] = []
     group = None
-    i += 1
-    while i < len(lines) and lines[i].strip():
-        s = lines[i]
+    for s in block:
         if s.startswith("  Experiment/Group: "):
             group = s[len("  Experiment/Group: ") :]
         elif s.startswith("  - "):
@@ -414,12 +540,58 @@ def parse_log(text: str) -> dict:
             path, sep, dtype = s[4:].rpartition("\t")
             if not sep:
                 raise LogFormatError(f"LCMS line without data type: {s!r}")
+            if lcms_paths is not None and path not in lcms_paths:
+                raise LogFormatError(f"LCMS file {path!r} is not in the manifest FragPipe read (line {s!r})")
             lcms.append({"path": path, "experiment": group, "data_type": dtype})
         elif not s.startswith("  (if "):
             raise LogFormatError(f"unexpected line in LCMS files section: {s!r}")
-        i += 1
     if not lcms:
         raise LogFormatError("LCMS files section is empty")
+    return lcms
+
+
+def _planned_commands(lines: list[str]) -> tuple[int, list[tuple[str, str | None, str]]]:
+    """Line index of ``<N> commands to execute:`` (FragpipeRun.java:412) and the (name, work dir, command
+    line) pairs after it, up to the ``~~~`` rule."""
+    plan_idx = next((k for k, s in enumerate(lines) if COMMANDS_HEADER_RE.match(s)), None)
+    if plan_idx is None:
+        raise LogFormatError("no '<N> commands to execute:' line")
+    n_planned = int(COMMANDS_HEADER_RE.match(lines[plan_idx]).group(1))
+    planned = []
+    k = plan_idx + 1
+    while not SECTION_RULE_RE.match(lines[k]):
+        if k + 1 >= len(lines) or SECTION_RULE_RE.match(lines[k + 1]):
+            raise LogFormatError(f"planned step header without command at log line {k + 1}")
+        name, wd = _parse_header(lines[k])
+        planned.append((name, wd, lines[k + 1]))
+        k += 2
+    if len(planned) != n_planned:
+        raise LogFormatError(f"log announces {n_planned} commands but lists {len(planned)}")
+    return plan_idx, planned
+
+
+def parse_dry_run(text: str, lcms_paths: frozenset[str] | None = None) -> dict:
+    """The LC-MS files and the planned commands of a headless dry run (no filesystem access).
+
+    A dry run prints the same ``LCMS files:`` and ``<N> commands to execute:`` blocks as a real run, then
+    "It's a dry-run, not running the commands." (FragpipeRun.java:477) instead of running them. Command
+    lines are kept as printed: decode_command turns them into argv. ``lcms_paths``: the manifest's LC-MS paths,
+    which a line split by another thread's log output is rejoined against (_lcms_section).
+    """
+    lines = redact_lines(text.replace("\r\n", "\n").split("\n"))
+    if DRY_RUN_LINE not in lines:
+        raise LogFormatError(f"not a dry-run log: no {DRY_RUN_LINE!r} line")
+    _plan_idx, planned = _planned_commands(lines)
+    for name, _wd, _cmd in planned:
+        if step_kind(name) is None:
+            raise LogFormatError(f"unrecognized FragPipe step name {name!r}; add it to KNOWN_STEPS")
+    return {"lcms_files": _lcms_section(lines, lcms_paths), "steps": [{"name": n, "cwd_raw": wd, "command_line": c} for n, wd, c in planned]}
+
+
+def parse_log(text: str) -> dict:
+    """Parse the log text into a raw structure (no filesystem access)."""
+    lines = redact_lines(text.replace("\r\n", "\n").split("\n"))
+    lcms = _lcms_section(lines)
 
     # fragpipe.config properties
     try:
@@ -439,20 +611,7 @@ def parse_log(text: str) -> dict:
     exec_start = j + 1
 
     # planned commands
-    plan_idx = next((k for k, s in enumerate(lines) if COMMANDS_HEADER_RE.match(s)), None)
-    if plan_idx is None:
-        raise LogFormatError("no '<N> commands to execute:' line")
-    n_planned = int(COMMANDS_HEADER_RE.match(lines[plan_idx]).group(1))
-    planned = []
-    k = plan_idx + 1
-    while not SECTION_RULE_RE.match(lines[k]):
-        if k + 1 >= len(lines) or SECTION_RULE_RE.match(lines[k + 1]):
-            raise LogFormatError(f"planned step header without command at log line {k + 1}")
-        name, wd = _parse_header(lines[k])
-        planned.append((name, wd, lines[k + 1]))
-        k += 2
-    if len(planned) != n_planned:
-        raise LogFormatError(f"log announces {n_planned} commands but lists {len(planned)}")
+    plan_idx, planned = _planned_commands(lines)
     if plan_idx > exec_start:
         raise LogFormatError("command plan found after the execution section start")
 
@@ -951,7 +1110,7 @@ def build_manifest(log_path: Path) -> dict:
 
     manifest = {
         "schema_version": MANIFEST_SCHEMA_VERSION,
-        "generator": "tests/tools/fragpipe_log_to_manifest.py",
+        "generator": "bin/fragpipe_log_to_manifest.py",
         "created_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "source_log": log_path.name,
         "fragpipe_version": _version(text),

@@ -240,7 +240,7 @@ The manifest records each step's `parallel_batch` and `concurrent_with`, and fla
 Some steps rewrite their inputs in place (IonQuant, PTM-Shepherd in glyco mode, MBG, `Rewrite pepxml`, `AppendFile`), so a captured run only holds the rewritten version.
 Each input carries a `golden_state` (`available`, `fragpipe_install`, `rewritten_by_step:N`, `moved_by_step:N`, `deleted_by_step:N`), and `golden_inputs_available` is false when any input is gone.
 Golden tests for such steps take their inputs from a run that stops just before the step, for example a run that ends after Philosopher Report.
-`tests/tools/fragpipe_log_to_manifest.py <log> -o manifest.json` builds the manifest alone.
+`bin/fragpipe_log_to_manifest.py <log> -o manifest.json` builds the manifest alone.
 
 ### Run the golden tests
 

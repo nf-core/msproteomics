@@ -1,0 +1,3 @@
+/plan/fp_work/dia_cptac_subset_Q1.mzML
+/plan/fp_work/dia_cptac_subset_Q2.mzML
+/plan/fp_work/dia_cptac_subset_Q3.mzML
