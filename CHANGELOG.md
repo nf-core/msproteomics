@@ -75,6 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- FragPipe mode no longer publishes Philosopher's `.meta` workspace (`ionquant/`, `opair/`, `mbg/`, `ptmshepherd/groups/`, `freequant/`, `labelquant/`): as FragPipe 24.0 does (FragpipeRun.java:2544-2583), the new `PHILOSOPHERWORKSPACECLEAN` runs `philosopher workspace --clean --nocheck` in each group dir after Filter's report, and the FreeQuant and LabelQuant workspaces are no longer published.
 - `--diann_skip_preliminary_analysis` reads `--diann_empirical_assembly_lib` (it read `--diann_speclib`) and stops when the library or `--diann_empirical_assembly_log` is missing.
 - `dia_proteomics_analysis`: a given empirical library now skips preliminary analysis and library assembly; the `join` on the FASTA-keyed channel never matched the experiment-keyed library, so they always ran.
 - DIA experimental design: samples whose `condition` was empty or equal to the sample name were left out.

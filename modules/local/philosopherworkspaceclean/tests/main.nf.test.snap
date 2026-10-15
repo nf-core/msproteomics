@@ -1,0 +1,35 @@
+{
+    "philosopher_workspace_clean - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    [
+                        "psm.tsv:md5,d504f7d08d4c8d3116ae6e73ed00d657"
+                    ]
+                ]
+            ],
+            [
+                [
+                    "PHILOSOPHERWORKSPACECLEAN",
+                    "philosopher",
+                    "5.1.3"
+                ]
+            ],
+            [
+                [
+                    "PHILOSOPHERWORKSPACECLEAN",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-15T13:46:56.749870232",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

@@ -48,6 +48,10 @@
                     "fragpipe",
                     "philosopher"
                 ],
+                "PHILOSOPHERWORKSPACECLEAN": [
+                    "fragpipe",
+                    "philosopher"
+                ],
                 "WRITE_FRAGGER_PARAMS": [
                     "coreutils"
                 ],
@@ -63,6 +67,7 @@
                 "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_INFERENCE:PHILOSOPHERFILTER\tquay.io/nf-core/ubuntu:20.04",
                 "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_INFERENCE:PHILOSOPHERFILTER_LATER\tquay.io/nf-core/ubuntu:20.04",
                 "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_INFERENCE:PHILOSOPHERPROTEINPROPHET\tquay.io/nf-core/ubuntu:20.04",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_PHILOSOPHER_QUANT:PHILOSOPHERWORKSPACECLEAN\tquay.io/nf-core/ubuntu:20.04",
                 "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_QUANT:IONQUANT\tquay.io/nf-core/ubuntu:20.04",
                 "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSBOOSTER\tquay.io/nf-core/ubuntu:20.04",
                 "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSFRAGGER\tquay.io/nf-core/ubuntu:20.04",
@@ -74,7 +79,7 @@
                 "NFCORE_MSPROTEOMICS:MULTIQC\tcommunity.wave.seqera.io/library/multiqc:1.35--c17fb751507e9dfc"
             ]
         ],
-        "timestamp": "2026-10-14T19:16:25.88858824",
+        "timestamp": "2026-10-15T20:36:12.832200619",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"

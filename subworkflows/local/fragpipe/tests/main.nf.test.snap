@@ -71,6 +71,7 @@
                 "PHILOSOPHERFILTER_LATER": 1,
                 "PHILOSOPHERPEPTIDEPROPHET": 2,
                 "PHILOSOPHERPROTEINPROPHET": 1,
+                "PHILOSOPHERWORKSPACECLEAN": 2,
                 "PTMSHEPHERD": 1,
                 "REPRINTTOSAINTINPUT": 2,
                 "SAINTEXPRESS": 2,
@@ -106,7 +107,7 @@
                 ]
             ]
         ],
-        "timestamp": "2026-10-14T19:10:25.621247482",
+        "timestamp": "2026-10-15T14:36:00.286147088",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"
@@ -125,11 +126,12 @@
                 "PHILOSOPHERFILTER",
                 "PHILOSOPHERPEPTIDEPROPHET",
                 "PHILOSOPHERPROTEINPROPHET",
+                "PHILOSOPHERWORKSPACECLEAN",
                 "PTMSHEPHERD",
                 "WRITE_FRAGGER_PARAMS"
             ]
         ],
-        "timestamp": "2026-10-14T19:09:04.998173284",
+        "timestamp": "2026-10-15T14:34:48.260744903",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"
@@ -230,9 +232,6 @@
                         "export_matched_fragments": false
                     },
                     [
-                        [
-                            "meta.bin:md5,d41d8cd98f00b204e9800998ecf8427e"
-                        ],
                         "filter.log:md5,d41d8cd98f00b204e9800998ecf8427e",
                         "ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
                         "peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
@@ -290,9 +289,9 @@
                 
             ]
         ],
-        "timestamp": "2026-10-08T14:55:22.789341501",
+        "timestamp": "2026-10-15T14:33:35.883971862",
         "meta": {
-            "nf-test": "0.9.3",
+            "nf-test": "0.9.5",
             "nextflow": "25.10.4"
         }
     },
@@ -391,9 +390,6 @@
                         "export_matched_fragments": false
                     },
                     [
-                        [
-                            "meta.bin:md5,d41d8cd98f00b204e9800998ecf8427e"
-                        ],
                         "filter.log:md5,d41d8cd98f00b204e9800998ecf8427e",
                         "ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
                         "peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
@@ -451,9 +447,9 @@
                 
             ]
         ],
-        "timestamp": "2026-10-08T14:54:21.656738966",
+        "timestamp": "2026-10-15T14:32:04.225369471",
         "meta": {
-            "nf-test": "0.9.3",
+            "nf-test": "0.9.5",
             "nextflow": "25.10.4"
         }
     },
@@ -471,6 +467,7 @@
                 "PHILOSOPHERFILTER_LATER": 1,
                 "PHILOSOPHERPEPTIDEPROPHET": 2,
                 "PHILOSOPHERPROTEINPROPHET": 1,
+                "PHILOSOPHERWORKSPACECLEAN": 2,
                 "WRITE_FRAGGER_PARAMS": 1
             },
             [
@@ -503,7 +500,7 @@
                 ]
             ]
         ],
-        "timestamp": "2026-10-14T19:09:58.252309049",
+        "timestamp": "2026-10-15T14:35:34.377489049",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"
@@ -604,9 +601,6 @@
                         "export_matched_fragments": false
                     },
                     [
-                        [
-                            "meta.bin:md5,d41d8cd98f00b204e9800998ecf8427e"
-                        ],
                         "filter.log:md5,d41d8cd98f00b204e9800998ecf8427e",
                         "ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
                         "peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
@@ -640,9 +634,9 @@
                 ]
             ]
         ],
-        "timestamp": "2026-10-08T14:55:00.830913248",
+        "timestamp": "2026-10-15T14:33:12.968575283",
         "meta": {
-            "nf-test": "0.9.3",
+            "nf-test": "0.9.5",
             "nextflow": "25.10.4"
         }
     },

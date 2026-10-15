@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
 name: "fragpipe_philosopher_quant"
-description: Philosopher quantification after Filter in FragPipe 24.0's order - FreeQuant, LabelQuant (TMT), final Report, then the matched-fragment export
+description: Philosopher quantification after Filter in FragPipe 24.0's order - FreeQuant, LabelQuant (TMT), final Report, the Philosopher workspace clean, then the matched-fragment export
 keywords:
   - proteomics
   - quantification
@@ -12,6 +12,7 @@ components:
   - freequant
   - philosopherlabelquant
   - philosopherreport
+  - philosopherworkspaceclean
   - writetextfile
   - labelquantannotationtext
   - fragpipe_matched_fragments

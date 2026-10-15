@@ -5,7 +5,8 @@
     The per-group tables after Philosopher Filter, in FragPipe 24.0's order (FragpipeRun.java:2463-2471,
     :2490): FREEQUANT (label-free, or the TMT FreeQuant when the TMT-Integrator extraction tool is
     Philosopher) -> PHILOSOPHERLABELQUANT (TMT) -> PHILOSOPHERREPORT on the workspace Filter left
-    (groups with meta.report_after_quant), then ExportMatchedFragments on every group.
+    (groups with meta.report_after_quant), the workspace clean of every group dir, then ExportMatchedFragments
+    on every group.
 
     Its output is what every later tool reads: the glyco chain (PairScans, O-Pair, PTM-Shepherd, MBG
     have IN-edges from PhilosopherReport), IonQuant, TMT-Integrator, SpecLibGen and the exports.
@@ -18,6 +19,7 @@ include { WRITETEXTFILE as WRITE_LABELQUANT_ANNOTATION } from '../../../modules/
 include { WRITETEXTFILE as WRITE_LABELQUANT_EXPERIMENT_ANNOTATION } from '../../../modules/local/writetextfile/main'
 include { labelquantAnnotationText } from '../utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
 include { PHILOSOPHERREPORT } from '../../../modules/local/philosopherreport/main'
+include { PHILOSOPHERWORKSPACECLEAN } from '../../../modules/local/philosopherworkspaceclean/main'
 include { shouldRunTool; getToolArgs; getToolField; getToolReportArgs; groupResultsDir; isobaricExperimentAnnotationLines } from '../utils_nfcore_msproteomics_pipeline/fragpipe_utils'
 include { FRAGPIPE_MATCHED_FRAGMENTS } from '../fragpipe_matched_fragments/main'
 
@@ -119,7 +121,7 @@ workflow FRAGPIPE_PHILOSOPHER_QUANT {
 
     //
     // STEP 3: Philosopher Report per group after FreeQuant / LabelQuant (FragpipeRun.java:2471),
-    // then the workspace clean
+    // then the workspace clean (in PHILOSOPHERREPORT)
     //
     ch_for_report = PHILOSOPHERLABELQUANT.out.results_dir
         .mix(
@@ -135,15 +137,23 @@ workflow FRAGPIPE_PHILOSOPHER_QUANT {
 
     ch_report_results_dir = PHILOSOPHERREPORT.out.results_files.map { meta, files -> [meta, groupResultsDir(files)] }
 
+    //
+    // STEP 4: workspace clean (CmdPhilosopherWorkspaceClean.java:43-48) in the groups whose last
+    // Philosopher command is Filter's report. FragPipe cleans every Philosopher work dir after the last
+    // Philosopher-dependent command (FragpipeRun.java:2544-2583; Abacus, the last such vertex), so no
+    // later tool (O-Pair, MBG, IonQuant, TMT-Integrator, ...) sees .meta. Filter keeps its own .meta for
+    // PHILOSOPHERFILTER_LATER and PHILOSOPHERABACUS (its workspace output); PHILOSOPHERREPORT cleans
+    // the groups it reports.
+    //
+    PHILOSOPHERWORKSPACECLEAN(ch_results_dir.filter { meta, _dir -> !meta.report_after_quant })
+
     // Final per-group tables every later reader sees: the Report output after FreeQuant/LabelQuant,
-    // else the Filter output (Filter leaves only placeholder tables when Report follows, ext.skip_report),
+    // else the cleaned Filter output (Filter leaves only placeholder tables when Report follows, ext.skip_report),
     // with matched fragments exported right after the Report (FragpipeRun.java:2490)
     // FragPipe exports matched fragments right after the final PhilosopherReport and before every
     // tool that reads psm.tsv (FragpipeRun.java:2411-2417, :2490); it rewrites psm.tsv in place.
     FRAGPIPE_MATCHED_FRAGMENTS(
-        ch_results_dir
-            .filter { meta, _dir -> !meta.report_after_quant }
-            .mix(ch_report_results_dir),
+        PHILOSOPHERWORKSPACECLEAN.out.results_dir.mix(ch_report_results_dir),
         ch_emf_inputs,
         ch_tool_configs,
         aggregate_meta

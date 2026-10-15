@@ -20,8 +20,7 @@ nextflow_pipeline {
         then {
             // stable_name: all files and folders in ${params.outdir}/ with a stable name
             // (pipeline_info names carry the run timestamp)
-            // IonQuant splits .meta/db.bin into a run-dependent number of db.bin__<n> shards
-            def stable_name = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/**', 'ionquant/**/.meta/db.bin__*'])
+            def stable_name = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/**'])
             def combined_protein = []
             new File("${params.outdir}").eachFileRecurse { f -> if (f.name == 'combined_protein.tsv') combined_protein << f }
             assertAll(

@@ -408,7 +408,7 @@
     },
     "-profile test": {
         "content": [
-            19,
+            21,
             [
                 "experiment_annotation.tsv",
                 "fragpipe",
@@ -424,15 +424,6 @@
                 "ionquant/fragpipe/combined_site_C_57.0215.tsv",
                 "ionquant/fragpipe/combined_site_M_15.9949.tsv",
                 "ionquant/fragpipe/control_1",
-                "ionquant/fragpipe/control_1/.meta",
-                "ionquant/fragpipe/control_1/.meta/db.bin",
-                "ionquant/fragpipe/control_1/.meta/ion.bin",
-                "ionquant/fragpipe/control_1/.meta/meta.bin",
-                "ionquant/fragpipe/control_1/.meta/pep.bin",
-                "ionquant/fragpipe/control_1/.meta/pro.bin",
-                "ionquant/fragpipe/control_1/.meta/protxml.bin",
-                "ionquant/fragpipe/control_1/.meta/psm.bin",
-                "ionquant/fragpipe/control_1/.meta/razor.bin",
                 "ionquant/fragpipe/control_1/filter.log",
                 "ionquant/fragpipe/control_1/ion.tsv",
                 "ionquant/fragpipe/control_1/peptide.tsv",
@@ -448,14 +439,6 @@
                 "ionquant/fragpipe/reprint.int.tsv",
                 "ionquant/fragpipe/reprint.spc.tsv",
                 "ionquant/fragpipe/treatment_1",
-                "ionquant/fragpipe/treatment_1/.meta",
-                "ionquant/fragpipe/treatment_1/.meta/ion.bin",
-                "ionquant/fragpipe/treatment_1/.meta/meta.bin",
-                "ionquant/fragpipe/treatment_1/.meta/pep.bin",
-                "ionquant/fragpipe/treatment_1/.meta/pro.bin",
-                "ionquant/fragpipe/treatment_1/.meta/protxml.bin",
-                "ionquant/fragpipe/treatment_1/.meta/psm.bin",
-                "ionquant/fragpipe/treatment_1/.meta/razor.bin",
                 "ionquant/fragpipe/treatment_1/filter.log",
                 "ionquant/fragpipe/treatment_1/ion.tsv",
                 "ionquant/fragpipe/treatment_1/peptide.tsv",
@@ -556,7 +539,7 @@
                 "sdrf/samplesheet.sdrf.tsv"
             ]
         ],
-        "timestamp": "2026-10-15T13:40:15.516300288",
+        "timestamp": "2026-10-15T20:24:42.986101161",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"
