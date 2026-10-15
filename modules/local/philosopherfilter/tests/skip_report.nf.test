@@ -1,0 +1,41 @@
+nextflow_process {
+
+    name "Test Process PHILOSOPHERFILTER - Report runs later"
+    script "../main.nf"
+    process "PHILOSOPHERFILTER"
+    config "./skip_report.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "philosopherfilter"
+
+    test("philosopher_filter - stub, Report after FreeQuant / LabelQuant writes no tables here") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                ['interact-a.pep.xml', 'combined.prot.xml', 'db.fasta'].each { n -> file("\${workDir}/\${n}").text = 'mock' }
+                input[0] = channel.of([[ id: 'A', group: 'A' ], file("\${workDir}/interact-a.pep.xml"), file("\${workDir}/combined.prot.xml"),
+                    [], 'A', '--sequential --picked --prot 0.01', false, ''])
+                input[1] = file("\${workDir}/db.fasta")
+                input[2] = 'rev_'
+                """
+            }
+        }
+
+        then {
+            def log_lines = new File(process.out.log.get(0).get(1).toString()).readLines()
+            assertAll (
+                { assert process.success },
+                // annotate and filter only: no report line
+                { assert log_lines.size() == 3 },
+                { assert process.out.psms.size() == 0 },
+                { assert process.out.peptides.size() == 0 },
+                { assert process.out.proteins.size() == 0 },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}

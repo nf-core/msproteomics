@@ -46,6 +46,10 @@ process IONQUANT {
     task.ext.when == null || task.ext.when
 
     script:
+    // Exit if running this module with -profile conda / -profile mamba (copied from modules/nf-core/diann/main.nf)
+    if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
+        error "IONQUANT module does not support Conda: it runs in the FragPipe image given with --fragpipe_container. Please use Docker / Singularity / Podman instead."
+    }
     def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id}"
     if (!task.memory) {
@@ -107,7 +111,7 @@ ${ionquantFiles(run, write_modlist ? modmasses : null, experiment_annotation)}
     touch ion.tsv combined_ion.tsv combined_protein.tsv combined_peptide.tsv combined_modified_peptide.tsv reprint.spc.tsv reprint.int.tsv
 ${ionquantCollect(prefix, root_group_dir, run.named_groups)}
     touch I_AGREE_FRAGPIPE_LICENSE_AGREEMENT
-    echo "${tools.fragpipe_version}" > .ionquant_version
+    echo "${tools.ionquant_version}" > .ionquant_version
     echo "${tools.fragpipe_version}" > .fragpipe_version
     """
 }

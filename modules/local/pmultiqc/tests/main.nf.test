@@ -5,7 +5,7 @@ nextflow_process {
     process "PMULTIQC"
 
     tag "modules"
-    tag "modules_nfcore"
+    tag "modules_local"
     tag "pmultiqc"
 
     test("pmultiqc - stub") {

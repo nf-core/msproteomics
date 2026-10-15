@@ -31,9 +31,15 @@ Usage:
     python parse_fragpipe_workflow.py --workflow input.workflow --outdir configs/
     python parse_fragpipe_workflow.py --workflow input.workflow --tool ionquant
     python parse_fragpipe_workflow.py --workflow input.workflow --output-json --outdir configs/
+    python parse_fragpipe_workflow.py --workflow input.workflow --output-json --outdir . --configs-outdir configs
+
+The FragPipe templates fragger_closed.params and diaumpire_se.params are data files in the module's
+assets/ directory; --fragger-template and --diaumpire-template name staged copies (a container only
+sees the module's resources/usr/bin, not assets/).
 """
 
 import argparse
+import copy
 import json
 import math
 import re
@@ -1196,7 +1202,7 @@ def label_free_ionquant_runs(all_params: Dict[str, Dict[str, str]]) -> bool:
     """QuantPanelLabelfree.isRunIonQuant(): isRun() && IonQuant radio (QuantPanelLabelfree.java:110-116).
 
     isRun() is the quantitation.run-label-free-quant checkbox (QuantPanelLabelfree.java:187-188);
-    the radio button starts as FragPipe's when its key is absent (get_run_flag, RC-05).
+    the radio button starts as FragPipe's when its key is absent (get_run_flag).
     """
     return get_run_flag(all_params, "ionquant")
 
@@ -1320,7 +1326,7 @@ def abacus_iprophet_entries(
     if pep_summary:
         abacus_args.append("--peptide")
     # args are emitted even when FragPipe's own conditions do not run Abacus: the pipeline also runs
-    # it to produce SAINTexpress's reprint tables (Appendix C of the parity review)
+    # it to produce SAINTexpress's reprint tables
     abacus = {"run": abacus_runs, "args": " ".join(abacus_args), "config_type": "cli"}
     if tmti_runs and extraction_tool == 1:
         abacus["labels_channel_num"] = tmt_quant_label(all_params["tmtintegrator"])
@@ -1350,11 +1356,6 @@ def generate_philosopher_config(
     lines = []
 
     if subcommand_prefix == "phi-report":
-        # M9: Check dont-use-prot-proph-file flag (CmdPhilosopherFilter.java:86-115)
-        dont_use_protxml = (
-            params.get("dont-use-prot-proph-file", "false").lower() == "true"
-        )
-
         # Filter subcommand: same flags as tool_configs.json (CmdPhilosopherFilter.java:82-115)
         if "filter" in params:
             lines.append(
@@ -1427,8 +1428,10 @@ def generate_philosopher_config(
 #      FP/params/Props.java:240-273).
 # ---------------------------------------------------------------------------------------------
 
-# FP/tools/fragger/fragger_closed.params, copied verbatim (MsfraggerParams.DEFAULT_FILE_CLOSEDSEARCH).
-FRAGGER_TEMPLATE = Path(__file__).resolve().parent / "fragger_closed.params"
+# FP/tools/fragger/fragger_closed.params, copied verbatim (MsfraggerParams.DEFAULT_FILE_CLOSEDSEARCH), in the
+# module's assets/; main() sets it from --fragger-template. The script's own location says nothing about
+# assets/ (in a Wave container the module's resources/usr/bin is /usr/bin).
+FRAGGER_TEMPLATE: Optional[Path] = None
 
 # MSFragger params file written for each FragPipe data type (FP/cmd/CmdMsfragger.java:444-447).
 # The DDA file is saved as fragger_dda.params when the run also has DIA/GPF-DIA/DIA-Lib files
@@ -1782,6 +1785,8 @@ class FraggerProps:
         """new MsfraggerParams(): Props.readProps of fragger_closed.params (Props.java:161-238)."""
         props = cls()
         blank = 0
+        if FRAGGER_TEMPLATE is None:
+            raise RuntimeError("fragger_closed.params is not set (--fragger-template)")
         for raw in FRAGGER_TEMPLATE.read_text(encoding="utf-8").split("\n")[:-1]:
             line = _java_trim(raw)
             if not line:
@@ -3175,8 +3180,9 @@ DIAUMPIRE_PANEL_PARAMS = (
     "Q1", "Q2", "Q3",
 )
 
-# FragPipe 24.0's jar template FP/tools/umpire/diaumpire_se.params, copied verbatim.
-DIAUMPIRE_TEMPLATE = Path(__file__).resolve().parent / "diaumpire_se.params"
+# FragPipe 24.0's jar template FP/tools/umpire/diaumpire_se.params, copied verbatim, in the module's assets/;
+# main() sets it from --diaumpire-template.
+DIAUMPIRE_TEMPLATE: Optional[Path] = None
 
 # Placeholder for the run's thread count; the DIAUMPIRE module puts task.cpus there.
 DIAUMPIRE_THREADS = "THREADS"
@@ -3192,6 +3198,8 @@ def generate_diaumpire_config(params: Dict[str, str]) -> str:
     """
     prop_regex = re.compile(r"^\s*([^=]+?)\s*=\s*(.+?)\s*$")
     out = []
+    if DIAUMPIRE_TEMPLATE is None:
+        raise RuntimeError("diaumpire_se.params is not set (--diaumpire-template)")
     for line in DIAUMPIRE_TEMPLATE.read_text(encoding="utf-8").split("\n"):
         hash_index = line.find("#")
         candidate = None
@@ -4622,7 +4630,7 @@ def write_tool_configs(
         print(f"Generated: {output_path}")
 
 
-# FragPipe 24.0 settings that msproteomics does not support (RC-22, RC-37). FragPipe aborts the
+# FragPipe 24.0 settings that msproteomics does not support. FragPipe aborts the
 # run when a stage's configure() returns false (FragpipeRun.java:2529-2536); msproteomics stops
 # the same way instead of finishing without the stage's outputs.
 #   (prefix, key, unsupported value, message)
@@ -4916,6 +4924,7 @@ def check_workflow_refusals(all_params: Dict[str, Dict[str, str]]) -> None:
 
 
 def main():
+    global FRAGGER_TEMPLATE, DIAUMPIRE_TEMPLATE
     parser = argparse.ArgumentParser(
         description="Parse FragPipe workflow files and generate tool-specific configs"
     )
@@ -4943,12 +4952,32 @@ def main():
     )
 
     parser.add_argument(
+        "--configs-outdir",
+        help="With --output-json: also write the tool config files to this directory in the same run",
+    )
+    parser.add_argument(
+        "--fragger-template",
+        type=Path,
+        required=True,
+        help="FragPipe 24.0's fragger_closed.params (the module's assets/)",
+    )
+    parser.add_argument(
+        "--diaumpire-template",
+        type=Path,
+        required=True,
+        help="FragPipe 24.0's diaumpire_se.params (the module's assets/)",
+    )
+    parser.add_argument(
         "--threads",
         type=int,
         help="Thread count of the run; overrides workflow.threads like FragPipe headless --threads (Fragpipe.java:508-514)",
     )
 
     args = parser.parse_args()
+    if args.configs_outdir and not args.output_json:
+        parser.error("--configs-outdir needs --output-json")
+    FRAGGER_TEMPLATE = args.fragger_template
+    DIAUMPIRE_TEMPLATE = args.diaumpire_template
 
     # Parse workflow file
     all_params = parse_workflow_file(args.workflow)
@@ -4969,6 +4998,8 @@ def main():
 
     # JSON output mode
     if args.output_json:
+        # the config files start from the parsed workflow as a run without --output-json does
+        config_params = copy.deepcopy(all_params) if args.configs_outdir else None
         check_glyco_hard_stops(all_params)
         json_output = generate_json_output(all_params, args.data_types.split(","))
         # Create output directory
@@ -4979,7 +5010,10 @@ def main():
         with open(output_path, "w") as f:
             json.dump(json_output, f, indent=2)
         print(f"Generated: {output_path}")
-        return 0
+        if not config_params:
+            return 0
+        all_params = config_params
+        args.outdir = args.configs_outdir
 
     # Create output directory
     outdir = Path(args.outdir)

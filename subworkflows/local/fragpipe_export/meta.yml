@@ -90,11 +90,6 @@ output:
       description: |
         Metaproteomics taxonomic assignment results directory.
         Structure: [ val(meta), path(results_dir) ]
-  - versions:
-      type: channel
-      description: |
-        Software versions of the export tools.
-        Structure: [ val(process), val(tool), val(version) ]
 authors:
   - "@dongzehe"
 maintainers:

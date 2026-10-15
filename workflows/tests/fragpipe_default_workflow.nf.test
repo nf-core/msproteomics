@@ -32,6 +32,7 @@ nextflow_workflow {
             def names = workflow.trace.tasks().collect { t -> t.name }
             assertAll(
                 { assert workflow.success },
+                { assert snapshot(workflow.trace.succeeded().collect { task -> task.name }.sort()).match() },
                 // LFQ-MBR: label-free IonQuant with match-between-runs, no TMT-Integrator
                 { assert names.any { n -> n.contains('IONQUANT') } : names },
                 { assert !names.any { n -> n.contains('TMTINTEGRATOR') } : names }

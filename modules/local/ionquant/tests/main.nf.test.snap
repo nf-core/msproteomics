@@ -20,11 +20,11 @@
                 ]
             ]
         ],
+        "timestamp": "2026-10-08T19:48:46.978288147",
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-10-08T19:48:46.978288147"
+        }
     },
     "ionquant - stub empty mod mass list and no modlist": {
         "content": [
@@ -32,20 +32,20 @@
                 [
                     "IONQUANT",
                     "ionquant",
-                    "24.0"
+                    "1.11.20"
                 ],
                 [
                     "IONQUANT",
                     "ionquant",
-                    "24.0"
+                    "1.11.20"
                 ]
             ]
         ],
+        "timestamp": "2026-10-14T19:41:35.181093807",
         "meta": {
-            "nf-test": "0.9.3",
+            "nf-test": "0.9.5",
             "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-10-05T14:45:23.685731413"
+        }
     },
     "ionquant - stub named groups, modmasses and experiment annotation": {
         "content": [
@@ -93,7 +93,7 @@
                 [
                     "IONQUANT",
                     "ionquant",
-                    "24.0"
+                    "1.11.20"
                 ]
             ],
             [
@@ -104,10 +104,10 @@
                 ]
             ]
         ],
+        "timestamp": "2026-10-14T19:41:27.273834974",
         "meta": {
-            "nf-test": "0.9.3",
+            "nf-test": "0.9.5",
             "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-10-08T19:48:33.939420132"
+        }
     }
 }

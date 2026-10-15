@@ -25,6 +25,7 @@
  *   - versions: FragPipe version (topic: versions)
  */
 include { fragpipeTools; writeSubMzmlArgv; shellArgs; rawSymlinksToFiles; fragpipeJarLines; hashSetClassPathLines } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
+include { javaXmxGb; shellQuote } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
 
 process WRITESUBMZML {
     tag "${meta.id}"
@@ -44,31 +45,32 @@ process WRITESUBMZML {
     script:
     def args = task.ext.args ?: ''
     // -Xmx<ram>G from the task memory; FragPipe always passes its RAM setting (CmdWriteSubMzml.java:103)
-    def ram = task.memory.toGiga()
+    def ram = javaXmxGb(task, 0)
     def tools = fragpipeTools(task)
     def cmd = writeSubMzmlArgv(lcms.name.tokenize('/').last(), 'lcms', meta, prob_threshold, ram, tools)
     """
     export HOME=\$(pwd)
-    echo "${tools.fragpipe_version}" > .fragpipe_version
+    echo ${shellQuote(tools.fragpipe_version)} > .fragpipe_version
 
     # FragPipe's work-dir layout: the group's psm.tsv in <wd>/<group>, the LC-MS file with its .mzBIN_all
-    mkdir -p '${cmd.group_dir}'
-    ln -s "\$PWD/group_psm/psm.tsv" '${cmd.psm}'
+    mkdir -p ${shellQuote(cmd.group_dir)}
+    ln -s "\$PWD/group_psm/psm.tsv" ${shellQuote(cmd.psm)}
     ${rawSymlinksToFiles("lcms/${lcms.name.tokenize('/').last()}")}
     ${fragpipeJarLines(tools, ['msfragger', 'batmass_io'])}
     ${hashSetClassPathLines(cmd.classpath_words)}
 
     CMD=(${shellArgs(cmd.argv)} ${args})
     printf '%s\\n' "\${CMD[*]}" > write_sub_mzml.log
-    (cd '${cmd.group_dir}' && "\${CMD[@]}") 2>&1 | tee -a write_sub_mzml.log
+    (cd ${shellQuote(cmd.group_dir)} && "\${CMD[@]}") 2>&1 | tee -a write_sub_mzml.log
     """
 
     stub:
     def tools = fragpipeTools(task)
-    def cmd = writeSubMzmlArgv(lcms.name.tokenize('/').last(), 'lcms', meta, prob_threshold, task.memory.toGiga(), tools)
+    def cmd = writeSubMzmlArgv(lcms.name.tokenize('/').last(), 'lcms', meta, prob_threshold, javaXmxGb(task, 0), tools)
+    // the log keeps the jar tokens literal (fragpipeJarLines does not run in the stub)
     """
-    printf '%s\\n' ${cmd.argv.collect { w -> "'${w}'" }.join(' ')} 'cwd ${cmd.group_dir}' > write_sub_mzml.log
-    touch '${cmd.sub_mzml}'
-    echo "${tools.fragpipe_version}" > .fragpipe_version
+    printf '%s\\n' ${cmd.argv.collect { w -> "'${w}'" }.join(' ')} ${shellQuote("cwd ${cmd.group_dir}")} > write_sub_mzml.log
+    touch ${shellQuote(cmd.sub_mzml)}
+    echo ${shellQuote(tools.fragpipe_version)} > .fragpipe_version
     """
 }

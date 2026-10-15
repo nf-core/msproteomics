@@ -16,7 +16,7 @@ nf-core/msproteomics is a Nextflow pipeline for mass spectrometry proteomics sup
 
 ## Reference
 
-- [Module Documentation](modules/README.md) -- Detailed documentation for all 49+ analysis modules
+- [Module Documentation](modules/README.md) -- One page per local module
 - [FragPipe Docker Build](fragpipe-docker/README.md) -- Building custom FragPipe containers with licensed tools
 - [Citations](../CITATIONS.md) -- References for all tools and methods used
 

@@ -34,9 +34,9 @@
 
   > Demichev V, Yu F, Teo GC, et al. Time-resolved in vivo ubiquitinome profiling by DIA-MS reveals USP7 targets on a proteome-wide scale. Nat Commun. 2021;12:5399. doi: 10.1038/s41467-021-25454-1.
 
-- [FragPipe](https://pubmed.ncbi.nlm.nih.gov/37704730/)
+- [FragPipe](https://pubmed.ncbi.nlm.nih.gov/32616513/)
 
-  > Yu F, Haynes SE, Teo GC, Avtonomov DM, Polasky DA, Nesvizhskii AI. Fast quantitative analysis of timsTOF PASEF data with MSFragger and IonQuant. Mol Cell Proteomics. 2020 Sep;19(9):1575-1585. doi: 10.1074/mcp.TIR120.002048.
+  > Yu F, Haynes SE, Teo GC, Avtonomov DM, Polasky DA, Nesvizhskii AI. Fast quantitative analysis of timsTOF PASEF data with MSFragger and IonQuant. Mol Cell Proteomics. 2020 Sep;19(9):1575-1585. doi: 10.1074/mcp.TIR120.002048. PubMed PMID: 32616513.
 
 - [MSFragger](https://pubmed.ncbi.nlm.nih.gov/28394336/)
 
@@ -78,13 +78,13 @@
 
   > da Veiga Leprevost F, Haynes SE, Avtonomov DM, Chang HY, Shanmugam AK, Mellacheruvu D, Kong AT, Nesvizhskii AI. Philosopher: a versatile toolkit for shotgun proteomics data analysis. Nat Methods. 2020 Sep;17(9):869-870. doi: 10.1038/s41592-020-0912-y. PubMed PMID: 32669682.
 
-- [IonQuant](https://pubmed.ncbi.nlm.nih.gov/33978567/)
+- [IonQuant](https://pubmed.ncbi.nlm.nih.gov/33813065/)
 
-  > Yu F, Haynes SE, Nesvizhskii AI. IonQuant enables accurate and sensitive label-free quantification with FDR-controlled match-between-runs. Mol Cell Proteomics. 2021;20:100077. doi: 10.1016/j.mcpro.2021.100077. PubMed PMID: 33978567.
+  > Yu F, Haynes SE, Nesvizhskii AI. IonQuant enables accurate and sensitive label-free quantification with FDR-controlled match-between-runs. Mol Cell Proteomics. 2021;20:100077. doi: 10.1016/j.mcpro.2021.100077. PubMed PMID: 33813065.
 
-- [MSBooster](https://pubmed.ncbi.nlm.nih.gov/36975790/)
+- [MSBooster](https://pubmed.ncbi.nlm.nih.gov/37500632/)
 
-  > Yang KL, Yu F, Teo GC, Li K, Demichev V, Ralser M, Nesvizhskii AI. MSBooster: improving peptide identification rates using deep learning-based features. Nat Commun. 2023 Mar 28;14(1):4539. doi: 10.1038/s41467-023-40129-9. PubMed PMID: 36975790.
+  > Yang KL, Yu F, Teo GC, Li K, Demichev V, Ralser M, Nesvizhskii AI. MSBooster: improving peptide identification rates using deep learning-based features. Nat Commun. 2023 Jul 27;14(1):4539. doi: 10.1038/s41467-023-40129-9. PubMed PMID: 37500632.
 
 - [Crystal-C](https://doi.org/10.1021/acs.jproteome.0c00296)
 
@@ -110,9 +110,89 @@
 
   > Kall L, Canterbury JD, Weston J, Noble WS, MacCoss MJ. Semi-supervised learning for peptide identification from shotgun proteomics datasets. Nat Methods. 2007 Nov;4(11):923-5. doi: 10.1038/nmeth1113. PubMed PMID: 17952086.
 
-- [TMTIntegrator](https://pubmed.ncbi.nlm.nih.gov/31495665/)
+- [TMTIntegrator](https://pubmed.ncbi.nlm.nih.gov/32265444/)
 
-  > Djomehri SI, Gonzalez ME, da Veiga Leprevost F, Tekula SR, Chang HY, White MJ, Cieslik M, Pflug K, Gala V, Noy R, Badve SS, Chinnaiyan AM, Nesvizhskii AI, Kleer CG. Quantitative proteomic landscape of metaplastic breast carcinoma pathological subtypes and their relationship to triple-negative tumors. Nat Commun. 2020 Apr 14;11(1):1723. doi: 10.1038/s41467-020-15283-z. PubMed PMID: 31495665.
+  > Djomehri SI, Gonzalez ME, da Veiga Leprevost F, Tekula SR, Chang HY, White MJ, Cieslik M, Pflug K, Gala V, Noy R, Badve SS, Chinnaiyan AM, Nesvizhskii AI, Kleer CG. Quantitative proteomic landscape of metaplastic breast carcinoma pathological subtypes and their relationship to triple-negative tumors. Nat Commun. 2020 Apr 14;11(1):1723. doi: 10.1038/s41467-020-15283-z. PubMed PMID: 32265444.
+
+- [PeptideProphet](https://pubmed.ncbi.nlm.nih.gov/12403597/)
+
+  > Keller A, Nesvizhskii AI, Kolker E, Aebersold R. Empirical statistical model to estimate the accuracy of peptide identifications made by MS/MS and database search. Anal Chem. 2002 Oct 15;74(20):5383-92. doi: 10.1021/ac025747h. PubMed PMID: 12403597.
+
+- [ProteinProphet](https://pubmed.ncbi.nlm.nih.gov/14632076/)
+
+  > Nesvizhskii AI, Keller A, Kolker E, Aebersold R. A statistical model for identifying proteins by tandem mass spectrometry. Anal Chem. 2003 Sep 1;75(17):4646-58. doi: 10.1021/ac0341261. PubMed PMID: 14632076.
+
+- [iProphet](https://pubmed.ncbi.nlm.nih.gov/21876204/)
+
+  > Shteynberg D, Deutsch EW, Lam H, Eng JK, Sun Z, Tasman N, Mendoza L, Moritz RL, Aebersold R, Nesvizhskii AI. iProphet: multi-level integrative analysis of shotgun proteomic data improves peptide and protein identification rates and error estimates. Mol Cell Proteomics. 2011 Dec;10(12):M111.007690. doi: 10.1074/mcp.M111.007690. PubMed PMID: 21876204.
+
+- [PTMProphet](https://pubmed.ncbi.nlm.nih.gov/31290668/)
+
+  > Shteynberg DD, Deutsch EW, Campbell DS, Hoopmann MR, Kusebauch U, Lee D, Mendoza L, Midha MK, Sun Z, Whetton AD, Moritz RL. PTMProphet: fast and accurate mass modification localization for the Trans-Proteomic Pipeline. J Proteome Res. 2019 Dec 6;18(12):4262-4272. doi: 10.1021/acs.jproteome.9b00205. PubMed PMID: 31290668.
+
+- [O-Pair Search (MetaMorpheus)](https://pubmed.ncbi.nlm.nih.gov/33106676/)
+
+  > Lu L, Riley NM, Shortreed MR, Bertozzi CR, Smith LM. O-Pair Search with MetaMorpheus for O-glycopeptide characterization. Nat Methods. 2020 Nov;17(11):1133-1138. doi: 10.1038/s41592-020-00985-5. PubMed PMID: 33106676.
+
+- [MBG (match-between-glycans)](https://pubmed.ncbi.nlm.nih.gov/41757029/)
+
+  > Shen J, Polasky DA, Jager S, Yu F, Heck AJR, Reiding KR, Nesvizhskii AI. Expanding glycopeptide identification with match-between-glycans in FragPipe. bioRxiv (preprint). 2026 Feb 19. doi: 10.64898/2026.02.18.706650. PubMed PMID: 41757029.
+
+- [SAINTexpress](https://pubmed.ncbi.nlm.nih.gov/24513533/)
+
+  > Teo G, Liu G, Zhang J, Nesvizhskii AI, Gingras AC, Choi H. SAINTexpress: improvements and additional features in Significance Analysis of INTeractome software. J Proteomics. 2014 Feb 26;100:37-43. doi: 10.1016/j.jprot.2013.10.023. PubMed PMID: 24513533.
+
+- [coADAPTr (FPOP)](https://pubmed.ncbi.nlm.nih.gov/39356573/)
+
+  > Shortt RL, Pino LK, Chea EE, Ramirez CR, Polasky DA, Nesvizhskii AI, et al. Covalent Labeling Automated Data Analysis Platform for High Throughput in R (coADAPTr): a proteome-wide data analysis platform for covalent labeling experiments. J Am Soc Mass Spectrom. 2024 Oct 2. doi: 10.1021/jasms.4c00196. PubMed PMID: 39356573.
+
+- [FP-Meta (FragPipe metaproteomics)](https://github.com/Nesvilab/FragPipe)
+
+  > No dedicated publication; see the FragPipe repository.
+
+- [FragReporter](https://github.com/Nesvilab/FragPipe)
+
+  > No dedicated publication; part of FragPipe (used with DIA-NN site and peptide reports).
+
+- [EasyPQP](https://github.com/grosenberger/easypqp)
+
+  > No dedicated publication; see the EasyPQP repository.
+
+- [MSstats](https://pubmed.ncbi.nlm.nih.gov/24794931/)
+
+  > Choi M, Chang CY, Clough T, Broudy D, Killeen T, MacLean B, Vitek O. MSstats: an R package for statistical analysis of quantitative mass spectrometry-based proteomic experiments. Bioinformatics. 2014 Sep 1;30(17):2524-6. doi: 10.1093/bioinformatics/btu305. PubMed PMID: 24794931.
+
+- [MSstats v4](https://pubmed.ncbi.nlm.nih.gov/37018319/)
+
+  > Kohler D, Staniak M, Tsai TH, Huang T, Shulman N, Bernhardt OM, MacLean BX, Nesvizhskii AI, Reiter L, Sabido E, Choi M, Vitek O. MSstats Version 4.0: statistical analyses of quantitative mass spectrometry-based proteomic experiments with chromatography-based quantification at scale. J Proteome Res. 2023 May 5;22(5):1466-1482. doi: 10.1021/acs.jproteome.2c00834. PubMed PMID: 37018319.
+
+- [iq](https://pubmed.ncbi.nlm.nih.gov/31909781/)
+
+  > Pham TV, Henneman AA, Jimenez CR. iq: an R package to estimate relative protein abundances from ion quantification in DIA-MS-based proteomics. Bioinformatics. 2020 Apr 15;36(8):2611-2613. doi: 10.1093/bioinformatics/btz961. PubMed PMID: 31909781.
+
+- [ThermoRawFileParser](https://pubmed.ncbi.nlm.nih.gov/31755270/)
+
+  > Hulstaert N, Shofstahl J, Sachsenberg T, Walzer M, Barsnes H, Martens L, Perez-Riverol Y. ThermoRawFileParser: modular, scalable, and cross-platform RAW file conversion. J Proteome Res. 2020 Jan 3;19(1):537-542. doi: 10.1021/acs.jproteome.9b00328. PubMed PMID: 31755270.
+
+- [OpenMS](https://pubmed.ncbi.nlm.nih.gov/38366242/)
+
+  > Pfeuffer J, Bielow C, Wein S, Jeong K, Netz E, Walter A, et al. OpenMS 3 enables reproducible analysis of large-scale mass spectrometry data. Nat Methods. 2024 Mar;21(3):365-367. doi: 10.1038/s41592-024-02197-7. PubMed PMID: 38366242.
+
+- [quantms](https://pubmed.ncbi.nlm.nih.gov/38965444/)
+
+  > Dai C, Pfeuffer J, Wang H, Zheng P, Kall L, Sachsenberg T, et al. quantms: a cloud-based pipeline for quantitative proteomics enables the reanalysis of public proteomics data. Nat Methods. 2024 Sep;21(9):1603-1607. doi: 10.1038/s41592-024-02343-1. PubMed PMID: 38965444.
+
+- [quantms-utils](https://github.com/bigbio/quantms-utils)
+
+  > No dedicated publication; cite quantms above.
+
+- [tdf2mzml](https://github.com/mafreitas/tdf2mzml)
+
+  > No publication; see the repository.
+
+- [pmultiqc](https://github.com/bigbio/pmultiqc)
+
+  > No dedicated publication; see the repository.
 
 - [MultiQC](https://pubmed.ncbi.nlm.nih.gov/27312411/)
 

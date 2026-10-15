@@ -9,7 +9,7 @@ nextflow_workflow {
     tag "subworkflows_local"
     tag "fragpipe_headless_wf"
 
-    // RC-09: FragPipe headless reads .raw itself; the manifest lists the .raw file.
+    // FragPipe headless reads .raw itself; the manifest lists the .raw file.
     test("fragpipe_headless_wf - stub with RAW input") {
         tag "stub"
         options "-stub"

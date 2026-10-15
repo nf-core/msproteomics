@@ -5,8 +5,8 @@ nextflow_process {
     process "SPLITFASTA"
 
     tag "modules"
-    tag "modules_nfcore"
-    tag "split_fasta"
+    tag "modules_local"
+    tag "splitfasta"
 
     test("split_fasta - stub") {
         options "-stub"

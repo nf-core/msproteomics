@@ -48,6 +48,7 @@ workflow FRAGPIPE_MATCHED_FRAGMENTS {
             files:     [fpopCoadaptrMeta(aggregate_meta, configs, ['filter', 'report']), sorted.collect { group -> group[1] }, spectra, umpire_spectra]
             manifest:  manifest
             root:      fragpipeRootGroupDir(sorted.collect { group -> group[0] })
+            // manifest: the one collectFile item FRAGPIPE_MATCHED_FRAGMENTS_INPUTS wrote, read once per run
             flags:     [shouldRunTool(configs, 'diaumpire'), shouldRunTool(configs, 'speclibgen'), matchedFragmentsExportPsms(manifest.text, shouldRunTool(configs, 'speclibgen'))]
         }
 
@@ -66,8 +67,6 @@ workflow FRAGPIPE_MATCHED_FRAGMENTS {
 
     emit:
     results_dir = ch_exported.mix(ch_groups.passthrough)  // channel: [ val(meta), path(results_dir) ] - psm.tsv with matched fragments when exported
-    export_log  = EXPORTMATCHEDFRAGMENTS.out.log         // channel: [ val(meta), path(export_matched_fragments.log) ]
-    versions    = channel.empty()  // channel: empty - every module reports its version on the 'versions' topic
 }
 
 workflow FRAGPIPE_MATCHED_FRAGMENTS_INPUTS {

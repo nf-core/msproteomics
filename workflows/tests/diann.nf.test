@@ -1,4 +1,4 @@
-// Workflow-level stub tests for MSPROTEOMICS_DIANN (RC-41, RC-43).
+// Workflow-level stub tests for MSPROTEOMICS_DIANN.
 // Stub runs build every DIA-NN command line exactly as the real run does, so the
 // assertions read the generated .command.sh files and the experimental design.
 

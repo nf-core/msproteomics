@@ -3,24 +3,24 @@ repository_type: pipeline
 nf_core_version: 4.1.0
 
 lint:
-  # FragPipe modules use the licensed FragPipe image given with --fragpipe_container
-  # which does not have public conda/biocontainers equivalents
-  modules_config: false
-  # nf-fragpipe submodule has its own structure
+  # skip_features: igenomes (proteomes come from iProteomes or --database), so the iGenomes configs are absent
   files_exist:
-    - conf/modules.config
-    # Test profiles live in conf/tests/ (test_dia, test_dda_lfq, test_tmt, test_tmtq); the `test`
-    # profile only sets nf-test resources. No iGenomes: proteomes come from --database.
-    - conf/test.config
-    - conf/test_full.config
     - conf/igenomes.config
     - conf/igenomes_ignored.config
-  files_unchanged: false
-  # Skip container checks for local modules that run in the FragPipe image
-  nextflow_config:
-    - config_defaults
+  files_unchanged:
+    # GitHub Actions hardening: event values reach the shell as env vars, the nf-core version and the comment header are validated
+    - .github/workflows/branch.yml
+    - .github/workflows/linting.yml
+    - .github/workflows/pr-comment.yml
+    # The publicly runnable test profile is test_dia (the other profiles need the licensed FragPipe image)
+    - .github/PULL_REQUEST_TEMPLATE.md
+    # Pipeline logo (the apple glyph) and the documentation index
+    - assets/nf-core-msproteomics_logo_light.png
+    - docs/images/nf-core-msproteomics_logo_light.png
+    - docs/images/nf-core-msproteomics_logo_dark.png
+    - docs/README.md
 
-# DIA-NN stays at 1.8.1 (user decision): `nf-core modules update` leaves diann at this sha
+# DIA-NN stays at 1.8.1: `nf-core modules update` leaves diann at this sha
 # (nf_core/components/update.py, config_entry handling: a str entry is the sha to update to).
 # module_version lint ignores this pin (nf_core/modules/lint/module_version.py:45-50), so it keeps its warning.
 update:

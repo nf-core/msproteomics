@@ -1,5 +1,5 @@
 /*
- * Test harness: FRAGPIPE_PHILOSOPHER_QUANT followed by FRAGPIPE_QUANT, wired as FRAGPIPE_WF wires
+ * Test harness: FRAGPIPE_PHILOSOPHER_QUANT followed by FRAGPIPE_QUANT, wired as FRAGPIPE wires
  * them without the glyco chain (subworkflows/local/fragpipe/main.nf, STEP 6b and 7b).
  */
 include { FRAGPIPE_PHILOSOPHER_QUANT } from '../main'

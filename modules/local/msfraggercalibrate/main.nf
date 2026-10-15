@@ -33,6 +33,8 @@ process MSFRAGGERCALIBRATE {
     tuple val(meta), path("msfragger_calibrate.log"), path("*.mzBIN_calibrated", arity: '0..*'), emit: calibration
     // MSFragger writes <stem>_uncalibrated.mzML next to .raw / .d input (write_uncalibrated_mzml = 1)
     tuple val(meta), path("*_uncalibrated.mzML")                                         , emit: uncalibrated_mzml, optional: true
+    // and <stem>_uncalibrated.mzBIN, which a slice-db FragPipe run keeps in raw_files/ next to the input
+    tuple val(meta), path("*_uncalibrated.mzBIN")                                        , emit: uncalibrated_mzbin, optional: true
     // Console log: read by FRAGPIPESDRF for the instruments (FragpipeRun.java:586)
     tuple val(meta), path("msfragger_calibrate.log")                                     , emit: log
     path "I_AGREE_FRAGPIPE_LICENSE_AGREEMENT"  , emit: license_agreement
@@ -43,6 +45,10 @@ process MSFRAGGERCALIBRATE {
     task.ext.when == null || task.ext.when
 
     script:
+    // Exit if running this module with -profile conda / -profile mamba (copied from modules/nf-core/diann/main.nf)
+    if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
+        error "MSFRAGGERCALIBRATE module does not support Conda: it runs in the FragPipe image given with --fragpipe_container. Please use Docker / Singularity / Podman instead."
+    }
     def args = task.ext.args ?: ''
     def mem = fragpipeJavaMemGb(task)
     def tools = fragpipeTools(task)
@@ -74,9 +80,9 @@ process MSFRAGGERCALIBRATE {
     stub:
     def tools = fragpipeTools(task)
     """
-    touch "${spectra.baseName}.mzBIN_calibrated"
+    touch "${spectra.baseName}.mzBIN_calibrated" "${spectra.baseName}_uncalibrated.mzBIN"
     touch I_AGREE_FRAGPIPE_LICENSE_AGREEMENT msfragger_calibrate.log
-    echo "${tools.fragpipe_version}" > .msfragger_version
+    echo "${tools.msfragger_version}" > .msfragger_version
     echo "${tools.fragpipe_version}" > .fragpipe_version
     """
 }

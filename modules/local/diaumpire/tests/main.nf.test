@@ -5,7 +5,7 @@ nextflow_process {
     process "DIAUMPIRE"
 
     tag "modules"
-    tag "modules_nfcore"
+    tag "modules_local"
     tag "diaumpire"
 
     test("diaumpire - stub") {
@@ -33,6 +33,7 @@ nextflow_process {
                     process.out.q2_spectra,
                     process.out.q3_spectra,
                     process.out.mgf_spectra,
+                    process.out.se_log,
                     process.out.versions_diaumpire,
                     process.out.versions_fragpipe
                 ).match() }
@@ -51,7 +52,7 @@ nextflow_process {
                 // diaumpire_se.params as PARSEFRAGPIPEWORKFLOW emits it: FragPipe 24.0's template with
                 // the thread count left as the THREADS placeholder that DIAUMPIRE fills with task.cpus
                 // (parse_fragpipe_workflow.py generate_diaumpire_config, default panel values)
-                def template = file("\${projectDir}/modules/local/parsefragpipeworkflow/resources/usr/bin/diaumpire_se.params", checkIfExists: true)
+                def template = file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)
                 def umpire_params = template.text.readLines().collect { line -> line ==~ /^Thread *=.*/ ? 'Thread = THREADS' : line }.join('\\n')
 
                 input[0] = channel.of([[ id: 'diaumpire_test' ], mzml_file, umpire_params])

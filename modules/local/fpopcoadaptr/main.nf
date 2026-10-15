@@ -1,3 +1,17 @@
+/*
+ * FPOPCOADAPTR: FragPipe's FPOP coADAPTr converter (CmdFPOPcoadaptr)
+ *
+ * Input:
+ *   - meta: Run metadata map
+ *   - inputs: IonQuant result trees, Philosopher group directories or DIA-NN dia-quant-output directories
+ *   - layout: 'tree', 'groups' or 'diann'
+ *   - fpop_mods: comma-joined FPOP masses
+ *
+ * Output:
+ *   - tables / psms / diann_report: the edited psm.tsv or report.tsv files
+ *   - log: converter output
+ *   - versions_fragpipe: FragPipe version (topic: versions)
+ */
 include { fragpipeTools; fpopCoadaptrStaging; shellArgs } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
 
 process FPOPCOADAPTR {
@@ -28,6 +42,10 @@ process FPOPCOADAPTR {
     task.ext.when == null || task.ext.when
 
     script:
+    // Exit if running this module with -profile conda / -profile mamba (copied from modules/nf-core/diann/main.nf)
+    if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
+        error "FPOPCOADAPTR module does not support Conda: it runs in the FragPipe image given with --fragpipe_container. Please use Docker / Singularity / Podman instead."
+    }
     // FPOP_PSMwriter reads exactly two positional arguments; task.ext.args has no place to go.
     prefix = task.ext.prefix ?: "${meta.id}"
     def editor = layout == 'diann' ? 'FPOP_DiannReport_Editor' : 'FPOP_PSMwriter'

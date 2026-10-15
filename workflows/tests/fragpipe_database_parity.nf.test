@@ -1,4 +1,4 @@
-// RC-07: FragPipe headless searches database.db-path as given (FragpipeRun.checkDbConfig only checks
+// FragPipe headless searches database.db-path as given (FragpipeRun.checkDbConfig only checks
 // its decoys). The database update philosopher database --custom <fasta> (CmdDatabaseUpdate.java:44-53)
 // runs only on request: --add_philosopher_decoy adds rev_ decoys (else --nodecoys),
 // --add_philosopher_contaminants adds --contam --contamprefix (PHI cmd/database.go:43-48).
@@ -19,7 +19,7 @@ nextflow_workflow {
         [false, true,  'philosopher database --custom test.fasta --nodecoys --contam --contamprefix']
     ].each { decoy, contam, expected ->
 
-        test("RC-07 database - decoy=${decoy} contaminants=${contam}") {
+        test("database - decoy=${decoy} contaminants=${contam}") {
             options "-stub"
             tag "stub"
 
@@ -46,6 +46,7 @@ nextflow_workflow {
                 def log    = new File("${outputDir}/proteome/fragpipe/philosopher_database.log")
                 assertAll(
                     { assert workflow.success },
+                    { assert snapshot(workflow.trace.succeeded().collect { task -> task.name }.sort()).match() },
                     { assert check.size() == 1 : "FragPipe's decoy check runs on every database" },
                     { assert update.size() == (expected ? 1 : 0) },
                     { assert !expected || log.text.trim() == expected }

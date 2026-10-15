@@ -6,7 +6,7 @@ nextflow_process {
 
     tag "modules"
     tag "modules_local"
-    tag "sort_fasta"
+    tag "sortfasta"
 
     // msfragger_pep_split.py:615-620: '>' + protein + '\n', sorted bytewise; the last protein keeps its own
     // trailing newline, so it ends with an empty line

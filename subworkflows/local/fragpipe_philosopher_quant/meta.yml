@@ -57,31 +57,11 @@ output:
       description: |
         Per-group tables after the final report and the matched-fragment export.
         Structure: [ val(meta), path(results_dir) ]
-  - report_peptides:
-      type: channel
-      description: |
-        Philosopher Report peptide table.
-        Structure: [ val(meta), path(peptide.tsv) ]
-  - report_proteins:
-      type: channel
-      description: |
-        Philosopher Report protein table.
-        Structure: [ val(meta), path(protein.tsv) ]
-  - labelquant_results_dir:
-      type: channel
-      description: |
-        LabelQuant results directory with the TMT intensities in .meta/.
-        Structure: [ val(meta), path(results_dir) ]
   - experiment_annotation:
       type: channel
       description: |
         Experiment annotation for the isobaric quantification.
         Structure: [ val(meta), path(experiment_annotation.tsv) ]
-  - versions:
-      type: channel
-      description: |
-        Tool versions of the Philosopher and FragPipe steps.
-        Structure: [ val(process), val(tool), val(version) ]
 authors:
   - "@dongzehe"
 maintainers:

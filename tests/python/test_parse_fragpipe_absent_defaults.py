@@ -15,6 +15,11 @@ REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "modules/local/parsefragpipeworkflow/resources/usr/bin"))
 import parse_fragpipe_workflow as pfw  # noqa: E402
 
+# FragPipe 24.0 templates the module stages (the script takes them as arguments)
+TEMPLATES = REPO / "modules" / "local" / "parsefragpipeworkflow" / "assets"
+pfw.FRAGGER_TEMPLATE = TEMPLATES / "fragger_closed.params"
+pfw.DIAUMPIRE_TEMPLATE = TEMPLATES / "diaumpire_se.params"
+
 MSFRAGGER = {"msfragger": {"mass_diff_to_variable_mod": "0"}}
 
 

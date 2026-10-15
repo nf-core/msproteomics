@@ -15,7 +15,7 @@
 
 ## Overview
 
-nf-fragpipe supports two Docker container variants:
+nf-core/msproteomics supports two FragPipe Docker image variants:
 
 - **Academic container** — For academic and non-profit use (free license from NESViLab)
 - **Commercial container** — For industry use (paid license from Fragmatics)
@@ -52,7 +52,7 @@ You need three tools from NESViLab (free for academic/non-profit use):
 ### Step 2: Build the Container
 
 ```bash
-cd nf-fragpipe/docker
+cd docs/fragpipe-docker
 
 export MSFRAGGER_ZIP=~/Downloads/MSFragger-4.4.1.zip
 export IONQUANT_ZIP=~/Downloads/IonQuant-1.11.20.zip
@@ -112,7 +112,7 @@ nextflow run main.nf \
 ### Step 2: Build the Container
 
 ```bash
-cd nf-fragpipe/docker
+cd docs/fragpipe-docker
 
 export FRAGPIPEPLUS_ZIP=~/Downloads/FragPipePlus-24.0-linux.zip
 export LICENSE_FILE=~/Downloads/license.dat

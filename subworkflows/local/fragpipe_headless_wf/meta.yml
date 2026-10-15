@@ -68,11 +68,6 @@ output:
       description: |
         Combined ion-level quantification across all samples.
         Structure: path(combined_ion.tsv)
-  - versions:
-      type: channel
-      description: |
-        Software versions (topic tuples).
-        Structure: [ val(process), val(tool), val(version) ]
 authors:
   - "@dongzehe"
 maintainers:

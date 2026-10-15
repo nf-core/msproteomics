@@ -75,16 +75,6 @@ output:
       description: |
         SpecLibGen's library.tsv.
         Structure: [ val(meta), path(library.tsv) ]
-  - easypqp_files:
-      type: channel
-      description: |
-        SpecLibGen's easypqp_files directory.
-        Structure: [ val(meta), path(easypqp_files) ]
-  - rt_reference:
-      type: channel
-      description: |
-        Rt reference.
-        Structure: [ val(meta), path(easypqp_rt_reference_run.tsv) ]
   - diann_results:
       type: channel
       description: |

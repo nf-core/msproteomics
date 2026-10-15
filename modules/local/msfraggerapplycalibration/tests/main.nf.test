@@ -6,7 +6,7 @@ nextflow_process {
 
     tag "modules"
     tag "modules_local"
-    tag "msfragger_apply_calibration"
+    tag "msfraggerapplycalibration"
 
     // msfragger_pep_split.py:524-611: optimized values for calibrate_mass = 2, check_spectral_files = 0,
     // the .mzBIN_calibrated replaces the input file

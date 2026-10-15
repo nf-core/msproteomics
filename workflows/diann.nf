@@ -42,7 +42,7 @@ workflow MSPROTEOMICS_DIANN {
     )
 
     // Convert raw files if needed
-    FILE_PREPARATION(ch_input)
+    FILE_PREPARATION(ch_input, params.reindex_mzml, params.openms_peakpicking, params.convert_dotd)
 
     // DIA-NN input: one item per MS file with the search settings (precursor = MS1, fragment = MS2 tolerance)
     ch_dia_input = FILE_PREPARATION.out.results.map { meta, ms_file ->
@@ -149,8 +149,7 @@ workflow MSPROTEOMICS_DIANN {
     }
 
     emit:
-    versions      = channel.empty() // every module reports its version on the 'versions' topic
-    multiqc_files = channel.empty()
+    multiqc_files = channel.empty() // every module reports its version on the 'versions' topic (main.nf collects them)
 }
 
 /*

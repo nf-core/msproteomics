@@ -1,4 +1,4 @@
-"""Unit tests for bin/golden_capture.py and bin/golden_step_check.py."""
+"""Unit tests for tests/tools/golden_capture.py and tests/tools/golden_step_check.py."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "bin"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import fragpipe_log_to_manifest as fpm  # noqa: E402

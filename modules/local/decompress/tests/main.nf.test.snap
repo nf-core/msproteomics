@@ -15,11 +15,37 @@
                 "test_decompression.log:md5,1ad239c94b4b8739c6acd1bb40b24990"
             ]
         ],
+        "timestamp": "2026-10-08T14:15:36.520499463",
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-10-08T14:15:36.520499463"
+        }
+    },
+    "decompress - X.d.tar.gz gives X.d": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "run_A"
+                    },
+                    [
+                        "analysis.tdf:md5,9ac1aaacbf0d42636ac57b8368c3abbf"
+                    ]
+                ]
+            ],
+            [
+                [
+                    "DECOMPRESS",
+                    "tar",
+                    "1.34"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-14T20:26:30.547697354",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
     },
     "decompress - X.mzML.gz gives X.mzML": {
         "content": [
@@ -32,10 +58,10 @@
                 ]
             ]
         ],
+        "timestamp": "2026-10-05T14:21:38.780269364",
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-10-05T14:21:38.780269364"
+        }
     }
 }

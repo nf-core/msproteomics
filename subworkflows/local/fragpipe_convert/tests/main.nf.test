@@ -36,7 +36,7 @@ nextflow_workflow {
         }
     }
 
-    // RC-09: FragPipe hands .raw straight to MSFragger (CmdMsfragger.java:390-403), no conversion.
+    // FragPipe hands .raw straight to MSFragger (CmdMsfragger.java:390-403), no conversion.
     test("fragpipe_convert - stub RAW input passes through unconverted") {
         tag "stub"
         options "-stub"
@@ -65,7 +65,7 @@ nextflow_workflow {
         }
     }
 
-    // RC-15: every LC-MS format MSFragger reads natively is FragPipe input
+    // every LC-MS format MSFragger reads natively is FragPipe input
     // (CmdMsfragger.java:764-766: .mgf, .mzml, .mzxml, .mzbin, .raw, .d), case-insensitive.
     test("fragpipe_convert - stub mzXML, MGF, mzBIN, RAW and .d pass through") {
         tag "stub"
@@ -94,7 +94,7 @@ nextflow_workflow {
         }
     }
 
-    // RC-15: anything MSFragger cannot read stops the run instead of silently dropping the sample.
+    // anything MSFragger cannot read stops the run instead of silently dropping the sample.
     test("fragpipe_convert - stub unsupported LC-MS file fails") {
         tag "stub"
         options "-stub"
@@ -118,7 +118,7 @@ nextflow_workflow {
         }
     }
 
-    // RC-09: DIA-Umpire reads .raw itself (CmdUmpireSe.java:129-141, -Dlibs.thermo.dir).
+    // DIA-Umpire reads .raw itself (CmdUmpireSe.java:129-141, -Dlibs.thermo.dir).
     test("fragpipe_convert - stub DIA-Umpire gets the RAW file") {
         tag "stub"
         options "-stub"
@@ -144,7 +144,7 @@ nextflow_workflow {
         }
     }
 
-    // RC-10/RC-11: DIA-Umpire runs only on files that are not DDA, DIA-Quant or DDA+, and its
+    // DIA-Umpire runs only on files that are not DDA, DIA-Quant or DDA+, and its
     // enabled Q1/Q2/Q3 pseudo-MS/MS files replace the DIA file in the LC-MS list, typed DDA with
     // the source group as experiment (CmdUmpireSe.java:59-78, FragpipeRun.java:1380-1382).
     test("fragpipe_convert - stub DIA-Umpire replaces DIA files by their enabled Q tiers") {
@@ -187,7 +187,7 @@ nextflow_workflow {
         }
     }
 
-    // RC-10/RC-13: diaTracer runs only on DIA / DIA-Lib / GPF-DIA .d files and its _diatracer.mzML
+    // diaTracer runs only on DIA / DIA-Lib / GPF-DIA .d files and its _diatracer.mzML
     // replaces the .d, typed DDA (CmdDiaTracer.java:131-145); other .d files are searched as they are.
     test("fragpipe_convert - stub diaTracer replaces DIA .d files only") {
         tag "stub"

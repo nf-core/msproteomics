@@ -1,5 +1,5 @@
 include { fragpipeJarLines; fragpipeTools } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
-include { speclibgenCommand; taskDirArg; taskFileCommand; shellQuote; fragpipeToolVersions } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
+include { speclibgenCommand; taskDirArg; taskFileCommand; shellQuote; fragpipeToolVersions; javaXmxGb } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
 
 process SPECLIBGEN {
     tag "${meta.id}"
@@ -8,7 +8,7 @@ process SPECLIBGEN {
     input:
     // FragPipe's SpecLibGen step (CmdSpecLibGen.java:114-216): one run of FragPipe's own
     // tools/speclib/gen_con_spec_lib.py in the group work dir, which holds, side by side,
-    //   psm.tsv / peptide.tsv:     the group's Philosopher report (one group, RC-04)
+    //   psm.tsv / peptide.tsv:     the group's Philosopher report (one group)
     //   pepxml_files:              the validated interact-*.pep.xml (or PTMProphet *.mod.pep.xml)
     //   spectra:                   the LC-MS files of filelist_speclibgen.txt (CmdSpecLibGen.java:172-202),
     //                              staged in the task dir (<work dir>/<name> in the file list)
@@ -21,6 +21,10 @@ process SPECLIBGEN {
     tuple val(meta), path("library.tsv")                 , emit: library_tsv
     tuple val(meta), path("easypqp_files")               , emit: easypqp_files
     tuple val(meta), path("easypqp_rt_reference_run.tsv"), emit: rt_reference, optional: true
+    // EasyPQP's ion mobility alignment, written for ion mobility data (diaPASEF) also with noIM: the reference run
+    // and one alignment per run; gen_con_spec_lib.py deletes only the RT *.alignment_pkl files (:370-373)
+    tuple val(meta), path("easypqp_im_reference_run.tsv"), emit: im_reference, optional: true
+    tuple val(meta), path("easypqp_im_alignment_*.alignment_pkl"), emit: im_alignments, optional: true
     tuple val(meta), path("filelist_*.txt")              , emit: filelists
     tuple val(meta), path("speclibgen_argv.txt")         , emit: argv
     tuple val(meta), path("{irt.tsv,im.tsv,*_temp-psm.tsv,*.psmpkl,*.peakpkl,*_run_peaks.tsv,easypqp_lib_openswath.tsv}"), emit: intermediates, optional: true
@@ -34,7 +38,7 @@ process SPECLIBGEN {
     if (task.ext.args) {
         error("SPECLIBGEN: gen_con_spec_lib.py takes positional arguments only (CmdSpecLibGen.java:122-202); ext.args is not passed: ${task.ext.args}")
     }
-    def ram = task.memory ? Math.max(1, task.memory.toGiga() - 2) : 30
+    def ram = javaXmxGb(task, 2)
     def cmd = speclibgenCommand(argv_parts, fasta.name, spectra, rt_cal_file, im_cal_file, ram, task)
     """
     export HOME=\$(pwd)
@@ -73,6 +77,8 @@ process SPECLIBGEN {
     printf '%s\\n' "\${SPECLIB_CMD[@]}" > speclibgen_argv.txt
 
     touch library.tsv filelist_easypqp_library.txt easypqp_rt_reference_run.tsv
+    # every output, as if the data had ion mobility (easypqp_im_*)
+    touch easypqp_im_reference_run.tsv ${[spectra].flatten().collect { s -> shellQuote("easypqp_im_alignment_${s.baseName}.alignment_pkl") }.join(' ')}
     mkdir -p easypqp_files
     touch easypqp_files/cmds.txt
     echo ${shellQuote(cmd.fragpipe_version)} > .fragpipe_version

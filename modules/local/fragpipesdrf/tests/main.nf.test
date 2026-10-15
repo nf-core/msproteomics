@@ -6,7 +6,7 @@ nextflow_process {
 
     tag "modules"
     tag "modules_local"
-    tag "fragpipe_sdrf"
+    tag "fragpipesdrf"
 
     test("fragpipe_sdrf - stub") {
         options "-stub"

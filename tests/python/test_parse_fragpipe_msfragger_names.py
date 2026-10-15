@@ -11,10 +11,15 @@ import pytest
 
 REPO = Path(__file__).resolve().parents[2]
 SCRIPT = REPO / "modules/local/parsefragpipeworkflow/resources/usr/bin/parse_fragpipe_workflow.py"
+# FragPipe 24.0 templates the module stages (the script takes them as arguments)
+TEMPLATES = Path(__file__).resolve().parents[2] / "modules" / "local" / "parsefragpipeworkflow" / "assets"
+TEMPLATE_ARGS = ["--fragger-template", str(TEMPLATES / "fragger_closed.params"), "--diaumpire-template", str(TEMPLATES / "diaumpire_se.params")]
 FIXTURES = REPO / "tests/fixtures/fragpipe_workflows"
 sys.path.insert(0, str(SCRIPT.parent))
 
 import parse_fragpipe_workflow as pfw  # noqa: E402
+pfw.FRAGGER_TEMPLATE = TEMPLATES / "fragger_closed.params"
+pfw.DIAUMPIRE_TEMPLATE = TEMPLATES / "diaumpire_se.params"
 
 DIA_FILES = {"fragger_dda.params", "fragger_dia.params", "fragger_gpfdia.params", "fragger_dda_plus.params"}
 DDA_FILES = {"fragger.params", "fragger_dia.params", "fragger_gpfdia.params", "fragger_dda_plus.params"}
@@ -42,7 +47,7 @@ def test_other_data_types_keep_their_names():
 @pytest.mark.parametrize("data_types, files", [("DIA", DIA_FILES), ("DDA", DDA_FILES)])
 def test_parser_writes_the_fragpipe_names(tmp_path, data_types, files):
     subprocess.run(
-        [sys.executable, str(SCRIPT), "--workflow", str(FIXTURES / "DIA_SpecLib_Quant_diaPASEF.workflow"), "--data-types", data_types,
+        [sys.executable, str(SCRIPT), *TEMPLATE_ARGS, "--workflow", str(FIXTURES / "DIA_SpecLib_Quant_diaPASEF.workflow"), "--data-types", data_types,
          "--outdir", str(tmp_path), "--threads", "4"],
         check=True, capture_output=True,
     )
@@ -52,7 +57,7 @@ def test_parser_writes_the_fragpipe_names(tmp_path, data_types, files):
 def test_dda_and_fragger_dda_params_have_the_same_content(tmp_path):
     for data_types in ("DIA", "DDA"):
         subprocess.run(
-            [sys.executable, str(SCRIPT), "--workflow", str(FIXTURES / "DIA_SpecLib_Quant_diaPASEF.workflow"), "--data-types", data_types,
+            [sys.executable, str(SCRIPT), *TEMPLATE_ARGS, "--workflow", str(FIXTURES / "DIA_SpecLib_Quant_diaPASEF.workflow"), "--data-types", data_types,
              "--outdir", str(tmp_path / data_types), "--threads", "4"],
             check=True, capture_output=True,
         )

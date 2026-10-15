@@ -32,9 +32,6 @@ process PHILOSOPHERABACUS {
     def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id}"
     def cmds = abacusCommand(group_workspaces, group_names, protxml, abacus_cli, args, plex, task)
-    def stage = cmds.groups.withIndex().collect { group, i ->
-        "mkdir -p ${shellQuote(group)} && ln -s \"\$PWD\"/group_meta${i + 1}/.meta ${shellQuote(group)}/.meta"
-    }.join('\n    ')
     """
     export HOME=\$(pwd)
     mkdir -p ${prefix}
@@ -42,7 +39,7 @@ process PHILOSOPHERABACUS {
     printf '%s\\n' ${shellQuote(cmds.fragpipe_version)} > .fragpipe_version
 
     # Group directories with their workspaces, as in FragPipe's work dir
-    ${stage}
+    ${cmds.stage}
 
     # Work-dir workspace (CmdPhilosopherWorkspaceCleanInit.java:66-74)
     phi_temp="\$PWD/phi_temp/\$(cat /proc/sys/kernel/random/uuid)"

@@ -82,11 +82,6 @@ output:
       description: |
         TMT abundance tables from TMTIntegrator.
         Structure: [ val(meta), path(abundance_*.tsv) ]
-  - tmt_ratio:
-      type: channel
-      description: |
-        TMT ratio tables from TMTIntegrator.
-        Structure: [ val(meta), path(ratio_*.tsv) ]
   - ionquant_dir:
       type: channel
       description: |
@@ -117,11 +112,6 @@ output:
       description: |
         Isobaric dir.
         Structure: [ val(meta), path(results_dir) ]
-  - versions:
-      type: channel
-      description: |
-        Software versions (topic tuples).
-        Structure: [ val(process), val(tool), val(version) ]
 authors:
   - "@dongzehe"
 maintainers:

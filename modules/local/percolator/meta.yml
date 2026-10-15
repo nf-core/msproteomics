@@ -117,7 +117,7 @@ output:
           description: Tool name
       - fragpipeToolVersions().percolator:
           type: string
-          description: Version of Percolator bundled with FragPipe
+          description: Version of Percolator bundled with FragPipe; fixed value (fragpipeToolVersions()), held by the version-named binary tools/percolator_3_7_1/linux/percolator that the module checks exists
   versions_fragpipe:
     - - ${task.process}:
           type: string
@@ -139,7 +139,7 @@ topics:
           description: Tool name
       - fragpipeToolVersions().percolator:
           type: string
-          description: Version of Percolator bundled with FragPipe
+          description: Version of Percolator bundled with FragPipe; fixed value (fragpipeToolVersions()), held by the version-named binary tools/percolator_3_7_1/linux/percolator that the module checks exists
     - - ${task.process}:
           type: string
           description: Process name

@@ -127,13 +127,18 @@
                 "interact": [
                     "interact-run_C02.pep.xml"
                 ],
+                "link_inputs": "ln -s \"$PWD\"/'run_C02.pin' 'C02_1'/'run_C02.pin'\n    ln -s \"$PWD\"/'run_C02_edited.pin' 'C02_1'/'run_C02_edited.pin'\n    ln -s \"$PWD\"/'run_C02.pepXML' 'C02_1'/'run_C02.pepXML'",
+                "unlink_inputs": "rm 'C02_1'/'run_C02.pin' 'C02_1'/'run_C02_edited.pin' 'C02_1'/'run_C02.pepXML'",
+                "drop_tsv": "rm 'C02_1'/'run_C02_percolator_decoy_psms.tsv'",
+                "move_outputs": "mv 'C02_1'/'interact-run_C02.pep.xml' 'C02_1'/'run_C02_percolator_target_psms.tsv' 'C02'/",
+                "move_weights": "",
                 "fragpipe_lib": "/opt/fragpipe-24.0/lib",
                 "fragpipe_version": "24.0"
             }
         ],
-        "timestamp": "2026-10-08T14:47:19.915609438",
+        "timestamp": "2026-10-14T14:05:33.129159838",
         "meta": {
-            "nf-test": "0.9.3",
+            "nf-test": "0.9.5",
             "nextflow": "25.10.4"
         }
     },
@@ -190,13 +195,17 @@
                 "pepxml_names": [
                     "interact-D02.pep.xml"
                 ],
+                "link_pepxml": "ln -s \"$PWD\"/pepxml_inputs/'interact-D02.pep.xml' 'D02'/'interact-D02.pep.xml'",
+                "link_first": "mkdir -p 'C02' && ln -s \"$PWD\"/first_group_meta 'C02'/.meta",
+                "annotate_lines": "",
+                "move_results": "",
                 "philosopher": "/opt/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9",
                 "fragpipe_version": "24.0"
             }
         ],
-        "timestamp": "2026-10-07T05:30:04.159354123",
+        "timestamp": "2026-10-14T14:06:30.08984853",
         "meta": {
-            "nf-test": "0.9.3",
+            "nf-test": "0.9.5",
             "nextflow": "25.10.4"
         }
     },
@@ -231,6 +240,10 @@
                     "a.mzML",
                     "b.mzML"
                 ],
+                "lcms_args": "\"$PWD\"/'a.mzML' \"$PWD\"/'b.mzML'",
+                "link_inputs": "ln -s \"$PWD\"/'a.pepXML' 'saliva'/'a.pepXML'\n    ln -s \"$PWD\"/'b.pepXML' 'saliva'/'b.pepXML'",
+                "unlink_inputs": "rm 'saliva'/'a.pepXML' 'saliva'/'b.pepXML'",
+                "move_interact": "",
                 "run_names": [
                     "a.pepXML",
                     "b.pepXML",
@@ -241,15 +254,15 @@
                 "fragpipe_version": "24.0"
             }
         ],
-        "timestamp": "2026-10-09T03:22:34.585111857",
+        "timestamp": "2026-10-14T14:06:58.059201115",
         "meta": {
-            "nf-test": "0.9.3",
+            "nf-test": "0.9.5",
             "nextflow": "25.10.4"
         }
     },
     "peptideProphetDirLines - group dir when it fits, /tmp link for a long one": {
         "content": [
-            "PP_GROUP_DIR=\"$PWD\"/'G'\nif [ $(( ${#PP_GROUP_DIR} + 1 + 55 )) -gt 255 ]; then\n    PP_LINK_DIR=\"$(mktemp -d /tmp/pp.XXXXXX)\"\n    trap 'rm -rf \"$PP_LINK_DIR\"' EXIT\n    ln -s \"$PP_GROUP_DIR\" \"$PP_LINK_DIR/g\"\n    PP_GROUP_DIR=\"$PP_LINK_DIR/g\"\nfi"
+            "PP_GROUP_DIR=\"$PWD\"/'G'\nif [ $(( ${#PP_GROUP_DIR} + 1 + 55 )) -gt 255 ]; then\n    PP_LINK_DIR=\"$(mktemp -d \"${TMPDIR:-/tmp}/pp.XXXXXX\")\"\n    trap 'rm -rf \"$PP_LINK_DIR\"' EXIT\n    ln -s \"$PP_GROUP_DIR\" \"$PP_LINK_DIR/g\"\n    PP_GROUP_DIR=\"$PP_LINK_DIR/g\"\nfi"
         ],
         "timestamp": "2026-10-08T18:31:40.598548492",
         "meta": {
@@ -283,12 +296,13 @@
                         "B01/interact-b.pep.xml"
                     ]
                 ],
+                "stage": "mkdir -p 'A01'\n    ln -s \"$PWD\"/'pepxml_inputs/1/interact-a.pep.xml' 'A01/interact-a.pep.xml'\n    printf '%s\\n' \"$PWD\"/'A01/interact-a.pep.xml' >> filelist_proteinprophet.txt\n    mkdir -p 'B01'\n    ln -s \"$PWD\"/'pepxml_inputs/2/interact-b.pep.xml' 'B01/interact-b.pep.xml'\n    printf '%s\\n' \"$PWD\"/'B01/interact-b.pep.xml' >> filelist_proteinprophet.txt",
                 "philosopher": "/opt/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9",
                 "philosopher_dir": "/opt/fragpipe-24.0/tools/Philosopher",
                 "fragpipe_version": "24.0"
             }
         ],
-        "timestamp": "2026-10-11T17:22:58.455784401",
+        "timestamp": "2026-10-14T14:07:09.451763609",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"
@@ -316,12 +330,13 @@
                     "C02",
                     "D02"
                 ],
+                "stage": "mkdir -p 'C02' && ln -s \"$PWD\"/group_meta1/.meta 'C02'/.meta\n    mkdir -p 'D02' && ln -s \"$PWD\"/group_meta2/.meta 'D02'/.meta",
                 "fragpipe_version": "24.0"
             }
         ],
-        "timestamp": "2026-10-07T05:29:28.682134695",
+        "timestamp": "2026-10-14T14:06:07.815875788",
         "meta": {
-            "nf-test": "0.9.3",
+            "nf-test": "0.9.5",
             "nextflow": "25.10.4"
         }
     },
@@ -357,6 +372,10 @@
                 "lcms": [
                     "A01_calibrated.mzML"
                 ],
+                "lcms_args": "\"$PWD\"/'A01_calibrated.mzML'",
+                "link_inputs": "ln -s \"$PWD\"/'A01.pepXML' 'A_1'/'A01.pepXML'",
+                "unlink_inputs": "rm 'A_1'/'A01.pepXML'",
+                "move_interact": "mv 'A_1/interact-A01.pep.xml' 'A01'/",
                 "run_names": [
                     "A01.pepXML",
                     "A01_calibrated.mzML"
@@ -365,9 +384,9 @@
                 "fragpipe_version": "24.0"
             }
         ],
-        "timestamp": "2026-10-08T18:31:23.368574505",
+        "timestamp": "2026-10-14T14:06:52.253302121",
         "meta": {
-            "nf-test": "0.9.3",
+            "nf-test": "0.9.5",
             "nextflow": "25.10.4"
         }
     },
@@ -380,12 +399,13 @@
                 "tmtintegrator": "6.1.3",
                 "ptmshepherd": "3.0.11",
                 "ptmprophet": "6.3.2",
-                "fragpipe_speclib": "0.1.58"
+                "fragpipe_speclib": "0.1.58",
+                "opair": "1.1.10"
             }
         ],
-        "timestamp": "2026-10-07T22:34:09.150268127",
+        "timestamp": "2026-10-14T14:21:30.179341926",
         "meta": {
-            "nf-test": "0.9.3",
+            "nf-test": "0.9.5",
             "nextflow": "25.10.4"
         }
     },
@@ -460,13 +480,18 @@
                     "interact-run_A01_c_rank1.pep.xml",
                     "interact-run_A01_c_rank2.pep.xml"
                 ],
+                "link_inputs": "",
+                "unlink_inputs": "",
+                "drop_tsv": "rm '.'/'run_A01_percolator_decoy_psms.tsv'",
+                "move_outputs": "mv '.'/'interact-run_A01_c_rank1.pep.xml' '.'/'interact-run_A01_c_rank2.pep.xml' '.'/'run_A01_percolator_target_psms.tsv' 'A01'/",
+                "move_weights": "",
                 "fragpipe_lib": "/opt/fragpipe-24.0/lib",
                 "fragpipe_version": "24.0"
             }
         ],
-        "timestamp": "2026-10-07T05:29:14.35809449",
+        "timestamp": "2026-10-14T14:05:42.845150802",
         "meta": {
-            "nf-test": "0.9.3",
+            "nf-test": "0.9.5",
             "nextflow": "25.10.4"
         }
     },
@@ -536,10 +561,11 @@
                         "B01/interact-b.pep.xml"
                     ]
                 ],
+                "stage": "mkdir -p 'A01'\n    ln -s \"$PWD\"/'pepxml_inputs/1/interact-a.pep.xml' 'A01/interact-a.pep.xml'\n    mkdir -p 'B01'\n    ln -s \"$PWD\"/'pepxml_inputs/2/interact-b.pep.xml' 'B01/interact-b.pep.xml'",
                 "fragpipe_version": "24.0"
             }
         ],
-        "timestamp": "2026-10-11T16:52:53.808881173",
+        "timestamp": "2026-10-14T14:06:18.844741496",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"
@@ -633,13 +659,17 @@
                 "pepxml_names": [
                     "interact-a.pep.xml"
                 ],
+                "link_pepxml": "ln -s \"$PWD\"/pepxml_inputs/'interact-a.pep.xml' '.'/'interact-a.pep.xml'",
+                "link_first": "",
+                "annotate_lines": "annotate_cmd=('/opt/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9' 'database' '--annotate' \"$PWD\"'/human.fasta' '--prefix' 'rev_')\n    printf '%s\\n' \"${annotate_cmd[*]}\" >> all.log\n    (cd '.' && GOMEMLIMIT=62GiB GOGC=100 GOMAXPROCS=32 \"${annotate_cmd[@]}\") 2>&1 | tee -a all.log",
+                "move_results": "mkdir -p 'all'; for f in psm.tsv peptide.tsv ion.tsv protein.tsv protein.fas filter.log; do if [ -e \"$f\" ]; then mv \"$f\" 'all'/; fi; done; mv .meta 'all'/",
                 "philosopher": "/opt/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9",
                 "fragpipe_version": "24.0"
             }
         ],
-        "timestamp": "2026-10-07T05:30:12.354864667",
+        "timestamp": "2026-10-14T14:06:35.865557946",
         "meta": {
-            "nf-test": "0.9.3",
+            "nf-test": "0.9.5",
             "nextflow": "25.10.4"
         }
     },
@@ -742,13 +772,17 @@
                 "pepxml_names": [
                     "interact-C02.pep.xml"
                 ],
+                "link_pepxml": "ln -s \"$PWD\"/pepxml_inputs/'interact-C02.pep.xml' 'C02'/'interact-C02.pep.xml'",
+                "link_first": "",
+                "annotate_lines": "annotate_cmd=('/opt/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9' 'database' '--annotate' \"$PWD\"'/human.fasta' '--prefix' 'rev_')\n    printf '%s\\n' \"${annotate_cmd[*]}\" >> C02.log\n    (cd 'C02' && GOMEMLIMIT=62GiB GOGC=100 GOMAXPROCS=32 \"${annotate_cmd[@]}\") 2>&1 | tee -a C02.log",
+                "move_results": "",
                 "philosopher": "/opt/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9",
                 "fragpipe_version": "24.0"
             }
         ],
-        "timestamp": "2026-10-07T05:29:57.550610001",
+        "timestamp": "2026-10-14T14:06:24.497468387",
         "meta": {
-            "nf-test": "0.9.3",
+            "nf-test": "0.9.5",
             "nextflow": "25.10.4"
         }
     },

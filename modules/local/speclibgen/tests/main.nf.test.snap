@@ -21,6 +21,22 @@
             ],
             [
                 [
+                    {
+                        "id": "fragpipe"
+                    },
+                    "easypqp_im_reference_run.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "fragpipe"
+                    },
+                    "easypqp_im_alignment_run1.alignment_pkl:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
                     "SPECLIBGEN",
                     "fragpipe-speclib",
                     "0.1.58"
@@ -34,11 +50,11 @@
                 ]
             ]
         ],
+        "timestamp": "2026-10-14T19:34:16.901245297",
         "meta": {
-            "nf-test": "0.9.3",
+            "nf-test": "0.9.5",
             "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-10-07T22:03:54.035087999"
+        }
     },
     "speclibgen - stub - psm.tsv conversion with glyco options (glyco-N-DIA)": {
         "content": [
@@ -62,6 +78,25 @@
             ],
             [
                 [
+                    {
+                        "id": "fragpipe"
+                    },
+                    "easypqp_im_reference_run.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "fragpipe"
+                    },
+                    [
+                        "easypqp_im_alignment_run0.alignment_pkl:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "easypqp_im_alignment_run1.alignment_pkl:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
                     "SPECLIBGEN",
                     "fragpipe-speclib",
                     "0.1.58"
@@ -75,11 +110,11 @@
                 ]
             ]
         ],
+        "timestamp": "2026-10-14T19:34:25.001576656",
         "meta": {
-            "nf-test": "0.9.3",
+            "nf-test": "0.9.5",
             "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-10-07T22:03:59.675716299"
+        }
     },
     "speclibgen - integration - pepXML conversion with test data": {
         "content": [
@@ -98,11 +133,11 @@
                 ]
             ]
         ],
+        "timestamp": "2026-10-09T01:10:12.452849265",
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-10-09T01:10:12.452849265"
+        }
     },
     "speclibgen - stub - user RT calibration file": {
         "content": [
@@ -122,11 +157,11 @@
                 ]
             ]
         ],
+        "timestamp": "2026-10-07T22:04:05.337484369",
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-10-07T22:04:05.337484369"
+        }
     },
     "speclibgen - integration - psm.tsv conversion with test data": {
         "content": [
@@ -145,10 +180,10 @@
                 ]
             ]
         ],
+        "timestamp": "2026-10-09T01:11:07.035317493",
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-10-09T01:11:07.035317493"
+        }
     }
 }

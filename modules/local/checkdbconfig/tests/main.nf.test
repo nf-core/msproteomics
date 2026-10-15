@@ -6,7 +6,7 @@ nextflow_process {
 
     tag "modules"
     tag "modules_local"
-    tag "check_db_config"
+    tag "checkdbconfig"
 
     // Replicates FragpipeRun.checkDbConfig (FragpipeRun.java:2703-2765): the run
     // stops with FragPipe's headless log.error message in each failing case.

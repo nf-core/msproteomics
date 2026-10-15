@@ -63,6 +63,8 @@ nextflow_process {
                 { assert snapshot(
                     process.out.library_tsv,
                     process.out.easypqp_files,
+                    process.out.im_reference,
+                    process.out.im_alignments,
                     process.out.versions_speclibgen,
                     process.out.versions_fragpipe
                 ).match() }
@@ -113,6 +115,8 @@ nextflow_process {
                 { assert snapshot(
                     process.out.library_tsv,
                     process.out.easypqp_files,
+                    process.out.im_reference,
+                    process.out.im_alignments,
                     process.out.versions_speclibgen,
                     process.out.versions_fragpipe
                 ).match() }

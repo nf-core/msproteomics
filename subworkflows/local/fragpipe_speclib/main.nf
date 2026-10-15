@@ -9,7 +9,7 @@
     - SPECLIBGEN     (FragPipe's tools/speclib/gen_con_spec_lib.py, CmdSpecLibGen.java)
     - DIANNFRAGPIPE (FragPipe's bundled DIA-NN and its post-steps, CmdDiann.java)
 
-    Execution: Aggregate (one FragPipe group "" when either runs, RC-04)
+    Execution: Aggregate (one FragPipe group "" when either runs)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
@@ -37,10 +37,10 @@ workflow FRAGPIPE_SPECLIB {
 
     def wrap = { items -> [items] }  // keep collected lists intact through combine
 
-    // Only checked when SpecLibGen / DIA-NN run: they force FragPipe's single group (RC-04)
+    // Only checked when SpecLibGen / DIA-NN run: they force FragPipe's single group
     def single = { files, name ->
         if (files.size() != 1) {
-            error("SpecLibGen / DIA-NN use FragPipe's single group (RC-04) but ${files.size()} ${name} files were produced")
+            error("SpecLibGen / DIA-NN use FragPipe's single group but ${files.size()} ${name} files were produced")
         }
         files[0]
     }
@@ -122,7 +122,6 @@ workflow FRAGPIPE_SPECLIB {
                 if (!library.exists() || !java.nio.file.Files.isRegularFile(library) || !java.nio.file.Files.isReadable(library)) {
                     error("The custom library file does not exist or is not readable: ${entry.library}\nPlease double check the spectral library (optinal) box in the Quant (DIA) tab.")
                 }
-                log.info("There are external spectral library. Will not generate the MSstats file.")
             }
             if (!library) {
                 error("DIA-NN reads SpecLibGen's library.tsv (CmdDiann.java:313-326) but SpecLibGen does not run and diann.library is empty")
@@ -132,6 +131,12 @@ workflow FRAGPIPE_SPECLIB {
             [coadaptr_meta, library, spectra, psm, peptide, protein, manifest, experiment_annotation, groovy.json.JsonOutput.toJson(entry)]
         }
 
+    // logged once the external library passed the check above
+    ch_tool_configs
+        .combine(ch_for_diann.map { item -> item[0] })
+        .filter { configs, _meta -> getToolEntry(configs, 'diann').library }
+        .subscribe { _item -> log.info("There are external spectral library. Will not generate the MSstats file.") }
+
     DIANNFRAGPIPE(ch_for_diann.map { item -> item.take(7) + [item[8]] }, ch_fasta)
 
     // experiment_annotation.tsv of the DIA-Quant work dir (generateLFQExperimentAnnotation(wd, 1), CmdDiann.java:610-617)
@@ -139,8 +144,6 @@ workflow FRAGPIPE_SPECLIB {
 
     emit:
     library_tsv       = SPECLIBGEN.out.library_tsv         // channel: [ val(meta), path(library.tsv) ]
-    easypqp_files     = SPECLIBGEN.out.easypqp_files       // channel: [ val(meta), path(easypqp_files) ]
-    rt_reference      = SPECLIBGEN.out.rt_reference        // channel: [ val(meta), path(easypqp_rt_reference_run.tsv) ]
     diann_results     = DIANNFRAGPIPE.out.results_files   // channel: [ val(meta), [ path(dia-quant-output/*) ] ]
     diann_report      = DIANNFRAGPIPE.out.report          // channel: [ val(meta), path(report.tsv) ]
     diann_pg_matrix   = DIANNFRAGPIPE.out.pg_matrix       // channel: [ val(meta), path(report.pg_matrix.tsv) ]

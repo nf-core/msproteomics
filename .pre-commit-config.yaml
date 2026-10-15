@@ -15,8 +15,8 @@ repos:
               .*ro-crate-metadata.json$|
               modules/(?!local/).*|
               subworkflows/(?!local/).*|
-              modules/local/parsefragpipeworkflow/resources/usr/bin/diaumpire_se\.params|
-              modules/local/parsefragpipeworkflow/resources/usr/bin/fragger_closed\.params|
+              modules/local/parsefragpipeworkflow/assets/diaumpire_se\.params|
+              modules/local/parsefragpipeworkflow/assets/fragger_closed\.params|
               tests/fixtures/fragger_params/.*|
               tests/fixtures/(fpop|metaproteomics)/.*\.(tsv|pin)$|
               .*\.snap$
@@ -27,8 +27,8 @@ repos:
               .*ro-crate-metadata.json$|
               modules/(?!local/).*|
               subworkflows/(?!local/).*|
-              modules/local/parsefragpipeworkflow/resources/usr/bin/diaumpire_se\.params|
-              modules/local/parsefragpipeworkflow/resources/usr/bin/fragger_closed\.params|
+              modules/local/parsefragpipeworkflow/assets/diaumpire_se\.params|
+              modules/local/parsefragpipeworkflow/assets/fragger_closed\.params|
               tests/fixtures/fragger_params/.*|
               .*\.snap$
           )$
@@ -38,9 +38,7 @@ repos:
           (?x)^(
               .*ro-crate-metadata.json$|
               .*\.snap$|
-              lib/nfcore_external_java_deps.jar$|
-              docs/.*\.(svg|pdf)$|
-              assets/.*$
+              docs/.*\.(svg|pdf)$
           )$
       - id: check-merge-conflict
   - repo: https://github.com/seqeralabs/nf-lint-pre-commit

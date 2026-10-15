@@ -40,7 +40,7 @@ workflow FRAGPIPE_EXPORT {
 
     //
     // SAINTEXPRESS: FragPipe's Downstream run over both modes (TabDownstream.java:137-145) when the workflow
-    // sets saintexpress.run-saint-express=true (user decision, parity review Appendix C). Each mode reads the
+    // sets saintexpress.run-saint-express=true (a deliberate difference, see FRAGPIPE_INFERENCE STEP 3). Each mode reads the
     // work dir's reprint.<mode>.tsv, whoever wrote it (Abacus --reprint or IonQuant). A missing table makes
     // CmdSaintExpress.configure log an error and return false, and only that mode is skipped
     // (CmdSaintExpress.java:72-79):
@@ -48,15 +48,15 @@ workflow FRAGPIPE_EXPORT {
     // REPRINTTOSAINTINPUT writes the inter/bait/prey.dat inputs (CmdSaintExpress.reprintTsvToSaintInput), or the
     // message (task dir = work dir) to saintexpress-<mode>/skipped_mode.txt; it is also logged here.
     //
+    ch_saint_on = ch_tool_configs.filter { configs -> shouldRunTool(configs, 'saintexpress') }
+    ch_saint_on.subscribe { _configs ->
+        log.info("SAINTexpress runs as an optional post-run step: FragPipe's Downstream-tab action, not part of FragPipe's run (results in downstream/saintexpress/)")
+    }
+
     ch_for_saintexpress = ch_saint_files
         .toList()
         .map { items -> [items] }
-        .combine(ch_tool_configs)
-        .filter { _items, configs -> shouldRunTool(configs, 'saintexpress') }
-        .map { items, configs ->
-            log.info("SAINTexpress runs as an optional post-run step: FragPipe's Downstream-tab action, not part of FragPipe's run (results in downstream/saintexpress/)")
-            [items, configs]
-        }
+        .combine(ch_saint_on)
         .flatMap { items, configs ->
             ['spc', 'int'].collect { mode ->
                 def found = items.findAll { item -> item[0] == mode }
@@ -75,15 +75,13 @@ workflow FRAGPIPE_EXPORT {
 
     SAINTEXPRESS(
         REPRINTTOSAINTINPUT.out.saint_input
+            // no failOnMismatch: saint_input is optional, a mode without its reprint table has none (skipped)
             .join(ch_for_saintexpress.map { meta, _reprint_tsv, _mode, saint_cli, cmd_opts -> [meta, saint_cli, cmd_opts] })
     )
 
-    // FragPipe's error for a skipped mode, also in the Nextflow log
+    // FragPipe's error for a skipped mode, also in the Nextflow log (skipped_mode.txt is a one-line task output)
+    REPRINTTOSAINTINPUT.out.skipped.subscribe { item -> log.error(item[1].text.trim()) }  // item: [meta, skipped]
     ch_saint_skipped = REPRINTTOSAINTINPUT.out.skipped
-        .map { meta, skipped ->
-            log.error(skipped.text.trim())
-            [meta, skipped]
-        }
 
     //
     // FPOP Quant (aggregate, CmdFpopQuant.java): after IonQuant / TMT-Integrator
@@ -140,12 +138,4 @@ workflow FRAGPIPE_EXPORT {
     fpop_psms        = FPOPCOADAPTR.out.psms                  // channel: [ val(meta), path(psm.tsv) ]
     fpop_diann_report = FPOPCOADAPTR.out.diann_report         // channel: [ val(meta), path(report.tsv) ]
     taxonomy_results = METAPROTEOMICS.out.results_dir          // channel: [ val(meta), path(results_dir) ]
-    versions         = SAINTEXPRESS.out.versions_saintexpress
-        .mix(REPRINTTOSAINTINPUT.out.versions_python)
-        .mix(SAINTEXPRESS.out.versions_fragpipe)
-        .mix(FPOP.out.versions_fpop)
-        .mix(FPOP.out.versions_fragpipe)
-        .mix(FPOPCOADAPTR.out.versions_fragpipe)
-        .mix(METAPROTEOMICS.out.versions_metaproteomics)
-        .mix(METAPROTEOMICS.out.versions_fragpipe)
 }

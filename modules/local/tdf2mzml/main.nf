@@ -1,7 +1,7 @@
 process TDF2MZML {
     tag "$meta.id"
     label 'process_single'
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+    container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
         'docker://quay.io/bigbio/tdf2mzml@sha256:98a38d2e9d7803e75dfdfdd7282567fec6a4f57df6859c67e0307483c9a710e9' :
         'quay.io/bigbio/tdf2mzml@sha256:98a38d2e9d7803e75dfdfdd7282567fec6a4f57df6859c67e0307483c9a710e9' }"
 

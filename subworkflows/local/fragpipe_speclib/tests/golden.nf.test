@@ -1,12 +1,13 @@
 // Golden test: SPECLIBGEN + DIANNFRAGPIPE outputs vs FragPipe 24.0's own DIA_SpecLib_Quant runs,
-// captured under params.golden_root (bin/golden_capture.py). Inputs are FragPipe's own psm.tsv,
+// captured under params.golden_root (tests/tools/golden_capture.py). Inputs are FragPipe's own psm.tsv,
 // peptide.tsv, protein.tsv, interact-*_rank<N>.pep.xml, the LC-MS files, the database and the
 // workflow file of each run; the LC-MS table is FragPipe's fragpipe-files.fp-manifest.
 // Comparison: raw bytes after
 // replacing the run's directories by <WORK>, <LCMS>, <DB> (FragPipe writes absolute paths; Nextflow
 // stages into task dirs); report.log.txt without its date line, [m:ss] prefixes and the host's Logical CPU cores
-// line (bin/golden_compare.py DIANN_LOG rule; Batch hosts have other core counts); PDFs skipped
-// (/CreationDate). Two orders depend on the machine, not on FragPipe's settings (measured in FragPipe determinism runs): FragReporter's run columns follow the
+// line (tests/tools/golden_compare.py DIANN_LOG rule; Batch hosts have other core counts); PDFs skipped
+// (/CreationDate). Two orders depend on the machine, not on FragPipe's settings (measured in
+// FragPipe-vs-FragPipe runs): FragReporter's run columns follow the
 // HashMap order of the absolute run paths (golden columns are put into that order for our paths, then
 // bytes), and library.tsv's AverageExperimentalRetentionTime is np.nanmean over alignment files in
 // directory-listing order (1e-15 relative; every other column exact).
@@ -197,7 +198,7 @@ nextflow_workflow {
                         t.replaceAll(/\{INPUT:([^}]+)\}/) { all, fname -> "<DB>/${fname}" }.replace('{WORKDIR}', '<WORK>').replace('{FRAGPIPE}', '<FP>')
                     }
                     def tokens = new File(dir, file).readLines()
-                    // FragPipe install root (fragpipe*) of the module's tool paths (<root>/tools/..., fragpipeTools()), as bin/golden_step_check.py fragpipe_root
+                    // FragPipe install root (fragpipe*) of the module's tool paths (<root>/tools/..., fragpipeTools()), as tests/tools/golden_step_check.py fragpipe_root
                     def fp = tokens.findResult { t -> def m = t =~ /(?i)^(\/[^\s:]*\/fragpipe[^\/\s:]*)\/(?:tools|lib)\//; m.find() ? m.group(1) : null }
                     def actual = tokens.collect { t ->
                         t.replace("${dir}/${run.db}", "<DB>/${run.db}").replace(dir.toString(), '<WORK>').replace(fp, '<FP>')

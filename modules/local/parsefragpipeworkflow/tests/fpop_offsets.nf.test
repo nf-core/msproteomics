@@ -1,5 +1,4 @@
 // FragPipe 24.0 parity for FPOP, FPOP coADAPTr, Metaproteomics and detailed mass offsets
-// (review items P-01..P-11, RC-34).
 // The real parser runs (no -stub) on FragPipe 24.0 workflows copied verbatim into
 // tests/fixtures/fragpipe_workflows/, plus two marked test copies (FPOP-quant-meta, TMT10-fpop).
 //
@@ -17,7 +16,7 @@ nextflow_process {
 
     tag "modules"
     tag "modules_local"
-    tag "parse_fragpipe_workflow"
+    tag "parsefragpipeworkflow"
     tag "stub"
 
     test("parse_fragpipe_workflow - FPOP, Metaproteomics and mass offsets match FragPipe 24.0") {
@@ -34,6 +33,7 @@ nextflow_process {
                         .collect { line -> line.startsWith('ptmshepherd.run-shepherd=') ? 'ptmshepherd.run-shepherd=true' : line }.join('\\n') + '\\n'
                     [ [ id: "\${n}-ptms".toString() ], f, ['DDA'] ]
                 }
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = channel.fromList(names).map { n ->
                     [ [ id: n ], file("${baseDir}/tests/fixtures/fragpipe_workflows/\${n}.workflow", checkIfExists: true), ['DDA'] ]
                 }.mix(channel.fromList(with_ptms))
@@ -44,7 +44,7 @@ nextflow_process {
         then {
             def slurper = new groovy.json.JsonSlurper()
             def json = process.out.tool_configs_json.collectEntries { meta, path -> [meta.id, slurper.parse(new File(path.toString()))] }
-            def configs = process.out.all_configs.collectEntries { meta, dir -> [meta.id, dir.toString()] }
+            def configs = process.out.tool_configs_json.collectEntries { meta, jsonFile -> [meta.id, new File(jsonFile.toString()).parentFile.toPath().resolve('configs').toString()] }
             def shepherd = { id -> new File(configs[id], 'shepherd.config').readLines().find { line -> line.startsWith('mass_offsets = ') } }
             def tmti_unmod = new File(configs['TMT10-fpop'], 'tmtintegrator_unmod.yml').readLines()
             def tmti = new File(configs['TMT10-fpop'], 'tmtintegrator.yml').readLines()
@@ -53,7 +53,7 @@ nextflow_process {
                 // P-09: IonQuant modlist includes the detailed offsets (FPOP, Labile_ADP-ribosylation)
                 { assert json['FPOP'].ionquant.modmasses == '-43.9898,-43.0534,-41.02656,-30.0106,-27.9949,-25.03166,-23.016,-22.032,-10.032,-9.03676,4.9735,13.9793,15.9949,31.9898,42.0106,47.9847,57.02146'.tokenize(',') },
                 // Labile_ADP-ribosylation has quantitation.run-label-free-quant=false: no label-free IonQuant
-                // runs (QuantPanelLabelfree.isRunIonQuant(), RC-05), so it has no mod mass list
+                // runs (QuantPanelLabelfree.isRunIonQuant()), so it has no mod mass list
                 { assert json['Labile_ADP-ribosylation'].ionquant.run == false && !json['Labile_ADP-ribosylation'].ionquant.containsKey('modmasses') },
                 // P-10: PTM-Shepherd mass_offsets = getMassOffsets(); no shepherd.config when PTM-Shepherd does not run
                 { assert !new File(configs['FPOP'], 'shepherd.config').exists() },
@@ -77,7 +77,7 @@ nextflow_process {
                 { assert tmti.contains('  mod_tag: M(15.9949)') && tmti.contains('  min_site_prob: 0.75') },
                 { assert tmti_unmod.contains('  mod_tag: none') && tmti_unmod.contains('  min_site_prob: -1') },
                 { assert tmti_unmod.findAll { line -> !(line.startsWith('  mod_tag:') || line.startsWith('  min_site_prob:')) } == tmti.findAll { line -> !(line.startsWith('  mod_tag:') || line.startsWith('  min_site_prob:')) } },
-                { assert snapshot(process.out.tool_configs_json, process.out.all_configs).match() }
+                { assert snapshot(process.out.tool_configs_json, process.out.tool_configs_json.collect { meta, jsonFile -> [meta, path(configs[meta.id].toString())] }).match() }
             )
         }
     }
@@ -91,6 +91,7 @@ nextflow_process {
                 workflow_file.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/FPOP.workflow").text
                     .replace('fpop.fragpipe.fpop.run-fpop=false', 'fpop.fragpipe.fpop.run-fpop=true')
                     .replace('fpop.fragpipe.fpop.fpop-tmt=false', 'fpop.fragpipe.fpop.fpop-tmt=true')
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = channel.of([[ id: 'fpop_tmt' ], workflow_file, ['DDA']])
                 """
             }

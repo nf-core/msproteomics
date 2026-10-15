@@ -8,7 +8,7 @@ nextflow_process {
     profile "conda"
 
     tag "modules"
-    tag "modules_nfcore"
+    tag "modules_local"
     tag "tdf2mzml"
 
     test("tdf2mzml - conda profile stops with a clear error") {

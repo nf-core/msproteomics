@@ -5,7 +5,7 @@ nextflow_process {
     process "PERCOLATOR"
 
     tag "modules"
-    tag "modules_nfcore"
+    tag "modules_local"
     tag "percolator"
 
     test("percolator - stub") {

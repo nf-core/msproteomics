@@ -8,9 +8,14 @@ import importlib.util
 from pathlib import Path
 
 SCRIPT = Path(__file__).resolve().parents[2] / "resources" / "usr" / "bin" / "parse_fragpipe_workflow.py"
+# FragPipe 24.0 templates the module stages (the script takes them as arguments)
+TEMPLATES = Path(__file__).resolve().parents[2] / "assets"
+TEMPLATE_ARGS = ["--fragger-template", str(TEMPLATES / "fragger_closed.params"), "--diaumpire-template", str(TEMPLATES / "diaumpire_se.params")]
 spec = importlib.util.spec_from_file_location("parse_fragpipe_workflow", SCRIPT)
 pfw = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(pfw)
+pfw.FRAGGER_TEMPLATE = TEMPLATES / "fragger_closed.params"
+pfw.DIAUMPIRE_TEMPLATE = TEMPLATES / "diaumpire_se.params"
 
 
 def load(tmp_path, text):

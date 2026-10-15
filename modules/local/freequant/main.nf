@@ -1,3 +1,16 @@
+/*
+ * FREEQUANT: Philosopher FreeQuant label-free MS1 quantification of one FragPipe group (CmdFreequant)
+ *
+ * Input:
+ *   - meta: Group metadata map
+ *   - results_dir: the group's PHILOSOPHERFILTER directory with its .meta workspace
+ *   - lcms_files: LC-MS files of the group
+ *   - config_cli: FreeQuant options (--ptw, --tol)
+ *
+ * Output:
+ *   - results_dir: the group directory after FreeQuant
+ *   - versions_philosopher / versions_fragpipe: versions (topic: versions)
+ */
 include { fragpipeTools } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
 include { fragpipeToolVersions } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
 
@@ -22,6 +35,10 @@ process FREEQUANT {
     task.ext.when == null || task.ext.when
 
     script:
+    // Exit if running this module with -profile conda / -profile mamba (copied from modules/nf-core/diann/main.nf)
+    if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
+        error "FREEQUANT module does not support Conda: it runs in the FragPipe image given with --fragpipe_container. Please use Docker / Singularity / Podman instead."
+    }
     def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id}"
     if (!task.memory) {

@@ -5,8 +5,8 @@ nextflow_process {
     process "FRAGPIPEHEADLESS"
 
     tag "modules"
-    tag "modules_nfcore"
-    tag "fragpipe_headless"
+    tag "modules_local"
+    tag "fragpipeheadless"
 
     test("fragpipe_headless - stub LFQ manifest keeps experiment and bioreplicate") {
         tag "stub"
@@ -123,7 +123,9 @@ nextflow_process {
                 { assert process.success },
                 { assert java.nio.file.Files.isRegularFile(staged, java.nio.file.LinkOption.NOFOLLOW_LINKS) },
                 { assert staged.text == 'raw bytes' },
-                { assert manifest_lines == ["raw_files/run1.raw\texp1\t\tDDA"] }
+                { assert manifest_lines == ["raw_files/run1.raw\texp1\t\tDDA"] },
+                // manifest.fp-manifest holds the task's absolute paths: its lines are compared above, not its md5
+                { assert snapshot(manifest_lines, process.out.all_results, process.out.versions).match() }
             )
         }
     }

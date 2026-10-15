@@ -7,7 +7,7 @@ nextflow_process {
 
     tag "modules"
     tag "modules_local"
-    tag "msfragger_calibrate"
+    tag "msfraggercalibrate"
 
     test("msfragger_calibrate - stub calibration search of one file") {
         options "-stub"
@@ -34,6 +34,7 @@ nextflow_process {
                 { assert [process.out.calibration.get(0).get(2)].flatten().collect { f -> new File(f.toString()).name } == ['sample1.mzBIN_calibrated'] },
                 { assert snapshot(
                     process.out.calibration,
+                    process.out.uncalibrated_mzbin,
                     process.out.license_agreement,
                     process.out.versions_msfragger,
                     process.out.versions_fragpipe

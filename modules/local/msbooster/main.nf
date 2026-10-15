@@ -28,6 +28,7 @@
  *   - versions: MSBooster and FragPipe versions (topic: versions)
  */
 include { fragpipeTools; msboosterParamsText; msboosterPinPaths; msboosterOutputDir; msboosterPinStaging; writeTextFile; fragpipeJarLines; shellArgs } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
+include { javaXmxGb } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
 
 process MSBOOSTER {
     tag "${meta.id}"
@@ -53,9 +54,13 @@ process MSBOOSTER {
     task.ext.when == null || task.ext.when
 
     script:
+    // Exit if running this module with -profile conda / -profile mamba (copied from modules/nf-core/diann/main.nf)
+    if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
+        error "MSBOOSTER module does not support Conda: it runs in the FragPipe image given with --fragpipe_container. Please use Docker / Singularity / Podman instead."
+    }
     def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id}"
-    def ram = task.memory ? task.memory.toGiga() : 8
+    def ram = javaXmxGb(task, 0)
     def pins = pin_files instanceof List ? pin_files : [pin_files]
     def pin_paths = msboosterPinPaths(pins.collect { p -> p.name }, pin_dirs)
     booster_dir = msboosterOutputDir(pin_paths)

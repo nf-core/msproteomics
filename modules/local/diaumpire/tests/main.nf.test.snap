@@ -44,9 +44,17 @@
             ],
             [
                 [
+                    {
+                        "id": "test_diaumpire"
+                    },
+                    "diaumpire_se.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
                     "DIAUMPIRE",
                     "diaumpire",
-                    "24.0"
+                    "2.3.3"
                 ]
             ],
             [
@@ -57,11 +65,11 @@
                 ]
             ]
         ],
+        "timestamp": "2026-10-15T00:04:50.968694823",
         "meta": {
-            "nf-test": "0.9.3",
+            "nf-test": "0.9.5",
             "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-10-07T05:39:09.172844982"
+        }
     },
     "file_names": {
         "content": [
@@ -75,10 +83,10 @@
                 "diaumpire.log"
             ]
         ],
+        "timestamp": "2026-02-19T01:13:02.590655541",
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "25.10.2"
-        },
-        "timestamp": "2026-02-19T01:13:02.590655541"
+        }
     }
 }

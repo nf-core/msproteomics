@@ -1,4 +1,4 @@
-"""Unit tests for bin/golden_compare.py (run: python3 -m unittest discover tests/python)."""
+"""Unit tests for tests/tools/golden_compare.py (run: make test-python)."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "bin"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 
 import golden_compare as gc  # noqa: E402
 

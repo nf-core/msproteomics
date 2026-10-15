@@ -1,6 +1,4 @@
 // FragPipe 24.0 parity acceptance test for PARSEFRAGPIPEWORKFLOW.
-// Written test-first: EXPECTED TO FAIL until RC-05 / RC-17 / RC-19 / RC-25 / RC-33
-// of the FragPipe parity review are fixed.
 //
 // Inputs: 7 workflow files copied verbatim from FragPipe 24.0 (FragPipe/workflows/) into
 // tests/fixtures/fragpipe_workflows/. The real parser runs (no -stub); it needs only python3.
@@ -9,8 +7,7 @@
 // (FP = FragPipe-GUI/src/main/java/org/nesvilab/fragpipe/), never from current parser output.
 // .workflow files are java.util.Properties files, so they are loaded exactly as FragPipe does.
 //
-// No snapshot is recorded on purpose: a snapshot taken now would freeze the non-parity
-// output. Add snapshot(...).match() once these assertions pass.
+// The snapshot records the tool configs of the 7 workflows once the derived checks pass.
 
 nextflow_process {
 
@@ -21,7 +18,7 @@ nextflow_process {
 
     tag "modules"
     tag "modules_local"
-    tag "parse_fragpipe_workflow"
+    tag "parsefragpipeworkflow"
     tag "parity"
 
     test("parse_fragpipe_workflow - FragPipe 24.0 run decisions for 7 bundled workflows") {
@@ -30,6 +27,7 @@ nextflow_process {
             process {
                 """
                 def names = ['Basic-Search', 'Open', 'glyco-N-LFQ', 'DIA_SpecLib_Quant', 'Nonspecific-HLA', 'TMT10', 'LFQ-MBR']
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = channel.fromList(names).map { n ->
                     [ [ id: n ], file("${baseDir}/tests/fixtures/fragpipe_workflows/\${n}.workflow", checkIfExists: true), n.startsWith('DIA') ? ['DIA'] : ['DDA'] ]
                 }
@@ -61,7 +59,7 @@ nextflow_process {
                 def flag  = { k -> truthy(props.getProperty(k)) }
                 def cfg   = slurper.parse(new File(json_path.toString()))
 
-                // ---- RC-05: label-free quant gate -------------------------------------------------
+                // ---- label-free quant gate -------------------------------------------------
                 // FP/tools/ionquant/QuantPanelLabelfree.java:110-116
                 //   isRunIonQuant()  = isRun() && uiRadioUseIonquant ; isRunFreeQuant() = isRun() && uiRadioUseFreequant
                 // FP/tools/ionquant/QuantPanelLabelfree.java:187-188  checkRun name = "quantitation.run-label-free-quant"
@@ -71,7 +69,7 @@ nextflow_process {
                 if (truthy(cfg.ionquant?.run) != expIonQ)   bad.ionquant  << "${name}: ionquant.run=${cfg.ionquant?.run}, FragPipe isRunIonQuant=${expIonQ}"
                 if (truthy(cfg.freequant?.run) != expFreeQ) bad.freequant << "${name}: freequant.run=${cfg.freequant?.run}, FragPipe isRunFreeQuant=${expFreeQ}"
 
-                // ---- RC-05: filter --prot rewrite only for label-free IonQuant ---------------------
+                // ---- filter --prot rewrite only for label-free IonQuant ---------------------
                 // FP/FragpipeRun.java:1758-1761 passes quantPanelLabelfree.isRunIonQuant() to CmdPhilosopherFilter.
                 // FP/cmd/CmdPhilosopherFilter.java:85-96: strip --razor; if isRunIonQuant replace/append --prot 0.01;
                 //   THEN if dont-use-prot-proph-file strip --sequential and --prot.
@@ -88,13 +86,13 @@ nextflow_process {
                 def actProt = protOf.call((cfg.filter?.args ?: '').toString())
                 if (expProt != actProt) bad.filter_prot << "${name}: filter '--prot ${actProt}', FragPipe '--prot ${expProt}' (filter text: '${ft.trim()}')"
 
-                // ---- RC-33: PTM-Shepherd gate ------------------------------------------------------
+                // ---- PTM-Shepherd gate ------------------------------------------------------
                 // FP/FragpipeRun.java:2096  isRunShepherd = ptmshepherdPanel.isRun() || ptmsGlycanPanel.isRun()
                 // FP/tools/ptmshepherd/PtmshepherdPanel.java:326,800 (run-shepherd); PTMSGlycanAssignPanel.java:117-119,151 (run_glyco_mode)
                 def expPtms = flag.call('ptmshepherd.run-shepherd') || flag.call('ptmshepherd.run_glyco_mode')
                 if (truthy(cfg.ptmshepherd?.run) != expPtms) bad.ptmshepherd << "${name}: ptmshepherd.run=${cfg.ptmshepherd?.run}, FragPipe isRunShepherd=${expPtms}"
 
-                // ---- RC-25: PeptideProphet --combine -----------------------------------------------
+                // ---- PeptideProphet --combine -----------------------------------------------
                 // FP/tools/pepproph/PepProphPanel.java:154 checkbox name "combine-pepxml"; FP/FragpipeRun.java:1593,1612
                 // FP/cmd/CmdPeptideProphet.java:190-202 (--combine in cmd-opts also forces combine)
                 // FP/cmd/CmdPeptideProphet.java:329  cmd.add("--combine") when combine
@@ -106,7 +104,7 @@ nextflow_process {
                     if (actCombine != expCombine) bad.combine << "${name}: peptideprophet combine=${actCombine} (args '${ppArgs}'), FragPipe combine=${expCombine}"
                 }
 
-                // ---- RC-17: MSFragger list params in fragger.params file format --------------------
+                // ---- MSFragger list params in fragger.params file format --------------------
                 // FP/tabs/TabMsfragger.java:293-302  mass_offsets: blank -> "0"; else TreeSet<String> of
                 //   String.valueOf(Float.parseFloat(part)) over split("[\\s/]+"), joined with "/"
                 // FP/tabs/TabMsfragger.java:311-313  Y_type_masses / diagnostic_fragments / remainder_fragment_masses:
@@ -133,7 +131,7 @@ nextflow_process {
                     }
                 }
 
-                // ---- RC-19: Crystal-C algorithm params ---------------------------------------------
+                // ---- Crystal-C algorithm params ---------------------------------------------
                 // FP/FragpipeRun.java:1642 crystalcPanel.isRun(); params from CrystalcPanel.toParams() (defaults above),
                 // runtime paths added by FP/cmd/CmdCrystalc.java:190-196.
                 def expCc = flag.call('crystalc.run-crystalc')
@@ -155,13 +153,14 @@ nextflow_process {
             assertAll(
                 { assert process.success },
                 { assert process.out.tool_configs_json.size() == 7 },
-                { assert bad.ionquant.isEmpty()      : "RC-05 IonQuant gate mismatches:\n  " + bad.ionquant.join('\n  ') },
-                { assert bad.freequant.isEmpty()     : "RC-05 FreeQuant gate mismatches:\n  " + bad.freequant.join('\n  ') },
-                { assert bad.filter_prot.isEmpty()   : "RC-05 filter --prot mismatches:\n  " + bad.filter_prot.join('\n  ') },
-                { assert bad.ptmshepherd.isEmpty()   : "RC-33 PTM-Shepherd gate mismatches:\n  " + bad.ptmshepherd.join('\n  ') },
-                { assert bad.combine.isEmpty()       : "RC-25 PeptideProphet --combine mismatches:\n  " + bad.combine.join('\n  ') },
-                { assert bad.fragger_lists.isEmpty() : "RC-17 MSFragger list-param mismatches:\n  " + bad.fragger_lists.join('\n  ') },
-                { assert bad.crystalc.isEmpty()      : "RC-19 Crystal-C mismatches:\n  " + bad.crystalc.join('\n  ') }
+                { assert snapshot(process.out.tool_configs_json.collect { meta, json_path -> [meta.id, json_path] }.sort { entry -> entry[0] }).match() },
+                { assert bad.ionquant.isEmpty()      : "IonQuant gate mismatches:\n  " + bad.ionquant.join('\n  ') },
+                { assert bad.freequant.isEmpty()     : "FreeQuant gate mismatches:\n  " + bad.freequant.join('\n  ') },
+                { assert bad.filter_prot.isEmpty()   : "filter --prot mismatches:\n  " + bad.filter_prot.join('\n  ') },
+                { assert bad.ptmshepherd.isEmpty()   : "PTM-Shepherd gate mismatches:\n  " + bad.ptmshepherd.join('\n  ') },
+                { assert bad.combine.isEmpty()       : "PeptideProphet --combine mismatches:\n  " + bad.combine.join('\n  ') },
+                { assert bad.fragger_lists.isEmpty() : "MSFragger list-param mismatches:\n  " + bad.fragger_lists.join('\n  ') },
+                { assert bad.crystalc.isEmpty()      : "Crystal-C mismatches:\n  " + bad.crystalc.join('\n  ') }
             )
         }
     }

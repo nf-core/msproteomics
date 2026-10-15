@@ -41,6 +41,7 @@ nextflow_workflow {
             def msfragger = tasks.findAll { t -> t.name.contains(':MSFRAGGER ') || t.name.contains(':MSFRAGGER(') }
             assertAll(
                 { assert workflow.success },
+                { assert snapshot(workflow.trace.succeeded().collect { task -> task.name }.sort()).match() },
                 { assert diatracer.size() == 2 : diatracer*.name },
                 { assert msfragger.size() == 2 : msfragger*.name },
                 // MSFragger's staged inputs are the _diatracer.mzML files, never the raw .d

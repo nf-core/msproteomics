@@ -454,7 +454,7 @@ def fragpipeExperiment(experiment) {
 }
 
 /**
- * Whether FragPipe puts every LC-MS file in the single group "" (RC-04):
+ * Whether FragPipe puts every LC-MS file in the single group "":
  * InputLcmsFile.getGroup() returns "" when SpeclibPanel.isRun() or DiannPanel.isRun()
  * (InputLcmsFile.java:131-136). The panels' run checkboxes are the workflow keys
  * speclibgen.run-speclibgen (SpeclibPanel.java:136-137) and diann.run-dia-nn.
@@ -1491,4 +1491,17 @@ def opairSpectraSource(spectra_kind, original_name) {
     }
     def name = original_name.toString().toLowerCase()
     return (name.endsWith('.raw') || name.endsWith('.d')) ? 'uncalibrated' : 'input'
+}
+
+/**
+ * FragPipe 24.0's templates PARSEFRAGPIPEWORKFLOW stages: fragger_closed.params (the MSFragger tab's
+ * closed-search defaults) and diaumpire_se.params (the DIA-Umpire template), kept in the module's assets/.
+ *
+ * @param project_dir Nextflow projectDir path
+ * @return [fragger_closed.params, diaumpire_se.params] files; a missing file stops the run
+ */
+def parseFragpipeWorkflowTemplates(project_dir) {
+    return ['fragger_closed.params', 'diaumpire_se.params'].collect { name ->
+        file("${project_dir}/modules/local/parsefragpipeworkflow/assets/${name}", checkIfExists: true)
+    }
 }

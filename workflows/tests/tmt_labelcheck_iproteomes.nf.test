@@ -42,6 +42,7 @@ nextflow_workflow {
                 proteome        = 'mouse'
                 iproteomes_base = store
                 tmt_type          = 'TMT10'
+                tmt_mode          = 'labelcheck'  // main.nf routes here only with --tmt_mode labelcheck
                 // the test profile sets LFQ-MBR.workflow; the label check takes its own from tmt_type
                 fragpipe_workflow = null
                 add_philosopher_decoy        = false
@@ -55,6 +56,7 @@ nextflow_workflow {
             def scripts = taskScripts(outputDir)
             assertAll(
                 { assert workflow.success },
+                { assert snapshot(workflow.trace.succeeded().collect { task -> task.name }.sort()).match() },
                 { assert !scripts.containsKey('PHILOSOPHERDATABASE') : 'the hosted database already has decoys and contaminants' },
                 { assert scripts['CHECKDBCONFIG'].size() == 1 },
                 { assert scripts['CHECKDBCONFIG'][0].contains('decoy check skipped for test_decoys_contam.fasta') : scripts['CHECKDBCONFIG'] }
@@ -79,6 +81,7 @@ nextflow_workflow {
                 proteome        = 'mouse'
                 iproteomes_base = store
                 tmt_type          = 'TMT10'
+                tmt_mode          = 'labelcheck'  // main.nf routes here only with --tmt_mode labelcheck
                 // the test profile sets LFQ-MBR.workflow; the label check takes its own from tmt_type
                 fragpipe_workflow = null
                 add_philosopher_decoy        = false
@@ -93,6 +96,7 @@ nextflow_workflow {
             def scripts = taskScripts(outputDir)
             assertAll(
                 { assert workflow.success },
+                { assert snapshot(workflow.trace.succeeded().collect { task -> task.name }.sort()).match() },
                 { assert scripts['CHECKDBCONFIG'][0].contains('decoy check skipped for test.fasta ') : scripts['CHECKDBCONFIG'] }
             )
         }
@@ -115,6 +119,7 @@ nextflow_workflow {
                 proteome        = 'mouse'
                 iproteomes_base = store
                 tmt_type          = 'TMT10'
+                tmt_mode          = 'labelcheck'  // main.nf routes here only with --tmt_mode labelcheck
                 // the test profile sets LFQ-MBR.workflow; the label check takes its own from tmt_type
                 fragpipe_workflow = null
                 add_philosopher_decoy        = false
@@ -150,6 +155,7 @@ nextflow_workflow {
                 proteome        = 'mouse'
                 iproteomes_base = store
                 tmt_type          = 'TMT10'
+                tmt_mode          = 'labelcheck'  // main.nf routes here only with --tmt_mode labelcheck
                 // the test profile sets LFQ-MBR.workflow; the label check takes its own from tmt_type
                 fragpipe_workflow = null
                 add_philosopher_decoy        = false

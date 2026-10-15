@@ -19,9 +19,14 @@ from pathlib import Path
 import pytest
 
 SCRIPT = Path(__file__).resolve().parents[2] / "resources" / "usr" / "bin" / "parse_fragpipe_workflow.py"
+# FragPipe 24.0 templates the module stages (the script takes them as arguments)
+TEMPLATES = Path(__file__).resolve().parents[2] / "assets"
+TEMPLATE_ARGS = ["--fragger-template", str(TEMPLATES / "fragger_closed.params"), "--diaumpire-template", str(TEMPLATES / "diaumpire_se.params")]
 spec = importlib.util.spec_from_file_location("parse_fragpipe_workflow", SCRIPT)
 pfw = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(pfw)
+pfw.FRAGGER_TEMPLATE = TEMPLATES / "fragger_closed.params"
+pfw.DIAUMPIRE_TEMPLATE = TEMPLATES / "diaumpire_se.params"
 
 ASSETS = Path(__file__).resolve().parents[5] / "assets"
 FRAGGER_FIXTURES = Path(__file__).resolve().parents[5] / "tests" / "fixtures" / "fragger_params"
@@ -111,7 +116,7 @@ class TestMsfraggerFormValues:
         for name, extra in (("keyless", ""), ("saved", saved)):
             (tmp_path / name).mkdir()
             (tmp_path / name / "w.workflow").write_text("database.decoy-tag=rev_\nworkflow.threads=2\n" + extra)
-            common = [sys.executable, str(SCRIPT), "--workflow", str(tmp_path / name / "w.workflow"), "--data-types", "DDA"]
+            common = [sys.executable, str(SCRIPT), *TEMPLATE_ARGS, "--workflow", str(tmp_path / name / "w.workflow"), "--data-types", "DDA"]
             subprocess.run(common + ["--output-json", "--outdir", str(tmp_path / name)], check=True, capture_output=True)
             subprocess.run(common + ["--outdir", str(tmp_path / name / "configs")], check=True, capture_output=True)
         msfragger = json.loads((tmp_path / "keyless" / "tool_configs.json").read_text())["msfragger"]

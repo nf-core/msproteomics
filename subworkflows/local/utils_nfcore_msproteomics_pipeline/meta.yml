@@ -1,6 +1,9 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
-name: "pipeline_initialisation"
-description: Pipeline-specific utility subworkflow for nf-core/msproteomics
+name: "utils_nfcore_msproteomics_pipeline"
+description: |
+  Pipeline-specific utility subworkflows for nf-core/msproteomics. PIPELINE_INITIALISATION validates the
+  parameters (the inputs and outputs listed below). PIPELINE_COMPLETION sends the completion email and summary
+  and takes email, email_on_fail, plaintext_email, outdir, monochrome_logs and multiqc_report; it emits nothing.
 keywords:
   - utility
   - pipeline

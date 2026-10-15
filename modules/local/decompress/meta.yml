@@ -47,12 +47,6 @@ output:
           description: Decompressed file or directory (X.d.tar.gz gives X.d, X.mzML.gz gives X.mzML, X.raw.zip gives X.raw)
           pattern: "*.{d,mzML,raw,...}"
           ontologies: []
-  log:
-    - "*.log":
-        type: file
-        description: Decompression log file
-        pattern: "*.log"
-        ontologies: []
   versions_gunzip:
     - - ${task.process}:
           type: string
@@ -83,6 +77,12 @@ output:
       - "unzip -v 2>&1 | head -1 | grep -oE \"[0-9]+\\.[0-9]+\" | head -1":
           type: eval
           description: The expression to obtain the version of the tool
+  log:
+    - "*.log":
+        type: file
+        description: Decompression log file
+        pattern: "*.log"
+        ontologies: []
 
 topics:
   versions:

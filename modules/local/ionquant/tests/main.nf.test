@@ -5,7 +5,7 @@ nextflow_process {
     process "IONQUANT"
 
     tag "modules"
-    tag "modules_nfcore"
+    tag "modules_local"
     tag "ionquant"
 
     // Golden FragPipe 24.0 label-free IonQuant options (TMT-labelcheck-304 run), CmdIonquant order

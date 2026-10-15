@@ -316,7 +316,7 @@ nextflow_workflow {
         }
     }
 
-    // RC-10: each file is searched with its data type's params set (CmdMsfragger.java:541-552):
+    // each file is searched with its data type's params set (CmdMsfragger.java:541-552):
     // DDA -> fragger_dda.params (fragger.params without DIA/GPF-DIA/DIA-Lib files, :444), DIA and DIA-Lib ->
     // fragger_dia.params, GPF-DIA -> fragger_gpfdia.params, DDA+ -> fragger_dda_plus.params; each search
     // writes its set under that name; one pepindex is shared.
@@ -365,8 +365,8 @@ nextflow_workflow {
         }
     }
 
-    // RC-21: MSBooster's useIM is on only when the run has timsTOF data (CmdMSBooster.java:151-170);
-    // RC-09: MSBooster finds the MSFragger _uncalibrated.mzML of a .raw file in the LC-MS directory.
+    // MSBooster's useIM is on only when the run has timsTOF data (CmdMSBooster.java:151-170);
+    // MSBooster finds the MSFragger _uncalibrated.mzML of a .raw file in the LC-MS directory.
     test("fragpipe_search - stub MSBooster gets the uncalibrated mzML of a RAW file, useIM off without timsTOF") {
         options "-stub"
         tag "stub"
@@ -410,7 +410,7 @@ nextflow_workflow {
         }
     }
 
-    // RC-21: one MSBooster runs over every file, as in FragPipe (per-file runs are not equivalent)
+    // one MSBooster runs over every file, as in FragPipe (per-file runs are not equivalent)
     test("fragpipe_search - stub MSBooster runs once over every file") {
         options "-stub"
         tag "stub"
@@ -448,7 +448,7 @@ nextflow_workflow {
         }
     }
 
-    // RC-19: Crystal-C runs with the jar defaults on mzML/mzXML/RAW and stops on other formats
+    // Crystal-C runs with the jar defaults on mzML/mzXML/RAW and stops on other formats
     test("fragpipe_search - stub Crystal-C on a .d file fails like FragPipe") {
         options "-stub"
         tag "stub"
@@ -482,7 +482,7 @@ nextflow_workflow {
         }
     }
 
-    // RC-20: FragPipe never prebuilds the pepindex for a search; MSFragger builds it inside each
+    // FragPipe never prebuilds the pepindex for a search; MSFragger builds it inside each
     // search call next to the FASTA, one file per digestion parameter set (first search + main
     // search with calibrate_mass 2). The pepindex header stores the absolute database_name, so an
     // index from another task directory is never reused.
@@ -528,7 +528,7 @@ nextflow_workflow {
         }
     }
 
-    // RC-20: split database search runs msfragger_pep_split.py per params set, here per file:
+    // split database search runs msfragger_pep_split.py per params set, here per file:
     // calibrate_mass 1/2 files are calibrated alone (MSFRAGGERCALIBRATE per file), calibrate_mass 0
     // files are searched as they are (msfragger_pep_split.py:630-632); each file keeps its data type's
     // params through the chunk searches and the merge.

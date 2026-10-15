@@ -36,6 +36,7 @@ def fragpipeTools(task) {
         error("fragpipeTools: task.ext.fragpipe_tools_dir '${tools_dir}' names no fragpipe-<version> directory; the FragPipe jar is lib/fragpipe-<version>.jar (e.g. /fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools)")
     }
     def fragpipe_version = version_match.group(1)
+    def versions = [crystalc: '1.5.10', diaumpire: '2.3.3', mbg: '0.3.6', fpmeta: '1.0.1', fragannotator: '1.0.0']
     return [
         tools_dir        : tools,
         // the tools path FragPipe writes into argv and config files: getDirTools() = <install>/lib/../tools,
@@ -65,12 +66,17 @@ def fragpipeTools(task) {
         // CmdMSBooster.JAR_MSBOOSTER_NAME), read in the task (fragpipeJarLines)
         batmass_io_jar   : '{BATMASS_IO_JAR}',
         grppr_jar        : "${tools}/grppr-0.3.23.jar".toString(),
-        crystalc_jar     : "${tools}/original-crystalc-1.5.10.jar".toString(),
-        crystalc_version : '1.5.10',
-        diaumpire_jar    : "${tools}/DIA_Umpire_SE-2.3.3.jar".toString(),
-        diaumpire_version: '2.3.3',
-        mbg_jar          : "${tools}/MBG-0.3.6.jar".toString(),
-        mbg_version      : '0.3.6',
+        // Versions FragPipe 24.0 compiles in and names the jars by (it reads no version from a jar):
+        // CmdCrystalc.CRYSTALC_VERSION (CmdCrystalc.java:48-49), UmpireParams.UMPIRESE_VERSION
+        // (UmpireParams.java:80-81), CmdMBGMatch.JAR_MBG_NAME (CmdMBGMatch.java:50), CmdMetaproteomics.VERSION
+        // (CmdMetaproteomics.java:33-34), TabRun.FRAG_ANNOTATOR (TabRun.java:96); the jars' pom.properties
+        // (crystalc, FragPipe-Meta, FragAnnotator) say the same
+        crystalc_jar     : "${tools}/original-crystalc-${versions.crystalc}.jar".toString(),
+        crystalc_version : versions.crystalc,
+        diaumpire_jar    : "${tools}/DIA_Umpire_SE-${versions.diaumpire}.jar".toString(),
+        diaumpire_version: versions.diaumpire,
+        mbg_jar          : "${tools}/MBG-${versions.mbg}.jar".toString(),
+        mbg_version      : versions.mbg,
         msbooster_jar    : '{MSBOOSTER_JAR}',
         msbooster_version: '1.4.17',
         diann            : "${tools}/diann/1.8.2_beta_8/linux/diann-1.8.1.8".toString(),
@@ -79,9 +85,10 @@ def fragpipeTools(task) {
         glycan_residues  : "${tools}/Glycan_Databases/glycan_residues.txt".toString(),
         glycan_mods      : "${tools}/Glycan_Databases/glycan_mods.txt".toString(),
         fragreporter_jar : "${tools}/FragReporter-1.1.2.jar".toString(),
-        fragannotator_jar: "${tools}/FP-PDV/FragAnnotator-1.0.0.jar".toString(),
-        fpmeta_jar       : "${tools}/metaproteomics/FP-Meta-1.0.1.jar".toString(),
-        fpmeta_version   : '1.0.1',
+        fragannotator_jar    : "${tools}/FP-PDV/FragAnnotator-${versions.fragannotator}.jar".toString(),
+        fragannotator_version: versions.fragannotator,
+        fpmeta_jar       : "${tools}/metaproteomics/FP-Meta-${versions.fpmeta}.jar".toString(),
+        fpmeta_version   : versions.fpmeta,
         taxon_names      : "${tools}/metaproteomics/names.dmp".toString(),
         taxon_nodes      : "${tools}/metaproteomics/nodes.dmp".toString(),
         fpop_script      : "${tools}/fpop/FragPipe_FPOP_Analysis.py".toString(),
@@ -127,6 +134,12 @@ def expandJarTokens(text, open = '', close = '') {
  * its lib/fragpipe-<version>.jar, under the tools folder (FragpipeLocations.checkToolsMissing): BATMASS_IO_JAR,
  * MSBOOSTER_JAR. A required tool without a jar stops the task with an error naming the folder; an optional
  * one leaves its variables empty.
+ *
+ * Approved exception to "modules only run tools" (docs/CONTRIBUTING.md, Pipeline specific contribution
+ * guidelines): the licensed FragPipe image is a runtime-only parameter (--fragpipe_container), so these jar
+ * names can only be resolved inside the task. The lookup copies FragPipe's (TabConfig.java:176-178, :188-209;
+ * ToolingUtils.java:62; CmdMSBooster.java:52; FragpipeRun.java:1348-1356); it is not a pattern for other
+ * in-task lookups.
  *
  * @param tools    fragpipeTools() result
  * @param required tools the task runs: any of 'msfragger', 'ionquant', 'diatracer', 'batmass_io', 'msbooster'
@@ -982,7 +995,7 @@ def diannFilelistText(spectra) {
  * and --cfg paths are fine). FragPipe passes absolute paths (CmdDiann.java:389-397), so the task directory
  * is used as it is when every input path fits, which keeps filelist_diann.txt and the reports as
  * FragPipe writes them. For a longer work dir (S3/Fusion, deep scratch) the inputs are read through a
- * symlink in a directory of the task's own /tmp (mktemp -d, so tasks sharing a host never collide), removed
+ * symlink in a directory of the task's $TMPDIR, else /tmp (mktemp -d, so tasks sharing a host never collide), removed
  * when the task script exits. DIA-NN and FragReporter then record that directory as the runs' location
  * (report File.Name, matrix and abundance run columns, log), in place of the task dir: the same
  * results with a different LC-MS directory prefix, as with any other work dir.
@@ -997,7 +1010,7 @@ def diannInputDirLines(spectra) {
     return [
         'DIANN_INPUT_DIR="$PWD"',
         "if [ \$(( \${#DIANN_INPUT_DIR} + 1 + ${longest} )) -gt ${max_path} ]; then",
-        '    DIANN_LINK_DIR="$(mktemp -d /tmp/diann.XXXXXX)"',
+        '    DIANN_LINK_DIR="$(mktemp -d "${TMPDIR:-/tmp}/diann.XXXXXX")"',
         '    trap \'rm -rf "$DIANN_LINK_DIR"\' EXIT',
         '    DIANN_INPUT_DIR="$DIANN_LINK_DIR/s"',
         '    ln -s "$PWD" "$DIANN_INPUT_DIR"',
@@ -1119,13 +1132,21 @@ def headlessWorkflowText(workflow_text, database) {
 }
 
 /**
- * Java heap of a FragPipe JVM tool in GB: ext.java_xmx, else the task memory, else 8.
+ * Java heap of a FragPipe JVM tool in GB: ext.java_xmx, else the task memory. FragPipe has no fixed
+ * default (its RAM setting, else OsUtils.getDefaultXmx(), FragpipeRun.java:1308), so a task without
+ * either stops.
  *
  * @param task Task (ext.java_xmx, memory)
  * @return heap size in GB
  */
 def fragpipeJavaMemGb(task) {
-    return task.ext.java_xmx ? task.ext.java_xmx as int : (task.memory ? task.memory.toGiga() : 8)
+    if (task.ext.java_xmx) {
+        return task.ext.java_xmx as int
+    }
+    if (!task.memory) {
+        error("${task.process}: neither ext.java_xmx nor task.memory is set; the Java heap (-Xmx) is the task memory, as FragPipe's RAM setting (FragpipeRun.java:1308)")
+    }
+    return task.memory.toGiga()
 }
 
 /**

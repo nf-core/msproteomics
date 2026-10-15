@@ -5,7 +5,7 @@ nextflow_process {
     process "MSFRAGGER"
 
     tag "modules"
-    tag "modules_nfcore"
+    tag "modules_local"
     tag "msfragger"
 
     test("msfragger - stub") {
@@ -147,7 +147,8 @@ nextflow_process {
                 { assert process.success },
                 { assert java.nio.file.Files.isRegularFile(staged, java.nio.file.LinkOption.NOFOLLOW_LINKS) },
                 { assert staged.text == 'raw bytes' },
-                { assert process.out.lcms_files.collect { item -> file(item[1]).name } == ['run1_uncalibrated.mzML'] }
+                { assert process.out.lcms_files.collect { item -> file(item[1]).name } == ['run1_uncalibrated.mzML'] },
+                { assert snapshot(process.out.pepxml, process.out.pin, process.out.lcms_files, process.out.versions_msfragger, process.out.versions_fragpipe).match() }
             )
         }
     }

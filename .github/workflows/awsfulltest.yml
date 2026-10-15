@@ -24,8 +24,8 @@ jobs:
 
       - name: Launch workflow via Seqera Platform
         uses: seqeralabs/action-tower-launch@51565b514bff1827cf34620de25d0055759f1fc9 # v2
-        # AWS full pipeline tests use test data with workflow-specific profiles
-        # via `test_dia.config` (or test_dda_lfq, test_tmt, test_tmtq)
+        # test_dia: test_full and the other FragPipe profiles need the licensed FragPipe image
+        # (--fragpipe_container), which this public runner does not have
         with:
           workspace_id: ${{ vars.TOWER_WORKSPACE_ID }}
           access_token: ${{ secrets.TOWER_ACCESS_TOKEN }}
@@ -46,10 +46,10 @@ jobs:
                 enabled = false
               }
               onComplete {
-                message = ':white_check_mark: *msproteomics/test_full* completed successfully! :tada:'
+                message = ':white_check_mark: *msproteomics/test_dia* completed successfully! :tada:'
               }
               onError {
-                message = ':x: *msproteomics/test_full* failed :crying_cat_face:'
+                message = ':x: *msproteomics/test_dia* failed :crying_cat_face:'
               }
             }
           parameters: |

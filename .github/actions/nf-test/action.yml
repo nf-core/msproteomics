@@ -60,9 +60,11 @@ runs:
       shell: bash
       env:
         NFT_WORKDIR: ${{ env.NFT_WORKDIR }}
+        EVENT_NAME: ${{ github.event_name }}
       run: |
         CHANGED_SINCE_ARG="--changed-since HEAD^"
-        if ! git rev-parse HEAD^ >/dev/null 2>&1; then
+        # a manual dispatch runs every test: HEAD^ of a branch push may touch no test at all
+        if [ "$EVENT_NAME" = "workflow_dispatch" ] || ! git rev-parse HEAD^ >/dev/null 2>&1; then
           CHANGED_SINCE_ARG=""
         fi
         nf-test test \

@@ -57,6 +57,14 @@ output:
           type: file
           description: Uncalibrated mzML MSFragger writes for .raw / .d input (optional)
           pattern: "*_uncalibrated.mzML"
+  uncalibrated_mzbin:
+    - - meta:
+          type: map
+          description: Sample metadata map
+      - "*_uncalibrated.mzBIN":
+          type: file
+          description: Uncalibrated spectra cache MSFragger writes next to the LC-MS file during mass calibration (optional)
+          pattern: "*_uncalibrated.mzBIN"
   log:
     - - meta:
           type: map

@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-# build_nfcore.sh — Build nf-fragpipe Docker container for nf-core pipelines
+# build_nfcore.sh — Build a FragPipe Docker image for nf-core/msproteomics
 #
 # Academic container (fcyucn/fragpipe:24.0 base + your licensed tools):
 #   export MSFRAGGER_ZIP=/path/to/MSFragger-4.4.1.zip

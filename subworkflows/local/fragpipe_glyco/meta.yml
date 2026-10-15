@@ -69,12 +69,6 @@ output:
   - mbg_log:
       type: channel
       description: "Structure: [ val(meta), path(mbg.log) ]"
-  - opair_log:
-      type: channel
-      description: "Structure: [ val(meta), path(opair.log) ]"
-  - versions:
-      type: channel
-      description: Versions (topic channel also used)
 authors:
   - "@dongzehe"
 maintainers:

@@ -49,10 +49,10 @@ process PHILOSOPHERDATABASE {
     # Philosopher commands run inside a workspace (CmdDatabaseUpdate.usesPhi())
     "\$PHILOSOPHER" workspace --init --nocheck
 
-    CMD=("\$PHILOSOPHER" database --custom ${fasta} ${args})
+    CMD=("\$PHILOSOPHER" database --custom ${shellQuote("${fasta}")} ${args})
     printf '%s\\n' "\${CMD[*]}" > philosopher_database.log
     "\${CMD[@]}" 2>&1 | tee -a philosopher_database.log
-    mv *-${fasta}.fas ${prefix}_philosopher.fasta
+    mv *-${shellQuote("${fasta}.fas")} ${shellQuote("${prefix}_philosopher.fasta")}
 
     "\$PHILOSOPHER" workspace --clean --nocheck
     """

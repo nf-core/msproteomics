@@ -1,6 +1,5 @@
 // FragPipe 24.0 parity acceptance test for MSPROTEOMICS_TMT_LABELCHECK.
-// Written test-first against FragPipe behaviour; passing since the RC-03 fix
-// of the FragPipe parity review.
+// Every expectation is derived from FragPipe's source, cited per test.
 //
 // FragPipe source root (FP): FragPipe-GUI/src/main/java/org/nesvilab/fragpipe/
 //
@@ -17,10 +16,10 @@ nextflow_workflow {
     tag "msproteomics_tmt_labelcheck"
     tag "parity"
 
-    // RC-03: FP/FragpipeRun.java:1258-1262 builds sharedLcmsFilesAll from the unique LC-MS file
+    // FP/FragpipeRun.java:1258-1262 builds sharedLcmsFilesAll from the unique LC-MS file
     // table (one InputLcmsFile per file), so a per-channel samplesheet (one row per TMT channel)
     // still yields exactly one MSFragger search input per raw file.
-    test("RC-03 TMT per-channel samplesheet - one MSFRAGGER task per raw file") {
+    test("TMT per-channel samplesheet - one MSFRAGGER task per raw file") {
         options "-stub"
         tag "stub"
 
@@ -33,6 +32,7 @@ nextflow_workflow {
                 input    = ss.toString()
                 database = "${fixtures}/test.fasta"
                 tmt_type = 'TMT10'
+                tmt_mode = 'labelcheck'  // main.nf routes here only with --tmt_mode labelcheck
                 // nf-test's default profile (conf/test.config) sets fragpipe_workflow to LFQ-MBR.workflow,
                 // which the label check would run instead of the TMT-labelcheck-229 workflow it selects
                 fragpipe_workflow = null
@@ -69,6 +69,7 @@ nextflow_workflow {
                 input             = ss.toString()
                 database          = "${fixtures}/test.fasta"
                 tmt_type          = 'TMT10'
+                tmt_mode          = 'labelcheck'  // main.nf routes here only with --tmt_mode labelcheck
                 fragpipe_workflow = wf.toString()
                 outdir            = "$outputDir"
             }
@@ -101,6 +102,7 @@ nextflow_workflow {
                 input    = ss.toString()
                 database = "${fixtures}/test.fasta"
                 tmt_type = 'TMT10'
+                tmt_mode = 'labelcheck'  // main.nf routes here only with --tmt_mode labelcheck
                 fragpipe_workflow = wf.toString()
                 outdir   = "$outputDir"
             }

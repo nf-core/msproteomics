@@ -36,6 +36,7 @@ workflow FRAGPIPE_PHILOSOPHER_QUANT {
     // FragPipe's LC-MS file list (wrapped so combine keeps it one item) and the TMT annotation
     // lines (header first; [] without TMT)
     ch_lcms_list = ch_lcms_files.toList().map { files -> [files] }
+    // ch_annotation is a value channel: the annotation file is read once
     ch_annotation_lines = ch_annotation.map { annot -> annot ? [annot.readLines()] : [[]] }
 
     //
@@ -151,14 +152,5 @@ workflow FRAGPIPE_PHILOSOPHER_QUANT {
 
     emit:
     final_results_dir      = ch_final_results                         // channel: [ val(meta), path(results_dir) ] - per-group tables after the final report and the matched-fragment export
-    report_peptides        = PHILOSOPHERREPORT.out.peptides          // channel: [ val(meta), path(peptide.tsv) ]
-    report_proteins        = PHILOSOPHERREPORT.out.proteins          // channel: [ val(meta), path(protein.tsv) ]
-    labelquant_results_dir = PHILOSOPHERLABELQUANT.out.results_dir   // channel: [ val(meta), path(results_dir) ] - with TMT intensities in .meta/
     experiment_annotation  = WRITE_LABELQUANT_EXPERIMENT_ANNOTATION.out.file  // channel: [ val(meta), path(experiment_annotation.tsv) ]
-    versions               = FREEQUANT.out.versions_philosopher
-        .mix(FREEQUANT.out.versions_fragpipe)
-        .mix(PHILOSOPHERLABELQUANT.out.versions_philosopher)
-        .mix(PHILOSOPHERLABELQUANT.out.versions_fragpipe)
-        .mix(PHILOSOPHERREPORT.out.versions_philosopher)
-        .mix(PHILOSOPHERREPORT.out.versions_fragpipe)
 }

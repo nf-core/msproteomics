@@ -6,7 +6,7 @@
                     {
                         "id": "fragpipe"
                     },
-                    "fragpipe-second-pass.workflow:md5,a98654241d7bd6489eb3469011ca160b"
+                    "fragpipe-second-pass.workflow:md5,f2c35747187fd0fd60583c64e25dff05"
                 ]
             ],
             [
@@ -24,7 +24,7 @@
                 ]
             ]
         ],
-        "timestamp": "2026-10-11T07:44:18.142857632",
+        "timestamp": "2026-10-14T20:05:06.449828467",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"

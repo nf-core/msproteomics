@@ -7,7 +7,7 @@ nextflow_process {
 
     tag "modules"
     tag "modules_local"
-    tag "fragpipe_save_workflow"
+    tag "fragpipesaveworkflow"
 
     // The workflow names the DIA-NN binary (fragpipe-config.bin-diann, as in a workflow FragPipe saved): FragPipe
     // validates it and writes its --version text, "1.8.2 beta 8" (Diann.java:102-130, TabConfig.java:566-584).

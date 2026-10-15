@@ -1,4 +1,18 @@
+/*
+ * DIAUMPIRE: DIA-Umpire SE pseudo-spectra from one DIA LC-MS file (CmdUmpireSe)
+ *
+ * Input:
+ *   - meta: Sample metadata map
+ *   - dia_file: DIA LC-MS file (mzML, mzXML or raw)
+ *   - umpire_params: umpire-se.params text with Thread = THREADS
+ *
+ * Output:
+ *   - results_dir: <run>_Q1/Q2/Q3 mzML (and mgf), umpire-se.params, diaumpire.log
+ *   - q1_spectra / q2_spectra / q3_spectra / mgf_spectra: the pseudo-spectra
+ *   - versions_diaumpire / versions_fragpipe: versions (topic: versions)
+ */
 include { fragpipeTools; setFragpipeParamValues; writeTextFile; rawSymlinksToFiles; fragpipeJarLines; shellArgs } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
+include { javaXmxGb } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
 
 process DIAUMPIRE {
     tag "${meta.id}"
@@ -16,6 +30,9 @@ process DIAUMPIRE {
     tuple val(meta), path("${prefix}/*_Q2.mzML")                , emit: q2_spectra, optional: true
     tuple val(meta), path("${prefix}/*_Q3.mzML")                , emit: q3_spectra, optional: true
     tuple val(meta), path("${prefix}/*_Q*.mgf")                 , emit: mgf_spectra, optional: true
+    // DIA-Umpire's own log, written in its cwd; FragPipe moves it with the Q files into the work dir
+    // (CmdUmpireSe.java:151-157, UmpireSeGarbageFiles.java:30-32) and keeps it
+    tuple val(meta), path("diaumpire_se.log")                   , emit: se_log
     tuple val("${task.process}"), val('diaumpire'), eval("cat .diaumpire_version"), emit: versions_diaumpire, topic: versions
     tuple val("${task.process}"), val('fragpipe'), eval("cat .fragpipe_version"), emit: versions_fragpipe, topic: versions
 
@@ -23,9 +40,13 @@ process DIAUMPIRE {
     task.ext.when == null || task.ext.when
 
     script:
+    // Exit if running this module with -profile conda / -profile mamba (copied from modules/nf-core/diann/main.nf)
+    if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
+        error "DIAUMPIRE module does not support Conda: it runs in the FragPipe image given with --fragpipe_container. Please use Docker / Singularity / Podman instead."
+    }
     def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id}"
-    def ram = task.memory ? task.memory.toGiga() : 8
+    def ram = javaXmxGb(task, 0)
     def tools = fragpipeTools(task)
     // FragPipe's template with the workflow values; Thread is the run's thread count (UmpirePanel.java:427)
     def params_text = setFragpipeParamValues(umpire_params, [Thread: task.cpus])
@@ -66,8 +87,8 @@ process DIAUMPIRE {
     touch ${prefix}/${basename}_Q2.mzML
     touch ${prefix}/${basename}_Q3.mzML
     ${writeTextFile("${prefix}/umpire-se.params", setFragpipeParamValues(umpire_params, [Thread: task.cpus]))}
-    touch ${prefix}/diaumpire.log
-    echo "${tools.fragpipe_version}" > .diaumpire_version
+    touch ${prefix}/diaumpire.log diaumpire_se.log
+    echo "${tools.diaumpire_version}" > .diaumpire_version
     echo "${tools.fragpipe_version}" > .fragpipe_version
     """
 }

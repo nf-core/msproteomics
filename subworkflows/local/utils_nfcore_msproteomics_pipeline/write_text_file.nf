@@ -1,5 +1,5 @@
 /*
- * Helper of WRITETEXTFILE (modules/local/writetextfile), shared by refactors A and B:
+ * Helper of WRITETEXTFILE (modules/local/writetextfile) and the module input builders:
  * the bash that writes a file body byte for byte. Unit tests in tests/write_text_file.nf.test.
  */
 

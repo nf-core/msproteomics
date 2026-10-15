@@ -69,9 +69,9 @@ output:
       - opair:
           type: string
           description: Tool name
-      - cat .opair_version:
-          type: eval
-          description: Version
+      - fragpipeToolVersions().opair:
+          type: string
+          description: 'Version; fixed value (fragpipeToolVersions()): tools/opair/CMD.dll has no version in its path; FragPipe 24.0''s CMD.dll prints "PTMLocalization version: 1.1.10"'
   versions_fragpipe:
     - - ${task.process}:
           type: string
@@ -91,9 +91,9 @@ topics:
       - opair:
           type: string
           description: Tool name
-      - cat .opair_version:
-          type: eval
-          description: Version of O-Pair
+      - fragpipeToolVersions().opair:
+          type: string
+          description: 'Version of O-Pair; fixed value (fragpipeToolVersions()): tools/opair/CMD.dll has no version in its path; FragPipe 24.0''s CMD.dll prints "PTMLocalization version: 1.1.10"'
     - - ${task.process}:
           type: string
           description: Process name

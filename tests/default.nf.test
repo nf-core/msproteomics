@@ -90,10 +90,9 @@ nextflow_pipeline {
             def stable_path = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore')
             def report = new File("$outputDir/diann/diann_quantification/diann_report.tsv")
             // DIA-NN output is byte-identical run to run on one CPU class and differs across classes (same threads and
-            // containers), so the DIA-NN tables and
-            // the tables built from them (tests/.nftignore) are snapshotted per CPU class, as nf-preprocess-proteomics
-            // tests/workflows/dia.nf.test. DIA-NN's predictor dispatches on the ISA the VM exposes, and Azure EPYC 9V74
-            // VMs come with and without AVX-512 (run 38509366906: a 9V74 without avx512f gave the EPYC 7763 tables).
+            // containers), so the DIA-NN tables and the tables built from them (tests/.nftignore) are snapshotted per
+            // CPU class. DIA-NN's predictor dispatches on the ISA the VM exposes, and Azure EPYC 9V74 VMs come with and
+            // without AVX-512 (a 9V74 without avx512f gives the EPYC 7763 tables).
             // Key suffix: /proc/cpuinfo "model name", trimmed, with every run of characters outside [A-Za-z0-9.-]
             // replaced by "_", then "__avx512" if the flags hold avx512f, else "__noavx512". A new class fails under
             // --ci with a missing snapshot.

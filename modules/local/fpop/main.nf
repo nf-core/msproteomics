@@ -1,3 +1,16 @@
+/*
+ * FPOP: FragPipe's FPOP Quant (FragPipe_FPOP_Analysis.py, CmdFpopQuant)
+ *
+ * Input:
+ *   - meta: Run metadata map
+ *   - modpep_tsv: IonQuant combined_modified_peptide.tsv (label-free), [] in TMT mode
+ *   - tmt_report / tmt_report_unmod: TMT-Integrator report directories (TMT mode), [] otherwise
+ *   - config_cli: script arguments from the workflow parser
+ *
+ * Output:
+ *   - results_dir / peptides / sites: FPOP_peptides.tsv, FPOP_sites.tsv and fpop.log
+ *   - versions_fpop / versions_fragpipe: versions (topic: versions)
+ */
 include { fragpipeTools; shellArgs } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
 
 process FPOP {
@@ -24,6 +37,10 @@ process FPOP {
     task.ext.when == null || task.ext.when
 
     script:
+    // Exit if running this module with -profile conda / -profile mamba (copied from modules/nf-core/diann/main.nf)
+    if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
+        error "FPOP module does not support Conda: it runs in the FragPipe image given with --fragpipe_container. Please use Docker / Singularity / Podman instead."
+    }
     // FragPipe_FPOP_Analysis.py takes only positional arguments (no flags), so task.ext.args
     // has nowhere to go: an extra word would become the unmodified-peptide argument.
     prefix = task.ext.prefix ?: "${meta.id}"

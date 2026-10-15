@@ -1,8 +1,8 @@
 nextflow_workflow {
 
-    name "Test Workflow FRAGPIPE_WF"
+    name "Test Workflow FRAGPIPE"
     script "../main.nf"
-    workflow "FRAGPIPE_WF"
+    workflow "FRAGPIPE"
 
     tag "subworkflows"
     tag "subworkflows_local"
@@ -50,6 +50,7 @@ database.decoy-tag = rev_
                 input[3] = Channel.empty()  // ch_decoy_db (not used)
                 input[4] = channel.value([])  // ch_annotation (not used)
                 input[5] = []               // ch_manifest (not used)
+                input[6] = channel.value([[], []])  // ch_taxon_files: FragPipe's tools/metaproteomics dumps
 
                 """
             }
@@ -122,6 +123,7 @@ database.decoy-tag = rev_
                 input[3] = Channel.empty()  // ch_decoy_db (not used)
                 input[4] = channel.value([])  // ch_annotation (not used)
                 input[5] = []               // ch_manifest (not used)
+                input[6] = channel.value([[], []])  // ch_taxon_files: FragPipe's tools/metaproteomics dumps
 
                 """
             }
@@ -170,6 +172,7 @@ database.decoy-tag = rev_
                 input[3] = Channel.empty()  // ch_decoy_db (not used)
                 input[4] = channel.value([])        // ch_annotation (not used)
                 input[5] = []               // ch_manifest (not used)
+                input[6] = channel.value([[], []])  // ch_taxon_files: FragPipe's tools/metaproteomics dumps
                 """
             }
         }
@@ -249,6 +252,7 @@ database.decoy-tag = rev_
                 input[3] = Channel.empty()  // ch_decoy_db (not used)
                 input[4] = channel.value(annotation_file)  // ch_annotation
                 input[5] = []               // ch_manifest (not used)
+                input[6] = channel.value([[], []])  // ch_taxon_files: FragPipe's tools/metaproteomics dumps
 
                 """
             }
@@ -318,6 +322,7 @@ database.decoy-tag = rev_
                 input[3] = channel.of([[ id: 'philosopher_db' ], decoy_fasta])  // ch_decoy_db
                 input[4] = channel.value([])  // ch_annotation (not used)
                 input[5] = []               // ch_manifest (not used)
+                input[6] = channel.value([[], []])  // ch_taxon_files: FragPipe's tools/metaproteomics dumps
 
                 """
             }
@@ -365,7 +370,7 @@ database.decoy-tag = rev_
                 fasta_file.text = '>sp|P00000|TEST_HUMAN Test protein\\nMKWVTFISLLLFSSAYSRGVFRRDTHKSEIAHR'
                 def manifest = file("\${workDir}/fragpipe-files.fp-manifest")
                 manifest.text = "\${dia1}\\t\\t\\tDIA\\n\${dia2}\\t\\t\\tDIA"
-                // SpecLibGen and DIA-NN run, so every file is in FragPipe's single group "" (RC-04)
+                // SpecLibGen and DIA-NN run, so every file is in FragPipe's single group ""
                 def m = { id -> [ id: id, group: '', experiment: null, bioreplicate: null, data_type: 'DIA' ] }
                 input[0] = channel.of([m.call('dia_run1'), dia1], [m.call('dia_run2'), dia2])
                 input[1] = channel.of([[ id: 'test_db' ], fasta_file])
@@ -373,6 +378,7 @@ database.decoy-tag = rev_
                 input[3] = Channel.empty()          // ch_decoy_db (not used)
                 input[4] = channel.value([])        // ch_annotation (not used)
                 input[5] = channel.value(manifest)  // ch_manifest
+                input[6] = channel.value([[], []])  // ch_taxon_files: FragPipe's tools/metaproteomics dumps
                 """
             }
         }
@@ -421,6 +427,7 @@ database.decoy-tag = rev_
                 input[3] = Channel.empty()          // ch_decoy_db (not used)
                 input[4] = channel.value([])        // ch_annotation (not used)
                 input[5] = channel.value(manifest)  // ch_manifest
+                input[6] = channel.value([[], []])  // ch_taxon_files: FragPipe's tools/metaproteomics dumps
                 """
             }
         }
@@ -456,6 +463,7 @@ database.decoy-tag = rev_
                 input[3] = Channel.empty()  // ch_decoy_db (not used)
                 input[4] = channel.value([])  // ch_annotation (not used)
                 input[5] = []               // ch_manifest (not used)
+                input[6] = channel.value([[], []])  // ch_taxon_files: FragPipe's tools/metaproteomics dumps
 
                 """
             }
@@ -504,6 +512,7 @@ database.decoy-tag = rev_
                 input[3] = Channel.empty()  // ch_decoy_db (not used)
                 input[4] = channel.value([])  // ch_annotation (not used)
                 input[5] = []               // ch_manifest (not used)
+                input[6] = channel.value([[], []])  // ch_taxon_files: FragPipe's tools/metaproteomics dumps
 
                 """
             }
@@ -552,6 +561,7 @@ database.decoy-tag = rev_
                 def manifest = file("\${workDir}/fragpipe-files.fp-manifest")
                 manifest.text = "\${mzml_file}\\tcancer\\t\\tDDA"
                 input[5] = channel.value(manifest)  // ch_manifest
+                input[6] = channel.value([[], []])  // ch_taxon_files: FragPipe's tools/metaproteomics dumps
                 """
             }
         }
@@ -604,6 +614,7 @@ database.decoy-tag = rev_
                 def manifest = file("\${workDir}/fragpipe-files.fp-manifest")
                 manifest.text = "\${mzml_file}\\tcancer\\t\\tDDA"
                 input[5] = channel.value(manifest)  // ch_manifest
+                input[6] = channel.value([[], []])  // ch_taxon_files: FragPipe's tools/metaproteomics dumps
                 """
             }
         }
@@ -651,6 +662,7 @@ database.decoy-tag = rev_
                 input[3] = Channel.empty()  // ch_decoy_db (not used)
                 input[4] = channel.value([])  // ch_annotation (not used)
                 input[5] = []               // ch_manifest (not used)
+                input[6] = channel.value([[], []])  // ch_taxon_files: FragPipe's tools/metaproteomics dumps
                 """
             }
         }
@@ -690,6 +702,7 @@ database.decoy-tag = rev_
                 input[3] = Channel.empty()  // ch_decoy_db (not used)
                 input[4] = channel.value([])  // ch_annotation (not used)
                 input[5] = []               // ch_manifest (not used)
+                input[6] = channel.value([[], []])  // ch_taxon_files: FragPipe's tools/metaproteomics dumps
                 """
             }
         }
@@ -699,7 +712,7 @@ database.decoy-tag = rev_
             assertAll (
                 { assert workflow.success },
                 { assert workflow.out.pin.size() == 0 },
-                { assert tasks.count { n -> n == 'PEPTIDEPROPHET' } >= 1 },
+                { assert tasks.count { n -> n == 'PHILOSOPHERPEPTIDEPROPHET' } >= 1 },
                 { assert !tasks.contains('PERCOLATOR') },
                 { assert snapshot(tasks.countBy { n -> n }.sort(), workflow.out.pin, workflow.out.validated_pepxml).match() }
             )

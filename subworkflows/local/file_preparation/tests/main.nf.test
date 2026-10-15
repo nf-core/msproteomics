@@ -20,6 +20,9 @@ nextflow_workflow {
                 mzml.text = "mock"
 
                 input[0] = channel.of([ [ id:'sample1' ], mzml ])
+                input[1] = false
+                input[2] = false
+                input[3] = false
                 """
             }
         }
@@ -43,6 +46,9 @@ nextflow_workflow {
                 raw.text = "mock"
 
                 input[0] = channel.of([ [ id:'sample1' ], raw ])
+                input[1] = false
+                input[2] = false
+                input[3] = false
                 """
             }
         }
@@ -61,9 +67,6 @@ nextflow_workflow {
         options "-stub"
 
         when {
-            params {
-                openms_peakpicking = true
-            }
             workflow {
                 """
                 def mzml = file("\${workDir}/s1.mzML")
@@ -81,6 +84,9 @@ nextflow_workflow {
                     [ [ id:'s3' ], dotd ],
                     [ [ id:'s4' ], dia ]
                 )
+                input[1] = false
+                input[2] = true
+                input[3] = false
                 """
             }
         }
@@ -96,7 +102,7 @@ nextflow_workflow {
         }
     }
 
-    // RC-15: an unsupported LC-MS file stops the run instead of being skipped with a warning
+    // an unsupported LC-MS file stops the run instead of being skipped with a warning
     test("file_preparation - stub unsupported file fails") {
         tag "stub"
         options "-stub"
@@ -108,6 +114,9 @@ nextflow_workflow {
                 mgf.text = "mock"
 
                 input[0] = channel.of([ [ id:'sample1', mzml_id:'sample1' ], mgf ])
+                input[1] = false
+                input[2] = false
+                input[3] = false
                 """
             }
         }

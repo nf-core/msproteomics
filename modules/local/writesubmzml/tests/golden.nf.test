@@ -65,7 +65,7 @@ nextflow_process {
             def argvFile = new File(outputDir, 'write_sub_mzml.cmd'); argvFile.text = subLog.readLines()[0]
             def report   = new File(outputDir, 'golden_report.json')
             def check = [
-                'python3', "${baseDir}/bin/golden_step_check.py",
+                'python3', "${baseDir}/tests/tools/golden_step_check.py",
                 '--golden', golden.path,
                 '--steps', "${step.step_index}",
                 '--argv-only',
@@ -81,7 +81,7 @@ nextflow_process {
             check.waitForProcessOutput(checkOut, checkErr)
             // the _sub.mzML names the LC-MS directory as sourceFile location (WriteSubMzml.java:217-233)
             def compare = [
-                'python3', "${baseDir}/bin/golden_compare.py", 'pairs',
+                'python3', "${baseDir}/tests/tools/golden_compare.py", 'pairs',
                 '--pair', "work/${stem}_sub.mzML", "${golden.path}/files/work/${stem}_sub.mzML", new File(process.out.sub_mzml[0][1].toString()).path,
                 '--expected-prefix', manifest.roots['{LCMS_DIR}'],
                 '--actual-prefix', "${taskDir.path}/lcms",

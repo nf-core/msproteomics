@@ -26,11 +26,11 @@
                 ]
             ]
         ],
+        "timestamp": "2026-10-07T22:04:26.07778334",
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-10-07T22:04:26.07778334"
+        }
     },
     "write_text_file - integration body with tabs, $, backticks and a trailing newline": {
         "content": [
@@ -47,7 +47,7 @@
                     [
                         "WRITETEXTFILE",
                         "coreutils",
-                        "8.30"
+                        "9.5"
                     ]
                 ],
                 "file": [
@@ -62,16 +62,16 @@
                     [
                         "WRITETEXTFILE",
                         "coreutils",
-                        "8.30"
+                        "9.5"
                     ]
                 ]
             }
         ],
+        "timestamp": "2026-10-14T15:16:26.06660361",
         "meta": {
-            "nf-test": "0.9.3",
+            "nf-test": "0.9.5",
             "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-10-07T16:14:53.067472566"
+        }
     },
     "write_text_file - integration body without a final newline and an empty body": {
         "content": [
@@ -94,12 +94,12 @@
                     [
                         "WRITETEXTFILE",
                         "coreutils",
-                        "8.30"
+                        "9.5"
                     ],
                     [
                         "WRITETEXTFILE",
                         "coreutils",
-                        "8.30"
+                        "9.5"
                     ]
                 ],
                 "file": [
@@ -120,21 +120,21 @@
                     [
                         "WRITETEXTFILE",
                         "coreutils",
-                        "8.30"
+                        "9.5"
                     ],
                     [
                         "WRITETEXTFILE",
                         "coreutils",
-                        "8.30"
+                        "9.5"
                     ]
                 ]
             }
         ],
+        "timestamp": "2026-10-14T15:16:32.588529474",
         "meta": {
-            "nf-test": "0.9.3",
+            "nf-test": "0.9.5",
             "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-10-07T16:15:00.218964434"
+        }
     },
     "write_text_file - stub body with tabs, $, backticks and a trailing newline": {
         "content": [
@@ -153,10 +153,10 @@
                 ]
             ]
         ],
+        "timestamp": "2026-10-07T22:04:21.070359936",
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-10-07T22:04:21.070359936"
+        }
     }
 }

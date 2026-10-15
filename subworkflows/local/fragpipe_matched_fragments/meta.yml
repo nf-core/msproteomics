@@ -1,5 +1,14 @@
 name: "fragpipe_matched_fragments"
-description: FragPipe "Export matched fragments" right after the final Philosopher report, before every tool that reads psm.tsv
+description: |
+  FragPipe "Export matched fragments" right after the final Philosopher report, before every tool that reads psm.tsv.
+  main.nf also holds FRAGPIPE_MATCHED_FRAGMENTS_INPUTS, which builds the ch_emf_inputs value channel of this
+  subworkflow once per run (the export's fragpipe-files.fp-manifest, the spectra it reads and the DIA-Umpire
+  pseudo-spectra). It runs no module, so it is not a subworkflow of its own (nf-core subworkflows contain at
+  least two modules); callers include it from this file next to FRAGPIPE_MATCHED_FRAGMENTS.
+  FRAGPIPE_MATCHED_FRAGMENTS_INPUTS take: ch_file [ val(meta), path(spectra) ] (every LC-MS file of the run),
+  ch_spectra [ val(meta), path(spectra) ] (searched spectra and MSFragger's _uncalibrated/_calibrated mzML),
+  ch_umpire_spectra [ val(meta), path(mzml) ] (DIA-Umpire pseudo-spectra);
+  emit: inputs [ path(manifest), [spectra], [umpire_spectra] ] (value channel).
 keywords:
   - proteomics
   - fragpipe
@@ -32,16 +41,6 @@ output:
       description: |
         Per-group results, psm.tsv with matched fragments when exported.
         Structure: [ val(meta), path(results_dir) ]
-  - export_log:
-      type: file
-      description: |
-        Console output of the export.
-        Structure: [ val(meta), path(export_matched_fragments.log) ]
-  - versions:
-      type: channel
-      description: |
-        Software versions (topic tuples).
-        Structure: [ val(process), val(tool), val(version) ]
 authors:
   - "@an-altosian"
 maintainers:

@@ -1,9 +1,21 @@
+/*
+ * DECOMPRESS: Decompress a .tar, .tar.gz, .gz or .zip archive of an MS file (X.d.tar.gz gives X.d)
+ *
+ * Input:
+ *   - meta: Sample metadata map
+ *   - compressed_file: the archive
+ *
+ * Output:
+ *   - decompressed_files: the decompressed file or Bruker .d directory
+ *   - log: tool output
+ *   - versions_gunzip / versions_tar / versions_unzip: tool versions (topic: versions)
+ */
 
 process DECOMPRESS {
     tag "$meta.id"
     label 'process_low'
     conda "${moduleDir}/environment.yml"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+    container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/mulled-v2-796b0610595ad1995b121d0b85375902097b78d4:a3a3220eb9ee55710d743438b2ab9092867c98c6-0' :
         'quay.io/biocontainers/mulled-v2-796b0610595ad1995b121d0b85375902097b78d4:a3a3220eb9ee55710d743438b2ab9092867c98c6-0' }"
 
@@ -39,15 +51,16 @@ process DECOMPRESS {
     task.ext.when == null || task.ext.when
 
     script:
+    def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     // X.d.tar.gz -> X.d, X.mzML.gz -> X.mzML, X.raw.zip -> X.raw
     target_name = compressed_file.name.replaceAll(/\.(tar\.gz|tar|gz|zip)$/, '')
     """
     case ${compressed_file} in
-        *.tar.gz) tar xvzf ${compressed_file} ;;
-        *.tar)    tar xvf ${compressed_file} ;;
-        *.gz)     gunzip -c ${compressed_file} > ${target_name} ;;
-        *.zip)    unzip ${compressed_file} ;;
+        *.tar.gz) tar xvzf ${compressed_file} ${args} ;;
+        *.tar)    tar xvf ${compressed_file} ${args} ;;
+        *.gz)     gunzip -c ${args} ${compressed_file} > ${target_name} ;;
+        *.zip)    unzip ${args} ${compressed_file} ;;
         *)        echo "Unknown archive type: ${compressed_file}" >&2; exit 1 ;;
     esac 2>&1 | tee ${prefix}_decompression.log
 

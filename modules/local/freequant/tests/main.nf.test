@@ -5,7 +5,7 @@ nextflow_process {
     process "FREEQUANT"
 
     tag "modules"
-    tag "modules_nfcore"
+    tag "modules_local"
     tag "freequant"
 
     test("freequant - stub") {

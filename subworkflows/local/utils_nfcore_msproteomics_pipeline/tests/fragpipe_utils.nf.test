@@ -202,7 +202,7 @@ nextflow_function {
         }
     }
 
-    // RC-04: InputLcmsFile.getGroup() returns "" when SpeclibPanel or DiannPanel isRun()
+    // InputLcmsFile.getGroup() returns "" when SpeclibPanel or DiannPanel isRun()
     // (FP/api/InputLcmsFile.java:131-136); the panels' checkboxes are the workflow keys
     // speclibgen.run-speclibgen (SpeclibPanel.java:136-137) and diann.run-dia-nn.
     test("speclibOrDiannRuns - true for a SpecLibGen/DIA-NN workflow") {
@@ -327,7 +327,7 @@ nextflow_function {
         }
     }
 
-    // RC-10: FragPipe data type per LC-MS file. A manifest type is normalised by the
+    // FragPipe data type per LC-MS file. A manifest type is normalised by the
     // InputLcmsFile constructor (InputLcmsFile.java:53-76); a blank type is guessed from the
     // absolute path by guessDataType() (InputLcmsFile.java:86-101).
     test("fragpipeDataType - explicit type kept, blank type guessed from the path like FragPipe") {
@@ -962,7 +962,7 @@ nextflow_function {
         }
     }
 
-    // RC-15: CmdMsfragger.java:764-766 - .mgf, .mzml, .mzxml, .mzbin, .raw, .d (case-insensitive)
+    // CmdMsfragger.java:764-766 - .mgf, .mzml, .mzxml, .mzbin, .raw, .d (case-insensitive)
     test("requireFragpipeLcmsFiles - accepts every MSFragger LC-MS format") {
         function "requireFragpipeLcmsFiles"
         when {
@@ -980,7 +980,7 @@ nextflow_function {
         }
     }
 
-    // RC-09: CmdPercolator.java:219-224 / CmdPeptideProphet.java:442-447, hasCalibratedMzml from FragpipeRun.java:1642
+    // CmdPercolator.java:219-224 / CmdPeptideProphet.java:442-447, hasCalibratedMzml from FragpipeRun.java:1642
     test("fragpipeValidationLcms - raw is named by MSFragger's uncalibrated mzML") {
         function "fragpipeValidationLcms"
         when {
@@ -1123,7 +1123,7 @@ nextflow_function {
         }
     }
 
-    // RC-14: CheckCentroid reads the first file of the alphabetically first group, no DIA-Quant
+    // CheckCentroid reads the first file of the alphabetically first group, no DIA-Quant
     test("checkCentroidFile - first file of the first sorted group, DIA-Quant skipped") {
         function "checkCentroidFile"
         when {

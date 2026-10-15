@@ -1,4 +1,4 @@
-"""Unit tests for bin/golden_argv_compare.py (run: python3 -m pytest tests/python/test_golden_argv_compare.py)."""
+"""Unit tests for tests/tools/golden_argv_compare.py (run: python3 -m pytest tests/python/test_golden_argv_compare.py)."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import sys
 import unittest
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "bin"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 
 import golden_argv_compare as gac  # noqa: E402
 

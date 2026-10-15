@@ -47,6 +47,10 @@ process MERGESPLITSEARCH {
     task.ext.when == null || task.ext.when
 
     script:
+    // Exit if running this module with -profile conda / -profile mamba (copied from modules/nf-core/diann/main.nf)
+    if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
+        error "MERGESPLITSEARCH module does not support Conda: it runs in the FragPipe image given with --fragpipe_container. Please use Docker / Singularity / Podman instead."
+    }
     def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id}"
     def tools = fragpipeTools(task)
@@ -87,7 +91,7 @@ process MERGESPLITSEARCH {
     touch "${prefix}/${prefix}.pepXML"
     touch "${prefix}/${prefix}.pin"
     touch I_AGREE_FRAGPIPE_LICENSE_AGREEMENT
-    echo "${tools.fragpipe_version}" > .msfragger_version
+    echo "${tools.msfragger_version}" > .msfragger_version
     echo "${tools.fragpipe_version}" > .fragpipe_version
     """
 }

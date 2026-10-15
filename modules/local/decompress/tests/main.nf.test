@@ -5,7 +5,7 @@ nextflow_process {
     process "DECOMPRESS"
 
     tag "modules"
-    tag "modules_nfcore"
+    tag "modules_local"
     tag "decompress"
 
     // Real decompression with the host's gzip/tar (no container needed for these tools).
@@ -53,7 +53,8 @@ nextflow_process {
             assertAll (
                 { assert process.success },
                 { assert process.out.decompressed_files.collect { item -> file(item[1]).name } == ['run_A.d'] },
-                { assert new File(process.out.decompressed_files[0][1].toString(), 'analysis.tdf').exists() }
+                { assert new File(process.out.decompressed_files[0][1].toString(), 'analysis.tdf').exists() },
+                { assert snapshot(process.out.decompressed_files, process.out.versions_tar).match() }
             )
         }
     }

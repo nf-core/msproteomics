@@ -7,7 +7,7 @@ nextflow_process {
 
     tag "modules"
     tag "modules_local"
-    tag "check_centroid"
+    tag "checkcentroid"
 
     // argv as FragPipe 24.0 (golden manifest step 1, CmdCheckCentroid.java:52-65)
     test("check_centroid - stub") {
@@ -48,7 +48,8 @@ nextflow_process {
             def log = new File(process.out.log.get(0).get(1)).readLines()
             assertAll(
                 { assert process.success },
-                { assert log[0].matches(/java -Duser\.home=\S+ -Xmx\d+G -cp \/fragpipe_bin\/fragpipe-24\.0\/fragpipe-24\.0\/lib\/fragpipe-24\.0\.jar:\S+\/tools\/batmass-io-1\.36\.6\.jar org\.nesvilab\.fragpipe\.util\.CheckCentroid \S+\/tmt_erwinia_subset\.mzML \d+/) },
+                // batmass-io: the jar the image's FragPipe build names (ToolingUtils.BATMASS_IO_JAR): 1.36.5 in the academic image, 1.36.6 in FragPipePlus
+                { assert log[0].matches(/java -Duser\.home=\S+ -Xmx\d+G -cp \/fragpipe_bin\/fragpipe-24\.0\/fragpipe-24\.0\/lib\/fragpipe-24\.0\.jar:\S+\/tools\/batmass-io-1\.36\.[56]\.jar org\.nesvilab\.fragpipe\.util\.CheckCentroid \S+\/tmt_erwinia_subset\.mzML \d+/) },
                 { assert log.any { line -> line.startsWith('Done in') } },
                 { assert snapshot(process.out.versions_fragpipe).match() }
             )

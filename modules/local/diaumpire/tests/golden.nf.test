@@ -30,7 +30,7 @@ nextflow_process {
                             '--workflow', "\${golden}/files/work/fragpipe.workflow", '--data-types', 'DIA', '--output-json', '--outdir', configs.path].execute()
                 proc.waitForProcessOutput(System.out, System.err)
                 assert proc.exitValue() == 0
-                def umpire_params = new groovy.json.JsonSlurper().parse(new File(configs, 'tool_configs.json')).diaumpire.args + '\\n'
+                def umpire_params = new groovy.json.JsonSlurper().parse(new File(configs, 'tool_configs.json')).diaumpire.args
                 input[0] = channel.of([ [ id: 'dia_cptac_subset', data_type: 'DIA' ], file("\${golden}/files/input/dia_cptac_subset.mzML", checkIfExists: true), umpire_params ])
                 """
             }
@@ -47,11 +47,11 @@ nextflow_process {
             def cmdFile  = new File(outputDir, 'step.cmd'); cmdFile.text = tokens.join(' ')
             def outs     = new File(outputDir, 'outs'); outs.mkdirs()
             // the step's work dir is not logged; the module's task dir stands for FragPipe's work dir
-            def argvCheck = ['python3', "${baseDir}/bin/golden_step_check.py", '--golden', golden.path, '--steps', "${step.step_index}",
+            def argvCheck = ['python3', "${baseDir}/tests/tools/golden_step_check.py", '--golden', golden.path, '--steps', "${step.step_index}",
                 '--actual-cwd', '/nonexistent', '--actual-workdir', taskDir.path, '--actual-outdir', outs.path,
                 '--actual-argv', "${step.step_index}=${cmdFile.path}", '--argv-only', '--json', new File(outputDir, 'golden_report.json').path].execute()
             def argvOut = new StringBuffer(); argvCheck.waitForProcessOutput(argvOut, argvOut); println argvOut
-            def cmp = ['python3', "${baseDir}/bin/golden_compare.py", 'pairs', '--expected-prefix', manifest.roots['{WORKDIR}'], '--expected-prefix', manifest.roots['{LCMS_DIR}'], '--actual-prefix', taskDir.path,
+            def cmp = ['python3', "${baseDir}/tests/tools/golden_compare.py", 'pairs', '--expected-prefix', manifest.roots['{WORKDIR}'], '--expected-prefix', manifest.roots['{LCMS_DIR}'], '--actual-prefix', taskDir.path,
                 '--pair', 'umpire-se.params', "${golden}/files/work/umpire-se.params".toString(), new File(taskDir, 'umpire-se.params').path]
             ['Q1', 'Q2', 'Q3'].each { q ->
                 cmp += ['--pair', "dia_cptac_subset_${q}.mzML".toString(), "${golden}/files/work/dia_cptac_subset_${q}.mzML".toString(), new File(outDir, "dia_cptac_subset_${q}.mzML").path]

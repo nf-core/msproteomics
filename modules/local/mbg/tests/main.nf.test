@@ -39,4 +39,31 @@ nextflow_process {
             )
         }
     }
+
+    // FragPipe stops without glycan residues (CmdMBGMatch.java:145-158); the script block stops before any tool runs
+    test("mbg - argv without --toaddresiduals fails") {
+        tag "stub"
+
+        when {
+            process {
+                """
+                def group = file("\${workDir}/cancer")
+                group.mkdirs()
+                file("\${group}/psm.tsv").text = "Spectrum\\tSpectrum File\\n"
+                def run_a = file("\${workDir}/run_A.mzML")
+                run_a.text = "mock"
+                def rows = [ ['run_A.mzML', 'cancer', null, 'DDA'] ]
+                def argv = ['--match', '--psm', '@PSM@', '--manifest', '@MANIFEST@']
+                input[0] = channel.of([ [ id: 'cancer', group: 'cancer' ], group, [ run_a ], rows, argv ])
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert !process.success },
+                { assert (process.stdout + process.stderr).any { line -> line.contains('no glycan residues or mods specified for MBG') } }
+            )
+        }
+    }
 }

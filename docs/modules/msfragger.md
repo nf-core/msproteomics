@@ -61,4 +61,4 @@ Requires explicit license agreement via `ext.agree_fragpipe_license_agreement = 
 
 - argv as FragPipe (`CmdMsfragger.java`): `java -jar -Dfile.encoding=UTF-8 -Xmx<ram>G <jar> <params> [--license <tools/../license*.dat>] <lcms files>`; no `-Dlibs.*` (MSFragger finds `ext/thermo` next to its jar).
 - `.raw` input fails early when `ext/thermo` is missing next to the jar, with FragPipe's message.
-- Staged `.raw` symlinks are replaced by the files: batmass-io reads `.raw` under Mono, which sizes a symlink as the link.
+- Staged `.raw` symlinks are replaced by the files: batmass-io reads `.raw` under Mono, which sizes a symlink as the link, so a symlinked `.raw` fails to read.

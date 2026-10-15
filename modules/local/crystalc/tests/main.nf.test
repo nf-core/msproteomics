@@ -6,7 +6,7 @@ nextflow_process {
     process "CRYSTALC"
 
     tag "modules"
-    tag "modules_nfcore"
+    tag "modules_local"
     tag "crystalc"
 
     test("crystalc - stub") {

@@ -58,16 +58,20 @@ workflow FRAGPIPE_SEARCH {
 
     main:
 
+    // Each MSFragger params set read once: [[params_type, path, text], ...] (value channel)
+    ch_fragger_sets = ch_fragger_params.map { sets -> sets.collect { set -> [set[0], set[1], set[1].text] } }
+
     // Filter to samples that should run MSFragger; each file gets the params set of its data type
     // (CmdMsfragger.java:541-552: DDA, DIA + DIA-Lib, GPF-DIA, DDA+).
     ch_for_msfragger = ch_mzml
         .combine(ch_tool_configs)
         .filter { _meta, _mzml, configs -> shouldRunTool(configs, 'msfragger') }
         .map { meta, mzml, _configs -> [meta, mzml] }
-        .combine(ch_fragger_params.map { sets -> [sets] })
+        .combine(ch_fragger_sets.map { sets -> [sets] })
         .map { meta, mzml, sets ->
             def params_type = fraggerParamsType(meta.data_type)
-            [meta, mzml, sets.find { set -> set[0] == params_type }[1]]
+            def set = sets.find { s -> s[0] == params_type }
+            [meta, mzml, set[1], set[2]]
         }
 
     // Create a meta-wrapped fasta for modules that need tuple input
@@ -80,7 +84,7 @@ workflow FRAGPIPE_SEARCH {
 
     ch_search_mode = ch_for_msfragger
         .combine(ch_slices)
-        .branch { _meta, _spectra, _params_file, slices ->
+        .branch { _meta, _spectra, _params_file, _params_text, slices ->
             split: slices > 1
             standard: true
         }
@@ -103,14 +107,14 @@ workflow FRAGPIPE_SEARCH {
     // each file's params set comes from tool_configs (no params file read on the head node).
     ch_split_input = ch_search_mode.split
         .combine(ch_tool_configs)
-        .map { meta, spectra, params_file, _slices, configs ->
+        .map { meta, spectra, params_file, params_text, _slices, configs ->
             def calibrate_mass = fraggerCalibrateMass(configs, fraggerParamsType(meta.data_type))
             if (!(calibrate_mass in [0, 1, 2])) {
                 error("msfragger_pep_split.py needs calibrate_mass 0, 1 or 2 in ${params_file.name}, found ${calibrate_mass}")
             }
-            [meta, spectra, params_file, calibrate_mass]
+            [meta, spectra, params_file, params_text, calibrate_mass]
         }
-        .branch { _meta, _spectra, _params_file, calibrate_mass ->
+        .branch { _meta, _spectra, _params_file, _params_text, calibrate_mass ->
             calibrate: calibrate_mass in [1, 2]
             direct: true
         }
@@ -119,21 +123,23 @@ workflow FRAGPIPE_SEARCH {
     SORTFASTA(ch_fasta.combine(ch_split_input.calibrate.first()).map { items -> items[0] })
 
     MSFRAGGERCALIBRATE(
-        ch_split_input.calibrate.map { meta, spectra, params_file, _cal -> [meta, spectra, params_file.text] },
+        ch_split_input.calibrate.map { meta, spectra, _params_file, params_text, _cal -> [meta, spectra, params_text] },
         SORTFASTA.out.fasta.first()
     )
 
     // Optimized values into the search params, calibrated spectra collected (msfragger_pep_split.py:524-611)
     MSFRAGGERAPPLYCALIBRATION(
         ch_split_input.calibrate
-            .map { meta, spectra, params_file, _cal -> [meta.id, meta, spectra, params_file] }
+            .map { meta, spectra, params_file, _params_text, _cal -> [meta.id, meta, spectra, params_file] }
             .join(MSFRAGGERCALIBRATE.out.calibration.map { meta, log_file, mzbin -> [meta.id, log_file, mzbin] }, failOnMismatch: true, failOnDuplicate: true)
             .map { _id, meta, spectra, params_file, log_file, mzbin -> [meta, spectra, log_file, mzbin, params_file] }
     )
 
-    // [meta, spectra to search, search params]
+    // [meta, spectra to search, search params, its text]; the calibrated params file is a small task
+    // output with no text emit, read once here
     ch_split_search_input = MSFRAGGERAPPLYCALIBRATION.out.calibrated
-        .mix(ch_split_input.direct.map { meta, spectra, params_file, _cal -> [meta, spectra, params_file] })
+        .map { meta, spectra, params_file -> [meta, spectra, params_file, params_file.text] }
+        .mix(ch_split_input.direct.map { meta, spectra, params_file, params_text, _cal -> [meta, spectra, params_file, params_text] })
 
     // The FASTA is split only when the workflow asks for slices (msfragger_pep_split.py:96-137).
     SPLITFASTA(
@@ -155,21 +161,21 @@ workflow FRAGPIPE_SEARCH {
     // (msfragger_pep_split.py:146-153).
     ch_for_split_search = ch_split_search_input
         .combine(ch_chunk_fastas.map { chunk_meta, fasta -> [chunk_meta.chunk_id, fasta] })
-        .map { meta, spectra, params_file, chunk_id, chunk_fasta ->
+        .map { meta, spectra, params_file, params_text, chunk_id, chunk_fasta ->
             def new_meta = meta.clone()
             new_meta.original_id = meta.id
             new_meta.chunk_id = chunk_id
             new_meta.id = "${meta.id}_chunk_${chunk_id}"
-            [new_meta, spectra, params_file, chunk_fasta]
+            [new_meta, spectra, params_file, params_text, chunk_fasta]
         }
 
     ch_for_standard_search = ch_search_mode.standard
         .combine(ch_fasta)
-        .map { meta, spectra, params_file, _slices, fasta -> [meta, spectra, params_file, fasta] }
+        .map { meta, spectra, params_file, params_text, _slices, fasta -> [meta, spectra, params_file, params_text, fasta] }
 
     MSFRAGGER(
         ch_for_standard_search.mix(ch_for_split_search)
-            .map { meta, spectra, params_file, fasta -> [meta, spectra, params_file.name, params_file.text, fasta] }
+            .map { meta, spectra, params_file, params_text, fasta -> [meta, spectra, params_file.name, params_text, fasta] }
     )
 
     // FragPipe writes each params set its files use into its work dir, with the run's FASTA as database_name
@@ -177,11 +183,11 @@ workflow FRAGPIPE_SEARCH {
     // temporary dir it deletes (:597-603, :645) and leaves that file as it is
     WRITE_FRAGGER_PARAMS(
         ch_for_msfragger
-            .map { _meta, _mzml, params_file -> params_file }
-            .unique { params_file -> params_file.name }
+            .map { _meta, _mzml, params_file, params_text -> [params_file, params_text] }
+            .unique { item -> item[0].name }
             .combine(ch_fasta)
-            .map { params_file, fasta ->
-                [[id: params_file.baseName], params_file.name, setFragpipeParamValues(params_file.text, [database_name: fasta.toUriString()])]
+            .map { params_file, params_text, fasta ->
+                [[id: params_file.baseName], params_file.name, setFragpipeParamValues(params_text, [database_name: fasta.toUriString()])]
             }
     )
 
@@ -196,7 +202,7 @@ workflow FRAGPIPE_SEARCH {
 
     // Merge the chunks of each file (msfragger_pep_split.py:401-496); groupKey carries the slice count.
     ch_split_keyed = ch_split_search_input
-        .map { meta, _spectra, params_file -> [meta.id, meta, params_file] }
+        .map { meta, _spectra, _params_file, params_text -> [meta.id, meta, params_text] }
 
     // Each file's chunk result directories in chunk order (msfragger_pep_split.py merges chunks 0..N-1)
     ch_split_dirs = MSFRAGGER.out.results_dir
@@ -208,7 +214,7 @@ workflow FRAGPIPE_SEARCH {
 
     ch_for_merge = ch_split_keyed
         .join(ch_split_dirs, failOnMismatch: true, failOnDuplicate: true)
-        .map { _id, meta, params_file, dirs -> [meta, dirs, params_file.text] }
+        .map { _id, meta, params_text, dirs -> [meta, dirs, params_text] }
 
     MERGESPLITSEARCH(ch_for_merge, ch_fasta)
 
@@ -219,13 +225,14 @@ workflow FRAGPIPE_SEARCH {
     // Files MSFragger writes next to the LC-MS file (_uncalibrated.mzML for .raw/.d, _calibrated.mzML,
     // mzBIN caches) wherever it reads the original file: in the search, in split calibration, or
     // (calibrate_mass 0) in every chunk search, of which chunk 0 is taken.
-    ch_split_meta = ch_split_keyed.map { id, meta, _params_file -> [id, meta] }
+    ch_split_meta = ch_split_keyed.map { id, meta, _params_text -> [id, meta] }
     ch_msfragger_lcms_files = ch_msfragger_out.lcms_files.standard
         .mix(MSFRAGGERCALIBRATE.out.uncalibrated_mzml)
         .mix(
             ch_msfragger_out.lcms_files.split
                 .filter { meta, _files -> meta.chunk_id == 0 }
                 .map { meta, files -> [meta.original_id, files] }
+                // no failOnMismatch: lcms_files is optional (MSFragger writes none for an mzML input without calibration output)
                 .join(ch_split_meta)
                 .map { _id, files, meta -> [meta, files] }
         )
@@ -238,16 +245,10 @@ workflow FRAGPIPE_SEARCH {
             ch_msfragger_out.log.split
                 .filter { meta, _log_file -> meta.chunk_id == 0 }
                 .map { meta, log_file -> [meta.original_id, log_file] }
-                .join(ch_split_input.direct.map { meta, _spectra, _params_file, _cal -> [meta.id, meta] })
+                // no failOnMismatch: chunk 0 logs of calibrated files are dropped here (their log is MSFRAGGERCALIBRATE's)
+                .join(ch_split_input.direct.map { meta, _spectra, _params_file, _params_text, _cal -> [meta.id, meta] })
                 .map { _id, log_file, meta -> [meta, log_file] }
         )
-
-    ch_search_versions = MSFRAGGER.out.versions_msfragger
-        .mix(MSFRAGGER.out.versions_fragpipe)
-        .mix(MSFRAGGERCALIBRATE.out.versions_msfragger)
-        .mix(MSFRAGGERCALIBRATE.out.versions_fragpipe)
-        .mix(MERGESPLITSEARCH.out.versions_msfragger)
-        .mix(MERGESPLITSEARCH.out.versions_fragpipe)
 
     //
     // =====================================================================
@@ -317,7 +318,7 @@ workflow FRAGPIPE_SEARCH {
     // CmdPeptideProphet.java:442-447): <base>_calibrated.mzML when MSFragger wrote it, else
     // <base>_uncalibrated.mzML for .raw/.d input, else the LC-MS file itself.
     // hasCalibratedMzml from the MSFragger settings, the same in every data-type params set (FragpipeRun.java:1642)
-    ch_has_calibrated_mzml = ch_fragger_params.map { sets -> fraggerWritesCalibratedMzml(sets[0][1].text) }
+    ch_has_calibrated_mzml = ch_fragger_sets.map { sets -> fraggerWritesCalibratedMzml(sets[0][2]) }
     ch_validation_lcms = ch_lcms
         .combine(ch_has_calibrated_mzml)
         .map { meta, files, has_cal -> [meta, fragpipeValidationLcms(files, has_cal)] }
@@ -327,7 +328,7 @@ workflow FRAGPIPE_SEARCH {
 
     // One MSBooster run over every file, as FragPipe (CmdMSBooster: one --paramsList call for all PINs).
     // Per-file runs are not equivalent: DIA-NN's RT predictions depend on the peptide batch, so
-    // delta_RT_loess differs in the 4th decimal.
+    // delta_RT_loess differs in the 4th decimal (measured on a FragPipe .raw run).
     // The run decision comes before the strict join: MSFragger writes no PIN when its output_format
     // has none (tsv_pepXML, PeptideProphet runs), and every searched file would be unmatched.
     ch_msbooster_on = ch_tool_configs.filter { configs -> shouldRunTool(configs, 'msbooster') }
@@ -346,6 +347,7 @@ workflow FRAGPIPE_SEARCH {
         }
 
     // numThreads the parser wrote (workflow.threads / --fragpipe_threads); it sizes the task (conf/modules.config)
+    // value channel: the MSBooster params are read once and the text reused below
     ch_msbooster_text = ch_msbooster_params.map { f -> f.text }
     ch_msbooster_threads = ch_msbooster_in.msbooster.combine(ch_msbooster_text).map { _meta, _pins, _spectra, text -> msboosterThreads(text) }
 
@@ -388,6 +390,7 @@ workflow FRAGPIPE_SEARCH {
     ch_pin_from_msbooster_keyed = MSBOOSTER.out.pin_edited
         .flatMap { _meta, pins -> [pins].flatten() }
         .map { pin -> [pin.name.replaceAll(/_edited\.pin$/, ".pin"), pin] }  // MSBooster keeps <stem>_edited.pin
+        // no failOnMismatch: without MSBooster the left side is empty and every PIN is unmatched
         .join(ch_pin_keyed.map { key, _meta, pin -> [pin.name, key] }, failOnDuplicate: true)
         .map { _name, pin, key -> [key, pin] }
 
@@ -414,9 +417,4 @@ workflow FRAGPIPE_SEARCH {
     validation_lcms   = ch_validation_lcms                 // channel: [ val(meta), path(spectra) ] - spectra file named by Percolator / PeptideProphet
     uncalibrated_mzml = ch_lcms.flatMap { meta, files -> files.findAll { f -> f.name.endsWith('_uncalibrated.mzML') }.collect { f -> [meta, f] } }  // channel: [ val(meta), path(*_uncalibrated.mzML) ] - for .d/.raw
     calibrated_mzml   = ch_lcms.flatMap { meta, files -> files.findAll { f -> f.name.endsWith('_calibrated.mzML') && !f.name.endsWith('_uncalibrated.mzML') }.collect { f -> [meta, f] } }  // channel: [ val(meta), path(*_calibrated.mzML) ] - write_calibrated_mzml with calibration
-    versions          = ch_search_versions
-        .mix(MSBOOSTER.out.versions_msbooster)
-        .mix(MSBOOSTER.out.versions_fragpipe)
-        .mix(CRYSTALC.out.versions_crystalc)
-        .mix(CRYSTALC.out.versions_fragpipe)
 }

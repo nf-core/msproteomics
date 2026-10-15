@@ -31,17 +31,17 @@ output:
           description: indexed mzML file
           pattern: "*.mzML"
           ontologies: []
-  log:
-    - "*.log":
-        type: file
-        description: log file
-        pattern: "*.log"
-        ontologies: []
   versions:
     - versions.yml:
         type: file
         description: File containing software versions
         pattern: "versions.yml"
+        ontologies: []
+  log:
+    - "*.log":
+        type: file
+        description: log file
+        pattern: "*.log"
         ontologies: []
 
 topics:

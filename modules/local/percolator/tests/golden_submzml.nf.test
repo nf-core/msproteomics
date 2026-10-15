@@ -74,7 +74,7 @@ nextflow_process {
             def actualOut = new File(outputDir, 'actual_out'); actualOut.mkdirs()
             (outDir.listFiles().toList() + [weightsFile]).each { f -> java.nio.file.Files.createSymbolicLink(new File(actualOut, f.name).toPath(), f.toPath()) }
             def cmd = [
-                'python3', "${baseDir}/bin/golden_step_check.py",
+                'python3', "${baseDir}/tests/tools/golden_step_check.py",
                 '--golden', golden.path,
                 '--steps', "${perc.step_index}", "${conv.step_index}",
                 '--actual-cwd', "${taskDir.path}/b1906_01A_1",

@@ -101,7 +101,8 @@ workflow FRAGPIPE_GLYCO {
 
     ch_group_pairs = PAIRSCANS.out.pairs
         .map { meta, pairs -> [meta.group, pairs] }
-        .groupTuple()
+        // by file name: a fixed order for the OPAIR task hash (resume); the files sit in different task dirs
+        .groupTuple(sort: { a, b -> a.name <=> b.name })
 
     // the user's oxonium ion definitions file (opair.oxonium_filtering_file), [] for FragPipe's default in the tools dir;
     // a declared file that does not exist stops the run; wrapped in a list so combine adds [] as one element
@@ -215,11 +216,4 @@ workflow FRAGPIPE_GLYCO {
     mbg_dirs         = MBG.out.psm_dir                   // channel: [ val(meta), path(group_dir) ]
     mbg_manifest     = MBG.out.manifest                  // channel: [ val(meta), path(fragpipe-files.fp-manifest) ]
     mbg_log          = MBG.out.log                       // channel: [ val(meta), path(mbg.log) ]
-    opair_log        = OPAIR.out.log                     // channel: [ val(meta), path(opair.log) ]
-    versions         = FRAGPIPE_PTM.out.versions
-        .mix(PAIRSCANS.out.versions_fragpipe)
-        .mix(OPAIR.out.versions_opair)
-        .mix(OPAIR.out.versions_fragpipe)
-        .mix(MBG.out.versions_mbg)
-        .mix(MBG.out.versions_fragpipe)
 }

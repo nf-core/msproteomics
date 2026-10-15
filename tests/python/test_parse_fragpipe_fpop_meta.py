@@ -10,10 +10,15 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
 SCRIPT = REPO / "modules/local/parsefragpipeworkflow/resources/usr/bin/parse_fragpipe_workflow.py"
+# FragPipe 24.0 templates the module stages (the script takes them as arguments)
+TEMPLATES = Path(__file__).resolve().parents[2] / "modules" / "local" / "parsefragpipeworkflow" / "assets"
+TEMPLATE_ARGS = ["--fragger-template", str(TEMPLATES / "fragger_closed.params"), "--diaumpire-template", str(TEMPLATES / "diaumpire_se.params")]
 
 spec = importlib.util.spec_from_file_location("parse_fragpipe_workflow", SCRIPT)
 pfw = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(pfw)
+pfw.FRAGGER_TEMPLATE = TEMPLATES / "fragger_closed.params"
+pfw.DIAUMPIRE_TEMPLATE = TEMPLATES / "diaumpire_se.params"
 
 
 class TestFpopArgv(unittest.TestCase):

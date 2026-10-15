@@ -17,6 +17,9 @@ import pytest
 
 REPO = Path(__file__).resolve().parents[2]
 PARSER = REPO / "modules/local/parsefragpipeworkflow/resources/usr/bin/parse_fragpipe_workflow.py"
+# FragPipe 24.0 templates the module stages (the script takes them as arguments)
+TEMPLATES = Path(__file__).resolve().parents[2] / "modules" / "local" / "parsefragpipeworkflow" / "assets"
+TEMPLATE_ARGS = ["--fragger-template", str(TEMPLATES / "fragger_closed.params"), "--diaumpire-template", str(TEMPLATES / "diaumpire_se.params")]
 FIXTURES = REPO / "tests/fixtures/ptmshepherd_parity"
 sys.path.insert(0, str(FIXTURES))
 from capture import case_workflow, cases  # noqa: E402
@@ -28,7 +31,7 @@ def parse(name: str, tmp_path: Path) -> subprocess.CompletedProcess:
     workflow = tmp_path / f"{name}.workflow"
     workflow.write_text(case_workflow(CASES[name]))
     return subprocess.run(
-        [sys.executable, str(PARSER), "--workflow", str(workflow), "--data-types", "DDA", "--output-json",
+        [sys.executable, str(PARSER), *TEMPLATE_ARGS, "--workflow", str(workflow), "--data-types", "DDA", "--output-json",
          "--outdir", str(tmp_path), "--threads", "4"],  # FragPipe ran with --threads 4 (capture.sh)
         capture_output=True, text=True,
     )

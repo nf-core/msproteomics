@@ -30,8 +30,7 @@ process FRAGPIPEHEADLESS {
     tag "fragpipe_headless"
     label 'process_high'
 
-    // No default container — users must provide a licensed FragPipe image
-    // via process.withName or process.container in their config
+    // No container directive: the FragPipe image given at runtime with --fragpipe_container (process.container)
 
     input:
     path raw_files, stageAs: "raw_files/*"
@@ -53,7 +52,15 @@ process FRAGPIPEHEADLESS {
     task.ext.when == null || task.ext.when
 
     script:
+    // Exit if running this module with -profile conda / -profile mamba (copied from modules/nf-core/diann/main.nf)
+    if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
+        error "FRAGPIPEHEADLESS module does not support Conda: it runs in the FragPipe image given with --fragpipe_container. Please use Docker / Singularity / Podman instead."
+    }
+    if (!task.memory) {
+        error("${task.process}: task.memory is not set; FragPipe headless gets --ram and -Xmx from it")
+    }
     def mem_gb = (task.memory.toGiga() * 0.9).intValue()
+    def args = task.ext.args ?: ''
     def tools = fragpipeTools(task)
     checkHeadlessRows(raw_files, manifest_rows, annotation_rows)
     def layout = headlessLayout(manifest_rows, annotation_rows)
@@ -82,7 +89,7 @@ ${headlessStagingLines(raw_files, layout)}
         --workdir \$(pwd)/results \\
         --threads ${task.cpus} \\
         --ram ${mem_gb} \\
-        --config-tools-folder ${tools.tools_dir}
+        --config-tools-folder ${tools.tools_dir} ${args}
 
     # --help prints "FragPipePlus v24.0" on the first line and exits 1 (FragPipeMain.java:43-45): accept exactly that
     FRAGPIPE_HELP=\$(java -Duser.home=\$PWD -cp "${tools.fragpipe_lib}/*" org.nesvilab.fragpipe.FragPipeMain --help 2>&1) || test \$? -eq 1

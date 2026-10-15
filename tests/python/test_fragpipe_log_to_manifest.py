@@ -1,4 +1,4 @@
-"""Unit tests for bin/fragpipe_log_to_manifest.py (run: python3 -m unittest discover tests/python)."""
+"""Unit tests for tests/tools/fragpipe_log_to_manifest.py (run: make test-python)."""
 
 from __future__ import annotations
 
@@ -7,7 +7,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "bin"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import fragpipe_log_to_manifest as fpm  # noqa: E402
 

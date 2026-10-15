@@ -6,18 +6,18 @@
     FragpipeRun.java:1670-1810 configures them.
 
     Modules:
-    - PROTEINPROPHET (all groups together, CmdProteinProphet)
+    - PHILOSOPHERPROTEINPROPHET (all groups together, CmdProteinProphet)
     - PHILOSOPHERFILTER (DbAnnotate + filter + report per group, CmdPhilosopherFilter)
-    - IPROPHET (CmdIprophet) and PHILOSOPHERABACUS (CmdPhilosopherAbacus)
+    - PHILOSOPHERIPROPHET (CmdIprophet) and PHILOSOPHERABACUS (CmdPhilosopherAbacus)
 
     Every tool sees FragPipe's work-dir layout: <group>/<file>, the blank group in the root.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { PROTEINPROPHET                                   } from '../../../modules/local/philosopher/proteinprophet/main'
+include { PHILOSOPHERPROTEINPROPHET                                   } from '../../../modules/local/philosopherproteinprophet/main'
 include { PHILOSOPHERFILTER } from '../../../modules/local/philosopherfilter/main'
 include { PHILOSOPHERFILTER as PHILOSOPHERFILTER_LATER } from '../../../modules/local/philosopherfilter/main'
-include { IPROPHET                                         } from '../../../modules/local/philosopher/iprophet/main'
+include { PHILOSOPHERIPROPHET                                         } from '../../../modules/local/philosopheriprophet/main'
 include { PHILOSOPHERABACUS } from '../../../modules/local/philosopherabacus/main'
 include { fpopCoadaptrMeta; shouldRunTool; getToolArgs; getToolField; getDecoyTag; requireToolField; fragpipeGroupDir; groupResultsDir; fragpipeLcmsOrderKey; compareFragpipeLcmsKeys; sortByRank; fragpipeGroupPath; fragpipeQuantLabels } from '../utils_nfcore_msproteomics_pipeline/fragpipe_utils'
 
@@ -53,7 +53,7 @@ workflow FRAGPIPE_INFERENCE {
         .filter { files, _paths, _first, configs -> files && shouldRunTool(configs, 'proteinprophet') }
         .map { files, paths, _first, configs -> [aggregate_meta, files, paths, getToolArgs(configs, 'proteinprophet')] }
 
-    PROTEINPROPHET(ch_for_proteinprophet, ch_fasta)
+    PHILOSOPHERPROTEINPROPHET(ch_for_proteinprophet, ch_fasta)
 
     //
     // STEP 2: DbAnnotate + filter + report per group (FragpipeRun.java:1688-1780). Groups after the
@@ -83,7 +83,7 @@ workflow FRAGPIPE_INFERENCE {
             }
         }
 
-    ch_protxml_for_filter = PROTEINPROPHET.out.protxml.map { _meta, protxml -> [protxml] }
+    ch_protxml_for_filter = PHILOSOPHERPROTEINPROPHET.out.protxml.map { _meta, protxml -> [protxml] }
         .ifEmpty([[]])
 
     ch_filter_rows = ch_groups
@@ -124,7 +124,7 @@ workflow FRAGPIPE_INFERENCE {
     //
     // STEP 3: iProphet and Abacus for more than one group without label-free IonQuant
     // (FragpipeRun.java:1782-1809).
-    // Exemption from FragPipe (user decision):
+    // Deliberate difference from FragPipe, documented in docs/usage.md (SAINTexpress):
     // Abacus --reprint also runs when SAINTexpress is on and no IonQuant run writes the REPRINT tables,
     // although FragPipe's own conditions would not run it; its outputs then exist only in the pipeline.
     //
@@ -145,15 +145,15 @@ workflow FRAGPIPE_INFERENCE {
         .combine(ch_shared)
         .map { _ordered, _abacus, _iprophet, configs, files, paths, _first -> [aggregate_meta, files, paths, getToolArgs(configs, 'iprophet')] }
 
-    IPROPHET(ch_for_iprophet)
+    PHILOSOPHERIPROPHET(ch_for_iprophet)
 
     ch_for_abacus = ch_report_groups
         .filter { _ordered, abacus, _iprophet, _configs -> abacus }
         // Without ProteinProphet FragPipe still configures Abacus on combined.prot.xml of the work dir
         // (sharedMapGroupsToProtxml is refilled outside isRun(), FragpipeRun.java:1684-1685); Philosopher
         // then fails on the missing file when --protein reads it (philosopher lib/aba/pro.go).
-        .combine(PROTEINPROPHET.out.protxml.map { _meta, protxml -> [protxml] }.ifEmpty([[]]))
-        .combine(IPROPHET.out.pepxml.map { _meta, pepxml -> [pepxml] }.ifEmpty([[]]))
+        .combine(PHILOSOPHERPROTEINPROPHET.out.protxml.map { _meta, protxml -> [protxml] }.ifEmpty([[]]))
+        .combine(PHILOSOPHERIPROPHET.out.pepxml.map { _meta, pepxml -> [pepxml] }.ifEmpty([[]]))
         .map { ordered, _abacus, _iprophet, configs, protxml_item, combined ->
             def protxml = [protxml_item].flatten().findAll { f -> f }
             def combined_pepxml = [combined].flatten().findAll { f -> f }
@@ -182,7 +182,7 @@ workflow FRAGPIPE_INFERENCE {
     ch_results_dir = ch_filter_files.map { meta, files -> [meta, groupResultsDir(files)] }
 
     emit:
-    protxml          = PROTEINPROPHET.out.protxml                  // channel: [ val(meta), path(combined.prot.xml) ]
+    protxml          = PHILOSOPHERPROTEINPROPHET.out.protxml                  // channel: [ val(meta), path(combined.prot.xml) ]
     results_dir      = ch_results_dir                              // channel: [ val(meta), path(results_dir) ] per FragPipe group
     workspace        = ch_workspaces                               // channel: [ val(meta), path(.meta) ] per FragPipe group
     psms             = PHILOSOPHERFILTER.out.psms.mix(PHILOSOPHERFILTER_LATER.out.psms)          // channel: [ val(meta), path(psm.tsv) ]
@@ -190,19 +190,19 @@ workflow FRAGPIPE_INFERENCE {
     proteins         = PHILOSOPHERFILTER.out.proteins.mix(PHILOSOPHERFILTER_LATER.out.proteins)  // channel: [ val(meta), path(protein.tsv) ]
     ions             = PHILOSOPHERFILTER.out.ions.mix(PHILOSOPHERFILTER_LATER.out.ions)          // channel: [ val(meta), path(ion.tsv) ] optional
     pepxml           = ch_pepxml                                   // channel: [ val(meta), path(pepxml) ] - ProteinProphet doesn't modify pepXML
-    combined_pepxml  = IPROPHET.out.pepxml                         // channel: [ val(meta), path(combined.pep.xml) ]
+    combined_pepxml  = PHILOSOPHERIPROPHET.out.pepxml                         // channel: [ val(meta), path(combined.pep.xml) ]
     reprint_spc      = PHILOSOPHERABACUS.out.reprint_spc          // channel: [ val(meta), path(reprint.spc.tsv) ]
     reprint_int      = PHILOSOPHERABACUS.out.reprint_int          // channel: [ val(meta), path(reprint.int.tsv) ]
     combined_protein = PHILOSOPHERABACUS.out.combined_protein     // channel: [ val(meta), path(combined_protein.tsv) ]
     combined_peptide = PHILOSOPHERABACUS.out.combined_peptide     // channel: [ val(meta), path(combined_peptide.tsv) ]
-    versions         = PROTEINPROPHET.out.versions_philosopher
-        .mix(PROTEINPROPHET.out.versions_fragpipe)
+    versions         = PHILOSOPHERPROTEINPROPHET.out.versions_philosopher
+        .mix(PHILOSOPHERPROTEINPROPHET.out.versions_fragpipe)
         .mix(PHILOSOPHERFILTER.out.versions_philosopher)
         .mix(PHILOSOPHERFILTER.out.versions_fragpipe)
         .mix(PHILOSOPHERFILTER_LATER.out.versions_philosopher)
         .mix(PHILOSOPHERFILTER_LATER.out.versions_fragpipe)
-        .mix(IPROPHET.out.versions_philosopher)
-        .mix(IPROPHET.out.versions_fragpipe)
+        .mix(PHILOSOPHERIPROPHET.out.versions_philosopher)
+        .mix(PHILOSOPHERIPROPHET.out.versions_fragpipe)
         .mix(PHILOSOPHERABACUS.out.versions_philosopher)
         .mix(PHILOSOPHERABACUS.out.versions_fragpipe)
 }

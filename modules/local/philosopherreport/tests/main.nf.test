@@ -5,9 +5,8 @@ nextflow_process {
     process "PHILOSOPHERREPORT"
 
     tag "modules"
-    tag "modules_nfcore"
-    tag "philosopher"
-    tag "philosopher/report"
+    tag "modules_local"
+    tag "philosopherreport"
 
     test("philosopher_report - stub") {
         options "-stub"

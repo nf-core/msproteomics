@@ -16,6 +16,7 @@
 */
 
 include { PARSEFRAGPIPEWORKFLOW } from '../../../modules/local/parsefragpipeworkflow/main'
+include { parseFragpipeWorkflowTemplates } from '../utils_nfcore_msproteomics_pipeline/fragpipe_utils'
 include { FRAGPIPE_DATABASE   } from '../fragpipe_database/main'
 include { FRAGPIPEHEADLESS } from '../../../modules/local/fragpipeheadless/main'
 
@@ -43,7 +44,8 @@ workflow FRAGPIPE_HEADLESS_WF {
     PARSEFRAGPIPEWORKFLOW(
         ch_workflow_file
             .map { wf -> [[id: wf.baseName], wf] }
-            .combine(ch_data_types.map { data_types -> [data_types] })
+            .combine(ch_data_types.map { data_types -> [data_types] }),
+        parseFragpipeWorkflowTemplates(projectDir)
     )
     ch_tool_configs = PARSEFRAGPIPEWORKFLOW.out.tool_configs_json
         .map { _meta, json_file -> json_file }
@@ -67,7 +69,7 @@ workflow FRAGPIPE_HEADLESS_WF {
     FRAGPIPEHEADLESS(
         ch_collected_files,
         ch_prepared_db,
-        ch_workflow_file.map { wf -> wf.text },
+        ch_workflow_file.map { wf -> wf.text },  // value channel: the .workflow is read once, FRAGPIPEHEADLESS writes it into its work dir
         ch_manifest_rows,
         ch_annotation_rows
     )
@@ -77,5 +79,4 @@ workflow FRAGPIPE_HEADLESS_WF {
     combined_protein = FRAGPIPEHEADLESS.out.combined_protein  // path: combined_protein.tsv
     combined_peptide = FRAGPIPEHEADLESS.out.combined_peptide  // path: combined_peptide.tsv
     combined_ion     = FRAGPIPEHEADLESS.out.combined_ion      // path: combined_ion.tsv
-    versions         = FRAGPIPEHEADLESS.out.versions
 }

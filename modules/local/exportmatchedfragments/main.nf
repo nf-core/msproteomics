@@ -23,7 +23,7 @@
  *   - results_dirs: results/<group dir>/ per group, psm.tsv with the matched fragments
  *   - psms: results/<group dir>/psm.tsv
  *   - log: console output of the export
- *   - versions: FragAnnotator version (from the jar name)
+ *   - versions: FragAnnotator version (TabRun.FRAG_ANNOTATOR, TabRun.java:96: FragAnnotator-1.0.0.jar; its pom.properties says 1.0.0)
  */
 include { fragpipeTools; matchedFragmentsStaging; matchedFragmentsCollect; fragpipeJarLines; shellArgs } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
 
@@ -47,6 +47,10 @@ process EXPORTMATCHEDFRAGMENTS {
     task.ext.when == null || task.ext.when
 
     script:
+    // Exit if running this module with -profile conda / -profile mamba (copied from modules/nf-core/diann/main.nf)
+    if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
+        error "EXPORTMATCHEDFRAGMENTS module does not support Conda: it runs in the FragPipe image given with --fragpipe_container. Please use Docker / Singularity / Podman instead."
+    }
     // FragPipe passes no options (CmdExportMatchedFragments.java); ext.args is appended after them
     def args = task.ext.args ?: ''
     def tools = fragpipeTools(task)
@@ -56,7 +60,7 @@ process EXPORTMATCHEDFRAGMENTS {
     // then goes on with the psm.tsv files unchanged, and so does this module.
     """
     export HOME=\$(pwd)
-    echo "1.0.0" > .fragannotator_version
+    echo "${tools.fragannotator_version}" > .fragannotator_version
     ${fragpipeJarLines(tools, ['batmass_io'])}
 
 ${matchedFragmentsStaging('fragpipe_manifest.tsv', groups, root_group_dir, diaumpire, speclibgen)}
@@ -70,6 +74,7 @@ ${matchedFragmentsCollect(groups, root_group_dir)}
     """
 
     stub:
+    def tools = fragpipeTools(task)
     def groups = (group_dirs instanceof List ? group_dirs : [group_dirs]).collect { d -> d.name.tokenize('/').last() }
     """
 ${matchedFragmentsStaging('fragpipe_manifest.tsv', groups, root_group_dir, diaumpire, speclibgen)}
@@ -83,6 +88,6 @@ ${matchedFragmentsStaging('fragpipe_manifest.tsv', groups, root_group_dir, diaum
     echo "stub" > export_matched_fragments.log
 
 ${matchedFragmentsCollect(groups, root_group_dir)}
-    echo "1.0.0" > .fragannotator_version
+    echo "${tools.fragannotator_version}" > .fragannotator_version
     """
 }

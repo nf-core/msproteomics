@@ -15,6 +15,7 @@
  *   - versions: FragPipe version (topic: versions)
  */
 include { fragpipeTools; fragpipeJarLines; shellArgs } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
+include { javaXmxGb } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
 
 process CHECKCENTROID {
     tag "${meta.id}"
@@ -31,8 +32,12 @@ process CHECKCENTROID {
     task.ext.when == null || task.ext.when
 
     script:
+    // Exit if running this module with -profile conda / -profile mamba (copied from modules/nf-core/diann/main.nf)
+    if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
+        error "CHECKCENTROID module does not support Conda: it runs in the FragPipe image given with --fragpipe_container. Please use Docker / Singularity / Podman instead."
+    }
     def args = task.ext.args ?: ''
-    def ram = task.memory ? task.memory.toGiga() : 8
+    def ram = javaXmxGb(task, 0)
     def tools = fragpipeTools(task)
     // Class path: lib/fragpipe-<version>.jar and the batmass-io jar its build names (ToolingUtils.BATMASS_IO_JAR:
     // batmass-io-1.36.5 in the FragPipe 24.0 release, 1.36.6 in FragPipePlus; fragpipeJarLines)

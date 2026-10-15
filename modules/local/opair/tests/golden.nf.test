@@ -33,6 +33,7 @@ nextflow_process {
             script "../../parsefragpipeworkflow/main.nf"
             process {
                 """
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = channel.of([ [ id: 'opair' ], file((System.getenv('GOLDEN_ROOT') + '/PXD017646/glyco-O-Pair_perfile_det/files/work') + '/fragpipe.workflow', checkIfExists: true), ['DDA'] ])
                 """
             }

@@ -5,8 +5,8 @@ nextflow_process {
     process "MERGESPLITSEARCH"
 
     tag "modules"
-    tag "modules_nfcore"
-    tag "merge_split_search"
+    tag "modules_local"
+    tag "mergesplitsearch"
 
     test("merge_split_search - stub") {
         options "-stub"

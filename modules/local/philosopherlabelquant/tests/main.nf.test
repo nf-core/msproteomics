@@ -5,9 +5,8 @@ nextflow_process {
     process "PHILOSOPHERLABELQUANT"
 
     tag "modules"
-    tag "modules_nfcore"
-    tag "philosopher"
-    tag "philosopher/labelquant"
+    tag "modules_local"
+    tag "philosopherlabelquant"
 
     test("philosopher_labelquant - stub") {
         options "-stub"

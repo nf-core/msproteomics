@@ -10,14 +10,14 @@ PTM-Shepherd is part of the FragPipe suite and uses multiple JAR dependencies in
 
 ## Inputs
 
-| Channel     | Type     | Description                                                        |
-| ----------- | -------- | ------------------------------------------------------------------ |
-| meta        | val(map) | Sample metadata map                                                |
-| psm_dirs    | path     | Directories containing `psm.tsv` files from PHILOSOPHERFILTER      |
-| protxml     | path     | Combined protein inference file from PROTEINPROPHET (`*.prot.xml`) |
-| mzml_files  | path     | Mass spectrometry files (`*.mzML`, staged in `spectra/` directory) |
-| config_file | path     | PTM-Shepherd configuration file (`shepherd.config`)                |
-| fasta       | path     | Protein database FASTA (shared resource)                           |
+| Channel     | Type     | Description                                                                   |
+| ----------- | -------- | ----------------------------------------------------------------------------- |
+| meta        | val(map) | Sample metadata map                                                           |
+| psm_dirs    | path     | Directories containing `psm.tsv` files from PHILOSOPHERFILTER                 |
+| protxml     | path     | Combined protein inference file from PHILOSOPHERPROTEINPROPHET (`*.prot.xml`) |
+| mzml_files  | path     | Mass spectrometry files (`*.mzML`, staged in `spectra/` directory)            |
+| config_file | path     | PTM-Shepherd configuration file (`shepherd.config`)                           |
+| fasta       | path     | Protein database FASTA (shared resource)                                      |
 
 ## Outputs
 

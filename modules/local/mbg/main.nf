@@ -15,6 +15,7 @@
  *   - log: mbg.log
  */
 include { fragpipeTools; fragpipeManifestText; writeTextFile; fillArgvTokens; shellArgs; fragpipeJarLines } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
+include { javaXmxGb } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
 
 process MBG {
     tag "${meta.id}"
@@ -34,10 +35,13 @@ process MBG {
     task.ext.when == null || task.ext.when
 
     script:
+    // Exit if running this module with -profile conda / -profile mamba (copied from modules/nf-core/diann/main.nf)
+    if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
+        error "MBG module does not support Conda: it runs in the FragPipe image given with --fragpipe_container. Please use Docker / Singularity / Podman instead."
+    }
     def args = task.ext.args ?: ''
-    prefix = task.ext.prefix ?: "${meta.id}"
     def tools = fragpipeTools(task)
-    def ram = task.memory ? Math.max(1, task.memory.toGiga() - 2) : 30
+    def ram = javaXmxGb(task, 2)
     // staged as input/<name>: compare the last path element
     if (psm_dir.toString().tokenize("/").last() != meta.id) {
         error("MBG: group directory ${psm_dir} does not match meta.id ${meta.id}")
@@ -50,7 +54,12 @@ process MBG {
         '@PSM@'      : "{TASK_DIR}/${meta.id}/psm.tsv",
         '@MANIFEST@' : '{TASK_DIR}/fragpipe-files.fp-manifest',
     ]))
-    def residues = argv[argv.indexOf('--toaddresiduals') + 1]
+    // FragPipe stops when no residues are set ("no glycan residues or mods specified for MBG", CmdMBGMatch.java:145-158)
+    def residues_at = argv.indexOf('--toaddresiduals')
+    if (residues_at < 0 || residues_at + 1 >= argv.size()) {
+        error("MBG ${meta.id}: no glycan residues or mods specified for MBG (no --toaddresiduals value in ${argv})")
+    }
+    def residues = argv[residues_at + 1]
     // java [bruker] [thermo] -cp <MBG>:<batmass-io>:<IonQuant> com.mbg.MBG ... (CmdMBGMatch.java:127-136), with
     // the Thermo / Bruker libraries next to the MSFragger jar (FragpipeRun.java:1348-1356).
     // FragPipe passes no -Xmx, so MBG gets the JVM default (1/4 of the host RAM); inside a task's
@@ -79,7 +88,6 @@ process MBG {
     """
 
     stub:
-    prefix = task.ext.prefix ?: "${meta.id}"
     def tools = fragpipeTools(task)
     """
     cp -rL "input/${meta.id}" "${meta.id}"

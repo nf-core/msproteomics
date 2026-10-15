@@ -23,6 +23,7 @@ nextflow_process {
             process {
                 """
                 assert System.getenv('GOLDEN_ROOT') : 'set GOLDEN_ROOT to the golden data root'
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = channel.of([ [ id: 'ptms' ], file(System.getenv('GOLDEN_ROOT') + '/PXD030670/glyco-N-preptms_perfile/files/work/fragpipe.workflow', checkIfExists: true), ['DDA'] ])
                 """
             }
@@ -63,10 +64,10 @@ nextflow_process {
             def outDir = new File(process.out.results_dir[0][1].toString())
             def task   = outDir.parentFile
             // argv: FragPipe's elements vs the ones printed to ptmshepherd.log (printf %q; the quotes around the config path
-            // are literal characters of the element, CmdPtmshepherd.java:163 passes it through a ProcessBuilder; -Xmx is task memory, a user decision; -Duser.home=<task dir> is
-            // added to every Java launch because the container user has no passwd entry, bin/golden_step_check.py)
+            // are literal characters of the element, CmdPtmshepherd.java:163 passes it through a ProcessBuilder; -Xmx is task memory; -Duser.home=<task dir> is
+            // added to every Java launch because the container user has no passwd entry, tests/tools/golden_step_check.py)
             def actualLine = new File(task, 'ptmshepherd.log').readLines()[0]
-            // FragPipe install root (fragpipe*) of the module's jar path (<root>/tools/..., fragpipeTools()), as bin/golden_step_check.py fragpipe_root
+            // FragPipe install root (fragpipe*) of the module's jar path (<root>/tools/..., fragpipeTools()), as tests/tools/golden_step_check.py fragpipe_root
             def fp   = (actualLine =~ /(?i)(\/[^\s:]*\/fragpipe[^\/\s:]*)\/(?:tools|lib)\//)[0][1]
             def norm = { String t -> t.replace('{FRAGPIPE}', fp).replace('{WORKDIR}', '<WORK>') }
             def expected = step.argv.collect { t -> norm.call(t) }.findAll { t -> !t.startsWith('-Xmx') && !t.startsWith('-Duser.home=') }

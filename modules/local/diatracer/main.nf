@@ -1,4 +1,18 @@
+/*
+ * DIATRACER: diaTracer pseudo-MS/MS spectra from one Bruker timsTOF DIA .d file (CmdDiaTracer)
+ *
+ * Input:
+ *   - meta: Sample metadata map
+ *   - d_file: Bruker .d directory
+ *   - config_cli: diaTracer options from the workflow parser
+ *
+ * Output:
+ *   - results_dir / mzml: <run>_diatracer.mzML and diatracer.log
+ *   - license_agreement: I_AGREE_FRAGPIPE_LICENSE_AGREEMENT
+ *   - versions_diatracer / versions_fragpipe: versions (topic: versions)
+ */
 include { fragpipeTools; requireFragpipeLicenseAgreement; writeTextFile; fragpipeJarLines; shellArgs } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
+include { javaXmxGb } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
 
 process DIATRACER {
     tag "${meta.id}"
@@ -21,9 +35,13 @@ process DIATRACER {
     task.ext.when == null || task.ext.when
 
     script:
+    // Exit if running this module with -profile conda / -profile mamba (copied from modules/nf-core/diann/main.nf)
+    if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
+        error "DIATRACER module does not support Conda: it runs in the FragPipe image given with --fragpipe_container. Please use Docker / Singularity / Podman instead."
+    }
     def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id}"
-    def ram = task.memory ? Math.max(1, task.memory.toGiga() - 2) : 30
+    def ram = javaXmxGb(task, 2)
     def tools = fragpipeTools(task)
     def agreement = requireFragpipeLicenseAgreement(task)
     // Argv as CmdDiaTracer.java:84-117 (headless run): the Bruker native libraries next to the MSFragger jar
@@ -32,6 +50,7 @@ process DIATRACER {
     // then ext.args: tool arguments, not JVM options
     // CmdDiaTracer.java:138: diaTracer writes <the .d path with ".d" replaced by "_diatracer.mzML"> next to the .d it is
     // given, so the staged path (not its resolved target in the data) is passed and the mzML lands in the task dir
+    // String.replace of every ".d", not of the suffix only, as FragPipe (CmdDiaTracer.java:138)
     def mzml_name = d_file.name.replace('.d', '_diatracer.mzML')
     """
     export HOME=\$(pwd)
@@ -48,6 +67,7 @@ process DIATRACER {
 
     stub:
     prefix = task.ext.prefix ?: "${meta.id}"
+    // String.replace of every ".d", not of the suffix only, as FragPipe (CmdDiaTracer.java:138)
     def mzml_name = d_file.name.replace('.d', '_diatracer.mzML')
     def tools = fragpipeTools(task)
     """

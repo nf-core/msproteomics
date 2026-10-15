@@ -61,7 +61,7 @@ output:
           description: Tool name
       - fragpipeToolVersions().ptmprophet:
           type: string
-          description: Version of PTMProphet bundled with FragPipe
+          description: Version of PTMProphet bundled with FragPipe; fixed value (fragpipeToolVersions()), held by the version-named binary tools/PTMProphet/PTMProphetParser-6.3.2 that the module checks exists
   versions_fragpipe:
     - - ${task.process}:
           type: string
@@ -83,7 +83,7 @@ topics:
           description: Tool name
       - fragpipeToolVersions().ptmprophet:
           type: string
-          description: Version of PTMProphet bundled with FragPipe
+          description: Version of PTMProphet bundled with FragPipe; fixed value (fragpipeToolVersions()), held by the version-named binary tools/PTMProphet/PTMProphetParser-6.3.2 that the module checks exists
     - - ${task.process}:
           type: string
           description: Process name

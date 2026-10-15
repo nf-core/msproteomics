@@ -5,8 +5,8 @@ nextflow_process {
     process "MZMLINDEXING"
 
     tag "modules"
-    tag "modules_nfcore"
-    tag "mzml_indexing"
+    tag "modules_local"
+    tag "mzmlindexing"
 
     test("mzml_indexing - stub") {
         tag "stub"
@@ -29,7 +29,7 @@ nextflow_process {
         then {
             assertAll (
                 { assert process.success },
-                { assert snapshot(process.out.mzmls_indexed, process.out.log).match() }
+                { assert snapshot(process.out.mzmls_indexed, process.out.log, process.out.versions).match() }
             )
         }
     }

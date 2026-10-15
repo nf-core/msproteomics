@@ -16,14 +16,18 @@ input:
   - ch_rawfiles:
       type: channel
       description: "Channel of [val(meta), path(raw/mzml/d.tar)] tuples with raw spectra files"
+  - val_reindex_mzml:
+      type: boolean
+      description: Index the mzML files with MZMLINDEXING (pipeline parameter reindex_mzml)
+  - val_openms_peakpicking:
+      type: boolean
+      description: Pick peaks in the mzML files with OPENMSPEAKPICKER (pipeline parameter openms_peakpicking)
+  - val_convert_dotd:
+      type: boolean
+      description: Convert Bruker .d directories to mzML with TDF2MZML (pipeline parameter convert_dotd)
 output:
   - results:
       type: channel
       description: "Channel of [val(meta), path(mzML|.d)] tuples with converted/indexed spectra files"
-  - versions:
-      type: channel
-      description: |
-        Empty. Every module reports its version on the 'versions' topic.
-        Structure: []
 authors:
   - "@daichengxin"

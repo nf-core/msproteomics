@@ -1,4 +1,4 @@
-include { opairCommands; taskDirArg; taskFileCommand; shellQuote } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
+include { opairCommands; taskDirArg; taskFileCommand; shellQuote; fragpipeToolVersions } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
 include { textFileCommand } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/write_text_file'
 
 /*
@@ -30,7 +30,7 @@ process OPAIR {
     output:
     tuple val(meta), path("${meta.id}", type: 'dir'), emit: psm_dir
     tuple val(meta), path("opair.log")               , emit: log
-    tuple val("${task.process}"), val('opair'), eval("cat .opair_version"), emit: versions_opair, topic: versions
+    tuple val("${task.process}"), val('opair'), val(fragpipeToolVersions().opair), emit: versions_opair, topic: versions
     tuple val("${task.process}"), val('fragpipe'), eval("cat .fragpipe_version"), emit: versions_fragpipe, topic: versions
 
     when:
@@ -38,7 +38,6 @@ process OPAIR {
 
     script:
     def args = task.ext.args ?: ''
-    prefix = task.ext.prefix ?: "${meta.id}"
     // staged as input/<name>: compare the last path element
     if (psm_dir.toString().tokenize("/").last() != meta.id) {
         error("OPAIR: group directory ${psm_dir} does not match meta.id ${meta.id}")
@@ -65,7 +64,6 @@ process OPAIR {
     done
 
     echo ${shellQuote(cmds.fragpipe_version)} > .fragpipe_version
-    cp .fragpipe_version .opair_version
 
     # FragPipe runs O-Pair from its work dir with one argv token per flag ("-b 20.0")
     CMD=( dotnet ${shellQuote(cmds.dll)} ${cmds.argv.collect { t -> taskDirArg(t) }.join(' ')} ${args} )
@@ -75,7 +73,6 @@ process OPAIR {
     """
 
     stub:
-    prefix = task.ext.prefix ?: "${meta.id}"
     def cmds = opairCommands(meta.id, filelist, argv, oxonium_file, task)
     // relative paths in the stub (deterministic snapshots); the log holds the filled argv, {TASK_DIR} unexpanded
     """
@@ -83,6 +80,5 @@ process OPAIR {
     ${taskFileCommand("${meta.id}/filelist_opair.txt", cmds.filelist.replace('{TASK_DIR}/', ''))}
     ${textFileCommand('opair.log', cmds.argv.collect { t -> "${t}\n" }.join(''))}
     echo ${shellQuote(cmds.fragpipe_version)} > .fragpipe_version
-    cp .fragpipe_version .opair_version
     """
 }

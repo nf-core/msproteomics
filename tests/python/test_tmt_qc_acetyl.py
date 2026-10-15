@@ -1,4 +1,4 @@
-"""N-terminal acetyl detection of the TMT label check QC (RC-38 F29): only N-terminal 42.0106
+"""N-terminal acetyl detection of the TMT label check QC: only N-terminal 42.0106
 counts as biological blocking; K-acetyl does not."""
 
 import importlib.util

@@ -34,11 +34,17 @@ def shellQuote(token) {
  * Both run in the pepXML's directory (CmdPercolator.java:214, :228), FragPipe's group dir: the
  * converter writes <cwd>/<basename>.pepXML as inputfile (PercolatorOutputToPepXML.java:406-450).
  * With the task dir as work dir that is <task>/<group>, the task dir itself for the blank group.
+ * The shell lines link the PIN(s) and pepXML(s) into the group dir and back out, delete the TSVs FragPipe
+ * deletes (CmdPercolator.java:233-247), move the outputs to <prefix>/ and the weights to the task dir.
  *
+ * @param keep_target_tsv false deletes <stripped>_percolator_target_psms.tsv
+ * @param keep_decoy_tsv false deletes <stripped>_percolator_decoy_psms.tsv
+ * @param prefix Output directory of the task (task.ext.prefix or meta.id)
  * @return Map: percolator and converter argv, group dir, stripped basename, interact file names,
+ *         shell lines (link_inputs, unlink_inputs, drop_tsv, move_outputs, move_weights; '' when not needed),
  *         FragPipe lib dir and FragPipe version
  */
-def percolatorCommands(meta, pin, edited_pin, pepxml_files, percolator_cli, args, min_prob, has_crystalc, decoy_tag, write_weights, init_weights, task) {
+def percolatorCommands(meta, pin, edited_pin, pepxml_files, percolator_cli, args, min_prob, has_crystalc, decoy_tag, write_weights, init_weights, keep_target_tsv, keep_decoy_tsv, prefix, task) {
     if (!meta.data_type) {
         error("PERCOLATOR ${meta.id}: meta.data_type is missing (FragPipe data type of the searched file)")
     }
@@ -85,12 +91,26 @@ def percolatorCommands(meta, pin, edited_pin, pepxml_files, percolator_cli, args
     def converter = ['java', '-cp', "${fragpipe_root}/lib/*", 'org.nesvilab.fragpipe.tools.percolator.PercolatorOutputToPepXML',
         "${stripped}.pin", basename, "${stripped}_percolator_target_psms.tsv", "${stripped}_percolator_decoy_psms.tsv",
         "interact-${basename}", meta.data_type == 'DDA' ? 'DDA' : 'DIA', min_prob]
+    def group_dir = (meta.group == '' ? '.' : meta.group).toString()
+    def gdir = shellQuote(group_dir)
+    def interact = stems.collect { s -> "interact-${s}.pep.xml".toString() }
+    def target_tsv = "${stripped}_percolator_target_psms.tsv"
+    def decoy_tsv = "${stripped}_percolator_decoy_psms.tsv"
+    // the group dir holds the PIN(s) and pepXML(s) like FragPipe's (the task dir itself for the blank group)
+    def inputs = ([pin] + edited + pepxmls).collect { f -> shellQuote(f.name) }
+    def outputs = interact.collect { name -> shellQuote(name) } + (keep_target_tsv ? [shellQuote(target_tsv)] : []) + (keep_decoy_tsv ? [shellQuote(decoy_tsv)] : [])
+    def drop_tsv = (keep_target_tsv ? [] : [target_tsv]) + (keep_decoy_tsv ? [] : [decoy_tsv])
     return [
         percolator      : percolator.collect { t -> t.toString() },
         converter       : converter.collect { t -> t.toString() },
-        group_dir       : (meta.group == '' ? '.' : meta.group).toString(),
+        group_dir       : group_dir,
         stripped        : stripped,
-        interact        : stems.collect { s -> "interact-${s}.pep.xml".toString() },
+        interact        : interact,
+        link_inputs     : (group_dir == '.' ? '' : inputs.collect { name -> "ln -s \"\$PWD\"/${name} ${gdir}/${name}" }.join('\n    ')).toString(),
+        unlink_inputs   : (group_dir == '.' ? '' : "rm ${inputs.collect { name -> "${gdir}/${name}" }.join(' ')}").toString(),
+        drop_tsv        : (drop_tsv ? "rm ${drop_tsv.collect { name -> "${gdir}/${shellQuote(name)}" }.join(' ')}" : '').toString(),
+        move_outputs    : (group_dir == prefix ? '' : "mv ${outputs.collect { name -> "${gdir}/${name}" }.join(' ')} ${shellQuote(prefix)}/").toString(),
+        move_weights    : (write_weights && group_dir != '.' ? "mv ${gdir}/${shellQuote("${stripped}_percolator.weights")} ." : '').toString(),
         fragpipe_lib    : "${fragpipe_root}/lib".toString(),
         fragpipe_version: tools.fragpipe_version
     ]
@@ -100,7 +120,9 @@ def percolatorCommands(meta, pin, edited_pin, pepxml_files, percolator_cli, args
  * Abacus argv as CmdPhilosopherAbacus.configure builds it (CmdPhilosopherAbacus.java:106-135):
  * `philosopher abacus <options> [--labels --plex <n>] <group dir...>`.
  *
- * @return Map: argv, group names and FragPipe version
+ * The stage lines create each group dir with a link to its staged workspace (group_meta<i>/.meta).
+ *
+ * @return Map: argv, group names, stage lines and FragPipe version
  */
 def abacusCommand(group_workspaces, group_names, protxml, abacus_cli, args, plex, task) {
     def workspaces = [group_workspaces].flatten()
@@ -127,6 +149,9 @@ def abacusCommand(group_workspaces, group_names, protxml, abacus_cli, args, plex
     return [
         argv            : argv.collect { t -> t.toString() },
         groups          : groups,
+        stage           : groups.withIndex().collect { group, i ->
+            "mkdir -p ${shellQuote(group)} && ln -s \"\$PWD\"/group_meta${i + 1}/.meta ${shellQuote(group)}/.meta"
+        }.join('\n    ').toString(),
         fragpipe_version: tools.fragpipe_version
     ]
 }
@@ -140,10 +165,15 @@ def abacusCommand(group_workspaces, group_names, protxml, abacus_cli, args, plex
  * [--protxml <protxml> [--probin <first group dir>] --razor]` (CmdPhilosopherFilter.java:79-115).
  * Report: `report <flags>` (CmdPhilosopherReport.java:47-62).
  *
+ * The shell lines link the pepXMLs into the group dir and the first group's workspace into its dir, run
+ * DbAnnotate (first group, logged to <prefix>.log) and move the group's results to <prefix>/.
+ *
+ * @param prefix Output directory of the task (task.ext.prefix or meta.id)
  * @return Map: group dir, first group dir, whether this is the first group, argv lists,
- *         pepXML names, philosopher binary and FragPipe version
+ *         pepXML names, shell lines (link_pepxml, link_first, annotate_lines, move_results; '' when not needed),
+ *         philosopher binary and FragPipe version
  */
-def philosopherFilterCommands(meta, pepxml_files, protxml, first_group_meta, first_group, filter_cli, args, dont_use_protxml, report_cli, fasta, decoy_tag, task) {
+def philosopherFilterCommands(meta, pepxml_files, protxml, first_group_meta, first_group, filter_cli, args, dont_use_protxml, report_cli, fasta, decoy_tag, prefix, task) {
     if (meta.group == null) {
         error("PHILOSOPHERFILTER ${meta.id}: meta.group is missing (FragPipe group)")
     }
@@ -176,14 +206,28 @@ def philosopherFilterCommands(meta, pepxml_files, protxml, first_group_meta, fir
         }
         filter += ['--razor']
     }
+    def first_dir = first_group == '' ? '.' : first_group.toString()
+    def annotate = is_first ? [philosopher, 'database', '--annotate', "{WORKDIR}/${fasta.name}", '--prefix', decoy_tag].collect { t -> t.toString() } : []
+    def pepxml_names = [pepxml_files].flatten().collect { f -> f.toString().tokenize('/').last() }
+    def ram = goMemLimitGb(task)
+    def annotate_lines = annotate ? """annotate_cmd=(${annotate.collect { t -> workdirWord(t) }.join(' ')})
+    printf '%s\\n' "\${annotate_cmd[*]}" >> ${prefix}.log
+    (cd ${shellQuote(group_dir)} && GOMEMLIMIT=${ram}GiB GOGC=100 GOMAXPROCS=${task.cpus} "\${annotate_cmd[@]}") 2>&1 | tee -a ${prefix}.log""" : ''
+    def move_results = group_dir == '.' ?
+        "mkdir -p ${shellQuote(prefix)}; for f in psm.tsv peptide.tsv ion.tsv protein.tsv protein.fas filter.log; do if [ -e \"\$f\" ]; then mv \"\$f\" ${shellQuote(prefix)}/; fi; done; mv .meta ${shellQuote(prefix)}/" :
+        (group_dir == prefix ? '' : "mv ${shellQuote(group_dir)} ${shellQuote(prefix)}")
     return [
         group_dir       : group_dir.toString(),
-        first_dir       : first_group == '' ? '.' : first_group.toString(),
+        first_dir       : first_dir,
         is_first        : is_first,
-        annotate        : is_first ? [philosopher, 'database', '--annotate', "{WORKDIR}/${fasta.name}", '--prefix', decoy_tag].collect { t -> t.toString() } : [],
+        annotate        : annotate,
         filter          : filter.collect { t -> t.toString() },
         report          : ([philosopher, 'report'] + (report_cli ?: '').toString().tokenize()).collect { t -> t.toString() },
-        pepxml_names    : [pepxml_files].flatten().collect { f -> f.toString().tokenize('/').last() },
+        pepxml_names    : pepxml_names,
+        link_pepxml     : pepxml_names.collect { name -> "ln -s \"\$PWD\"/pepxml_inputs/${shellQuote(name)} ${shellQuote(group_dir)}/${shellQuote(name)}" }.join('\n    ').toString(),
+        link_first      : (is_first ? '' : "mkdir -p ${shellQuote(first_dir)} && ln -s \"\$PWD\"/first_group_meta ${shellQuote(first_dir)}/.meta").toString(),
+        annotate_lines  : annotate_lines.toString(),
+        move_results    : move_results.toString(),
         philosopher     : philosopher,
         fragpipe_version: tools.fragpipe_version
     ]
@@ -215,6 +259,22 @@ def goMemLimitGb(task) {
 }
 
 /**
+ * -Xmx<n>G of a FragPipe Java tool. FragPipe passes its RAM setting, or OsUtils.getDefaultXmx() of the
+ * machine when it is 0 (FragpipeRun.java:1308); here the task memory plays the RAM setting, so a task
+ * without memory stops instead of falling back to a fixed size.
+ *
+ * @param task Task (memory, process)
+ * @param headroom_gb GB kept free of the heap (0 for the whole task memory)
+ * @return GB, at least 1
+ */
+def javaXmxGb(task, headroom_gb) {
+    if (!task.memory) {
+        error("${task.process}: task.memory is not set; the Java heap (-Xmx) is the task memory, as FragPipe's RAM setting (FragpipeRun.java:1308)")
+    }
+    return Math.max(1, task.memory.toGiga() - headroom_gb)
+}
+
+/**
  * Staged location of each pepXML of a multi-group step and its FragPipe location. The pepXMLs are staged
  * one per numbered directory (stageAs 'pepxml_inputs/?/*', in input order) because groups can share a
  * name: combined PeptideProphet writes interact.pep.xml in every group (CmdPeptideProphet.java:302-336).
@@ -227,16 +287,34 @@ def pepxmlStagedLinks(paths) {
 }
 
 /**
+ * Shell lines that link each staged pepXML to its FragPipe location (creating the group dir), and with
+ * filelist also append its absolute path to filelist_proteinprophet.txt (CmdProteinProphet.java:150-166).
+ *
+ * @param links [staged path, FragPipe location] per pepXML (pepxmlStagedLinks)
+ * @param filelist true appends each location to filelist_proteinprophet.txt
+ * @return shell lines
+ */
+def pepxmlStageLines(links, filelist) {
+    return links.collect { staged, rel ->
+        def dir = rel.contains('/') ? rel[0..<rel.lastIndexOf('/')] : ''
+        (dir ? "mkdir -p ${shellQuote(dir)}\n    " : '') + "ln -s \"\$PWD\"/${shellQuote(staged)} ${shellQuote(rel)}" +
+            (filelist ? "\n    printf '%s\\n' \"\$PWD\"/${shellQuote(rel)} >> filelist_proteinprophet.txt" : '')
+    }.join('\n    ').toString()
+}
+
+/**
  * iProphet argv as CmdIprophet.configure builds it (CmdIprophet.java:41-58):
  * `philosopher iprophet --decoy <tag> --nonsp --output combined --threads <n> <pepxml...>`.
  *
- * @return Map: argv without the pepXML paths, the pepXML locations and the FragPipe version
+ * The stage lines link each staged pepXML to its FragPipe location.
+ *
+ * @return Map: argv without the pepXML paths, the pepXML locations, stage lines and the FragPipe version
  */
 def iprophetCommand(pepxml_files, pepxml_paths, iprophet_cli, args, task) {
     def files = [pepxml_files].flatten().collect { f -> f.toString().tokenize('/').last() }
     def paths = [pepxml_paths].flatten().collect { p -> p.toString() }
     if (paths.collect { p -> p.tokenize('/').last() } != files || paths.unique(false).size() != paths.size()) {
-        error("IPROPHET: pepXML locations ${paths} do not match the staged pepXMLs ${files}")
+        error("PHILOSOPHERIPROPHET: pepXML locations ${paths} do not match the staged pepXMLs ${files}")
     }
     def tools = fragpipeTools(task)
     def argv = [tools.philosopher, 'iprophet'] + (iprophet_cli ?: '').toString().tokenize() +
@@ -245,6 +323,7 @@ def iprophetCommand(pepxml_files, pepxml_paths, iprophet_cli, args, task) {
         argv            : argv.collect { t -> t.toString() },
         paths           : paths,
         links           : pepxmlStagedLinks(paths),
+        stage           : pepxmlStageLines(pepxmlStagedLinks(paths), false),
         fragpipe_version: tools.fragpipe_version
     ]
 }
@@ -261,28 +340,32 @@ def iprophetCommand(pepxml_files, pepxml_paths, iprophet_cli, args, task) {
  * RewritePepxml: java -cp <FragPipe>/lib/* org.nesvilab.fragpipe.util.RewritePepxml <interact> <lcms...>
  * (CmdPeptideProphet.java:426-451).
  *
+ * The shell lines link the pepXMLs into the group dir and back out, give RewritePepxml the absolute
+ * LC-MS paths and move the interact file to <prefix>/.
+ *
+ * @param prefix Output directory of the task (task.ext.prefix or meta.id)
  * @return Map: philosopher binary, group dir, run dir, peptideprophet argv, rewrite argv prefix,
  *         interact name and its task-relative path, lcms names, run dir below the group dir and run names
- *         (peptideProphetDirLines),
- *         FragPipe lib dir and version
+ *         (peptideProphetDirLines), shell words and lines (lcms_args, link_inputs, unlink_inputs,
+ *         move_interact; '' when not needed), FragPipe lib dir and version
  */
-def peptideProphetCommands(meta, pepxml_files, lcms_names, peptideprophet_cli, args, combine, fasta, decoy_tag, task) {
+def peptideProphetCommands(meta, pepxml_files, lcms_names, peptideprophet_cli, args, combine, fasta, decoy_tag, prefix, task) {
     if (meta.group == null) {
-        error("PEPTIDEPROPHET ${meta.id}: meta.group is missing (FragPipe group of the pepXMLs)")
+        error("PHILOSOPHERPEPTIDEPROPHET ${meta.id}: meta.group is missing (FragPipe group of the pepXMLs)")
     }
     def group_dir = meta.group == '' ? '.' : meta.group.toString()
     def pepxmls = [pepxml_files].flatten()
     if (!combine && pepxmls.size() != 1) {
-        error("PEPTIDEPROPHET ${meta.id}: per-file mode takes one pepXML, got ${pepxmls.collect { f -> f.name }}")
+        error("PHILOSOPHERPEPTIDEPROPHET ${meta.id}: per-file mode takes one pepXML, got ${pepxmls.collect { f -> f.name }}")
     }
     def lcms = [lcms_names].flatten().collect { n -> n.toString() }
     if (!lcms) {
-        error("PEPTIDEPROPHET ${meta.id}: no LC-MS file names for RewritePepxml")
+        error("PHILOSOPHERPEPTIDEPROPHET ${meta.id}: no LC-MS file names for RewritePepxml")
     }
     def tools = fragpipeTools(task)
     def tools_dir = tools.tools_dir
     if (!tools_dir.endsWith('/tools')) {
-        error("PEPTIDEPROPHET: task.ext.fragpipe_tools_dir must be the FragPipe tools directory, got ${tools_dir}")
+        error("PHILOSOPHERPEPTIDEPROPHET: task.ext.fragpipe_tools_dir must be the FragPipe tools directory, got ${tools_dir}")
     }
     def fragpipe_root = tools_dir[0..<(tools_dir.length() - '/tools'.length())]
     // FragPipe 24.0's Philosopher binary (tools/Philosopher/philosopher-v5.1.3-RC9)
@@ -300,12 +383,16 @@ def peptideProphetCommands(meta, pepxml_files, lcms_names, peptideprophet_cli, a
         def name = pepxmls[0].name
         def matched = ['pepxml', 'pep.xml'].find { ext -> name.toLowerCase().endsWith(ext) }
         if (matched == null) {
-            error("PEPTIDEPROPHET ${meta.id}: could not identify the pepXML extension of ${name} (CmdPeptideProphet.java:86-99)")
+            error("PHILOSOPHERPEPTIDEPROPHET ${meta.id}: could not identify the pepXML extension of ${name} (CmdPeptideProphet.java:86-99)")
         }
         peptideprophet = common + ["../${name}"]
         run_dir = group_dir == '.' ? "fragpipe-${name}-temp" : "${group_dir}/fragpipe-${name}-temp"
         interact = "interact-${name[0..<name.toLowerCase().lastIndexOf(matched)]}pep.xml"
     }
+    def gdir = shellQuote(group_dir)
+    def interact_path = (group_dir == '.' ? interact : "${group_dir}/${interact}").toString()
+    // the group dir holds the pepXMLs like FragPipe's (the task dir itself for the blank group)
+    def inputs = pepxmls.collect { f -> shellQuote(f.name) }
     return [
         philosopher     : philosopher,
         group_dir       : group_dir,
@@ -314,8 +401,12 @@ def peptideProphetCommands(meta, pepxml_files, lcms_names, peptideprophet_cli, a
         peptideprophet  : peptideprophet.collect { t -> t.toString() },
         rewrite         : ['java', '-cp', "${fragpipe_root}/lib/*", 'org.nesvilab.fragpipe.util.RewritePepxml'].collect { t -> t.toString() },
         interact        : interact.toString(),
-        interact_path   : (group_dir == '.' ? interact : "${group_dir}/${interact}").toString(),
+        interact_path   : interact_path,
         lcms            : lcms,
+        lcms_args       : lcms.collect { name -> "\"\$PWD\"/${shellQuote(name)}" }.join(' ').toString(),
+        link_inputs     : (group_dir == '.' ? '' : inputs.collect { name -> "ln -s \"\$PWD\"/${name} ${gdir}/${name}" }.join('\n    ')).toString(),
+        unlink_inputs   : (group_dir == '.' ? '' : "rm ${inputs.collect { name -> "${gdir}/${name}" }.join(' ')}").toString(),
+        move_interact   : (group_dir == prefix ? '' : "mv ${shellQuote(interact_path)} ${shellQuote(prefix)}/").toString(),
         run_names       : (pepxmls.collect { f -> f.name } + lcms.collect { n -> n.tokenize('/').last() }).unique(),
         fragpipe_lib    : "${fragpipe_root}/lib".toString(),
         fragpipe_version: tools.fragpipe_version
@@ -333,7 +424,7 @@ def peptideProphetCommands(meta, pepxml_files, lcms_names, peptideprophet_cli, a
  * passes, 207 crashes; the pepXML, output, -D database and --temp paths may be longer. FragPipe runs in
  * its work dir (CmdPeptideProphet.java:229, :332), so the group dir <task>/<group> is used as it is when
  * the path fits, which keeps interact.pep.xml as FragPipe writes it. Otherwise (long work dir, long group
- * name) PeptideProphet reads the group dir through a symlink in the task's own /tmp (mktemp -d), removed
+ * name) PeptideProphet reads the group dir through a symlink in the task's $TMPDIR, else /tmp (mktemp -d), removed
  * when the script exits; interact.pep.xml then names that directory where it names the group dir (same
  * results, a different directory prefix, as DIA-NN's diannInputDirLines). ProteinProphet and iProphet
  * were measured fine with a 230-character dir.
@@ -350,7 +441,7 @@ def peptideProphetDirLines(group_dir, run_names) {
     return [
         "PP_GROUP_DIR=${group}",
         "if [ \$(( \${#PP_GROUP_DIR} + 1 + ${longest} )) -gt ${max_path} ]; then",
-        '    PP_LINK_DIR="$(mktemp -d /tmp/pp.XXXXXX)"',
+        '    PP_LINK_DIR="$(mktemp -d "${TMPDIR:-/tmp}/pp.XXXXXX")"',
         '    trap \'rm -rf "$PP_LINK_DIR"\' EXIT',
         '    ln -s "$PP_GROUP_DIR" "$PP_LINK_DIR/g"',
         '    PP_GROUP_DIR="$PP_LINK_DIR/g"',
@@ -364,16 +455,18 @@ def peptideProphetDirLines(group_dir, run_names) {
  * `philosopher proteinprophet <cmd-opts>`, then `--output combined` unless the options already
  * contain --output, then the filelist (added by the script). Output: <output>.prot.xml.
  *
- * @return Map: argv without the filelist, output file name, filelist entries, binary and versions
+ * The stage lines link each staged pepXML to its FragPipe location and list it in filelist_proteinprophet.txt.
+ *
+ * @return Map: argv without the filelist, output file name, filelist entries, stage lines, binary and versions
  */
 def proteinProphetCommand(pepxml_files, filelist_paths, proteinprophet_cli, args, task) {
     def files = [pepxml_files].flatten().collect { f -> f.toString().tokenize('/').last() }
     def filelist = [filelist_paths].flatten().collect { p -> p.toString() }
     if (filelist.collect { p -> p.tokenize('/').last() } != files) {
-        error("PROTEINPROPHET: filelist ${filelist} does not match the staged pepXMLs ${files}")
+        error("PHILOSOPHERPROTEINPROPHET: filelist ${filelist} does not match the staged pepXMLs ${files}")
     }
     if (filelist.unique(false).size() != filelist.size()) {
-        error("PROTEINPROPHET: duplicate pepXML in the filelist ${filelist}")
+        error("PHILOSOPHERPROTEINPROPHET: duplicate pepXML in the filelist ${filelist}")
     }
     def tools = fragpipeTools(task)
     def philosopher = tools.philosopher
@@ -388,6 +481,7 @@ def proteinProphetCommand(pepxml_files, filelist_paths, proteinprophet_cli, args
         output          : output.toString(),
         filelist        : filelist,
         links           : pepxmlStagedLinks(filelist),
+        stage           : pepxmlStageLines(pepxmlStagedLinks(filelist), true),
         philosopher     : philosopher.toString(),
         philosopher_dir : "${tools.tools_dir}/Philosopher".toString(),
         fragpipe_version: tools.fragpipe_version
@@ -741,7 +835,8 @@ def speclibgenCommand(argv_parts, fasta_name, spectra, rt_cal_file, im_cal_file,
  * Philosopher tools/Philosopher/philosopher-v5.1.3-RC9 reports version=v5.1.3; Percolator
  * tools/percolator_3_7_1 reports "Percolator version 3.07.1"; SAINTexpress reports "SAINT express version 3.6.1";
  * tools/TMT-Integrator-6.1.3.jar; tools/ptmshepherd-3.0.11.jar; tools/PTMProphet/PTMProphetParser-6.3.2;
- * fragpipe-speclib is pinned by FragPipe 24.0 python/python_packages/requirements.txt (fragpipe-speclib==0.1.58).
+ * fragpipe-speclib is pinned by FragPipe 24.0 python/python_packages/requirements.txt (fragpipe-speclib==0.1.58);
+ * O-Pair tools/opair/CMD.dll (no version in the path) prints "PTMLocalization version: 1.1.10" (string in CMD.dll).
  *
  * @return Map tool -> version
  */
@@ -754,5 +849,6 @@ def fragpipeToolVersions() {
         ptmshepherd     : '3.0.11',
         ptmprophet      : '6.3.2',
         fragpipe_speclib: '0.1.58',
+        opair           : '1.1.10',
     ]
 }

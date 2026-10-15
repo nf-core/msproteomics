@@ -66,7 +66,7 @@ output:
           description: Tool name
       - fragpipeToolVersions().saintexpress:
           type: string
-          description: Version of SAINTexpress bundled with FragPipe
+          description: 'Version of SAINTexpress bundled with FragPipe; fixed value (fragpipeToolVersions()): tools/SAINTexpress/SAINTexpress-<mode> has no version in its path; FragPipe 24.0 ships SAINTexpress 3.6.1 (it prints "SAINT express version 3.6.1")'
   versions_fragpipe:
     - - ${task.process}:
           type: string
@@ -87,7 +87,7 @@ topics:
           description: Tool name
       - fragpipeToolVersions().saintexpress:
           type: string
-          description: Version of SAINTexpress bundled with FragPipe
+          description: 'Version of SAINTexpress bundled with FragPipe; fixed value (fragpipeToolVersions()): tools/SAINTexpress/SAINTexpress-<mode> has no version in its path; FragPipe 24.0 ships SAINTexpress 3.6.1 (it prints "SAINT express version 3.6.1")'
     - - ${task.process}:
           type: string
           description: Process name

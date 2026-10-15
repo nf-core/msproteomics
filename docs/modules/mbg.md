@@ -44,7 +44,7 @@ The licensed FragPipe image given with `--fragpipe_container`.
 ## Usage
 
 Used in the `FRAGPIPE_GLYCO` subworkflow for glycoproteomics analysis within the modular FragPipe pipeline.
-Results are emitted as `mbg_results` from the `FRAGPIPE_WF` subworkflow (`subworkflows/local/fragpipe/main.nf`).
+Results are emitted as `mbg_results` from the `FRAGPIPE` subworkflow (`subworkflows/local/fragpipe/main.nf`).
 
 ## References
 

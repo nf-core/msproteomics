@@ -13,6 +13,9 @@ import pytest
 
 REPO = Path(__file__).resolve().parents[2]
 SCRIPT = REPO / "modules/local/parsefragpipeworkflow/resources/usr/bin/parse_fragpipe_workflow.py"
+# FragPipe 24.0 templates the module stages (the script takes them as arguments)
+TEMPLATES = Path(__file__).resolve().parents[2] / "modules" / "local" / "parsefragpipeworkflow" / "assets"
+TEMPLATE_ARGS = ["--fragger-template", str(TEMPLATES / "fragger_closed.params"), "--diaumpire-template", str(TEMPLATES / "diaumpire_se.params")]
 FIXTURES = REPO / "tests/fixtures/fragpipe_workflows"
 KEYS = {
     "rt_cal": "SPECLIB_RT_CAL",
@@ -25,7 +28,7 @@ KEYS = {
 
 def speclibgen_entry(tmp_path: Path, workflow: str) -> dict:
     subprocess.run(
-        [sys.executable, str(SCRIPT), "--workflow", str(FIXTURES / f"{workflow}.workflow"), "--data-types", "DIA",
+        [sys.executable, str(SCRIPT), *TEMPLATE_ARGS, "--workflow", str(FIXTURES / f"{workflow}.workflow"), "--data-types", "DIA",
          "--output-json", "--outdir", str(tmp_path), "--threads", "4"],
         check=True, capture_output=True,
     )

@@ -1,4 +1,18 @@
 {
+    "parse_fragpipe_workflow - diaTracer flags use diaTracer's own option names": {
+        "content": [
+            {
+                "run": true,
+                "args": "--writeInter 0 --deltaApexIM 0.01 --deltaApexRT 3 --massDefectFilter 1 --massDefectOffset 1.0 --ms1MS2Corr 0.3 --RFMax 500",
+                "config_type": "cli"
+            }
+        ],
+        "timestamp": "2026-10-14T14:42:41.912070838",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
     "parse_fragpipe_workflow - umpire-se.params is FragPipe's template with the workflow values": {
         "content": [
             [
@@ -91,10 +105,10 @@
                 ""
             ]
         ],
+        "timestamp": "2026-10-05T02:57:37.367841758",
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-10-05T02:57:37.367841758"
+        }
     }
 }

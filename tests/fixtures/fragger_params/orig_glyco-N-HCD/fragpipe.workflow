@@ -411,4 +411,4 @@ workflow.input.data-type.regular-ms=true
 workflow.misc.save-sdrf=true
 workflow.misc.sdrf-type=Default
 workflow.saved-with-ver=24.0-build27
-database.db-path=/data/fragpipe-runs/fpgt/db/tiny.fasta
+database.db-path=/data/database.fasta

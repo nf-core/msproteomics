@@ -1,6 +1,5 @@
 // FragPipe 24.0 parity acceptance tests for MSPROTEOMICS_FRAGPIPE (pipeline mode).
-// Written test-first against FragPipe behaviour (RC-01 / RC-02 / RC-03 of the
-// FragPipe parity review).
+// Every expectation is derived from FragPipe's source, cited per test.
 //
 // FragPipe source root (FP): FragPipe-GUI/src/main/java/org/nesvilab/fragpipe/
 //
@@ -18,13 +17,13 @@ nextflow_workflow {
     tag "msproteomics_fragpipe"
     tag "parity"
 
-    // RC-01: FP/api/InputLcmsFile.java:131-145 getGroup():
+    // FP/api/InputLcmsFile.java:131-145 getGroup():
     //   speclib/DIA-NN run -> ""; bioreplicate set -> experiment + "_" + bioreplicate
     //   (or "exp_" + bioreplicate when experiment blank); else experiment.
     // FP/tabs/TabWorkflow.java:1625-1636 groups files by getGroup(); FP/cmd/CmdPhilosopherFilter.java:60-122
     // runs ONE philosopher filter per group. FP/cmd/CmdIonquant.java:221-222,316-327: --multidir .
     // when a group is named, one --psm <group>/psm.tsv per group.
-    test("RC-01 grouping - experiment + bioreplicate gives one filter per experiment_bioreplicate") {
+    test("grouping - experiment + bioreplicate gives one filter per experiment_bioreplicate") {
         options "-stub"
         tag "stub"
 
@@ -60,11 +59,11 @@ nextflow_workflow {
         }
     }
 
-    // RC-04: with SpecLibGen or DIA-NN on, getGroup() is "" for every file
+    // with SpecLibGen or DIA-NN on, getGroup() is "" for every file
     // (FP/api/InputLcmsFile.java:131-136), so ONE philosopher filter/report runs over all
     // pepXMLs in the work-dir root (CmdPhilosopherFilter.java:60-122) and SpecLibGen runs once
     // in that group directory (CmdSpecLibGen.java:116,138-140), even with named experiments.
-    test("RC-04 grouping - SpecLibGen/DIA-NN workflow puts named experiments in the single group") {
+    test("grouping - SpecLibGen/DIA-NN workflow puts named experiments in the single group") {
         options "-stub"
         tag "stub"
 
@@ -95,10 +94,10 @@ nextflow_workflow {
         }
     }
 
-    // RC-01: blank experiment and blank bioreplicate -> getGroup() returns "" for every file
+    // blank experiment and blank bioreplicate -> getGroup() returns "" for every file
     // -> ONE group (user-confirmed default). FragPipe refuses IonQuant MBR without named
     // experiments (FP/cmd/CmdIonquant.java:288-294), so LFQ-MBR must fail with its message.
-    test("RC-01 grouping - blank experiment and bioreplicate with MBR fails like FragPipe") {
+    test("grouping - blank experiment and bioreplicate with MBR fails like FragPipe") {
         options "-stub"
         tag "stub"
 
@@ -129,10 +128,10 @@ nextflow_workflow {
         }
     }
 
-    // RC-01: blank groups without MBR: FragPipe runs IonQuant without --multidir on the
+    // blank groups without MBR: FragPipe runs IonQuant without --multidir on the
     // work-dir root psm.tsv (CmdIonquant.java:221-222, 316-327; LcmsFileGroup.outputDir("") == wd).
     // The Nextflow-internal staging name of the blank group must not reach tools or published paths.
-    test("RC-01 grouping - blank experiment and bioreplicate without MBR runs IonQuant on the root group") {
+    test("grouping - blank experiment and bioreplicate without MBR runs IonQuant on the root group") {
         options "-stub"
         tag "stub"
 
@@ -168,12 +167,12 @@ nextflow_workflow {
         }
     }
 
-    // RC-02: one annotation per experiment (LcmsFileGroup == one plex) holding every channel of the
+    // one annotation per experiment (LcmsFileGroup == one plex) holding every channel of the
     // label type; the samplesheet's per-channel `sample` is the annotation's sample name, NA excludes
     // a channel. FP/tools/tmtintegrator/TmtiPanel.java:684-721, FP/cmd/CmdTmtIntegrator.java:195-208,
     // FP/FragpipeRun.java:1917-1922 (annotations passed per group), FP/cmd/CmdIonquant.java:204-215.
-    // RC-03 (search side): FP/FragpipeRun.java:1258-1262 takes each LC-MS file once -> one MSFragger input per file.
-    test("RC-02/RC-03 TMT per-channel samplesheet - one search per raw file, one annotation per plex") {
+    // FP/FragpipeRun.java:1258-1262 takes each LC-MS file once -> one MSFragger input per file.
+    test("TMT per-channel samplesheet - one search per raw file, one annotation per plex") {
         options "-stub"
         tag "stub"
 
@@ -231,11 +230,11 @@ nextflow_workflow {
         }
     }
 
-    // RC-01/RC-02: a TMT plex with blank experiment is FragPipe's group "": its annotation is
+    // a TMT plex with blank experiment is FragPipe's group "": its annotation is
     // _annotation.txt in the work dir, IonQuant reads psm.tsv there without --multidir
     // (CmdIonquant.java:204-215, 221-222), and TMT-Integrator receives the work-dir psm.tsv
     // (CmdTmtIntegrator.java:293-296: g.outputDir(wd).resolve("psm.tsv")).
-    test("RC-01/RC-02 TMT blank experiment - group \"\" through IonQuant and TMT-Integrator") {
+    test("TMT blank experiment - group \"\" through IonQuant and TMT-Integrator") {
         options "-stub"
         tag "stub"
 

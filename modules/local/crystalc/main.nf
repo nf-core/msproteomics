@@ -19,6 +19,7 @@
  *   - versions: Crystal-C and FragPipe versions (topic: versions)
  */
 include { fragpipeTools; crystalcParamsName; crystalcRuntimeParams; heredocText; rawSymlinksToFiles; fragpipeJarLines; shellArgs } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
+include { javaXmxGb } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
 
 process CRYSTALC {
     tag "${meta.id}"
@@ -38,9 +39,13 @@ process CRYSTALC {
     task.ext.when == null || task.ext.when
 
     script:
+    // Exit if running this module with -profile conda / -profile mamba (copied from modules/nf-core/diann/main.nf)
+    if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
+        error "CRYSTALC module does not support Conda: it runs in the FragPipe image given with --fragpipe_container. Please use Docker / Singularity / Podman instead."
+    }
     def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id}"
-    def ram = task.memory ? task.memory.toGiga() : 8
+    def ram = javaXmxGb(task, 0)
     def tools = fragpipeTools(task)
     // <ccParamsFilePrefix>-<index>-<pepXML name>.params; fragpipe_search counts the index over the whole run as CmdCrystalc.java:176-185
     def params_file = crystalcParamsName(meta, pepxml_file)
@@ -75,7 +80,7 @@ FP_EOF
     mkdir -p ${prefix}
     touch ${prefix}/${basename}_c.pepXML
     touch ${prefix}/crystalc.log
-    echo "${tools.fragpipe_version}" > .crystalc_version
+    echo "${tools.crystalc_version}" > .crystalc_version
     echo "${tools.fragpipe_version}" > .fragpipe_version
     """
 }

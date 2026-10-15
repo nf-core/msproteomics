@@ -1,5 +1,5 @@
 // FragPipe 24.0 run decisions of PARSEFRAGPIPEWORKFLOW on edited bundled workflows
-// (RC-05, RC-22, RC-33, RC-37) and Write sub mzML.
+// and Write sub mzML.
 // FP = FragPipe-GUI/src/main/java/org/nesvilab/fragpipe/ at tag 24.0.
 // Each test copies a verbatim FragPipe workflow from tests/fixtures/fragpipe_workflows/ and
 // flips the keys under test, so the expected value follows from the cited FragPipe line only.
@@ -14,10 +14,10 @@ nextflow_process {
 
     tag "modules"
     tag "modules_local"
-    tag "parse_fragpipe_workflow"
+    tag "parsefragpipeworkflow"
     tag "stub"
 
-    test("RC-22 - run-psm-validation is respected") {
+    test("run-psm-validation is respected") {
         options "-stub"
 
         when {
@@ -38,6 +38,7 @@ nextflow_process {
                 // FP/tabs/TabMsfragger.java:570-571 new UiCheck("Run MSFragger", null, true): absent key = true
                 def noFragger = file("\${workDir}/msfragger_absent.workflow")
                 noFragger.text = src.readLines().findAll { line -> !line.startsWith('msfragger.run-msfragger=') }.join('\\n') + '\\n'
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = channel.of(
                     [ [ id: 'off' ], off, ['DDA'] ],
                     [ [ id: 'absent' ], absent, ['DDA'] ],
@@ -73,6 +74,7 @@ nextflow_process {
                 def src = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text
                 def absent = file("\${workDir}/percolator_absent.workflow")
                 absent.text = src.readLines().findAll { line -> !line.startsWith('percolator.run-percolator=') }.join('\\n') + '\\n'
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = channel.of(
                     [ [ id: 'explicit' ], file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true), ['DDA'] ],
                     [ [ id: 'absent' ], absent, ['DDA'] ]
@@ -106,6 +108,7 @@ nextflow_process {
                 wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text
                     .replace('run-validation-tab=true', 'run-validation-tab=false')
                     .replace('quantitation.run-label-free-quant=true', 'quantitation.run-label-free-quant=false')
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = [ [ id: 'validation_off' ], wf, ['DDA'] ]
                 """
             }
@@ -132,6 +135,7 @@ nextflow_process {
                 def wf = file("\${workDir}/validation_off_ionquant.workflow")
                 wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text
                     .replace('run-validation-tab=true', 'run-validation-tab=false')
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = [ [ id: 'validation_off_ionquant' ], wf, ['DDA'] ]
                 """
             }
@@ -146,7 +150,7 @@ nextflow_process {
         }
     }
 
-    test("RC-22 - run-msfragger=false fails: msproteomics cannot reuse a FragPipe work directory") {
+    test("run-msfragger=false fails: msproteomics cannot reuse a FragPipe work directory") {
         options "-stub"
 
         when {
@@ -157,6 +161,7 @@ nextflow_process {
                 def wf = file("\${workDir}/msfragger_off.workflow")
                 wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text
                     .replace('msfragger.run-msfragger=true', 'msfragger.run-msfragger=false')
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = [ [ id: 'msfragger_off' ], wf, ['DDA'] ]
                 """
             }
@@ -170,7 +175,7 @@ nextflow_process {
         }
     }
 
-    test("RC-05 - label-free quant gate, --prot 0.01 before the dont-use-protXML strip, TMT modlist") {
+    test("label-free quant gate, --prot 0.01 before the dont-use-protXML strip, TMT modlist") {
         options "-stub"
 
         when {
@@ -195,6 +200,7 @@ nextflow_process {
                 // label-free IonQuant on and no --prot: --prot 0.01 is appended (CmdPhilosopherFilter.java:89-91)
                 def noProt = file("\${workDir}/lfq_no_prot.workflow")
                 noProt.text = lfq.replace('phi-report.filter=--sequential --prot 0.01 --picked', 'phi-report.filter=--sequential --picked')
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = channel.of(
                     [ [ id: 'prot05' ], prot05, ['DDA'] ],
                     [ [ id: 'no_prot' ], noProt, ['DDA'] ],
@@ -212,8 +218,8 @@ nextflow_process {
 
         then {
             def cfg = process.out.tool_configs_json.collectEntries { meta, json -> [meta.id, new groovy.json.JsonSlurper().parse(new File(json.toString()))] }
-            def legacyFilter = process.out.all_configs.collectEntries { meta, dir ->
-                [meta.id, new File("${dir}/phi-report.config").readLines().find { line -> line.startsWith('filter=') }]
+            def legacyFilter = process.out.tool_configs_json.collectEntries { meta, json ->
+                [meta.id, new File(new File(json.toString()).parentFile, 'configs/phi-report.config').readLines().find { line -> line.startsWith('filter=') }]
             }
             assertAll(
                 { assert process.success },
@@ -239,7 +245,7 @@ nextflow_process {
         }
     }
 
-    test("RC-05 - label-free quant radio buttons start as FragPipe's when their keys are absent") {
+    test("label-free quant radio buttons start as FragPipe's when their keys are absent") {
         options "-stub"
 
         when {
@@ -253,6 +259,7 @@ nextflow_process {
                 both.text = drop.call(['freequant.run-freequant', 'ionquant.run-ionquant'])
                 def ionOnly = file("\${workDir}/ionquant_key_only.workflow")
                 ionOnly.text = drop.call(['freequant.run-freequant'])
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = channel.of(
                     [ [ id: 'no_radio_keys' ], both, ['DDA'] ],
                     [ [ id: 'ionquant_key_only' ], ionOnly, ['DDA'] ]
@@ -274,7 +281,7 @@ nextflow_process {
         }
     }
 
-    test("RC-05 - IonQuant --modlist: detailed mass offsets, none with O-Pair") {
+    test("IonQuant --modlist: detailed mass offsets, none with O-Pair") {
         options "-stub"
 
         when {
@@ -291,6 +298,7 @@ nextflow_process {
                     .replace('msfragger.mass_offsets_detailed=', 'msfragger.mass_offsets_detailed=0.00000(aa\\\\=);-43.98980(aa\\\\=DE);15.99490(aa\\\\=M)')
                 def opair = file("\${workDir}/opair.workflow")
                 opair.text = src.replace('opair.run-opair=false', 'opair.run-opair=true')
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = channel.of(
                     [ [ id: 'lfq' ], file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true), ['DDA'] ],
                     [ [ id: 'detailed' ], detailed, ['DDA'] ],
@@ -313,7 +321,7 @@ nextflow_process {
         }
     }
 
-    test("RC-05 - empty mod mass set still passes --modlist with an empty file") {
+    test("empty mod mass set still passes --modlist with an empty file") {
         options "-stub"
 
         when {
@@ -325,6 +333,7 @@ nextflow_process {
                     line.startsWith('msfragger.table.var-mods=') ? 'msfragger.table.var-mods=' :
                         line.startsWith('msfragger.table.fix-mods=') ? 'msfragger.table.fix-mods=' : line
                 }.join('\\n') + '\\n'
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = [ [ id: 'no_mods' ], wf, ['DDA'] ]
                 """
             }
@@ -335,12 +344,13 @@ nextflow_process {
                 // FragPipe writes modmasses_ionquant.txt even when the set is empty and passes --modlist
                 // (CmdIonquant.java:340-357, FragpipeRun.java:1852-1855); IONQUANT writes the empty file
                 { assert process.success },
-                { assert process.out.tool_configs_json.collect { _meta, json -> new groovy.json.JsonSlurper().parse(new File(json.toString())).ionquant.modmasses } == [[]] }
+                { assert process.out.tool_configs_json.collect { _meta, json -> new groovy.json.JsonSlurper().parse(new File(json.toString())).ionquant.modmasses } == [[]] },
+                { assert snapshot(process.out.tool_configs_json.collect { _meta, json -> new groovy.json.JsonSlurper().parse(new File(json.toString())).ionquant.modmasses }).match() }
             )
         }
     }
 
-    test("RC-33 - PTM-Shepherd runs for glycan assignment alone") {
+    test("PTM-Shepherd runs for glycan assignment alone") {
         options "-stub"
 
         when {
@@ -352,6 +362,7 @@ nextflow_process {
                 def none = file("\${workDir}/glyco_off.workflow")
                 none.text = file("\${fx}/glyco-N-LFQ.workflow", checkIfExists: true).text
                     .replace('ptmshepherd.run_glyco_mode=true', 'ptmshepherd.run_glyco_mode=false')
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = channel.of(
                     [ [ id: 'glyco' ], file("\${fx}/glyco-N-LFQ.workflow", checkIfExists: true), ['DDA'] ],
                     [ [ id: 'none' ], none, ['DDA'] ]
@@ -382,6 +393,7 @@ nextflow_process {
                 def wf = file("\${workDir}/digest_only.workflow")
                 wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text
                     .replace('msfragger.digest-only=false', 'msfragger.digest-only=true')
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = [ [ id: 'digest_only' ], wf, ['DDA'] ]
                 """
             }
@@ -407,6 +419,7 @@ nextflow_process {
                     .replace('freequant.run-freequant=false', 'freequant.run-freequant=true')
                     .replace('ionquant.run-ionquant=true', 'ionquant.run-ionquant=false')
                     .replace('phi-report.run-report=true', 'phi-report.run-report=false')
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = [ [ id: 'freequant_report_off' ], wf, ['DDA'] ]
                 """
             }
@@ -420,7 +433,7 @@ nextflow_process {
         }
     }
 
-    test("RC-37 - Skyline fails like FragPipe on Linux") {
+    test("Skyline fails like FragPipe on Linux") {
         options "-stub"
 
         when {
@@ -430,6 +443,7 @@ nextflow_process {
                 def wf = file("\${workDir}/skyline.workflow")
                 wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text
                     .replace('skyline.run-skyline=false', 'skyline.run-skyline=true')
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = [ [ id: 'skyline' ], wf, ['DDA'] ]
                 """
             }
@@ -443,7 +457,7 @@ nextflow_process {
         }
     }
 
-    test("RC-37 - Transfer learning fails") {
+    test("Transfer learning fails") {
         options "-stub"
 
         when {
@@ -454,6 +468,7 @@ nextflow_process {
                 def wf = file("\${workDir}/transfer_learning.workflow")
                 wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/DIA_SpecLib_Quant.workflow", checkIfExists: true).text
                     .replace('transfer-learning.run-transfer-learning=false', 'transfer-learning.run-transfer-learning=true')
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = [ [ id: 'tl' ], wf, ['DDA'] ]
                 """
             }
@@ -478,6 +493,7 @@ nextflow_process {
                 def wf = file("\${workDir}/write_sub_mzml.workflow")
                 wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text
                     .replace('tab-run.write_sub_mzml=false', 'tab-run.write_sub_mzml=true')
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = [ [ id: 'sub' ], wf, ['DDA'] ]
                 """
             }
@@ -504,6 +520,7 @@ nextflow_process {
                 def wf = file("\${workDir}/write_sub_mzml_dia.workflow")
                 wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text
                     .replace('tab-run.write_sub_mzml=false', 'tab-run.write_sub_mzml=true')
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = [ [ id: 'sub_dia' ], wf, ['DDA', 'DIA'] ]
                 """
             }
@@ -529,6 +546,7 @@ nextflow_process {
                     .replace('msfragger.precursor_mass_lower=-20', 'msfragger.precursor_mass_lower=-150')
                     .replace('msfragger.precursor_mass_units=1', 'msfragger.precursor_mass_units=0')
                     .replace('msfragger.precursor_mass_upper=20', 'msfragger.precursor_mass_upper=500')
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = [ [ id: 'refused' ], wf, ['DDA'] ]
                 """
             }
@@ -554,6 +572,7 @@ nextflow_process {
                 wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text
                     .replace('msbooster.predict-rt=true', 'msbooster.predict-rt=false')
                     .replace('msbooster.predict-spectra=true', 'msbooster.predict-spectra=false')
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = [ [ id: 'refused' ], wf, ['DDA'] ]
                 """
             }
@@ -578,6 +597,7 @@ nextflow_process {
                 def wf = file("\${workDir}/msbooster_koina_model_without_a_koina_ur.workflow")
                 wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text
                     .replace('msbooster.rt-model=DIA-NN', 'msbooster.rt-model=Prosit_2019_irt')
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = [ [ id: 'refused' ], wf, ['DDA'] ]
                 """
             }
@@ -602,6 +622,7 @@ nextflow_process {
                 def wf = file("\${workDir}/percolator_without_pin_and_pepxml_output.workflow")
                 wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text
                     .replace('msfragger.output_format=pepXML_pin', 'msfragger.output_format=pepXML')
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = [ [ id: 'refused' ], wf, ['DDA'] ]
                 """
             }
@@ -627,6 +648,7 @@ nextflow_process {
                 wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text
                     .replace('msfragger.labile_search_mode=off', 'msfragger.labile_search_mode=labile')
                     .replace('msfragger.remainder_fragment_masses=', 'msfragger.remainder_fragment_masses=203.0794')
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = [ [ id: 'refused' ], wf, ['DDA'] ]
                 """
             }
@@ -651,6 +673,7 @@ nextflow_process {
                 def wf = file("\${workDir}/an_enabled_variable_modification_with_in.workflow")
                 wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text
                     .replace('msfragger.table.var-mods=15.9949,M,true,3;', 'msfragger.table.var-mods=15.9949,m1,true,3;')
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = [ [ id: 'refused' ], wf, ['DDA'] ]
                 """
             }
@@ -675,6 +698,7 @@ nextflow_process {
                 def wf = file("\${workDir}/malformed_ptmshepherd_varmod_masses_fail.workflow")
                 wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text
                     .replace('ptmshepherd.varmod_masses=', 'ptmshepherd.varmod_masses=Hex:')
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = [ [ id: 'refused' ], wf, ['DDA'] ]
                 """
             }
@@ -699,6 +723,7 @@ nextflow_process {
                 def wf = file("\${workDir}/ionquant_text_value_with_whitespace_fail.workflow")
                 wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow", checkIfExists: true).text
                     .replace('ionquant.excludemods=', 'ionquant.excludemods=M15.9949; STY79.96633')
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = [ [ id: 'refused' ], wf, ['DDA'] ]
                 """
             }

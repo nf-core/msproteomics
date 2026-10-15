@@ -6,7 +6,7 @@ nextflow_process {
 
     tag "modules"
     tag "modules_local"
-    tag "export_matched_fragments"
+    tag "exportmatchedfragments"
 
     test("export_matched_fragments - stub, named groups get FragPipe work-dir layout") {
         options "-stub"

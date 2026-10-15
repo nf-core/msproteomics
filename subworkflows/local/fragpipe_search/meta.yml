@@ -116,11 +116,6 @@ output:
       description: |
         Write_calibrated_mzml with calibration.
         Structure: [ val(meta), path(*_calibrated.mzML) ]
-  - versions:
-      type: channel
-      description: |
-        Software versions (topic tuples).
-        Structure: [ val(process), val(tool), val(version) ]
 authors:
   - "@dongzehe"
 maintainers:

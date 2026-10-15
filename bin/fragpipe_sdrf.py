@@ -726,7 +726,9 @@ def read_protein_headers(fasta):
         with open(fasta, encoding="utf-8", errors="strict", newline=None) as fh:
             headers = [line.rstrip("\n") for line in fh if line.startswith(">")]
     except UnicodeDecodeError:
-        # FragPipe catches the MalformedInputException and keeps an empty header list.
+        # On purpose, as FragPipe 24.0: Files.lines(p) (UTF-8) throws on a malformed byte, the catch (Exception e)
+        # only logs "Cannot get the sample of ...", and proteinHeaders stays the empty list it was initialised to
+        # (FragpipeRun.java:436-454).
         return []
     return sorted(headers)
 

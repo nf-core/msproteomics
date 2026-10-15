@@ -90,7 +90,7 @@ output:
           description: The name of the tool
       - fragpipeToolVersions().philosopher:
           type: string
-          description: The Philosopher version bundled with FragPipe
+          description: The Philosopher version bundled with FragPipe; fixed value (fragpipeToolVersions()), held by the version-named binary tools/Philosopher/philosopher-v5.1.3-RC9 that the module checks exists
   versions_fragpipe:
     - - ${task.process}:
           type: string
@@ -111,7 +111,7 @@ topics:
           description: The name of the tool
       - fragpipeToolVersions().philosopher:
           type: string
-          description: The Philosopher version bundled with FragPipe
+          description: The Philosopher version bundled with FragPipe; fixed value (fragpipeToolVersions()), held by the version-named binary tools/Philosopher/philosopher-v5.1.3-RC9 that the module checks exists
     - - ${task.process}:
           type: string
           description: The name of the process

@@ -6,7 +6,7 @@ nextflow_process {
 
     tag "modules"
     tag "modules_local"
-    tag "write_text_file"
+    tag "writetextfile"
 
     // tabs, a trailing newline, $, backticks, backslashes and quotes come out unchanged (quoted here-doc)
     [['stub', true], ['integration', false]].each { kind, stub ->

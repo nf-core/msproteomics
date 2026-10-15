@@ -15,7 +15,7 @@ nextflow_process {
 
     tag "modules"
     tag "modules_local"
-    tag "diann_fragpipe"
+    tag "diannfragpipe"
 
     test("diann_fragpipe - stub - DIA_SpecLib_Quant settings") {
         options "-stub"

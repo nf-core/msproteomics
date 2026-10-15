@@ -5,7 +5,7 @@ process TMTLABELCHECKANALYZE {
     label 'process_low'
 
     conda "${moduleDir}/environment.yml"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+    container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/seaborn:0.13.2' :
         'quay.io/biocontainers/seaborn:0.13.2' }"
 
@@ -27,7 +27,6 @@ process TMTLABELCHECKANALYZE {
 
     script:
     def args = task.ext.args ?: ''
-    prefix = task.ext.prefix ?: "${meta.id}"
     def thresholds = tmtLabelcheckThresholds(task)
     def pass_threshold = thresholds.pass
     def warn_threshold = thresholds.warn
@@ -56,7 +55,6 @@ process TMTLABELCHECKANALYZE {
     }
 
     stub:
-    prefix = task.ext.prefix ?: "${meta.id}"
     """
     echo "<html><body>STUB</body></html>" > report.html
     echo "STUB" > report.md

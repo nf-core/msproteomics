@@ -6,13 +6,13 @@
 
     Modules:
     - PERCOLATOR (per searched pepXML basename, CmdPercolator)
-    - PEPTIDEPROPHET (per pepXML, or one --combine run per group, CmdPeptideProphet)
+    - PHILOSOPHERPEPTIDEPROPHET (per pepXML, or one --combine run per group, CmdPeptideProphet)
     - PTMPROPHET (per validated pepXML, CmdPtmProphet)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
 include { PERCOLATOR     } from '../../../modules/local/percolator/main'
-include { PEPTIDEPROPHET } from '../../../modules/local/philosopher/peptideprophet/main'
+include { PHILOSOPHERPEPTIDEPROPHET } from '../../../modules/local/philosopherpeptideprophet/main'
 include { PTMPROPHET     } from '../../../modules/local/ptmprophet/main'
 include { percolatorInitWeights; shouldRunTool; getToolArgs; getDecoyTag; requireToolField; fragpipeGroupDir; fragpipeLcmsOrderKey; compareFragpipeLcmsKeys; sortByRank; fragpipeLcmsName } from '../utils_nfcore_msproteomics_pipeline/fragpipe_utils'
 
@@ -130,10 +130,10 @@ workflow FRAGPIPE_VALIDATE {
             }
         }
 
-    PEPTIDEPROPHET(ch_pp_per_file.mix(ch_pp_combined), ch_fasta, ch_decoy_tag)
+    PHILOSOPHERPEPTIDEPROPHET(ch_pp_per_file.mix(ch_pp_combined), ch_fasta, ch_decoy_tag)
 
     // Per-file outputs back to one item per LC-MS file
-    ch_pp_out = PEPTIDEPROPHET.out.pepxml
+    ch_pp_out = PHILOSOPHERPEPTIDEPROPHET.out.pepxml
         .branch { meta, _pepxml ->
             combined: meta.pp_combined_ids != null
             per_file: true
@@ -199,8 +199,8 @@ workflow FRAGPIPE_VALIDATE {
     results_dir  = PERCOLATOR.out.results_dir                   // channel: [ val(meta), path(results_dir) ]
     versions     = PERCOLATOR.out.versions_percolator
         .mix(PERCOLATOR.out.versions_fragpipe)
-        .mix(PEPTIDEPROPHET.out.versions_philosopher)
-        .mix(PEPTIDEPROPHET.out.versions_fragpipe)
+        .mix(PHILOSOPHERPEPTIDEPROPHET.out.versions_philosopher)
+        .mix(PHILOSOPHERPEPTIDEPROPHET.out.versions_fragpipe)
         .mix(PTMPROPHET.out.versions_ptmprophet)
         .mix(PTMPROPHET.out.versions_fragpipe)
 }

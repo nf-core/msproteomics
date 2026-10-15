@@ -15,7 +15,7 @@ nextflow_process {
 
     tag "modules"
     tag "modules_local"
-    tag "parse_fragpipe_workflow"
+    tag "parsefragpipeworkflow"
     tag "stub"
 
     test("parse_fragpipe_workflow - exportmatchedfragments follows tab-run.export_matched_fragments") {
@@ -31,6 +31,7 @@ nextflow_process {
                     on:     text.replace('tab-run.export_matched_fragments=false', 'tab-run.export_matched_fragments=true'),
                     absent: text.readLines().findAll { line -> !line.startsWith('tab-run.export_matched_fragments=') }.join('\\n')
                 ]
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = channel.fromList(variants.collect { name, content -> [name, content] })
                     .map { name, content ->
                         def wf = file("\${workDir}/emf_\${name}.workflow")

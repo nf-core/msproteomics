@@ -11,7 +11,21 @@
             "nextflow": "25.10.4"
         }
     },
-    "RC-05 - IonQuant --modlist: detailed mass offsets, none with O-Pair": {
+    "empty mod mass set still passes --modlist with an empty file": {
+        "content": [
+            [
+                [
+                    
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-14T14:53:55.222384199",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "IonQuant --modlist: detailed mass offsets, none with O-Pair": {
         "content": [
             {
                 "detailed": [
@@ -34,7 +48,7 @@
             "nextflow": "25.10.4"
         }
     },
-    "RC-05 - label-free quant gate, --prot 0.01 before the dont-use-protXML strip, TMT modlist": {
+    "label-free quant gate, --prot 0.01 before the dont-use-protXML strip, TMT modlist": {
         "content": [
             {
                 "blank": {
@@ -73,7 +87,7 @@
             "nextflow": "25.10.4"
         }
     },
-    "RC-05 - label-free quant radio buttons start as FragPipe's when their keys are absent": {
+    "label-free quant radio buttons start as FragPipe's when their keys are absent": {
         "content": [
             {
                 "ionquant_key_only": {
@@ -200,7 +214,7 @@
             "nextflow": "25.10.4"
         }
     },
-    "RC-22 - run-psm-validation is respected": {
+    "run-psm-validation is respected": {
         "content": [
             {
                 "absent": {
@@ -229,7 +243,7 @@
             "nextflow": "25.10.4"
         }
     },
-    "RC-33 - PTM-Shepherd runs for glycan assignment alone": {
+    "PTM-Shepherd runs for glycan assignment alone": {
         "content": [
             {
                 "glyco": true,

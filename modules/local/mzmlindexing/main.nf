@@ -1,8 +1,20 @@
+/*
+ * MZMLINDEXING: Rewrite an mzML file as indexed mzML (OpenMS FileConverter)
+ *
+ * Input:
+ *   - meta: Sample metadata map
+ *   - mzmlfile: mzML file
+ *
+ * Output:
+ *   - mzmls_indexed: out/<name>.mzML
+ *   - versions: versions.yml (topic: versions)
+ *   - log: FileConverter output
+ */
 process MZMLINDEXING {
     tag "$meta.id"
     label 'process_low'
     conda "${moduleDir}/environment.yml"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+    container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/openms:3.5.0--h78fb946_0' :
         'quay.io/biocontainers/openms:3.5.0--h78fb946_0' }"
 
@@ -38,7 +50,7 @@ process MZMLINDEXING {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        FileConverter: stub
+        FileConverter: \$(FileConverter 2>&1 | grep -E '^Version(.*)' | sed 's/Version: //g' | cut -d ' ' -f 1)
     END_VERSIONS
     """
 }

@@ -30,7 +30,7 @@ nextflow_process {
 
     tag "modules"
     tag "modules_local"
-    tag "parse_fragpipe_workflow"
+    tag "parsefragpipeworkflow"
 
     test("parse_fragpipe_workflow - SpecLibGen and DIA-NN argv for DIA_SpecLib_Quant, DIA_SpecLib_Quant_diaPASEF, glyco-N-DIA") {
         tag "integration"
@@ -38,6 +38,7 @@ nextflow_process {
         when {
             process {
                 """
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = channel.fromList(['DIA_SpecLib_Quant', 'DIA_SpecLib_Quant_diaPASEF', 'glyco-N-DIA']).map { n ->
                     // the DIA workflows search DIA files (data types of the manifest, TabWorkflow.adjustToolsBasedOnDataTypes)
                     [ [ id: n ], file("\${baseDir}/tests/fixtures/fragpipe_workflows/\${n}.workflow", checkIfExists: true), ['DIA'] ]
@@ -128,6 +129,7 @@ speclibgen.run-speclibgen=true
 speclibgen.easypqp.rt-cal=Biognosys_iRT
 database.decoy-tag=rev_
 '''.trim()
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = channel.of([[ id: 'user_cal' ], user_cal, ['DIA']], [[ id: 'biognosys' ], biognosys, ['DIA']])  // DIA manifest files
                 """
             }
@@ -169,6 +171,7 @@ speclibgen.convert-psm=false
 speclibgen.easypqp.labile_mode=N-glyco
 database.decoy-tag=rev_
 '''.trim()
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = channel.of([[ id: 'glyco_pepxml' ], wf, ['DIA']])
                 """
             }

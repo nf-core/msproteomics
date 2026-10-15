@@ -1,5 +1,5 @@
 /*
- * Test harness: FRAGPIPE_GLYCO followed by FRAGPIPE_QUANT, wired as FRAGPIPE_WF wires them
+ * Test harness: FRAGPIPE_GLYCO followed by FRAGPIPE_QUANT, wired as FRAGPIPE wires them
  * (subworkflows/local/fragpipe/main.nf, STEP 7a-7b), for the FragPipe golden-run comparison.
  */
 include { FRAGPIPE_GLYCO } from '../main'

@@ -1665,4 +1665,57 @@ nextflow_function {
             )
         }
     }
+
+    // ext.java_xmx wins over the task memory (golden configs, conf/modules.config)
+    test("fragpipeJavaMemGb - ext.java_xmx, else the task memory") {
+        function "fragpipeJavaMemGb"
+        when {
+            function {
+                """
+                input[0] = [ process: 'MSFRAGGER', ext: [java_xmx: 28], memory: nextflow.util.MemoryUnit.of('64 GB') ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == 28 }
+            )
+        }
+    }
+
+    test("fragpipeJavaMemGb - the task memory without ext.java_xmx") {
+        function "fragpipeJavaMemGb"
+        when {
+            function {
+                """
+                input[0] = [ process: 'MSFRAGGER', ext: [:], memory: nextflow.util.MemoryUnit.of('16 GB') ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == 16 }
+            )
+        }
+    }
+
+    // FragPipe has no fixed heap (its RAM setting, else the machine's default, FragpipeRun.java:1308): neither set stops
+    test("fragpipeJavaMemGb - neither ext.java_xmx nor task memory fails") {
+        function "fragpipeJavaMemGb"
+        when {
+            function {
+                """
+                input[0] = [ process: 'MSFRAGGER', ext: [:] ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert !function.success },
+                { assert (function.stdout + function.stderr).any { l -> l.contains('MSFRAGGER: neither ext.java_xmx nor task.memory is set') } }
+            )
+        }
+    }
 }

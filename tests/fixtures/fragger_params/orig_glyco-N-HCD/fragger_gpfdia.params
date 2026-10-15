@@ -1,4 +1,4 @@
-database_name = /data/fragpipe-runs/fpgt/db/tiny.fasta			# Path to the protein database file in FASTA format.
+database_name = /data/database.fasta			# Path to the protein database file in FASTA format.
 num_threads = 32			# Number of CPU threads to use.
 
 precursor_mass_lower = -20			# Lower bound of the precursor mass window.

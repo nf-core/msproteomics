@@ -1,5 +1,5 @@
 include { fragpipeJarLines; fragpipeTools; shellArgs } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
-include { pairScansCommands; shellQuote } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
+include { pairScansCommands; shellQuote; javaXmxGb } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
 include { textFileCommand } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/write_text_file'
 
 /*
@@ -34,8 +34,7 @@ process PAIRSCANS {
 
     script:
     def args = task.ext.args ?: ''
-    prefix = task.ext.prefix ?: "${meta.id}"
-    def ram = task.memory ? Math.max(1, task.memory.toGiga() - 2) : 30
+    def ram = javaXmxGb(task, 2)
     def cmds = pairScansCommands(spectra.toString(), pairscans_args, task)
     def is_raw = spectra.name.toLowerCase().endsWith('.raw')
     """
@@ -65,7 +64,6 @@ process PAIRSCANS {
     """
 
     stub:
-    prefix = task.ext.prefix ?: "${meta.id}"
     def cmds = pairScansCommands(spectra.toString(), pairscans_args, task)
     // the log holds the argv after the JVM options, {TASK_DIR} unexpanded (deterministic snapshots)
     """

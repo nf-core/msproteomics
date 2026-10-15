@@ -78,7 +78,7 @@ Sample_B2,/data/raw/B2.raw,treated,,,treated,2
 ```
 
 For TMT, one plex is one FragPipe group, so give every file of a plex the same `experiment` (and the same `bioreplicate`, or leave it blank).
-List one row per channel and file; each file is converted and searched once.
+List one row per channel and file; each file is searched once (FragPipe mode reads the LC-MS files as given, `.raw` included).
 For TMT rows, `sample` is the channel's sample name in the TMT annotation (FragPipe's `<channel> <sample>` annotation file), and `NA` excludes a channel.
 Every channel of the label type set in the workflow file (`tmtintegrator.channel_num`) must be listed for each plex, as FragPipe requires.
 A channel may appear once per plex; repeating it for each fraction file with the same sample and condition is allowed.
@@ -134,40 +134,44 @@ To use a custom database, provide `--database /path/to/database.fasta`.
 
 FragPipe mode supports DDA LFQ, TMT label check, TMT quantification, and generic FragPipe workflows.
 The specific workflow is controlled by the `--fragpipe_workflow` and `--tmt_mode` parameters.
+A workflow that runs MSBooster (the shipped `LFQ-MBR.workflow` and `TMT6.workflow` do) needs `--fragpipe_threads` unless the workflow file sets `workflow.threads`: MSBooster's RT fit depends on the thread count, so the pipeline does not pick one from the host as FragPipe does.
 
-**DDA LFQ** -- uses MSFragger, MSBooster, Percolator, ProteinProphet, Philosopher, and IonQuant:
+**DDA LFQ** -- uses MSFragger, MSBooster, Percolator, ProteinProphet, Philosopher, and IonQuant; without `--fragpipe_workflow` the shipped `assets/LFQ-MBR.workflow` runs:
 
 ```bash
 nextflow run nf-core/msproteomics \
   --mode fragpipe \
   --fragpipe_container docker.io/<your-org>/fragpipe:24.0 \
-  --fragpipe_workflow LFQ-MBR.workflow \
+  --fragpipe_threads 16 \
   --input samplesheet.csv \
   --database /path/to/uniprot_human.fasta \
   --outdir results \
   -profile docker
 ```
 
-**TMT Label Check** -- assess TMT labeling efficiency:
+**TMT Label Check** -- assess TMT labeling efficiency; `--tmt_type` selects the shipped `assets/TMT-labelcheck-229.workflow` (TMT6/10/11) or `assets/TMT-labelcheck-304.workflow` (TMT16/18/35/TMTpro):
 
 ```bash
 nextflow run nf-core/msproteomics \
   --mode fragpipe \
   --fragpipe_container docker.io/<your-org>/fragpipe:24.0 \
   --tmt_mode labelcheck \
+  --tmt_type TMT16 \
   --input samplesheet.csv \
   --database /path/to/uniprot_human.fasta \
   --outdir results \
   -profile docker
 ```
 
-**TMT Quantification** -- full TMT isobaric quantification:
+**TMT Quantification** -- full TMT isobaric quantification; it needs a TMT workflow file, e.g. FragPipe's own `TMT10.workflow` / `TMT16.workflow` (FragPipe's `workflows/` folder) or the shipped `assets/TMT6.workflow` (FragPipe's TMT10 workflow with `tmtintegrator.channel_num=TMT-6`):
 
 ```bash
 nextflow run nf-core/msproteomics \
   --mode fragpipe \
   --fragpipe_container docker.io/<your-org>/fragpipe:24.0 \
+  --fragpipe_threads 16 \
   --tmt_mode quant \
+  --fragpipe_workflow /path/to/TMT10.workflow \
   --input samplesheet.csv \
   --database /path/to/uniprot_human.fasta \
   --outdir results \
@@ -180,6 +184,7 @@ nextflow run nf-core/msproteomics \
 nextflow run nf-core/msproteomics \
   --mode fragpipe \
   --fragpipe_container docker.io/<your-org>/fragpipe:24.0 \
+  --fragpipe_threads 16 \
   --fragpipe_workflow /path/to/custom.workflow \
   --input samplesheet.csv \
   --database /path/to/uniprot_human.fasta \
@@ -190,13 +195,14 @@ nextflow run nf-core/msproteomics \
 ### Understanding .workflow Files
 
 FragPipe `.workflow` files are key=value configuration files that control which tools run and their parameters.
-The pipeline ships three built-in workflow files in `assets/`:
+The pipeline ships four built-in workflow files in `assets/`:
 
-| File                          | Use Case                                              | Key Tools                                                  |
-| ----------------------------- | ----------------------------------------------------- | ---------------------------------------------------------- |
-| `LFQ-MBR.workflow`            | DDA label-free quantification with match-between-runs | MSFragger, MSBooster, Percolator, ProteinProphet, IonQuant |
-| `TMT-labelcheck-229.workflow` | TMT label check for TMT6/10/11 (mass 229 Da)          | MSFragger, Percolator, ProteinProphet                      |
-| `TMT-labelcheck-304.workflow` | TMT label check for TMTpro/16/18 (mass 304 Da)        | MSFragger, Percolator, ProteinProphet                      |
+| File                          | Use Case                                                       | Key Tools                                                                  |
+| ----------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `LFQ-MBR.workflow`            | DDA label-free quantification with match-between-runs          | MSFragger, MSBooster, Percolator, ProteinProphet, IonQuant                 |
+| `TMT-labelcheck-229.workflow` | TMT label check for TMT6/10/11 (mass 229 Da)                   | MSFragger, Percolator, ProteinProphet                                      |
+| `TMT-labelcheck-304.workflow` | TMT label check for TMTpro/16/18 (mass 304 Da)                 | MSFragger, Percolator, ProteinProphet                                      |
+| `TMT6.workflow`               | TMT6 quantification (`--tmt_mode quant`, `-profile test_tmtq`) | MSFragger, MSBooster, Percolator, ProteinProphet, IonQuant, TMT-Integrator |
 
 To create a custom `.workflow` file:
 
@@ -254,7 +260,7 @@ SAINTexpress is an optional post-run step, not part of FragPipe's run: FragPipe 
 It runs when the `.workflow` file sets `saintexpress.run-saint-express=true`; there is no pipeline flag.
 The pipeline runs it after the main analysis, as the Downstream tab's Run button does, logs that it does so, and writes it to its own output directory, `downstream/saintexpress/`: both modes (`spc`, `int`) on the work dir's `reprint.<mode>.tsv`.
 IonQuant writes those tables when it runs.
-Otherwise the pipeline runs Philosopher Abacus with `--reprint --razor` to produce them, which FragPipe's own run conditions would not do (user decision, parity review Appendix C); the Abacus outputs then appear only in the pipeline results.
+Otherwise the pipeline runs Philosopher Abacus with `--reprint --razor` to produce them, a deliberate difference from FragPipe, whose own run conditions would not run Abacus; the Abacus outputs then appear only in the pipeline results.
 A mode whose table is missing is skipped with FragPipe's error `Input file <path> is not accessible.`, logged and written to `downstream/saintexpress/saintexpress-<mode>/skipped_mode.txt`.
 SAINTexpress needs control IPs to score well, but FragPipe does not require them, and neither does the pipeline.
 A bait is a control when its name starts with `CONTROL` (`CmdSaintExpress.java:117-123`); Philosopher's reprint table labels a group `CONTROL` when its name contains `control` in any case (`lib/aba/pro.go:102-122`).
@@ -289,27 +295,28 @@ With a container engine and no `--fragpipe_container`, the run stops.
 You must build that image with the licensed tools (MSFragger, IonQuant, diaTracer) under your own license terms.
 See [Docker build instructions](fragpipe-docker/README.md) for academic and commercial container builds.
 
-**FragPipe is free for academic use.**
-Commercial users must obtain a license from Fragmatics.
+**MSFragger, IonQuant and diaTracer are free for academic, non-commercial and educational use.**
+Other users need a commercial license from [Fragmatics](https://www.fragmatics.com/), which took over commercial licensing from the University of Michigan on 1 May 2025.
 
 ## Profiles
 
 Use `-profile` to select a software packaging method:
 
-| Profile        | Description                                    |
-| -------------- | ---------------------------------------------- |
-| `docker`       | Run with Docker containers (recommended)       |
-| `singularity`  | Run with Singularity containers                |
-| `apptainer`    | Run with Apptainer containers                  |
-| `podman`       | Run with Podman containers                     |
-| `conda`        | Run with Conda environments (last resort)      |
-| `test`         | Minimal stub test for CI validation (DIA mode) |
-| `test_dia`     | DIA workflow test with small DIA dataset       |
-| `test_dda_lfq` | DDA LFQ workflow test with small DDA dataset   |
-| `test_tmt`     | TMT label check workflow test                  |
-| `test_tmtq`    | TMT quantification workflow test               |
+| Profile        | Description                                                                                                          |
+| -------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `docker`       | Run with Docker containers (recommended)                                                                             |
+| `singularity`  | Run with Singularity containers                                                                                      |
+| `apptainer`    | Run with Apptainer containers                                                                                        |
+| `podman`       | Run with Podman containers                                                                                           |
+| `conda`        | Not supported: DIA-NN and the licensed FragPipe tools have no Conda packages                                         |
+| `test`         | Minimal FragPipe DDA LFQ run (two human SILAC mzML subsets, `assets/LFQ-MBR.workflow`); needs `--fragpipe_container` |
+| `test_full`    | Full-size FragPipe DDA LFQ run (PXD024427, the FragPipe LFQ tutorial, six runs); needs `--fragpipe_container`        |
+| `test_dia`     | DIA-NN run on a small CPTAC CCRCC DIA mzML subset; runs with public containers only                                  |
+| `test_dda_lfq` | FragPipe DDA LFQ run on the same data as `test`; needs `--fragpipe_container`                                        |
+| `test_tmt`     | FragPipe TMT label check (TMT6, Erwinia mzML subsets); needs `--fragpipe_container`                                  |
+| `test_tmtq`    | FragPipe TMT quantification (`assets/TMT6.workflow`, Erwinia mzML subsets); needs `--fragpipe_container`             |
 
-Multiple profiles can be combined: `-profile test_dia,docker`
+Multiple profiles can be combined: `-profile test_dia,docker`, or `-profile test,docker --fragpipe_container <image>` for a FragPipe profile.
 
 ## Running the Pipeline
 
@@ -477,7 +484,7 @@ Each entry has:
 | `fragpipe_fasta` | Optional FASTA with `rev_` decoys and contaminants (`philosopher database --custom --contam`) |
 | `diann_speclib`  | Optional DIA-NN predicted spectral library of `fasta`                                         |
 
-Resolution follows iGenomes with `--star_index`: a user parameter wins over the iProteome, which wins over building in the pipeline.
+Resolution follows the nf-core iGenomes pattern: a user parameter wins over the iProteome, which wins over building in the pipeline.
 
 | Mode     | User parameter                  | iProteome                                             | Built in the pipeline                                                                                                                                                   |
 | -------- | ------------------------------- | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -564,155 +571,6 @@ To limit Nextflow's JVM memory usage, add the following to your environment:
 ```bash
 NXF_OPTS='-Xms1g -Xmx4g'
 ```
-
-## Golden FragPipe tests
-
-Golden tests check that a module reproduces FragPipe 24.0 exactly: the module gets the exact input files FragPipe used, and its command line and every output file are compared with FragPipe's.
-They need licensed-environment data (a captured FragPipe run and the licensed FragPipe image), so they run outside public CI with the nf-test tag `golden`.
-
-### Capture a FragPipe run
-
-Run FragPipe 24.0 headless, keeping every intermediate file, then capture it:
-
-```bash
-python3 bin/golden_capture.py \
-    --log <run>/work/log_<timestamp>.txt \
-    --dataset <dataset> \
-    --workflow TMT-labelcheck-304_perfile \
-    --root /path/to/golden
-```
-
-If the run dir holds empty placeholder spectra files (for example Docker bind-mount targets), pass `--lcms-source <dir with the real files>`; an empty spectra file without it is an error.
-`--root` defaults to `$GOLDEN_ROOT` and is required when that is unset; an unwritable root is an error.
-The capture writes `<root>/<dataset>/<workflow>/` with:
-
-| Path                                       | Content                                                                                                                                                                                                                                                                   |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `manifest.json`                            | every executed FragPipe step: tool, normalized argv, work dir, exit code, parallel batch and concurrent steps, inputs (with `golden_state`), outputs (with final state: present, moved, deleted, overwritten), flags for anything inferred; sha256 of every captured file |
-| `fragpipe_log.redacted.txt`                | the FragPipe log with license arguments and license lines removed                                                                                                                                                                                                         |
-| `files/work/`, `files/input/`, `files/db/` | FragPipe work dir, spectra dir (symlinks resolved), database dir                                                                                                                                                                                                          |
-
-The FragPipe log is never copied verbatim, license-named files are refused, and the capture aborts if a copied file references a license file or `--license` argument.
-In the redacted log and the manifest, the value of any license flag (`--license`, `-licence`, `--License-key`, ..., with a space or `=`) becomes `{LICENSE}` in place and any `license.dat` path becomes `{LICENSE_PATH}`; the argument count is unchanged, command lines are never dropped, and only informational lines that mention a license are dropped.
-Logs already scrubbed this way are accepted.
-
-FragPipe runs the per-group steps of a parallel group concurrently, so their log output interleaves.
-The manifest records each step's `parallel_batch` and `concurrent_with`, and flags steps whose `Process '<name>' finished` marker cannot be told apart from a concurrent step of the same name.
-
-Some steps rewrite their inputs in place (IonQuant, PTM-Shepherd in glyco mode, MBG, `Rewrite pepxml`, `AppendFile`), so a captured run only holds the rewritten version.
-Each input carries a `golden_state` (`available`, `fragpipe_install`, `rewritten_by_step:N`, `moved_by_step:N`, `deleted_by_step:N`), and `golden_inputs_available` is false when any input is gone.
-Golden tests for such steps take their inputs from a run that stops just before the step, for example a run that ends after Philosopher Report.
-`bin/fragpipe_log_to_manifest.py <log> -o manifest.json` builds the manifest alone.
-
-### Run the golden tests
-
-```bash
-export FRAGPIPE_CONTAINER=<licensed FragPipe 24.0 image>   # the FragPipe tools of the golden tests run in it
-export GOLDEN_ROOT=/path/to/golden                         # captured FragPipe runs; every golden test fails without it
-export OPAIR_DET_DLL=/path/to/PTMLocalization.dll          # deterministic O-Pair 1.1.10 build (O-Pair golden test)
-NXF_OFFLINE=true nf-test test --tag golden
-```
-
-Stock O-Pair 1.1.10 breaks ties between equally scored glycan placements in a random order, so its `psm.tsv` differs between identical runs.
-The O-Pair golden test compares against `PXD017646/glyco-O-Pair_perfile_det`, a FragPipe run with a `PTMLocalization.dll` that builds its glycan boxes in enumeration order (the order of stock O-Pair with `-t 1`).
-It mounts `$OPAIR_DET_DLL` over the image's `tools/opair/PTMLocalization.dll`, checks its md5 (`01fca5e12c419a45880c5b610bcd0175`) and requires `psm.tsv` to match exactly.
-
-Each golden test has its own `golden.config` next to it: it runs the tools in `$FRAGPIPE_CONTAINER` with docker and pins the tested processes to the threads and memory of the golden FragPipe run.
-
-Each test (`modules/**/tests/golden.nf.test`) selects its steps from the manifest, stages the golden inputs, runs the module, and calls `bin/golden_step_check.py`, which fails on any of:
-
-- argv differences after path normalization (step work dir, FragPipe install and external inputs become placeholders; argument order and flags are compared as is);
-- output files that differ under the comparison rules below, or that the module did not write;
-- module files with no FragPipe counterpart, except module logs passed with `--ignore-actual`.
-
-Outputs FragPipe deleted or overwrote later (for example Percolator's `*_psms.tsv`) have no golden copy and are reported as `UNVERIFIABLE`; a step with no output that could be compared fails (`NO_VERIFIED_OUTPUT`).
-The module's command line is split with POSIX shell rules, so quoted and empty arguments are compared like FragPipe's.
-
-### Comparison rules
-
-`bin/golden_compare.py` applies exactly the rules measured in the FragPipe-vs-FragPipe determinism runs; every other byte must match.
-The Philosopher tolerances are the measured envelope of its nondeterministic FDR tie handling (`bin/philosopher_tables.py`, determinism doc section "Philosopher filter/report nondeterminism").
-There are two rule profiles, selected with `--profile` (default `dda`); `bin/golden_step_check.py` picks `dia` when the golden run's spectra are DIA.
-
-Profile `dda` (TMT label check, DDA LFQ, glyco DDA):
-
-| File                                                                                                     | Normalization                                                                                                                      |
-| -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `log_*.txt`, anything under `?/`                                                                         | skipped                                                                                                                            |
-| `*.pepindex`                                                                                             | first 8 bytes dropped, run paths rewritten                                                                                         |
-| `*.prot.xml`                                                                                             | `<tmpdir>/<uuid>/`, run paths, ISO `date=`/`time=`                                                                                 |
-| `*.pepXML`, `*.pep.xml`                                                                                  | run paths, ISO `date=`/`time=`                                                                                                     |
-| `filter.log`                                                                                             | run paths, `time=` stripped, `Parsing` lines as a set, PSM/peptide/ion counts ±2, decoy ±1, threshold ±2e-4 (Philosopher envelope) |
-| `fragger*.params`, `*.workflow`, `*.job`, `*.fp-manifest`, `filelist_*.txt`, `experiment_annotation.tsv` | run paths                                                                                                                          |
-| `psm.tsv`                                                                                                | Philosopher envelope: `Qvalue` within 1.01/max(T_above,1), at most 1 boundary PSM between the two runs' `filter.log` thresholds    |
-| `peptide.tsv`, `ion.tsv`, `protein.tsv`                                                                  | spectral counts may move by the boundary PSMs mapped to the entry                                                                  |
-| everything else                                                                                          | none (raw bytes)                                                                                                                   |
-
-Profile `dia` adds the rules measured on the DIA runs:
-
-| File                                             | Normalization                                                                                                                                                                           |
-| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `MSBooster/spectraRT.predicted.bin`              | skipped                                                                                                                                                                                 |
-| `*.pdf` (EasyPQP alignment plots)                | `/CreationDate (D:...)`                                                                                                                                                                 |
-| DIA-NN `report.log.txt`                          | run paths, `Current date and time:` text, `[m:ss] ` prefixes                                                                                                                            |
-| `MSBooster/spectraRT*.tsv`                       | rows sorted (header first)                                                                                                                                                              |
-| `peptide.tsv`, `ion.tsv`                         | full Philosopher envelope: `Qvalue` rule; `ion.tsv` keyed on stripped sequence + `Charge` + `M/Z`, `Expectation`/`Prev AA`/`Next AA` dropped; `peptide.tsv` without `Prev AA`/`Next AA` |
-| `msbooster_params.txt`, `easypqp_files/cmds.txt` | run paths                                                                                                                                                                               |
-
-Compare two run directories, for example two FragPipe runs:
-
-```bash
-python3 bin/golden_compare.py dirs runA/work runB/work --profile dda \
-    --expected-prefix runA --actual-prefix runB \
-    --expected-tmp runA/jtmp --actual-tmp runB/jtmp
-```
-
-Missing and extra files are failures, and so is a comparison in which no file was compared.
-
-### Coverage
-
-```bash
-python3 bin/golden_coverage.py <golden>/<dataset>/<workflow>/manifest.json
-```
-
-lists every FragPipe step of the run and the golden test that covers it.
-Unit tests for the scripts: `python3 -m unittest discover -s tests/python`.
-
-## Comparing against FragPipe
-
-`bin/compare_fragpipe_results.py` measures how closely an msproteomics run reproduces a FragPipe GUI/headless run on the same data.
-It needs only Python 3 (standard library).
-
-```bash
-python3 bin/compare_fragpipe_results.py \
-    --test results/ \
-    --reference /path/to/fragpipe_output/ \
-    --outdir comparison/
-```
-
-Both directories are searched recursively, so the msproteomics layout (`philosopher/<exp>/`, `ionquant/`, `tmtintegrator/`) and the FragPipe layout (`<exp>/`, `combined_*.tsv`, `tmt-report/`) can be compared directly.
-Per-experiment `psm.tsv`, `peptide.tsv`, `ion.tsv` and `protein.tsv` are matched by experiment directory name.
-Use `--experiment-map TEST=REF ...` when experiment names differ, and `--exclude REGEX` when a file is found twice.
-Combined tables (`combined_protein.tsv`, `combined_peptide.tsv`, `combined_modified_peptide.tsv`, `combined_ion.tsv`) and TMT-Integrator tables (`abundance_*.tsv`, `ratio_*.tsv`) are matched by file name.
-A table present on only one side, or a missing required column, is an error (exit code 2) that names the file.
-
-The tool reports, per experiment and for the combined tables:
-
-| Metric         | Description                                                                                                                 |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Counts         | PSMs, peptides, modified peptides, ions and proteins (decoys excluded)                                                      |
-| Overlap        | Jaccard, only-test and only-reference counts for peptide sequences, modified peptides, ions and protein IDs                 |
-| Shared PSMs    | Percentage of shared spectra with the same peptide and modified peptide, and Probability/Hyperscore/Expectation correlation |
-| Quantification | Pearson and Spearman of log2 intensities (raw and MaxLFQ), median log2 ratio and percentage within 2-fold                   |
-| TMT            | Per-channel correlation of TMT-Integrator log2 values                                                                       |
-| Parameters     | Differing keys between `fragger.params` and `fragpipe.workflow` (informational, not gated)                                  |
-
-Modified peptides are keyed on `Assigned Modifications` (position, residue and mass rounded to `--mod-decimals`), because `Modified Peptide` notation differs between tables.
-The verdict is PASS (exit code 0) only when every gated metric meets `--max-count-deviation` (default 0.01), `--min-jaccard` (default 0.98) and `--min-spearman` (default 0.99); otherwise it is FAIL (exit code 1).
-Correlations with fewer than `--min-quant-n` shared values are not computed and are listed as skipped.
-Results are written to `comparison.md` and `comparison.json` in `--outdir`.
-
-Unit tests run with `python3 -m unittest discover -s tests/python -v`.
 
 ## Further Reading
 

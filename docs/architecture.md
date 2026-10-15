@@ -26,20 +26,49 @@ The DIA workflow (`workflows/diann.nf`) runs DIA-NN-based analysis with optional
 ```
 Input CSV
   │
-  ├── GENERATE_SDRF ─────────── bookkeeping (SDRF metadata generation)
+  ├── GENERATESDRFFROMSAMPLESHEET ─ bookkeeping
   │
   ▼
-FILE_PREPARATION ──────────── RAW → mzML conversion, decompression, peak picking
+PARSEFRAGPIPEWORKFLOW ────── read the .workflow file (tool run flags and settings)
   │
   ▼
-DIA_PROTEOMICS_ANALYSIS ───── DIA-NN library generation + quantification
-  │                            (nf-core subworkflow)
+CHECKCENTROID ────────────── FragPipe's centroid check of the LC-MS files
   │
-  ├──► MSstats (optional) ──── differential abundance analysis
+  ▼
+FRAGPIPE_DATABASE ────────── decoy check (CHECKDBCONFIG); optional PHILOSOPHERDATABASE (decoys + contaminants)
   │
-  ├──► IQ / MaxLFQ ────────── protein-level quantification via MaxLFQ algorithm
+  ▼
+FRAGPIPE_CONVERT ─────────── optional DIA-Umpire / diaTracer (LC-MS files searched as given)
   │
-  └──► PMULTIQC (optional) ─── proteomics QC report
+  ▼
+FRAGPIPE_SEARCH ──────────── MSFragger database search (split database: SORTFASTA, MSFRAGGERCALIBRATE, SPLITFASTA, MERGESPLITSEARCH)
+  │                           + CrystalC artifact removal (optional)
+  │                           + MSBooster rescoring (optional)
+  │
+  ▼
+FRAGPIPE_VALIDATE ────────── PSM validation via Percolator or PeptideProphet
+  │                           + PTMProphet for modification localization (optional)
+  │
+  ▼
+FRAGPIPE_INFERENCE ───────── ProteinProphet, Philosopher Filter, iProphet, Abacus
+  │
+  ▼
+FRAGPIPE_PHILOSOPHER_QUANT ─ FreeQuant / LabelQuant, final Philosopher report
+  │                           then Export matched fragments (FRAGPIPE_MATCHED_FRAGMENTS)
+  │
+  ├──► WRITESUBMZML ──────── optional _sub.mzML per LC-MS file; then FRAGPIPESECONDPASS writes the
+  │                           second-pass workflow and manifest (workflows/fragpipe.nf)
+  ▼
+FRAGPIPE_GLYCO ───────────── PairScans, O-Pair, PTM-Shepherd (FRAGPIPE_PTM), MBG
+  │
+  ▼
+FRAGPIPE_QUANT ───────────── IonQuant (LFQ, MS1, isobaric), TMT-Integrator
+  │
+  ▼
+FRAGPIPE_SPECLIB ─────────── spectral library generation (SPECLIBGEN, DIANNFRAGPIPE)
+  │
+  ▼
+FRAGPIPE_EXPORT ──────────── SAINTexpress (optional), FPOP, FPOP coADAPTr, Metaproteomics
 ```
 
 **FILE_PREPARATION** converts vendor-specific raw files (Thermo `.raw`, Bruker `.d`) to open-format mzML.
@@ -61,7 +90,7 @@ Each subworkflow wraps one or more FragPipe tools and can run independently with
 ```
 Input CSV
   │
-  ├── GENERATE_SDRF ──────── bookkeeping
+  ├── GENERATESDRFFROMSAMPLESHEET ─ bookkeeping
   │
   ▼
 FRAGPIPE_CONVERT ─────────── optional DIA-Umpire / diaTracer (LC-MS files searched as given)
@@ -82,13 +111,13 @@ FRAGPIPE_VALIDATE ────────── PSM validation via Percolator o
 FRAGPIPE_INFERENCE ───────── ProteinProphet protein-level inference
   │                           + Philosopher Filter FDR filtering
   │
-  ├──► FRAGPIPE_QUANT ────── IonQuant (LFQ) or TMTIntegrator (TMT) or FreeQuant
+  ├──► FRAGPIPE_PHILOSOPHER_QUANT ─ FreeQuant / LabelQuant, final Philosopher report
   │
-  ├──► FRAGPIPE_PTM ──────── PTMShepherd post-translational modification analysis
+  ├──► FRAGPIPE_GLYCO ────── PTMShepherd (FRAGPIPE_PTM), O-Pair, MBG glycoproteomics
   │
-  ├──► FRAGPIPE_SPECLIB ──── Spectral library generation (EasyPQP / SpecLibGen)
+  ├──► FRAGPIPE_QUANT ────── IonQuant (LFQ) or TMTIntegrator (TMT)
   │
-  ├──► FRAGPIPE_GLYCO ────── Glycoproteomics: MSFragger-Glyco / O-Pair
+  ├──► FRAGPIPE_SPECLIB ──── Spectral library generation (SPECLIBGEN, DIANNFRAGPIPE)
   │
   └──► FRAGPIPE_EXPORT ───── FPOP, Metaproteomics; SAINTexpress (optional post-run, downstream/)
 ```
@@ -109,12 +138,12 @@ PTMProphet can optionally localize modification sites.
 
 **FRAGPIPE_INFERENCE** aggregates per-sample results for protein-level inference via ProteinProphet, then applies Philosopher Filter for multi-level FDR control (PSM, peptide, protein).
 
-**Post-inference steps** run in parallel after inference completes:
+**Post-inference steps** run in FragPipe's order, each on the tables the previous one left:
 
-- **FRAGPIPE_QUANT** -- IonQuant for label-free quantification (with MaxLFQ and match-between-runs), TMTIntegrator for isobaric quantification, or FreeQuant for spectral counting
-- **FRAGPIPE_PTM** -- PTMShepherd for open search PTM summarization and localization
+- **FRAGPIPE_PHILOSOPHER_QUANT** -- FreeQuant, LabelQuant and the final Philosopher report, then Export matched fragments; Write sub mzML (`tab-run.write_sub_mzml=true`) runs per LC-MS file on the final report
+- **FRAGPIPE_GLYCO** -- PAIRSCANS and O-Pair (O-linked), MBG, and `FRAGPIPE_PTM` (PTMShepherd for open search PTM summarization and localization)
+- **FRAGPIPE_QUANT** -- IonQuant for label-free quantification (with MaxLFQ and match-between-runs) and isobaric quantification, TMTIntegrator for isobaric quantification
 - **FRAGPIPE_SPECLIB** -- spectral library generation for DIA or targeted methods
-- **FRAGPIPE_GLYCO** -- MSFragger-Glyco (N-linked) and O-Pair (O-linked) glycoproteomics
 - **FRAGPIPE_EXPORT** -- export results to FPOP or metaproteomics analysis, and the optional post-run SAINTexpress (FragPipe's Downstream-tab action, written to `downstream/saintexpress/`) (Skyline is not supported: FragPipe 24.0 refuses to run it on Linux, where it finds no Skyline installation)
 
 ## FragPipe Headless Mode
@@ -125,12 +154,13 @@ Headless mode (`--fragpipe_mode headless`) runs the entire FragPipe pipeline as 
 Input CSV
   │
   ▼
-THERMORAWFILEPARSER ────── RAW → mzML conversion (per-sample, parallel)
+PARSEFRAGPIPEWORKFLOW ──── read the .workflow file (decoy tag and tool run flags)
   │
-  │   PHILOSOPHERDATABASE ── decoy generation (required for headless)
-  │       │
-  ▼       ▼
-FRAGPIPEHEADLESS ─────── all-in-one FragPipe execution
+  ▼
+FRAGPIPE_DATABASE ──────── decoy check (CHECKDBCONFIG); optional PHILOSOPHERDATABASE (decoys + contaminants)
+  │
+  ▼
+FRAGPIPEHEADLESS ───────── all-in-one FragPipe execution on all LC-MS files as given
                             (single process, all tools run sequentially)
 ```
 
@@ -151,31 +181,11 @@ For TMT experiments, per-plex annotation files are generated automatically from 
 The TMT Label Check workflow (`workflows/tmt_labelcheck.nf`) is a QC workflow that measures TMT labeling efficiency before committing to a full quantification experiment.
 
 ```
-Input CSV
-  │
-  ├── GENERATE_SDRF ──────── bookkeeping
-  │
-  ▼
-FRAGPIPE_DATABASE ────────── prepare FASTA with decoys
-  │
-  ▼
-FRAGPIPE_CONVERT ─────────── RAW → mzML conversion
-  │
-  ▼
-MSFRAGGER ────────────────── database search (single-pass, no calibration)
-  │                           TMT set as VARIABLE modification
-  │
-  ▼
-FRAGPIPE_VALIDATE ────────── Percolator PSM-level FDR
-  │
-  ▼
-FRAGPIPE_INFERENCE ───────── ProteinProphet + Philosopher Filter
-  │
-  ▼
-FRAGPIPE_QUANT ───────────── IonQuant (aggregate PSMs)
-  │
-  ▼
-TMTLABELCHECKANALYZE ───── labeling efficiency report (HTML + TSV)
+MSPROTEOMICS_FRAGPIPE ───── the label check workflow, as any FragPipe run
+  │                         (--fragpipe_mode pipeline: FRAGPIPE; headless: FRAGPIPE_HEADLESS_WF)
+  │                         TMT set as VARIABLE modification
+  ├── each group's Report psm.tsv ──────── TMTLABELCHECKANALYZE (qc/)
+  └── IonQuant combined_modified_peptide ─ TMTLABELCHECKANALYZE_IONQUANT (qc_combined/)
 ```
 
 The key difference from a standard search is that TMT is configured as a **variable** modification (not fixed).

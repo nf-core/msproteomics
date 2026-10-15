@@ -45,7 +45,7 @@ The process environment is FragPipe's: `PYTHONIOENCODING=utf-8`, `OMP_NUM_THREAD
 
 ## Container
 
-The FragPipe image given with `--fragpipe_container` (needs FragPipe-SpecLib's pinned Python packages).
+The FragPipe image given with `--fragpipe_container` (its Python environment must have the EasyPQP dependency versions FragPipe-SpecLib was built with).
 
 ## Usage
 

@@ -88,7 +88,7 @@ output:
           description: Tool name
       - fragpipeToolVersions().ptmshepherd:
           type: string
-          description: Version of PTM-Shepherd bundled with FragPipe
+          description: Version of PTM-Shepherd bundled with FragPipe; fixed value (fragpipeToolVersions()), held by the version-named jar tools/ptmshepherd-3.0.11.jar that the module checks exists
   versions_fragpipe:
     - - ${task.process}:
           type: string
@@ -110,7 +110,7 @@ topics:
           description: Tool name
       - fragpipeToolVersions().ptmshepherd:
           type: string
-          description: Version of PTM-Shepherd bundled with FragPipe
+          description: Version of PTM-Shepherd bundled with FragPipe; fixed value (fragpipeToolVersions()), held by the version-named jar tools/ptmshepherd-3.0.11.jar that the module checks exists
     - - ${task.process}:
           type: string
           description: Process name

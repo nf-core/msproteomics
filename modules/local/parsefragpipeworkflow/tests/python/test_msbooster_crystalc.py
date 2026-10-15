@@ -1,4 +1,4 @@
-"""Unit tests for the MSBooster (RC-21) and Crystal-C (RC-19) params of parse_fragpipe_workflow.py.
+"""Unit tests for the MSBooster and Crystal-C params of parse_fragpipe_workflow.py.
 
 Expected values are FragPipe 24.0: CmdMSBooster.configure (release jar), MSBoosterPanel model
 tables, CrystalcPanel.toParams / crystalc.params, and the msbooster_params.txt FragPipe wrote for
@@ -11,9 +11,14 @@ from pathlib import Path
 import pytest
 
 SCRIPT = Path(__file__).resolve().parents[2] / "resources" / "usr" / "bin" / "parse_fragpipe_workflow.py"
+# FragPipe 24.0 templates the module stages (the script takes them as arguments)
+TEMPLATES = Path(__file__).resolve().parents[2] / "assets"
+TEMPLATE_ARGS = ["--fragger-template", str(TEMPLATES / "fragger_closed.params"), "--diaumpire-template", str(TEMPLATES / "diaumpire_se.params")]
 spec = importlib.util.spec_from_file_location("parse_fragpipe_workflow", SCRIPT)
 pfw = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(pfw)
+pfw.FRAGGER_TEMPLATE = TEMPLATES / "fragger_closed.params"
+pfw.DIAUMPIRE_TEMPLATE = TEMPLATES / "diaumpire_se.params"
 
 LFQ_MBR_MSBOOSTER = {
     "find-best-im-model": "false",

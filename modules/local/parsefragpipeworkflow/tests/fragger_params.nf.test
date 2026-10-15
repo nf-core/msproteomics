@@ -1,4 +1,4 @@
-// RC-17 / RC-18: the MSFragger params files must be byte-identical to the ones FragPipe 24.0 writes.
+// The MSFragger params files must be byte-identical to the ones FragPipe 24.0 writes.
 //
 // Expected files in tests/fixtures/fragger_params/<case>/ were written by FragPipe 24.0 itself, not
 // derived from the parser:
@@ -26,7 +26,7 @@ nextflow_process {
 
     tag "modules"
     tag "modules_local"
-    tag "parse_fragpipe_workflow"
+    tag "parsefragpipeworkflow"
     tag "stub"
 
     test("parse_fragpipe_workflow - fragger params byte-identical to FragPipe for bundled workflows") {
@@ -36,6 +36,7 @@ nextflow_process {
             process {
                 """
                 def cases = ['DIA_SpecLib_Quant', 'glyco-N-HCD', 'Mass-Offset-CommonPTMs', 'XRNAX-MassOffset', 'Labile_ADP-ribosylation', 'glyco-N-DIA', 'crafted_cap512', 'crafted_cap1024', 'orig_glyco-N-HCD']
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = channel.fromList(cases).map { n ->
                     [ [ id: n ], file("${baseDir}/tests/fixtures/fragger_params/\${n}/fragpipe.workflow", checkIfExists: true),
                       ['DDA', 'DIA', 'GPF-DIA', 'DDA+'] ]

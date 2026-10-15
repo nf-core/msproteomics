@@ -47,22 +47,12 @@ process PERCOLATOR {
     script:
     def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id}"
-    def cmds = percolatorCommands(meta, pin, edited_pin, pepxml_files, percolator_cli, args, min_prob, has_crystalc, decoy_tag, write_weights, init_weights, task)
+    def cmds = percolatorCommands(meta, pin, edited_pin, pepxml_files, percolator_cli, args, min_prob, has_crystalc, decoy_tag, write_weights, init_weights, keep_target_tsv, keep_decoy_tsv, prefix, task)
     def gdir = shellQuote(cmds.group_dir)
-    def target_tsv = "${cmds.stripped}_percolator_target_psms.tsv"
-    def decoy_tsv = "${cmds.stripped}_percolator_decoy_psms.tsv"
-    // the group dir holds the PIN(s) and pepXML(s) like FragPipe's (the task dir itself for the blank group)
-    def inputs = ([pin] + [edited_pin].flatten().findAll { f -> f } + [pepxml_files].flatten()).collect { f -> shellQuote(f.name) }
-    def link_inputs = cmds.group_dir == '.' ? '' : inputs.collect { name -> "ln -s \"\$PWD\"/${name} ${gdir}/${name}" }.join('\n    ')
-    def unlink_inputs = cmds.group_dir == '.' ? '' : "rm ${inputs.collect { name -> "${gdir}/${name}" }.join(' ')}"
-    def weights = "${cmds.stripped}_percolator.weights"
-    def outputs = cmds.interact.collect { name -> shellQuote(name) } + (keep_target_tsv ? [shellQuote(target_tsv)] : []) + (keep_decoy_tsv ? [shellQuote(decoy_tsv)] : [])
-    def move_outputs = cmds.group_dir == prefix ? '' : "mv ${outputs.collect { name -> "${gdir}/${name}" }.join(' ')} ${shellQuote(prefix)}/"
-    def drop_tsv = (keep_target_tsv ? [] : [target_tsv]) + (keep_decoy_tsv ? [] : [decoy_tsv])
     """
     export HOME=\$(pwd)
     mkdir -p ${prefix} ${gdir}
-    ${link_inputs}
+    ${cmds.link_inputs}
 
     for part in ${shellQuote(cmds.percolator[0])} ${shellQuote(cmds.fragpipe_lib)}; do
         [ -e "\$part" ] || { echo "ERROR: FragPipe component \$part not found (the FragPipe tools directory set in nextflow.config)" >&2; exit 1; }
@@ -80,15 +70,15 @@ process PERCOLATOR {
     printf '%s\\n' "\${conv_cmd[*]}" >> ${prefix}/percolator.log
     (cd ${gdir} && "\${conv_cmd[@]}") 2>&1 | tee -a ${prefix}/percolator.log
 
-    ${unlink_inputs}
-    ${drop_tsv ? "rm ${drop_tsv.collect { name -> "${gdir}/${shellQuote(name)}" }.join(' ')}" : ''}
-    ${move_outputs}
-    ${write_weights && cmds.group_dir != '.' ? "mv ${gdir}/${shellQuote(weights)} ." : ''}
+    ${cmds.unlink_inputs}
+    ${cmds.drop_tsv}
+    ${cmds.move_outputs}
+    ${cmds.move_weights}
     """
 
     stub:
     prefix = task.ext.prefix ?: "${meta.id}"
-    def cmds = percolatorCommands(meta, pin, edited_pin, pepxml_files, percolator_cli, task.ext.args ?: '', min_prob, has_crystalc, decoy_tag, write_weights, init_weights, task)
+    def cmds = percolatorCommands(meta, pin, edited_pin, pepxml_files, percolator_cli, task.ext.args ?: '', min_prob, has_crystalc, decoy_tag, write_weights, init_weights, keep_target_tsv, keep_decoy_tsv, prefix, task)
     """
     mkdir -p ${prefix}
     touch ${cmds.interact.collect { name -> "${prefix}/${name}" }.join(' ')}

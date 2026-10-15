@@ -5,7 +5,7 @@ nextflow_process {
     process "SAINTEXPRESS"
 
     tag "modules"
-    tag "modules_nfcore"
+    tag "modules_local"
     tag "saintexpress"
 
     test("saintexpress - stub") {

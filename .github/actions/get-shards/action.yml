@@ -27,12 +27,15 @@ runs:
     - name: Get number of shards
       id: shards
       shell: bash
+      env:
+        EVENT_NAME: ${{ github.event_name }}
       run: |
         # Run nf-test with dynamic parameter
         # Use --changed-since HEAD^ for incremental testing, fall back to running all tests
         # if HEAD^ doesn't exist (single-commit repo or initial push)
         CHANGED_SINCE_ARG="--changed-since HEAD^"
-        if ! git rev-parse HEAD^ >/dev/null 2>&1; then
+        # a manual dispatch runs every test: HEAD^ of a branch push may touch no test at all
+        if [ "$EVENT_NAME" = "workflow_dispatch" ] || ! git rev-parse HEAD^ >/dev/null 2>&1; then
           CHANGED_SINCE_ARG=""
         fi
         nftest_output=$(nf-test test \

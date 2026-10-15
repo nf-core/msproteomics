@@ -82,6 +82,22 @@ output:
           type: file
           description: EasyPQP reference run RT table (automatic RT calibration)
           pattern: "easypqp_rt_reference_run.tsv"
+  im_reference:
+    - - meta:
+          type: map
+          description: Groovy Map of the FragPipe group
+      - easypqp_im_reference_run.tsv:
+          type: file
+          description: EasyPQP reference run ion mobility table (IM calibration, ion mobility data)
+          pattern: "easypqp_im_reference_run.tsv"
+  im_alignments:
+    - - meta:
+          type: map
+          description: Groovy Map of the FragPipe group
+      - easypqp_im_alignment_*.alignment_pkl:
+          type: file
+          description: EasyPQP ion mobility alignment of each run to the reference run (pickled)
+          pattern: "easypqp_im_alignment_*.alignment_pkl"
   filelists:
     - - meta:
           type: map
@@ -115,7 +131,7 @@ output:
           description: The tool name
       - fragpipeToolVersions().fragpipe_speclib:
           type: string
-          description: FragPipe-SpecLib version pinned by FragPipe 24.0 (python/python_packages/requirements.txt), checked against pip show at run time
+          description: "FragPipe-SpecLib version pinned by FragPipe 24.0 (python/python_packages/requirements.txt), checked against pip show at run time; fixed value (fragpipeToolVersions()): FragPipe 24.0 pins fragpipe-speclib==0.1.58 (python/python_packages/requirements.txt)"
   versions_fragpipe:
     - - ${task.process}:
           type: string
@@ -137,7 +153,7 @@ topics:
           description: The tool name
       - fragpipeToolVersions().fragpipe_speclib:
           type: string
-          description: The tool version
+          description: "The tool version; fixed value (fragpipeToolVersions()): FragPipe 24.0 pins fragpipe-speclib==0.1.58 (python/python_packages/requirements.txt)"
     - - ${task.process}:
           type: string
           description: The process the versions were collected from

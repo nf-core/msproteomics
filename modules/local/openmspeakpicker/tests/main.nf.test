@@ -5,8 +5,8 @@ nextflow_process {
     process "OPENMSPEAKPICKER"
 
     tag "modules"
-    tag "modules_nfcore"
-    tag "openms_peak_picker"
+    tag "modules_local"
+    tag "openmspeakpicker"
 
     test("openms_peak_picker - stub") {
         tag "stub"

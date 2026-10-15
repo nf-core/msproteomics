@@ -37,15 +37,18 @@ output:
       - openms:
           type: string
           description: The tool name
-      - cat .openms_peakpicker_version:
+      - "PeakPickerHiRes 2>&1 | grep -E '^Version(.*)' | sed 's/Version: //g' | cut -d ' ' -f 1":
           type: eval
           description: The expression to obtain the version of the tool
   log:
-    - "*.log":
-        type: file
-        description: log file
-        pattern: "*.log"
-        ontologies: []
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - ${prefix}_pp.log:
+          type: file
+          description: PeakPickerHiRes log
+          pattern: "*_pp.log"
+          ontologies: []
 
 topics:
   versions:
@@ -55,7 +58,7 @@ topics:
       - openms:
           type: string
           description: The tool name
-      - cat .openms_peakpicker_version:
+      - "PeakPickerHiRes 2>&1 | grep -E '^Version(.*)' | sed 's/Version: //g' | cut -d ' ' -f 1":
           type: eval
           description: The expression to obtain the version of the tool
 

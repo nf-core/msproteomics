@@ -9,6 +9,18 @@ nextflow_process {
     tag "fragpipesecondpass"
 
     // FragpipeRun.java:589-700: rewritten workflow lines, sub mzML manifest; databases folder of the FragPipe install
+    def run_workflow = [
+        '# FragPipe workflow',
+        'database.db-path=/data/db.fasta',
+        'database.decoy-tag=rev_',
+        'msfragger.calibrate_mass=2',
+        'msfragger.fragment_mass_tolerance=20',
+        'msfragger.fragment_mass_units=1',
+        'phi-report.print-decoys=true',
+        'tab-run.write_sub_mzml=true',
+        'workdir=/out/fragpipe',
+        ''
+    ].join('\n')
     [['stub', true], ['integration', false]].each { kind, stub ->
         test("fragpipe_second_pass - ${kind} workflow and manifest") {
             if (stub) { options "-stub" }
@@ -43,7 +55,8 @@ nextflow_process {
                 def manifest = new File(process.out.manifest[0][1].toString())
                 assertAll(
                     { assert process.success },
-                    { assert wf.text == [
+                    // the stub copies the run's workflow; fragpipe_second_pass.py applies FragPipe's second-pass rules
+                    { assert wf.text == (stub ? run_workflow : [
                         '# FragPipe workflow',
                         'database.db-path=/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/databases',
                         'database.decoy-tag=',
@@ -54,7 +67,7 @@ nextflow_process {
                         'tab-run.write_sub_mzml=false',
                         'workdir=',
                         ''
-                    ].join('\n') : wf.text },
+                    ].join('\n')) : wf.text },
                     { assert manifest.text == '/out/fragpipe/A01_sub.mzML\tA\t1\tDDA\n/out/fragpipe/B01_sub.mzML\tB\t\tDDA\n' : manifest.text },
                     { assert snapshot(process.out.workflow, process.out.manifest, process.out.versions_python.collect { entry -> entry.take(2) }).match() }
                 )

@@ -1,4 +1,4 @@
-// G-02, G-05, G-06, G-08, G-09, G-10, G-12, G-13, RC-33: glyco tool arguments and FragPipe hard stops.
+// Glyco tool arguments and FragPipe hard stops.
 //
 // Every expected value is derived here from the FragPipe 24.0 workflow file with FragPipe's own
 // rules (FP = FragPipe-GUI/src/main/java/org/nesvilab/fragpipe/), never from parser output:
@@ -21,7 +21,7 @@ nextflow_process {
 
     tag "modules"
     tag "modules_local"
-    tag "parse_fragpipe_workflow"
+    tag "parsefragpipeworkflow"
     tag "glyco"
 
     test("parse_fragpipe_workflow - glyco - O-Pair, PairScans, MBG, AppendFile and PTM-S arguments of bundled workflows") {
@@ -35,6 +35,7 @@ nextflow_process {
                 // glyco-N-LFQ with MBG switched on (no bundled workflow runs MBG)
                 def mbg_wf = file("\${workDir}/glyco-N-LFQ-MBG.workflow")
                 mbg_wf.text = file("\${fixtures}/glyco-N-LFQ.workflow").text.replace('mbg.run-mbg=false', 'mbg.run-mbg=true')
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = channel.of(
                     [ [ id: 'glyco-O-Pair' ], file("\${fixtures}/glyco-O-Pair.workflow", checkIfExists: true), ['DDA'] ],
                     [ [ id: 'glyco-O-Hybrid' ], file("\${fixtures}/glyco-O-Hybrid.workflow", checkIfExists: true), ['DDA'] ],
@@ -90,23 +91,23 @@ nextflow_process {
             def ptmsKeys = ptmsLines.collect { line -> line.split(' = ', 2)[0] }
 
             assertAll(
-                // O-Pair argv (G-05, G-06)
+                // O-Pair argv
                 { assert cfg['glyco-O-Pair'].opair.args == expOpair(pOP) },
                 { assert cfg['glyco-O-Hybrid'].opair.args == expOpair(pOH) },
                 { assert cfg['glyco-O-Pair'].opair.config_type == 'argv' },
                 { assert cfg['glyco-O-Pair'].opair.oxonium_file == '' },
-                // O-Pair reads <base>_calibrated.mzML (write_calibrated_mzml && calibrate_mass > 0) (G-07)
+                // O-Pair reads <base>_calibrated.mzML (write_calibrated_mzml && calibrate_mass > 0)
                 { assert cfg['glyco-O-Pair'].opair.spectra == ((pOP.getProperty('msfragger.write_calibrated_mzml') == 'true' && pOP.getProperty('msfragger.calibrate_mass').toInteger() > 0) ? 'calibrated' : 'uncalibrated_or_input') },
-                // PairScans (G-08)
+                // PairScans
                 { assert cfg['glyco-O-Pair'].pairscans.run == (pOP.getProperty('opair.single_scan_type') != 'true') },
                 { assert cfg['glyco-O-Pair'].pairscans.args == ['opair.activation1', 'opair.activation2', 'opair.reverse_scan_order', 'opair.single_scan_type'].collect { k -> pOP.getProperty(k) } },
                 { assert cfg['glyco-O-Hybrid'].pairscans.run == false },
-                // No IonQuant modlist when O-Pair runs (RC-33)
+                // No IonQuant modlist when O-Pair runs
                 { assert !cfg['glyco-O-Pair'].ionquant.containsKey('modmasses') },
-                // AppendFile: glycan assignment and an IonQuant pass (TMT-I extraction tool 0) (RC-33)
+                // AppendFile: glycan assignment and an IonQuant pass (TMT-I extraction tool 0)
                 { assert cfg['glyco-N-TMT'].appendfile.run == (pNT.getProperty('ptmshepherd.run_glyco_mode') == 'true') },
                 { assert cfg['glyco-O-Pair'].appendfile.run == false },
-                // MBG argv (G-02)
+                // MBG argv
                 { assert cfg['glyco-N-LFQ-MBG'].mbg.args == expMbg },
                 { assert cfg['glyco-N-LFQ-MBG'].mbg.im_ms == (pMB.getProperty('workflow.input.data-type.im-ms') == 'true') },
                 // PTM-S property block (G-10, G-12, G-13): sorted, defaults seeded, empty values kept,
@@ -142,6 +143,7 @@ nextflow_process {
                 wf.text = file("\${fixtures}/glyco-O-Pair.workflow").text.replace('opair.oxonium_filtering_file=\\n', 'opair.oxonium_filtering_file=/data/my_oxonium.txt\\n')
                 def off = file("\${workDir}/glyco-O-Pair-off.workflow")
                 off.text = wf.text.replace('opair.filterOxonium=true', 'opair.filterOxonium=false')
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = channel.of(
                     [ [ id: 'oxo' ], wf, ['DDA'] ],
                     [ [ id: 'off' ], off, ['DDA'] ]
@@ -175,6 +177,7 @@ nextflow_process {
                 """
                 def wf = file("\${workDir}/stop.workflow")
                 wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/glyco-O-Pair.workflow").text.replace('ptmshepherd.run_glyco_mode=false', 'ptmshepherd.run_glyco_mode=true')
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = channel.of([ [ id: 'stop' ], wf, ['DDA'] ])
                 """
             }
@@ -197,6 +200,7 @@ nextflow_process {
                 """
                 def wf = file("\${workDir}/stop.workflow")
                 wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/glyco-O-Pair.workflow").text.replace('opair.activation1=HCD', 'opair.activation1=CID')
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = channel.of([ [ id: 'stop' ], wf, ['DDA'] ])
                 """
             }
@@ -220,6 +224,7 @@ nextflow_process {
                 def wf = file("\${workDir}/stop.workflow")
                 def text = file("${baseDir}/tests/fixtures/fragpipe_workflows/glyco-N-LFQ.workflow").text
                 wf.text = text.replace('mbg.run-mbg=false', 'mbg.run-mbg=true').replaceAll(/(?m)^mbg\\.residues_to_add=.*\$/, 'mbg.residues_to_add=')
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = channel.of([ [ id: 'stop' ], wf, ['DDA'] ])
                 """
             }

@@ -52,6 +52,8 @@ See [docs/usage.md](docs/usage.md) for full details.
 > [!NOTE]
 > If you are new to Nextflow and nf-core, please refer to [this page](https://nf-co.re/docs/get_started/environment_setup/overview) on how to set-up Nextflow.
 > Make sure to [test your setup](https://nf-co.re/docs/get_started/run-your-first-pipeline) with `-profile test` before running the workflow on actual data.
+> The `test` profile runs FragPipe and needs the licensed FragPipe image (`--fragpipe_container <image>`); `-profile test_dia` runs with public containers only.
+> See [docs/usage.md](docs/usage.md#profiles) for every test profile.
 
 First, prepare a CSV samplesheet describing your samples:
 
@@ -79,7 +81,7 @@ nextflow run nf-core/msproteomics \
 nextflow run nf-core/msproteomics \
   --mode fragpipe \
   --fragpipe_container docker.io/<your-org>/fragpipe:24.0 \
-  --fragpipe_workflow LFQ-MBR.workflow \
+  --fragpipe_threads 16 \
   --input samplesheet.csv \
   --database /path/to/uniprot_human.fasta \
   --outdir results \
@@ -96,13 +98,13 @@ nextflow run nf-core/msproteomics \
   --outdir results \
   -profile docker
 
-# TMT quantification (TMT18 example)
+# TMT quantification (FragPipe's TMT16 workflow; the workflow file sets the label)
 nextflow run nf-core/msproteomics \
   --mode fragpipe \
   --fragpipe_container docker.io/<your-org>/fragpipe:24.0 \
+  --fragpipe_threads 16 \
   --tmt_mode quant \
-  --tmt_type TMT18 \
-  --fragpipe_workflow /path/to/TMT-quant.workflow \
+  --fragpipe_workflow /path/to/TMT16.workflow \
   --input samplesheet.csv \
   --database /path/to/uniprot_human.fasta \
   --outdir results \
@@ -123,7 +125,7 @@ For more details about the output files and reports, please refer to the [output
 ## FragPipe License
 
 FragPipe-based workflows (DDA LFQ, TMT Label Check, generic FragPipe) require a [FragPipe](https://fragpipe.nesvilab.org/) installation with a valid license.
-FragPipe is free for academic use; commercial users must obtain a license from the University of Michigan.
+MSFragger, IonQuant and diaTracer are free for academic, non-commercial and educational use; other users need a commercial license from [Fragmatics](https://www.fragmatics.com/), which took over commercial licensing from the University of Michigan on 1 May 2025.
 You must build or provide a Docker/Singularity container that includes FragPipe, MSFragger, IonQuant, and Philosopher under your own license terms.
 
 ## Documentation
@@ -160,6 +162,14 @@ See the full list of key references at [FragPipe GitHub](https://github.com/Nesv
 
 **DIA-NN** (DIA workflows):
 See the key publications at [DIA-NN GitHub](https://github.com/vdemichev/diann#key-publications).
+
+**Tools run by the pipeline** (all cited in [`CITATIONS.md`](CITATIONS.md)):
+
+- DIA: [DIA-NN](https://github.com/vdemichev/DiaNN), [OpenMS](https://github.com/OpenMS/OpenMS), [ThermoRawFileParser](https://github.com/compomics/ThermoRawFileParser), [tdf2mzml](https://github.com/mafreitas/tdf2mzml), [quantms-utils](https://github.com/bigbio/quantms-utils), [MSstats](https://github.com/Vitek-Lab/MSstats), [iq](https://github.com/tvpham/iq), [pmultiqc](https://github.com/bigbio/pmultiqc)
+- FragPipe search and validation: MSFragger, MSBooster, Crystal-C, Percolator, PeptideProphet, PTMProphet, ProteinProphet, iProphet, Philosopher
+- FragPipe quantification and downstream: IonQuant, TMT-Integrator, PTM-Shepherd, O-Pair, MBG, SAINTexpress, FPOP coADAPTr, FP-Meta, FragReporter
+- FragPipe DIA: DIA-Umpire, diaTracer, EasyPQP, DIA-NN
+- Reporting: [MultiQC](https://multiqc.info/)
 
 An extensive list of references for all tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.
 

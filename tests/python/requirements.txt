@@ -1,0 +1,6 @@
+# Python unit tests (make test-python): tests/python and modules/local/parsefragpipeworkflow/tests/python
+# numpy: merge_split_search.py; pyyaml: test_subworkflow_meta.py; matplotlib: tmt_qc.py / tmt_qc_ionquant.py
+matplotlib==3.10.6
+numpy==2.3.3
+pytest==8.4.2
+pyyaml==6.0.3

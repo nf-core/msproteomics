@@ -1,4 +1,22 @@
+/*
+ * DIANNFRAGPIPE: FragPipe's DIA-NN quantification step and its post-processing (CmdDiann)
+ *
+ * Input:
+ *   - meta: Run metadata map
+ *   - library: SpecLibGen library.tsv or the diann.library file
+ *   - spectra: DIA LC-MS files
+ *   - psm / peptide / protein: FragPipe reports DIA-NN's post-processing reads
+ *   - manifest: fragpipe-files.fp-manifest
+ *   - diann_config: DIA-NN settings (JSON) from the workflow parser
+ *   - fasta: protein database
+ *
+ * Output:
+ *   - results_files / report / pr_matrix / pg_matrix / speclib / msstats: dia-quant-output/ files
+ *   - filelist / argv: filelist_diann.txt and the DIA-NN argv
+ *   - versions_diann / versions_fragpipe: versions (topic: versions)
+ */
 include { fragpipeTools; diannArgv; diannFilelistText; diannInputDirLines; writeTextFile; shellArgs; fragpipeJarLines } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
+include { javaXmxGb } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
 
 // Long work dirs: DIA-NN 1.8.2 Beta 8 aborts on a run path of 256+ characters, so the runs are then read through a
 // short /tmp link (diannInputDirLines) and the outputs record /tmp/diann.XXXXXX/s/<run> as the runs' location.
@@ -36,9 +54,13 @@ process DIANNFRAGPIPE {
     task.ext.when == null || task.ext.when
 
     script:
+    // Exit if running this module with -profile conda / -profile mamba (copied from modules/nf-core/diann/main.nf)
+    if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
+        error "DIANNFRAGPIPE module does not support Conda: it runs in the FragPipe image given with --fragpipe_container. Please use Docker / Singularity / Podman instead."
+    }
     def args = task.ext.args ?: ''
     def cfg = new groovy.json.JsonSlurper().parseText(diann_config)
-    def ram = task.memory ? Math.max(1, task.memory.toGiga() - 2) : 30
+    def ram = javaXmxGb(task, 2)
     def tools = fragpipeTools(task)
     if (!cfg.library && library.toString().tokenize('/').last() != 'library.tsv') {
         error("DIANNFRAGPIPE ${meta.id}: without diann.library DIA-NN reads SpecLibGen's library.tsv (CmdDiann.java:313-326), got ${library}")

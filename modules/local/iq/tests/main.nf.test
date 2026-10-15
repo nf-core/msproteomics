@@ -5,7 +5,7 @@ nextflow_process {
     process "IQ"
 
     tag "modules"
-    tag "modules_nfcore"
+    tag "modules_local"
     tag "iq"
 
     test("iq - stub") {
@@ -29,7 +29,7 @@ nextflow_process {
         then {
             assertAll (
                 { assert process.success },
-                { assert snapshot(process.out.contaminants_removed_report, process.out.maxlfq).match() }
+                { assert snapshot(process.out.contaminants_removed_report, process.out.maxlfq, process.out.versions).match() }
             )
         }
     }
@@ -59,7 +59,7 @@ nextflow_process {
                 // process.stderr is the Nextflow console, not the task's; read the task's .command.err
                 { def task_err = new File(new File(process.out.maxlfq[0].toString()).parentFile, '.command.err').text
                   assert task_err.contains('WARNING: IQ: maxlfq.tsv: no report row passes Q.Value < 0.01 & PG.Q.Value < 0.05') : task_err },
-                { assert snapshot(process.out.contaminants_removed_report, process.out.maxlfq).match() }
+                { assert snapshot(process.out.contaminants_removed_report, process.out.maxlfq, process.out.versions).match() }
             )
         }
     }

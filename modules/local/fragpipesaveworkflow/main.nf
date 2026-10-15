@@ -38,6 +38,10 @@ process FRAGPIPESAVEWORKFLOW {
     task.ext.when == null || task.ext.when
 
     script:
+    // Exit if running this module with -profile conda / -profile mamba (copied from modules/nf-core/diann/main.nf)
+    if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
+        error "FRAGPIPESAVEWORKFLOW module does not support Conda: it runs in the FragPipe image given with --fragpipe_container. Please use Docker / Singularity / Podman instead."
+    }
     def args = task.ext.args ?: ''
     def tools = fragpipeTools(task)
     """
@@ -45,7 +49,7 @@ process FRAGPIPESAVEWORKFLOW {
     java -Djava.awt.headless=true -Duser.home=\$PWD/home -Djava.io.tmpdir=\$PWD/tmp ${args} \\
         -cp "${tools.fragpipe_lib}/*:fragpipe_ui_state" FragpipeUiState \\
         ${workflow_file} ${manifest} ${workdir} ${tools.tools_dir} ${database} fragpipe.workflow \\
-        > fragpipe_ui_state.log 2>&1
+        2>&1 | tee fragpipe_ui_state.log
     test -s fragpipe.workflow
     """
 

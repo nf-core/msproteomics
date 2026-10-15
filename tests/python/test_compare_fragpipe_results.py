@@ -1,6 +1,6 @@
-"""Unit tests for bin/compare_fragpipe_results.py (stdlib unittest).
+"""Unit tests for tests/tools/compare_fragpipe_results.py (stdlib unittest).
 
-Run: python3 -m unittest discover -s tests/python -v
+Run: make test-python
 """
 
 import contextlib
@@ -12,7 +12,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "bin"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 import compare_fragpipe_results as cfr  # noqa: E402
 
 N_ROWS = 20

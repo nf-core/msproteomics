@@ -1,6 +1,6 @@
-"""Quantification options of parse_fragpipe_workflow.py against FragPipe 24.0 (RC-32/35/36/38).
+"""Quantification options of parse_fragpipe_workflow.py against FragPipe 24.0.
 
-Run: python3 -m unittest discover -s tests/python
+Run: make test-python
 Expected values come from the FragPipe 24.0 sources cited in each test and from the golden
 FragPipe run (TMT-labelcheck-304_perfile, IonQuant step argv).
 """
@@ -11,11 +11,16 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
 SCRIPT = REPO / "modules/local/parsefragpipeworkflow/resources/usr/bin/parse_fragpipe_workflow.py"
+# FragPipe 24.0 templates the module stages (the script takes them as arguments)
+TEMPLATES = Path(__file__).resolve().parents[2] / "modules" / "local" / "parsefragpipeworkflow" / "assets"
+TEMPLATE_ARGS = ["--fragger-template", str(TEMPLATES / "fragger_closed.params"), "--diaumpire-template", str(TEMPLATES / "diaumpire_se.params")]
 FIXTURES = REPO / "tests/fixtures/fragpipe_workflows"
 
 spec = importlib.util.spec_from_file_location("parse_fragpipe_workflow", SCRIPT)
 pfw = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(pfw)
+pfw.FRAGGER_TEMPLATE = TEMPLATES / "fragger_closed.params"
+pfw.DIAUMPIRE_TEMPLATE = TEMPLATES / "diaumpire_se.params"
 
 
 def parse_with_threads(path: str) -> dict:

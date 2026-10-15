@@ -1,6 +1,8 @@
 """Every subworkflows/local/*/meta.yml lists exactly the take: inputs and emit: outputs of its workflow.
 
 The workflow is the one named like meta.yml `name` (upper-cased); main.nf may hold helper workflows too.
+A meta.yml named after a directory of several workflows (utils_nfcore_msproteomics_pipeline) lists the
+first one's (PIPELINE_INITIALISATION); its description names the others.
 """
 
 from __future__ import annotations
@@ -35,7 +37,11 @@ class TestSubworkflowMeta(unittest.TestCase):
         for d in dirs:
             with self.subTest(subworkflow=d.name):
                 meta = yaml.safe_load((d / "meta.yml").read_text())
-                take, emit = workflow_take_emit((d / "main.nf").read_text(), meta["name"].upper())
+                main_nf = (d / "main.nf").read_text()
+                name = meta["name"].upper()
+                if meta["name"] == d.name and not re.search(rf"^workflow\s+{name}\s*\{{", main_nf, re.M):
+                    name = re.search(r"^workflow\s+(\w+)\s*\{", main_nf, re.M).group(1)
+                take, emit = workflow_take_emit(main_nf, name)
                 self.assertEqual([next(iter(e)) for e in meta.get("input") or []], take, "meta.yml input vs take:")
                 self.assertEqual([next(iter(e)) for e in meta.get("output") or []], emit, "meta.yml output vs emit:")
 

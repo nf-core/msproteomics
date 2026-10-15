@@ -1,5 +1,5 @@
 include { fragpipeJarLines; fragpipeTools; shellArgs } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
-include { ptmShepherdCommands; taskFileCommand; shellQuote; fragpipeToolVersions } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
+include { ptmShepherdCommands; taskFileCommand; shellQuote; fragpipeToolVersions; javaXmxGb } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
 
 /*
  * PTMSHEPHERD: PTM-Shepherd mass-shift profiling and glycan assignment (CmdPtmshepherd.java)
@@ -45,7 +45,7 @@ process PTMSHEPHERD {
     script:
     def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id}"
-    def ram = task.memory ? Math.max(1, task.memory.toGiga() - 2) : 30
+    def ram = javaXmxGb(task, 2)
     def cmds = ptmShepherdCommands(datasets, config_text, fasta.name, annotation_file, task)
     // IonQuant joins the class path only for kl glyco features; the Thermo libraries are optional
     def jar_lines = fragpipeJarLines(fragpipeTools(task), ['batmass_io'] + (cmds.class_path.contains('{IONQUANT_JAR}') ? ['ionquant'] : []), ['msfragger'])

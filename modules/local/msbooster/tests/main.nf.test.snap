@@ -81,20 +81,5 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         }
-    },
-    "msbooster - from MSFRAGGER": {
-        "content": [
-            [
-                
-            ],
-            [
-                
-            ]
-        ],
-        "timestamp": "2026-02-15T21:37:33.081875127",
-        "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.2"
-        }
     }
 }

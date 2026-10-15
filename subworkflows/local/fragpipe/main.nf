@@ -35,7 +35,7 @@ include { PARSEFRAGPIPEWORKFLOW } from '../../../modules/local/parsefragpipework
 include { CHECKCENTROID } from '../../../modules/local/checkcentroid/main'
 
 // Import utility functions
-include { shouldRunTool; requireToolField; msboosterFraggerParamsType; checkTimsTofTools; fragpipeWorkflowProperties; checkCentroidFile; getMsfraggerNumSlices; checkFpopTools } from '../utils_nfcore_msproteomics_pipeline/fragpipe_utils'
+include { shouldRunTool; requireToolField; msboosterFraggerParamsType; checkTimsTofTools; fragpipeWorkflowProperties; checkCentroidFile; getMsfraggerNumSlices; checkFpopTools; parseFragpipeWorkflowTemplates } from '../utils_nfcore_msproteomics_pipeline/fragpipe_utils'
 
 // Import subworkflows
 include { FRAGPIPE_DATABASE                                    } from '../fragpipe_database/main'
@@ -57,7 +57,7 @@ include { WRITESUBMZML     } from '../../../modules/local/writesubmzml/main'
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-workflow FRAGPIPE_WF {
+workflow FRAGPIPE {
     take:
     ch_file            // channel: [ val(sample_meta), path(mzml/raw/d) ] - sample files (meta.data_type: FragPipe data type)
     ch_database        // channel: [ val(meta), path(fasta) ] - FASTA to update with decoys (empty unless --add_philosopher_decoy / --add_philosopher_contaminants)
@@ -65,6 +65,7 @@ workflow FRAGPIPE_WF {
     ch_decoy_db        // channel: [ val(meta), path(fasta) ] - FASTA searched as given (empty when ch_database is used)
     ch_annotation      // channel: path(annotation_file) - value channel, [] when not used
     ch_manifest        // channel: path(fragpipe-files.fp-manifest) - value channel (fragpipeManifestEntries)
+    ch_taxon_files     // channel: value [ path(names.dmp) or [], path(nodes.dmp) or [] ] - Metaproteomics taxonomy dumps; [] = FragPipe's tools/metaproteomics/{names,nodes}.dmp (CmdMetaproteomics.java:39-42)
 
     main:
 
@@ -77,7 +78,7 @@ workflow FRAGPIPE_WF {
         .map { meta, _spectra -> meta.data_type }
         .unique()
         .toSortedList()
-    PARSEFRAGPIPEWORKFLOW(ch_workflow_file.combine(ch_data_types.map { data_types -> [data_types] }))
+    PARSEFRAGPIPEWORKFLOW(ch_workflow_file.combine(ch_data_types.map { data_types -> [data_types] }), parseFragpipeWorkflowTemplates(projectDir))
 
     // Read tool configs JSON as a string value channel.
     // Strings avoid the Groovy Map-as-named-parameter bug in channel operators.
@@ -100,14 +101,17 @@ workflow FRAGPIPE_WF {
     // MSFragger params files always.
     // MSFragger params per data type: [[params_type, path], ...] (CmdMsfragger.java:444-457); the parser
     // writes all four, with FragPipe's closed-search defaults when the workflow has no msfragger.* keys.
-    ch_fragger_params = PARSEFRAGPIPEWORKFLOW.out.msfragger_config.map { _meta, params -> ['DDA', params] }
-        .mix(PARSEFRAGPIPEWORKFLOW.out.msfragger_dia_config.map { _meta, params -> ['DIA', params] })
-        .mix(PARSEFRAGPIPEWORKFLOW.out.msfragger_gpfdia_config.map { _meta, params -> ['GPF-DIA', params] })
-        .mix(PARSEFRAGPIPEWORKFLOW.out.msfragger_dda_plus_config.map { _meta, params -> ['DDA+', params] })
+    ch_fragger_params = PARSEFRAGPIPEWORKFLOW.out.msfragger_config.map { _meta, params_file -> ['DDA', params_file] }
+        .mix(PARSEFRAGPIPEWORKFLOW.out.msfragger_dia_config.map { _meta, params_file -> ['DIA', params_file] })
+        .mix(PARSEFRAGPIPEWORKFLOW.out.msfragger_gpfdia_config.map { _meta, params_file -> ['GPF-DIA', params_file] })
+        .mix(PARSEFRAGPIPEWORKFLOW.out.msfragger_dda_plus_config.map { _meta, params_file -> ['DDA+', params_file] })
         .toList()
+        // empty only when PARSEFRAGPIPEWORKFLOW failed: the run then stops with the parser's error, which
+        // a NullPointerException on sets[0] downstream would hide
+        .filter { sets -> !sets.isEmpty() }
 
     ch_msbooster_params = PARSEFRAGPIPEWORKFLOW.out.msbooster_config
-        .map { _meta, params -> params }
+        .map { _meta, params_file -> params_file }
         .first()
 
 
@@ -124,7 +128,11 @@ workflow FRAGPIPE_WF {
                 return []
             }
             def params_type = msboosterFraggerParamsType(data_types, shouldRunTool(configs, 'diaumpire'), shouldRunTool(configs, 'diatracer'))
-            sets.find { set -> set[0] == params_type }[1]
+            def fragger_params = sets.find { set -> set[0] == params_type }
+            if (!fragger_params) {
+                error("MSBooster reads the MSFragger params of data type ${params_type}, but the parser wrote only ${sets.collect { set -> set[0] }}")
+            }
+            fragger_params[1]
         }
         .first()  // value channel: combine() above emits a queue channel
 
@@ -137,8 +145,10 @@ workflow FRAGPIPE_WF {
     // Skipped when no file is searched (only DIA-Quant files), as FragPipe (FragpipeRun.java:1335)
     CHECKCENTROID(
         ch_file.toList()
-            .filter { files -> checkCentroidFile(files) != null }
-            .map { files -> checkCentroidFile(files) }
+            .flatMap { files ->
+                def centroid_input = checkCentroidFile(files)
+                centroid_input != null ? [centroid_input] : []
+            }
     )
 
     ch_fragpipe_files = ch_file
@@ -216,7 +226,7 @@ workflow FRAGPIPE_WF {
     // (IN-edges from PhilosopherReport), IonQuant, TMT-Integrator, SpecLibGen and the exports.
     //
     // Spectra the export reads: the LC-MS directory after the search (searched mzML files and
-    // MSFragger's _uncalibrated.mzML of .raw / .d files, tracker item 7)
+    // MSFragger's _uncalibrated.mzML of .raw / .d files)
     FRAGPIPE_MATCHED_FRAGMENTS_INPUTS(
         ch_file,
         ch_mzml_downstream,
@@ -254,6 +264,14 @@ workflow FRAGPIPE_WF {
                 error("WRITESUBMZML: MSFragger wrote no .mzBIN_all for ${key}, but Write sub mzML is on (write_mzbin_all = 1, FragpipeRun.java:1481)")
             }
             [meta.group, meta, spectra, mzbin, requireToolField(configs, 'writesubmzml', 'prob_threshold')]
+        }
+        // every searched file's group has a Report psm.tsv; combine(by:) would drop a file without one silently
+        .combine(ch_group_psm.map { group, _psm -> group }.collect().ifEmpty([]).map { groups -> [groups] })
+        .map { group, meta, spectra, mzbin, threshold, groups ->
+            if (!(group in groups)) {
+                error("WRITESUBMZML: group '${group}' of ${meta.id} has no Report psm.tsv (groups with one: ${groups})")
+            }
+            [group, meta, spectra, mzbin, threshold]
         }
         .combine(ch_group_psm, by: 0)
         .map { _group, meta, spectra, mzbin, threshold, psm -> [meta, spectra, mzbin, psm, threshold] }
@@ -305,7 +323,7 @@ workflow FRAGPIPE_WF {
 
     //
     // STEP 7c: Spectral library generation and DIA-NN quantification (optional, aggregate), on the
-    // psm.tsv the glyco chain left (tracker item 5, S-07)
+    // psm.tsv the glyco chain left
     //
     FRAGPIPE_SPECLIB(
         ch_psms,
@@ -356,7 +374,7 @@ workflow FRAGPIPE_WF {
     // dia-quant-output/report.tsv): [ val(meta), path(report.tsv) ], empty when DIA-NN does not run
     ch_diann_report = FRAGPIPE_SPECLIB.out.diann_report
 
-    // FPOP Quant input (CmdFpopQuant.java:56-63, RC-34): IonQuant's combined_modified_peptide.tsv,
+    // FPOP Quant input (CmdFpopQuant.java:56-63): IonQuant's combined_modified_peptide.tsv,
     // or in TMT mode the tmt-report and tmt-report-unmod TMT-Integrator directories.
     ch_fpop_inputs = FRAGPIPE_QUANT.out.combined_modified_peptide
         .map { _meta, modpep -> [modpep, [], []] }
@@ -369,7 +387,7 @@ workflow FRAGPIPE_WF {
                 .map { _meta, tmt_report, tmt_report_unmod -> [[], tmt_report, tmt_report_unmod] }
         )
 
-    // Metaproteomics project dir (RC-34): FP-Meta reads every <run>.pin (MSFragger) and
+    // Metaproteomics project dir: FP-Meta reads every <run>.pin (MSFragger) and
     // <run>_percolator_{target,decoy}_psms.tsv of the work dir, right after Percolator
     // (FragpipeRun.java:2458).
     ch_metaproteomics_files = ch_search_pin
@@ -379,12 +397,6 @@ workflow FRAGPIPE_WF {
             FRAGPIPE_VALIDATE.out.decoy_psms.map { _meta, psms -> psms }
         )
         .collect(sort: true)
-
-    // Taxonomy dumps: [] = FragPipe's tools/metaproteomics/{names,nodes}.dmp (CmdMetaproteomics.java:39-42)
-    ch_taxon_files = channel.value([
-        params.metaproteomics_names_dmp ? file(params.metaproteomics_names_dmp, checkIfExists: true) : [],
-        params.metaproteomics_nodes_dmp ? file(params.metaproteomics_nodes_dmp, checkIfExists: true) : []
-    ])
 
     // SAINTexpress reads reprint.<mode>.tsv from the work dir (CmdSaintExpress.java:59): written by
     // Abacus --reprint, or by IonQuant when it runs (Abacus then does not, FragpipeRun.java:1786-1788)
@@ -433,6 +445,7 @@ workflow FRAGPIPE_WF {
     ionquant_dir          = FRAGPIPE_QUANT.out.ionquant_dir                    // channel: [ val(meta), path(results_dir) ]
     tmt_abundance         = FRAGPIPE_QUANT.out.tmt_abundance                   // channel: [ val(meta), path(abundance_*.tsv) ]
     tmt_dir               = FRAGPIPE_QUANT.out.tmt_dir                         // channel: [ val(meta), path(tmt-report) ]
+    combined_modified_peptide = FRAGPIPE_QUANT.out.combined_modified_peptide   // channel: [ val(meta), path(combined_modified_peptide.tsv) ]
 
     // PTM / glyco outputs
     ptm_results           = FRAGPIPE_GLYCO.out.ptm_results                     // channel: [ val(meta), path(ptm-shepherd-output) ]
@@ -450,6 +463,4 @@ workflow FRAGPIPE_WF {
     fpop_psms             = FRAGPIPE_EXPORT.out.fpop_psms                      // channel: [ val(meta), path(psm.tsv) ]
     fpop_diann_report     = FRAGPIPE_EXPORT.out.fpop_diann_report              // channel: [ val(meta), path(report.tsv) ]
 
-    // Versions collected via topic channels
-    versions              = channel.empty()
 }

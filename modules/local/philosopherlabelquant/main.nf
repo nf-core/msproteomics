@@ -57,7 +57,7 @@ process PHILOSOPHERLABELQUANT {
 
     # philosopher labelquant <opts> --annot <abs> --brand <type> --dir <LC-MS dir> in the group dir
     # (CmdLabelquant.java:94-160; --raw is unreachable: labelquant takes only mzML, CmdLabelquant.java:51)
-    CMD=(\$PHILOSOPHER labelquant ${config_cli} --annot "\${WORK_DIR}/lcms_files/${annotation_name}" --brand ${brand} --dir "\${WORK_DIR}/lcms_files" ${args})
+    CMD=("\$PHILOSOPHER" labelquant ${config_cli} --annot "\${WORK_DIR}"/lcms_files/${shellQuote(annotation_name)} --brand ${shellQuote(brand)} --dir "\${WORK_DIR}/lcms_files" ${args})
     printf '%s\\n' "\${CMD[*]}" > labelquant.log
     (cd ${prefix} && "\${CMD[@]}") 2>&1 | tee -a labelquant.log
     """

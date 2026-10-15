@@ -76,8 +76,8 @@ if (!any(passing)) {
 versions_file <- file("versions.yml")
 write(
     paste(
-        '${task.process}:',
-        paste0('  r-base: "', R.Version()\$version.string, '"'),
+        '"${task.process}":',
+        paste0('  r-base: "', R.version\$major, '.', R.version\$minor, '"'),
         paste0('  iq: "', as.character(packageVersion("iq")), '"'),
         sep = "\\n"
     ),

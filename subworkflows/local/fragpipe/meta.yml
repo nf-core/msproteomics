@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
-name: "fragpipe_wf"
+name: "fragpipe"
 description: General FragPipe orchestration subworkflow that composes all focused subworkflows into a complete proteomics analysis pipeline
 keywords:
   - proteomics
@@ -57,6 +57,11 @@ input:
       description: |
         FragPipe manifest file for glycoproteomics workflows. Pass [] when not used.
         Structure: path(manifest.fp-manifest)
+  - ch_taxon_files:
+      type: channel
+      description: |
+        Metaproteomics taxonomy dumps (value channel); [] uses FragPipe's tools/metaproteomics/{names,nodes}.dmp.
+        Structure: [ path(names.dmp) or [], path(nodes.dmp) or [] ]
 output:
   - searched_lcms:
       type: channel
@@ -153,6 +158,11 @@ output:
       description: |
         TMTIntegrator results directory.
         Structure: [ val(meta), path(tmt-report) ]
+  - combined_modified_peptide:
+      type: channel
+      description: |
+        IonQuant's combined_modified_peptide.tsv, when IonQuant runs (the TMT label check analyses it).
+        Structure: [ val(meta), path(combined_modified_peptide.tsv) ]
   - ptm_results:
       type: channel
       description: |
@@ -203,11 +213,6 @@ output:
       description: |
         Fpop diann report.
         Structure: [ val(meta), path(report.tsv) ]
-  - versions:
-      type: channel
-      description: |
-        Software versions (topic tuples).
-        Structure: [ val(process), val(tool), val(version) ]
 authors:
   - "@dongzehe"
 maintainers:

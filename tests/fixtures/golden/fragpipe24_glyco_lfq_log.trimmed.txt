@@ -4,7 +4,7 @@ Java Info: 17.0.18, OpenJDK 64-Bit Server VM, Ubuntu
 
 
 Version info:
-FragPipePlus version 24.0
+FragPipe version 24.0
 DIA-Umpire version 2.3.3
 diaTracer version 2.2.1
 MSFragger version 4.4.1
@@ -141,7 +141,7 @@ Execution order:
 ~~~~~~~~~~~~~~~~~~~~~~
 
 ~~~~~~~~~ fragpipe.config ~~~~~~~~~
-# FragPipePlus v24.0ui state cache
+# FragPipe v24.0ui state cache
 
 
 # Please edit the following path to point to the correct location.

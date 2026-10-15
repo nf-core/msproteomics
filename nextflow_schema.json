@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://raw.githubusercontent.com/nf-core/msproteomics/main/nextflow_schema.json",
+    "$id": "https://raw.githubusercontent.com/nf-core/msproteomics/master/nextflow_schema.json",
     "title": "nf-core/msproteomics pipeline parameters",
     "description": "Mass spectrometry proteomics preprocessing (DIA, DDA LFQ, TMT)",
     "type": "object",
@@ -437,7 +437,7 @@
                     "format": "file-path",
                     "description": "Path to a custom FragPipe .workflow file.",
                     "fa_icon": "fas fa-file-code",
-                    "help_text": "A FragPipe workflow file (.workflow) containing all tool parameters. If not provided, the pipeline uses a default workflow based on the selected mode and tmt_mode."
+                    "help_text": "A FragPipe workflow file (.workflow) containing all tool parameters. Without it, --mode fragpipe runs the shipped assets/LFQ-MBR.workflow and --tmt_mode labelcheck runs the shipped label check workflow selected by --tmt_type; --tmt_mode quant requires it (e.g. FragPipe's TMT10.workflow, or the shipped assets/TMT6.workflow)."
                 },
                 "fragpipe_container": {
                     "type": "string",
@@ -464,7 +464,7 @@
                     "description": "TMT plex type: TMT6, TMT10, TMT11, TMT16, TMT18, TMT35, TMTPRO.",
                     "enum": ["TMT6", "TMT10", "TMT11", "TMT16", "TMT18", "TMT35", "TMTPRO"],
                     "fa_icon": "fas fa-tags",
-                    "help_text": "Specifies the TMT plex type for TMT workflows. The pipeline auto-selects the appropriate label check workflow file based on this value."
+                    "help_text": "Required for --tmt_mode labelcheck: the label the label check analysis counts, and, without --fragpipe_workflow, the shipped label check workflow (229 Da for TMT6/10/11, 304 Da for TMT16/18/35/TMTPRO). Not used by --tmt_mode quant, where the workflow file sets the label (tmtintegrator.channel_num)."
                 }
             }
         },
@@ -659,20 +659,6 @@
                 }
             }
         },
-        "internal_options": {
-            "title": "Internal pipeline options",
-            "type": "object",
-            "description": "Internal parameters. Not intended for direct user configuration.",
-            "fa_icon": "fas fa-cogs",
-            "properties": {
-                "golden_root": {
-                    "type": "string",
-                    "format": "directory-path",
-                    "description": "Root of the golden FragPipe data sets used by the golden nf-tests (internal).",
-                    "hidden": true
-                }
-            }
-        },
         "institutional_config_options": {
             "title": "Institutional config options",
             "type": "object",
@@ -857,9 +843,6 @@
         },
         {
             "$ref": "#/$defs/generic_options"
-        },
-        {
-            "$ref": "#/$defs/internal_options"
         }
     ]
 }

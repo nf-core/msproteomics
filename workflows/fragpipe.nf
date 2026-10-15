@@ -1,24 +1,25 @@
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    FRAGPIPE WORKFLOW (LFQ + TMT Quant)
+    FRAGPIPE WORKFLOW (LFQ, TMT quant, TMT label check, any FragPipe workflow)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Unified FragPipe workflow that handles both DDA LFQ and TMT quantification.
+    Unified FragPipe workflow; MSPROTEOMICS_TMT_LABELCHECK runs it and analyses its PSMs.
     When samples have labels (label column in samplesheet), TMT annotation is
     built automatically. When no labels are present, annotation is empty and
     FragPipe runs in LFQ mode.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { checkWorkflowDatabase; resolveDatabase; generateSdrfBookkeeping; resolveProteome; resolveOrganism; resolveFragPipeDatabase; resolveFragPipeDatabaseChannels } from '../subworkflows/local/utils_nfcore_msproteomics_pipeline'
+include { checkWorkflowDatabase; resolveDatabase; generateSdrfBookkeeping; resolveProteome; resolveOrganism; resolveFragPipeDatabase; resolveFragPipeDatabaseChannels; getTmtLabelcheckWorkflow } from '../subworkflows/local/utils_nfcore_msproteomics_pipeline'
 
 // SDRF generation (bookkeeping only)
 include { GENERATESDRFFROMSAMPLESHEET } from '../modules/local/generatesdrffromsamplesheet/main'
 
 // FragPipe subworkflows
-include { FRAGPIPE_WF as FRAGPIPE_PIPELINE } from '../subworkflows/local/fragpipe/main'
+include { FRAGPIPE as FRAGPIPE_PIPELINE } from '../subworkflows/local/fragpipe/main'
 include { FRAGPIPE_HEADLESS_WF             } from '../subworkflows/local/fragpipe_headless_wf/main'
 include { FRAGPIPESDRF } from '../modules/local/fragpipesdrf/main'
 include { FRAGPIPESAVEWORKFLOW } from '../modules/local/fragpipesaveworkflow/main'
+include { WRITETEXTFILE as WRITE_FRAGPIPE_MANIFEST } from '../modules/local/writetextfile/main'
 include { FRAGPIPESECONDPASS } from '../modules/local/fragpipesecondpass/main'
 
 // FragPipe utilities
@@ -37,16 +38,20 @@ workflow MSPROTEOMICS_FRAGPIPE {
     if (workflow.containerEngine && !workflow.stubRun && !params.fragpipe_container) {
         error("--mode fragpipe with ${workflow.containerEngine} needs --fragpipe_container: the licensed FragPipe image that runs every FragPipe tool")
     }
-    // Workflow file: the shipped DDA LFQ workflow when none is given (docs/usage.md); TMT quantification has
-    // no shipped workflow, so it needs --fragpipe_workflow (nf-core/msproteomics#2)
-    if (!params.fragpipe_workflow && params.tmt_mode) {
+    // Workflow file when none is given (docs/usage.md): the shipped DDA LFQ workflow, or for the label check the
+    // shipped label check workflow of --tmt_type; TMT quantification has no shipped default, so it needs
+    // --fragpipe_workflow (nf-core/msproteomics#2)
+    if (!params.fragpipe_workflow && params.tmt_mode == 'quant') {
         error("--tmt_mode ${params.tmt_mode} requires --fragpipe_workflow (a FragPipe .workflow file, see docs/usage.md)")
     }
-    def fragpipe_workflow_file = file(params.fragpipe_workflow ?: "${projectDir}/assets/LFQ-MBR.workflow", checkIfExists: true)
+    def default_workflow = params.tmt_mode == 'labelcheck'
+        ? getTmtLabelcheckWorkflow(params.tmt_type, projectDir)
+        : "${projectDir}/assets/LFQ-MBR.workflow"
+    def fragpipe_workflow_file = file(params.fragpipe_workflow ?: default_workflow, checkIfExists: true)
     def workflow_props = fragpipeWorkflowProperties(fragpipe_workflow_file)
 
     // One row per samplesheet line (TMT: one per channel); one item per spectra file.
-    // SpecLibGen/DIA-NN on: every file is in FragPipe's single group "" (RC-04).
+    // SpecLibGen/DIA-NN on: every file is in FragPipe's single group "".
     def samplesheet_rows = parseSamplesheet(params.input, "${projectDir}/assets/schema_input.json", speclibOrDiannRuns(workflow_props))
     // Second pass of Write sub mzML: _sub.mzML inputs with their _percolator.weights (CmdMsfragger.java:612-626, CmdPercolator.java:185-201)
     def spectra_files    = subMzmlWeights(checkDiaPreprocessing(
@@ -57,12 +62,14 @@ workflow MSPROTEOMICS_FRAGPIPE {
 
     // iProteome (--proteome): fasta and hosted FragPipe database; --database wins
     def proteome = resolveProteome(params)
-    checkWorkflowDatabase(workflow_props, [resolveDatabase(proteome, params), resolveFragPipeDatabase(proteome, params)])
+    // the database FragPipe searches, resolved once (--database > iProteome)
+    def fragpipe_database = resolveFragPipeDatabase(proteome, params)
+    checkWorkflowDatabase(workflow_props, [resolveDatabase(proteome, params), fragpipe_database])
 
     GENERATESDRFFROMSAMPLESHEET(
         channel.fromPath(params.input, checkIfExists: true),
         generateSdrfBookkeeping(params, resolveOrganism(proteome, params)),
-        file(resolveFragPipeDatabase(proteome, params), glob: false, checkIfExists: true)
+        file(fragpipe_database, glob: false, checkIfExists: true)
     )
 
     def db_channels = resolveFragPipeDatabaseChannels(proteome, params)
@@ -117,6 +124,15 @@ workflow MSPROTEOMICS_FRAGPIPE {
             ch_manifest_rows,
             ch_annotation_rows
         )
+        // FragPipe's results: each group's Report psm.tsv (<group>/psm.tsv, psm.tsv for the group "") and
+        // IonQuant's combined_modified_peptide.tsv in the work dir root
+        ch_headless_results = FRAGPIPE_HEADLESS_WF.out.all_results.flatten()
+        ch_group_psms = ch_headless_results
+            .filter { result -> result.name == 'psm.tsv' }
+            .toSortedList { a_psm, b_psm -> a_psm.parent.name <=> b_psm.parent.name }
+        ch_combined_modified_peptide = ch_headless_results
+            .filter { result -> result.name == 'combined_modified_peptide.tsv' && result.parent.name == 'results' }
+            .map { result -> [[id: 'fragpipe'], result] }
     } else {
         //
         // PIPELINE MODE: Modular FragPipe subworkflows with Nextflow orchestration
@@ -125,14 +141,14 @@ workflow MSPROTEOMICS_FRAGPIPE {
         // (TabWorkflow.manifestSave: absolute path, experiment, bioreplicate, data type; no trailing
         // newline) and FragPipe's saved UI state. Published to <outdir>/fragpipe/ like headless mode.
         // Read by DIA-NN's post-steps and MBG too.
-        ch_fragpipe_manifest = channel.of(generateFragpipeManifest(fragpipeManifestEntries(spectra_files)))
-            .collectFile(name: 'fragpipe-files.fp-manifest', storeDir: "${params.outdir}/fragpipe").first()
+        WRITE_FRAGPIPE_MANIFEST(channel.of([[id: 'fragpipe'], 'fragpipe-files.fp-manifest', generateFragpipeManifest(fragpipeManifestEntries(spectra_files))]))
+        ch_fragpipe_manifest = WRITE_FRAGPIPE_MANIFEST.out.file.map { _meta, manifest -> manifest }.first()
         // fragpipe.workflow: FragPipe's saved UI state for this run, written by FragPipe's own code.
         // FragPipe loads the manifest and drops the LC-MS files that do not exist (TabWorkflow.manifestLoad),
         // so the task loads a manifest naming the files it stages (spectra/<name>), not the input paths
         // (an S3 input is not a path inside the task). The database is staged too.
         def fragpipe_workdir = file("${params.outdir}/fragpipe").toString()
-        def fragpipe_db = file(resolveFragPipeDatabase(proteome, params), glob: false, checkIfExists: true)
+        def fragpipe_db = file(fragpipe_database, glob: false, checkIfExists: true)
         def ui_state_dir = file("${projectDir}/assets/fragpipe_ui_state", checkIfExists: true)
         def ch_staged_manifest = channel.of(generateFragpipeManifest(fragpipeManifestEntries(spectra_files, 'spectra')))
             .collectFile(name: 'staged.fp-manifest')
@@ -148,8 +164,20 @@ workflow MSPROTEOMICS_FRAGPIPE {
             ch_workflow_file,
             db_channels.ch_prebuilt_db,
             ch_annotation,
-            ch_fragpipe_manifest
+            ch_fragpipe_manifest,
+            // Metaproteomics taxonomy dumps; [] = FragPipe's tools/metaproteomics/{names,nodes}.dmp (CmdMetaproteomics.java:39-42)
+            channel.value([
+                params.metaproteomics_names_dmp ? file(params.metaproteomics_names_dmp, checkIfExists: true) : [],
+                params.metaproteomics_nodes_dmp ? file(params.metaproteomics_nodes_dmp, checkIfExists: true) : []
+            ])
         )
+
+        // each group's final Report psm.tsv, groups by name; IonQuant's combined_modified_peptide.tsv
+        ch_group_psms = FRAGPIPE_PIPELINE.out.results_dir
+            .map { _meta, dir -> dir }
+            .collect(sort: true)
+            .map { dirs -> dirs.sort(false) { dir -> dir.name }.collect { dir -> dir.resolve('psm.tsv') } }
+        ch_combined_modified_peptide = FRAGPIPE_PIPELINE.out.combined_modified_peptide
 
         // MSFragger console text in the order FragPipe runs MSFragger (FRAGPIPESDRF, FRAGPIPESECONDPASS)
         def ch_msfragger_logs = FRAGPIPE_PIPELINE.out.msfragger_logs
@@ -180,7 +208,8 @@ workflow MSPROTEOMICS_FRAGPIPE {
                 : ''
             def sdrf_manifest_names = spectra_files.collectEntries { meta, spectra_file -> [meta.id, spectra_file.name] }
             def ch_sdrf_searched_names = FRAGPIPE_PIPELINE.out.searched_lcms
-                .map { meta, searched -> "${sdrf_manifest_names[meta.id]}\t${searched.name}" }
+                // DIA-Umpire / diaTracer pseudo spectra have no manifest name of their own: they map to themselves
+                .map { meta, searched -> "${sdrf_manifest_names[meta.id] ?: searched.name}\t${searched.name}" }
                 .collectFile(name: 'searched_files.tsv', newLine: true, sort: true)
             FRAGPIPESDRF(
                 ch_fragpipe_manifest
@@ -195,8 +224,9 @@ workflow MSPROTEOMICS_FRAGPIPE {
     }
 
     emit:
-    versions      = channel.empty() // every module reports its version on the 'versions' topic
-    multiqc_files = channel.empty()
+    group_psms                = ch_group_psms                 // channel: [ path(psm.tsv), ... ] - each group's Report psm.tsv, groups by name
+    combined_modified_peptide = ch_combined_modified_peptide  // channel: [ val(meta), path(combined_modified_peptide.tsv) ] - IonQuant's, when it runs
+    multiqc_files             = channel.empty()               // every module reports its version on the 'versions' topic (main.nf collects them)
 }
 
 /*

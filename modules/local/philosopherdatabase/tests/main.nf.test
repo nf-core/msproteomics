@@ -7,8 +7,7 @@ nextflow_process {
 
     tag "modules"
     tag "modules_local"
-    tag "philosopher"
-    tag "philosopher/database"
+    tag "philosopherdatabase"
 
     // FragPipe "Add decoys" argv: database --custom <fasta> --contam --contamprefix
     // (FP/cmd/CmdDatabaseUpdate.java:44-53); the contaminant flags are ext.args.

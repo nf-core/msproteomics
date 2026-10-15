@@ -10,20 +10,25 @@
                 ]
             ],
             [
-                "test_pp.log:md5,1ad239c94b4b8739c6acd1bb40b24990"
+                [
+                    {
+                        "id": "test"
+                    },
+                    "test_pp.log:md5,1ad239c94b4b8739c6acd1bb40b24990"
+                ]
             ],
             [
                 [
                     "OPENMSPEAKPICKER",
                     "openms",
-                    "stub"
+                    "3.5.0-pre-exported-20251212"
                 ]
             ]
         ],
+        "timestamp": "2026-10-14T15:15:00.771880994",
         "meta": {
-            "nf-test": "0.9.3",
+            "nf-test": "0.9.5",
             "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-10-05T14:23:31.189865178"
+        }
     }
 }

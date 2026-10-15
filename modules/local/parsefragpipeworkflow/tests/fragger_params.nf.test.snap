@@ -54,7 +54,7 @@
                     {
                         "id": "orig_glyco-N-HCD"
                     },
-                    "fragger_dda.params:md5,569b287a7b76e90bdf13b3418e38c61d"
+                    "fragger_dda.params:md5,19c16d3f12781cbf48dfa38cb332fd10"
                 ]
             ],
             [
@@ -110,7 +110,7 @@
                     {
                         "id": "orig_glyco-N-HCD"
                     },
-                    "fragger_dia.params:md5,0b72402612087512131cc7c8692f30a3"
+                    "fragger_dia.params:md5,a92158d3d0ac307d3f8606dcbc8be594"
                 ]
             ],
             [
@@ -166,7 +166,7 @@
                     {
                         "id": "orig_glyco-N-HCD"
                     },
-                    "fragger_gpfdia.params:md5,7c119166d925e06caae10bbaf262eca8"
+                    "fragger_gpfdia.params:md5,6d80c5d427ad56f55c911bdba981a64b"
                 ]
             ],
             [
@@ -222,7 +222,7 @@
                     {
                         "id": "orig_glyco-N-HCD"
                     },
-                    "fragger_dda_plus.params:md5,bdbb57ca78728dfc316f9d6070686f55"
+                    "fragger_dda_plus.params:md5,d4de7a79580a1849429750f7f6ad727e"
                 ]
             ]
         ],

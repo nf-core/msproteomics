@@ -6,8 +6,8 @@ nextflow_process {
     config "./nextflow.config"
 
     tag "modules"
-    tag "modules_nfcore"
-    tag "parse_fragpipe_workflow"
+    tag "modules_local"
+    tag "parsefragpipeworkflow"
 
     test("parse_fragpipe_workflow - stub") {
         options "-stub"
@@ -34,26 +34,25 @@ protein-prophet.run-protein-prophet = true
 database.decoy-tag = rev_
 '''.trim()
 
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = channel.of([[ id: 'test_experiment' ], workflow_file, ['DDA']])
                 """
             }
         }
 
         then {
+            def configs_dir = new File(process.out.tool_configs_json[0][1].toString()).parentFile.toPath().resolve('configs')
+            def tool_configs = ['ionquant.config', 'percolator.config', 'phi-report.config', 'peptide-prophet.config', 'protein-prophet.config', 'database.config', 'tmtintegrator.yml']
+                .findAll { name -> new File("${configs_dir}/${name}").exists() }
+                .collect { name -> path("${configs_dir}/${name}".toString()) }
             assertAll (
                 { assert process.success },
                 { assert snapshot(
                     process.out.tool_configs_json,
                     process.out.msfragger_config,
-                    process.out.ionquant_config,
                     process.out.msbooster_config,
-                    process.out.percolator_config,
-                    process.out.phi_report_config,
-                    process.out.peptideprophet_config,
-                    process.out.proteinprophet_config,
-                    process.out.database_config,
-                    process.out.tmtintegrator_config,
-                    process.out.all_configs
+                    tool_configs,
+                    path(configs_dir.toString())
                 ).match() }
             )
         }
@@ -69,6 +68,7 @@ database.decoy-tag = rev_
                 """
                 def workflow_dir = file("\${workDir}/not_a_file.workflow")
                 workflow_dir.mkdirs()
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = channel.of([[ id: 'bad' ], workflow_dir, ['DDA']])
                 """
             }
@@ -134,26 +134,25 @@ database.decoy-tag = rev_
 tmtintegrator.run-tmtintegrator = false
 '''.trim()
 
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = channel.of([[ id: 'test_experiment' ], workflow_file, ['DDA']])
                 """
             }
         }
 
         then {
+            def configs_dir = new File(process.out.tool_configs_json[0][1].toString()).parentFile.toPath().resolve('configs')
+            def tool_configs = ['ionquant.config', 'percolator.config', 'phi-report.config', 'peptide-prophet.config', 'protein-prophet.config', 'database.config', 'tmtintegrator.yml']
+                .findAll { name -> new File("${configs_dir}/${name}").exists() }
+                .collect { name -> path("${configs_dir}/${name}".toString()) }
             assertAll (
                 { assert process.success },
                 { assert snapshot(
                     process.out.tool_configs_json,
                     process.out.msfragger_config,
-                    process.out.ionquant_config,
                     process.out.msbooster_config,
-                    process.out.percolator_config,
-                    process.out.phi_report_config,
-                    process.out.peptideprophet_config,
-                    process.out.proteinprophet_config,
-                    process.out.database_config,
-                    process.out.tmtintegrator_config,
-                    process.out.all_configs
+                    tool_configs,
+                    path(configs_dir.toString())
                 ).match() }
             )
         }
@@ -175,6 +174,7 @@ protein-prophet.run-protein-prophet = true
 database.decoy-tag = DECOY_
 '''.trim()
 
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = channel.of([[ id: 'decoy_experiment' ], workflow_file, ['DDA']])
                 """
             }
@@ -203,6 +203,7 @@ msfragger.run-msfragger = true
 database.decoy-tag =
 '''.trim()
 
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = channel.of([[ id: 'empty_decoy' ], workflow_file, ['DDA']])
                 """
             }
@@ -231,6 +232,7 @@ msfragger.run-msfragger = true
 percolator.run-percolator = true
 \'\'\'.trim()
 
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = channel.of([[ id: 'no_decoy_key' ], workflow_file, ['DDA']])
                 """
             }
@@ -263,6 +265,7 @@ speclibgen.easypqp.extras.max_glycan_qval = 0.01
 database.decoy-tag = DECOY_
 \'\'\'.trim()
 
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = channel.of([[ id: 'speclib' ], workflow_file, ['DDA']])
                 """
             }
@@ -291,6 +294,7 @@ percolator.run-percolator = true
 database.decoy-tag = DECOY_
 \'\'\'.trim()
 
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = channel.of([[ id: 'stub_decoy' ], workflow_file, ['DDA']])
                 """
             }
@@ -301,12 +305,12 @@ database.decoy-tag = DECOY_
             assertAll (
                 { assert process.success },
                 { assert configs.database.decoy_tag == 'DECOY_' },
-                { assert snapshot(process.out.tool_configs_json, process.out.database_config).match() }
+                { assert snapshot(process.out.tool_configs_json, path("${new File(process.out.tool_configs_json[0][1].toString()).parentFile}/configs/database.config")).match() }
             )
         }
     }
 
-    // RC-20: the split-database slice count is the workflow's msfragger.misc.slice-db
+    // The split-database slice count is the workflow's msfragger.misc.slice-db
     // (TabMsfragger.getNumDbSlices -> CmdMsfragger.configure numSlices, FragpipeRun.java:1470);
     // without the key FragPipe keeps the spinner's reset value 1 (TabMsfragger.java:2095).
     test("parse_fragpipe_workflow - stub msfragger.misc.slice-db is the slice count") {
@@ -320,6 +324,7 @@ database.decoy-tag = DECOY_
                 split.text = "msfragger.run-msfragger=true\\nmsfragger.misc.slice-db=3\\n"
                 def plain = file("\${workDir}/plain.workflow")
                 plain.text = "msfragger.run-msfragger=true\\n"
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = channel.of([[ id: 'split' ], split, ['DDA']], [[ id: 'plain' ], plain, ['DDA']])
                 """
             }
@@ -351,6 +356,7 @@ database.decoy-tag = DECOY_
                 def wf = file("${baseDir}/tests/fixtures/fragger_params/orig_glyco-N-HCD/fragpipe.workflow", checkIfExists: true)
                 def tmt = file("\${workDir}/tmt.workflow")
                 tmt.text = "msfragger.run-msfragger=true\\nmsfragger.table.var-mods=15.9949,M,true,3\\ntmtintegrator.run-tmtintegrator=true\\ncrystalc.run-crystalc=true\\ndiaumpire.run-diaumpire=true\\n"
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = channel.of(
                     [[ id: 'dda' ], wf, ['DDA']],
                     [[ id: 'dia' ], wf, ['DDA', 'DIA']],
@@ -393,6 +399,7 @@ database.decoy-tag = DECOY_
                 """
                 def wf = file("\${workDir}/split.workflow")
                 wf.text = "msfragger.run-msfragger=true\\nmsfragger.misc.slice-db=2\\nmsfragger.calibrate_mass=2\\nmsfragger.output_report_topN_dia1=5\\n"
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = channel.of([[ id: 'split' ], wf, ['DDA', 'DIA']])
                 """
             }
@@ -416,6 +423,7 @@ database.decoy-tag = DECOY_
                 """
                 def wf = file("\${workDir}/split.workflow")
                 wf.text = "msfragger.run-msfragger=true\\nmsfragger.misc.slice-db=2\\nmsfragger.calibrate_mass=2\\nmsfragger.output_report_topN_dia1=5\\nmsfragger.output_report_topN=2\\ndiaumpire.run-diaumpire=true\\n"
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = channel.of([[ id: 'split' ], wf, ['DIA']])
                 """
             }
@@ -439,6 +447,7 @@ database.decoy-tag = DECOY_
                 """
                 def wf = file("\${workDir}/split.workflow")
                 wf.text = "msfragger.run-msfragger=true\\nmsfragger.misc.slice-db=2\\nmsfragger.calibrate_mass=2\\nmsfragger.output_report_topN_dia1=5\\nmsfragger.output_report_topN=1\\ndiaumpire.run-diaumpire=true\\n"
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = channel.of([[ id: 'split' ], wf, ['DIA']])
                 """
             }
@@ -464,6 +473,7 @@ database.decoy-tag = DECOY_
                 """
                 def wf = file("\${workDir}/split.workflow")
                 wf.text = "msfragger.run-msfragger=true\\nmsfragger.misc.slice-db=2\\nmsfragger.calibrate_mass=2\\nmsfragger.localize_delta_mass=true\\n"
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
                 input[0] = channel.of([[ id: 'split' ], wf, ['DIA']])
                 """
             }

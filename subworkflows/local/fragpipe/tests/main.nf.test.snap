@@ -43,16 +43,16 @@
                 "FREEQUANT",
                 "MSFRAGGER",
                 "PARSEFRAGPIPEWORKFLOW",
-                "PEPTIDEPROPHET",
                 "PHILOSOPHERDATABASE",
                 "PHILOSOPHERFILTER",
+                "PHILOSOPHERPEPTIDEPROPHET",
+                "PHILOSOPHERPROTEINPROPHET",
                 "PHILOSOPHERREPORT",
-                "PROTEINPROPHET",
                 "PTMSHEPHERD",
                 "WRITE_FRAGGER_PARAMS"
             ]
         ],
-        "timestamp": "2026-10-14T00:30:10.149308404",
+        "timestamp": "2026-10-14T19:09:32.265691056",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"
@@ -66,11 +66,11 @@
                 "IONQUANT": 1,
                 "MSFRAGGER": 2,
                 "PARSEFRAGPIPEWORKFLOW": 1,
-                "PEPTIDEPROPHET": 2,
                 "PHILOSOPHERDATABASE": 1,
                 "PHILOSOPHERFILTER": 1,
                 "PHILOSOPHERFILTER_LATER": 1,
-                "PROTEINPROPHET": 1,
+                "PHILOSOPHERPEPTIDEPROPHET": 2,
+                "PHILOSOPHERPROTEINPROPHET": 1,
                 "PTMSHEPHERD": 1,
                 "REPRINTTOSAINTINPUT": 2,
                 "SAINTEXPRESS": 2,
@@ -106,7 +106,7 @@
                 ]
             ]
         ],
-        "timestamp": "2026-10-14T00:31:52.703314248",
+        "timestamp": "2026-10-14T19:10:25.621247482",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"
@@ -121,15 +121,15 @@
                 "MBG",
                 "MSFRAGGER",
                 "PARSEFRAGPIPEWORKFLOW",
-                "PEPTIDEPROPHET",
                 "PHILOSOPHERDATABASE",
                 "PHILOSOPHERFILTER",
-                "PROTEINPROPHET",
+                "PHILOSOPHERPEPTIDEPROPHET",
+                "PHILOSOPHERPROTEINPROPHET",
                 "PTMSHEPHERD",
                 "WRITE_FRAGGER_PARAMS"
             ]
         ],
-        "timestamp": "2026-10-14T00:29:22.655738272",
+        "timestamp": "2026-10-14T19:09:04.998173284",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"
@@ -466,11 +466,11 @@
                 "OPAIR": 2,
                 "PAIRSCANS": 2,
                 "PARSEFRAGPIPEWORKFLOW": 1,
-                "PEPTIDEPROPHET": 2,
                 "PHILOSOPHERDATABASE": 1,
                 "PHILOSOPHERFILTER": 1,
                 "PHILOSOPHERFILTER_LATER": 1,
-                "PROTEINPROPHET": 1,
+                "PHILOSOPHERPEPTIDEPROPHET": 2,
+                "PHILOSOPHERPROTEINPROPHET": 1,
                 "WRITE_FRAGGER_PARAMS": 1
             },
             [
@@ -503,7 +503,7 @@
                 ]
             ]
         ],
-        "timestamp": "2026-10-14T00:31:02.145647683",
+        "timestamp": "2026-10-14T19:09:58.252309049",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"
@@ -759,7 +759,7 @@
                 "PARSEFRAGPIPEWORKFLOW",
                 "PERCOLATOR",
                 "PHILOSOPHERDATABASE",
-                "PROTEINPROPHET",
+                "PHILOSOPHERPROTEINPROPHET",
                 "WRITE_FRAGGER_PARAMS"
             ]
         ],

@@ -21,7 +21,7 @@ nextflow_workflow {
     // FragPipe's run-level MSFragger params (CmdMsfragger.java:441-447, :541-552): the parser's set with database_name = the run's FASTA
     def runFraggerParams = { String output_dir ->
         def files = new File("${output_dir}/msfragger").listFiles().findAll { f -> f.isFile() && f.name ==~ /fragger.*\.params/ }
-        def set = new File("${output_dir}/parse/configs/fragger.params").readLines()
+        def set = new File(taskDir(output_dir, 'PARSEFRAGPIPEWORKFLOW'), 'configs/fragger.params').readLines()
         def run = files ? files[0].readLines() : []
         [names: files*.name, database: run ? run[0] : '', rest_equal: run.drop(1) == set.drop(1)]
     }
@@ -118,7 +118,7 @@ nextflow_workflow {
     }
 
     // TabMsfragger.java:2388 keys instruments by the file MSFragger read. MSFragger reads .raw
-    // natively (RC-09), so the searched name is the .raw itself, not its _uncalibrated.mzML.
+    // natively, so the searched name is the .raw itself, not its _uncalibrated.mzML.
     test("EX-02 - sdrf.tsv maps a .raw input to the file MSFragger searched") {
         options "-stub"
         tag "stub"
@@ -152,7 +152,7 @@ nextflow_workflow {
 
     // FragPipe writes sdrf.tsv in split-database mode too, from the console text
     // (FragpipeRun.java:586): here each file's calibration log (calibrate_mass 2), which read the
-    // original file. The slice count comes from the workflow's msfragger.misc.slice-db (RC-20).
+    // original file. The slice count comes from the workflow's msfragger.misc.slice-db.
     test("EX-02 - split-database search writes sdrf.tsv from the calibration log") {
         options "-stub"
         tag "stub"

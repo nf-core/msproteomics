@@ -75,6 +75,14 @@ output:
           type: file
           description: Pseudo-spectra in MGF format
           pattern: "*_Q*.mgf"
+  se_log:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - diaumpire_se.log:
+          type: file
+          description: DIA-Umpire SE's own log (parameters, progress), written in its working directory
+          pattern: "diaumpire_se.log"
   versions_diaumpire:
     - - ${task.process}:
           type: string

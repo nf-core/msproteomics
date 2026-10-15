@@ -1,3 +1,19 @@
+/*
+ * MSFRAGGER: MSFragger database search of one or more LC-MS files (CmdMsfragger)
+ *
+ * Input:
+ *   - meta: Sample metadata map
+ *   - mzml_files: LC-MS files
+ *   - params_name / params_text: FragPipe's params file name and text for the data type
+ *   - fasta: protein database
+ *
+ * Output:
+ *   - pepxml / pin / tsv: search results
+ *   - lcms_files / mzbin_all / pepindex: files MSFragger writes next to its inputs
+ *   - results_dir / log: results directory and msfragger.log
+ *   - license_agreement: I_AGREE_FRAGPIPE_LICENSE_AGREEMENT
+ *   - versions_msfragger / versions_fragpipe: versions (topic: versions)
+ */
 include { fragpipeJavaMemGb; msfraggerPartialArgs; fragpipeTools; requireFragpipeLicenseAgreement; writeTextFile; rawSymlinksToFiles; setFragpipeParamValues; shellArgs; msfraggerStubFiles; msfraggerTrailingArgv; fragpipeJarLines } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
 
 process MSFRAGGER {
@@ -45,6 +61,10 @@ process MSFRAGGER {
     task.ext.when == null || task.ext.when
 
     script:
+    // Exit if running this module with -profile conda / -profile mamba (copied from modules/nf-core/diann/main.nf)
+    if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
+        error "MSFRAGGER module does not support Conda: it runs in the FragPipe image given with --fragpipe_container. Please use Docker / Singularity / Podman instead."
+    }
     def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id}"
     def mem = fragpipeJavaMemGb(task)
@@ -94,7 +114,7 @@ process MSFRAGGER {
     touch ${msfraggerStubFiles(spectra, fasta.name, params_text, prefix).collect { f -> "'${f}'" }.join(' ')}
     touch ${prefix}/msfragger.log
     touch I_AGREE_FRAGPIPE_LICENSE_AGREEMENT
-    echo "${tools.fragpipe_version}" > .msfragger_version
+    echo "${tools.msfragger_version}" > .msfragger_version
     echo "${tools.fragpipe_version}" > .fragpipe_version
     """
 }

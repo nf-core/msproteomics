@@ -18,76 +18,30 @@
                 ]
             ],
             [
-                [
-                    {
-                        "id": "test_experiment"
-                    },
-                    "ionquant.config:md5,b1dd4aed1524639533c3141f20ef1522"
-                ]
-            ],
-            [
                 
             ],
             [
-                [
-                    {
-                        "id": "test_experiment"
-                    },
-                    "percolator.config:md5,68b329da9893e34099c7d8ad5cb9c940"
-                ]
+                "ionquant.config:md5,b1dd4aed1524639533c3141f20ef1522",
+                "percolator.config:md5,68b329da9893e34099c7d8ad5cb9c940",
+                "phi-report.config:md5,72486573a7ffec2badca70a4ea523457",
+                "protein-prophet.config:md5,b0769cb698b4373af727a2e4cf7c57bc",
+                "database.config:md5,858c6fcee6f0be037d299a71e8d22b56"
             ],
             [
-                [
-                    {
-                        "id": "test_experiment"
-                    },
-                    "phi-report.config:md5,72486573a7ffec2badca70a4ea523457"
-                ]
-            ],
-            [
-                
-            ],
-            [
-                [
-                    {
-                        "id": "test_experiment"
-                    },
-                    "protein-prophet.config:md5,b0769cb698b4373af727a2e4cf7c57bc"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "test_experiment"
-                    },
-                    "database.config:md5,858c6fcee6f0be037d299a71e8d22b56"
-                ]
-            ],
-            [
-                
-            ],
-            [
-                [
-                    {
-                        "id": "test_experiment"
-                    },
-                    [
-                        "database.config:md5,858c6fcee6f0be037d299a71e8d22b56",
-                        "fragger.params:md5,f5bed594adcf68e1e36446ffbed2ad12",
-                        "fragger_dda_plus.params:md5,8a7281071c59e5e32b36561a629dd75d",
-                        "fragger_dia.params:md5,56ec85de059871895088053051afd1e0",
-                        "fragger_gpfdia.params:md5,5dcff13cb255956a2ab482bb56fd0b14",
-                        "ionquant.config:md5,b1dd4aed1524639533c3141f20ef1522",
-                        "percolator.config:md5,68b329da9893e34099c7d8ad5cb9c940",
-                        "phi-report.config:md5,72486573a7ffec2badca70a4ea523457",
-                        "protein-prophet.config:md5,b0769cb698b4373af727a2e4cf7c57bc",
-                        "quantitation.config:md5,98c8d4486ebabc2b3adf195456b2561c",
-                        "workflow.config:md5,57bc186be3ddf73c9001d3bd9544f110"
-                    ]
-                ]
+                "database.config:md5,858c6fcee6f0be037d299a71e8d22b56",
+                "fragger.params:md5,f5bed594adcf68e1e36446ffbed2ad12",
+                "fragger_dda_plus.params:md5,8a7281071c59e5e32b36561a629dd75d",
+                "fragger_dia.params:md5,56ec85de059871895088053051afd1e0",
+                "fragger_gpfdia.params:md5,5dcff13cb255956a2ab482bb56fd0b14",
+                "ionquant.config:md5,b1dd4aed1524639533c3141f20ef1522",
+                "percolator.config:md5,68b329da9893e34099c7d8ad5cb9c940",
+                "phi-report.config:md5,72486573a7ffec2badca70a4ea523457",
+                "protein-prophet.config:md5,b0769cb698b4373af727a2e4cf7c57bc",
+                "quantitation.config:md5,98c8d4486ebabc2b3adf195456b2561c",
+                "workflow.config:md5,57bc186be3ddf73c9001d3bd9544f110"
             ]
         ],
-        "timestamp": "2026-10-11T23:09:12.358838202",
+        "timestamp": "2026-10-14T14:51:10.145106661",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"
@@ -116,91 +70,37 @@
                     {
                         "id": "test_experiment"
                     },
-                    "ionquant.config:md5,f98a3839327ac67b207dcdc590af1ee5"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "test_experiment"
-                    },
                     "msbooster.config:md5,3537831a8c194aa7730296f2ff3736f5"
                 ]
             ],
             [
-                [
-                    {
-                        "id": "test_experiment"
-                    },
-                    "percolator.config:md5,a03660f366829ad361e5549052b57249"
-                ]
+                "ionquant.config:md5,f98a3839327ac67b207dcdc590af1ee5",
+                "percolator.config:md5,a03660f366829ad361e5549052b57249",
+                "phi-report.config:md5,ec86b914aec87c5f0e20a5ac0509af77",
+                "peptide-prophet.config:md5,513f37cf7a92e4a71f43018818615d50",
+                "protein-prophet.config:md5,ca53bcff706030eb6dc8d78f3e9930e9",
+                "database.config:md5,858c6fcee6f0be037d299a71e8d22b56",
+                "tmtintegrator.yml:md5,f8a24127301cf777669ad39c4806192d"
             ],
             [
-                [
-                    {
-                        "id": "test_experiment"
-                    },
-                    "phi-report.config:md5,ec86b914aec87c5f0e20a5ac0509af77"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "test_experiment"
-                    },
-                    "peptide-prophet.config:md5,513f37cf7a92e4a71f43018818615d50"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "test_experiment"
-                    },
-                    "protein-prophet.config:md5,ca53bcff706030eb6dc8d78f3e9930e9"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "test_experiment"
-                    },
-                    "database.config:md5,858c6fcee6f0be037d299a71e8d22b56"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "test_experiment"
-                    },
-                    "tmtintegrator.yml:md5,f8a24127301cf777669ad39c4806192d"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "test_experiment"
-                    },
-                    [
-                        "database.config:md5,858c6fcee6f0be037d299a71e8d22b56",
-                        "fragger.params:md5,f5bed594adcf68e1e36446ffbed2ad12",
-                        "fragger_dda_plus.params:md5,8a7281071c59e5e32b36561a629dd75d",
-                        "fragger_dia.params:md5,56ec85de059871895088053051afd1e0",
-                        "fragger_gpfdia.params:md5,5dcff13cb255956a2ab482bb56fd0b14",
-                        "ionquant.config:md5,f98a3839327ac67b207dcdc590af1ee5",
-                        "msbooster.config:md5,3537831a8c194aa7730296f2ff3736f5",
-                        "peptide-prophet.config:md5,513f37cf7a92e4a71f43018818615d50",
-                        "percolator.config:md5,a03660f366829ad361e5549052b57249",
-                        "phi-report.config:md5,ec86b914aec87c5f0e20a5ac0509af77",
-                        "protein-prophet.config:md5,ca53bcff706030eb6dc8d78f3e9930e9",
-                        "quantitation.config:md5,98c8d4486ebabc2b3adf195456b2561c",
-                        "tmtintegrator.yml:md5,f8a24127301cf777669ad39c4806192d",
-                        "tmtintegrator_unmod.yml:md5,f8a24127301cf777669ad39c4806192d",
-                        "workflow.config:md5,57bc186be3ddf73c9001d3bd9544f110"
-                    ]
-                ]
+                "database.config:md5,858c6fcee6f0be037d299a71e8d22b56",
+                "fragger.params:md5,f5bed594adcf68e1e36446ffbed2ad12",
+                "fragger_dda_plus.params:md5,8a7281071c59e5e32b36561a629dd75d",
+                "fragger_dia.params:md5,56ec85de059871895088053051afd1e0",
+                "fragger_gpfdia.params:md5,5dcff13cb255956a2ab482bb56fd0b14",
+                "ionquant.config:md5,f98a3839327ac67b207dcdc590af1ee5",
+                "msbooster.config:md5,3537831a8c194aa7730296f2ff3736f5",
+                "peptide-prophet.config:md5,513f37cf7a92e4a71f43018818615d50",
+                "percolator.config:md5,a03660f366829ad361e5549052b57249",
+                "phi-report.config:md5,ec86b914aec87c5f0e20a5ac0509af77",
+                "protein-prophet.config:md5,ca53bcff706030eb6dc8d78f3e9930e9",
+                "quantitation.config:md5,98c8d4486ebabc2b3adf195456b2561c",
+                "tmtintegrator.yml:md5,f8a24127301cf777669ad39c4806192d",
+                "tmtintegrator_unmod.yml:md5,f8a24127301cf777669ad39c4806192d",
+                "workflow.config:md5,57bc186be3ddf73c9001d3bd9544f110"
             ]
         ],
-        "timestamp": "2026-10-12T02:12:43.080529378",
+        "timestamp": "2026-10-14T14:51:23.769323299",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"
@@ -324,16 +224,9 @@
                     "tool_configs.json:md5,90357ee47f5d1240fcfdaa4500aa157a"
                 ]
             ],
-            [
-                [
-                    {
-                        "id": "stub_decoy"
-                    },
-                    "database.config:md5,25dbe19a3d7d1bc764864ec248ccdfc5"
-                ]
-            ]
+            "database.config:md5,25dbe19a3d7d1bc764864ec248ccdfc5"
         ],
-        "timestamp": "2026-10-11T23:09:57.698128562",
+        "timestamp": "2026-10-14T14:51:57.472294451",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"

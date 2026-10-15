@@ -6,7 +6,7 @@ nextflow_process {
 
     tag "modules"
     tag "modules_local"
-    tag "reprint_to_saint_input"
+    tag "reprinttosaintinput"
 
     test("reprint_to_saint_input - stub") {
         options "-stub"
@@ -48,7 +48,9 @@ nextflow_process {
             assertAll (
                 { assert process.success },
                 { assert process.out.saint_input.size() == 0 },
-                { assert skipped.text ==~ /Input file \/.+\/reprint\.int\.tsv is not accessible\.\n/ : skipped.text }
+                { assert skipped.text ==~ /Input file \/.+\/reprint\.int\.tsv is not accessible\.\n/ : skipped.text },
+                // the message names the task's absolute input path, so the snapshot holds the file name, not its md5
+                { assert snapshot(process.out.skipped.collect { meta, f -> [meta, new File(f.toString()).name] }, process.out.versions_python).match() }
             )
         }
     }
@@ -93,7 +95,9 @@ nextflow_process {
             assertAll (
                 { assert process.success },
                 { assert process.out.saint_input.size() == 0 },
-                { assert skipped.text ==~ /Input file \/.+\/reprint\.spc\.tsv is not accessible\.\n/ : skipped.text }
+                { assert skipped.text ==~ /Input file \/.+\/reprint\.spc\.tsv is not accessible\.\n/ : skipped.text },
+                // the message names the task's absolute input path, so the snapshot holds the file name, not its md5
+                { assert snapshot(process.out.skipped.collect { meta, f -> [meta, new File(f.toString()).name] }, process.out.versions_python).match() }
             )
         }
     }

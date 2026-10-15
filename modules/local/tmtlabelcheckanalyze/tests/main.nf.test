@@ -5,8 +5,8 @@ nextflow_process {
     process "TMTLABELCHECKANALYZE"
 
     tag "modules"
-    tag "modules_nfcore"
-    tag "tmtlabelcheck"
+    tag "modules_local"
+    tag "tmtlabelcheckanalyze"
 
     test("tmtlabelcheck - stub psm mode") {
         options "-stub"

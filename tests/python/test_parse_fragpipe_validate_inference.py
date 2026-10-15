@@ -15,6 +15,11 @@ REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "modules/local/parsefragpipeworkflow/resources/usr/bin"))
 import parse_fragpipe_workflow as pfw  # noqa: E402
 
+# FragPipe 24.0 templates the module stages (the script takes them as arguments)
+TEMPLATES = REPO / "modules" / "local" / "parsefragpipeworkflow" / "assets"
+pfw.FRAGGER_TEMPLATE = TEMPLATES / "fragger_closed.params"
+pfw.DIAUMPIRE_TEMPLATE = TEMPLATES / "diaumpire_se.params"
+
 
 def parse_with_threads(path: str) -> dict:
     """parse_workflow_file plus the run's thread count: the pipeline passes --threads (workflow.threads), which

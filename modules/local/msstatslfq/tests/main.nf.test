@@ -5,8 +5,8 @@ nextflow_process {
     process "MSSTATSLFQ"
 
     tag "modules"
-    tag "modules_nfcore"
-    tag "msstats_lfq"
+    tag "modules_local"
+    tag "msstatslfq"
 
     test("msstats_lfq - stub") {
         tag "stub"
@@ -33,7 +33,7 @@ nextflow_process {
         then {
             assertAll (
                 { assert process.success },
-                { assert snapshot(process.out.msstats_csv, process.out.log).match() }
+                { assert snapshot(process.out.msstats_csv, process.out.log, process.out.versions).match() }
             )
         }
     }

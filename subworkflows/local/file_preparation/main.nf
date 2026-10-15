@@ -11,6 +11,9 @@ include { OPENMSPEAKPICKER } from '../../../modules/local/openmspeakpicker/main'
 workflow FILE_PREPARATION {
     take:
     ch_rawfiles            // channel: [ val(meta), .raw | .mzML | .d | .dia, optionally .gz/.tar/.tar.gz/.zip ]
+    val_reindex_mzml       // boolean: index the mzML files (MZMLINDEXING)
+    val_openms_peakpicking // boolean: pick peaks in the mzML files (OPENMSPEAKPICKER)
+    val_convert_dotd       // boolean: convert Bruker .d to mzML (TDF2MZML)
 
     main:
     // Decompress archives: X.mzML.gz -> X.mzML, X.raw.gz -> X.raw, X.d.tar.gz -> X.d
@@ -40,7 +43,7 @@ workflow FILE_PREPARATION {
 
     // Indexing is done here when requested; search engines index on demand otherwise
     // (peeking into remote files costs a lot of RAM, see https://github.com/bigbio/quantms/issues/61).
-    if (params.reindex_mzml) {
+    if (val_reindex_mzml) {
         MZMLINDEXING(ch_by_format.mzml)
         ch_mzml = MZMLINDEXING.out.mzmls_indexed
     } else {
@@ -51,12 +54,12 @@ workflow FILE_PREPARATION {
     ch_mzml = ch_mzml.mix(THERMORAWFILEPARSER.out.spectra)
 
     // Peak picking applies to the mzML files only; .d and .dia files pass through.
-    if (params.openms_peakpicking) {
+    if (val_openms_peakpicking) {
         OPENMSPEAKPICKER(ch_mzml)
         ch_mzml = OPENMSPEAKPICKER.out.mzmls_picked
     }
 
-    if (params.convert_dotd) {
+    if (val_convert_dotd) {
         TDF2MZML(ch_by_format.dotd)
         ch_dotd = TDF2MZML.out.mzmls_converted
     } else {
@@ -65,7 +68,6 @@ workflow FILE_PREPARATION {
 
     emit:
     results = ch_mzml.mix(ch_dotd, ch_by_format.dia) // channel: [ val(meta), .mzML | .d | .dia ]
-    versions = channel.empty()  // channel: empty - every module reports its version on the 'versions' topic
 }
 
 //

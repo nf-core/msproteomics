@@ -1,8 +1,22 @@
+/*
+ * MSSTATSLFQ: MSstats label-free statistics on an MSstats input table (bin/msstats_plfq.R)
+ *
+ * Input:
+ *   - msstats_csv_input: MSstats input CSV
+ *   - contrasts / ref_condition: contrasts ('pairwise' or a list) and reference condition
+ *   - remove_one_feat_prot / remove_few_measurements / feature_subset_protein / quant_summary_method / threshold: MSstats options
+ *
+ * Output:
+ *   - pdf: MSstats plots (optional)
+ *   - msstats_csv: result tables
+ *   - log: msstats.log
+ *   - versions: versions.yml (topic: versions)
+ */
 process MSSTATSLFQ {
-    tag "$msstats_csv_input.Name"
+    tag "${msstats_csv_input.name}"
     label 'process_medium'
     conda "${moduleDir}/environment.yml"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+    container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/bioconductor-msstats:4.14.0--r44he5774e6_0' :
         'quay.io/biocontainers/bioconductor-msstats:4.14.0--r44he5774e6_0' }"
 
@@ -58,8 +72,8 @@ process MSSTATSLFQ {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        r-base: stub
-        bioconductor-msstats: stub
+        r-base: \$(echo \$(R --version 2>&1) | sed 's/^.*R version //; s/ .*\$//')
+        bioconductor-msstats: \$(Rscript -e "library(MSstats); cat(as.character(packageVersion('MSstats')))" 2>/dev/null)
     END_VERSIONS
     """
 }

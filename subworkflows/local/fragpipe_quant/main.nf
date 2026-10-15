@@ -37,6 +37,7 @@ workflow FRAGPIPE_QUANT {
     // FragPipe's LC-MS file list (wrapped so combine keeps it one item) and the TMT annotation
     // lines (header first; [] without TMT)
     ch_lcms_list = ch_lcms_files.toList().map { files -> [files] }
+    // ch_annotation is a value channel: the annotation file is read once
     ch_annotation_lines = ch_annotation.map { annot -> annot ? [annot.readLines()] : [[]] }
 
     // Per-group results as [ [group dirs], root_group_dir ]: root_group_dir names the blank
@@ -249,21 +250,10 @@ workflow FRAGPIPE_QUANT {
     experiment_annotation = IONQUANT.out.experiment_annotation
         .mix(IONQUANT_ISOBARIC.out.experiment_annotation)    // channel: [ val(meta), path(experiment_annotation.tsv) ]
     tmt_abundance    = TMTINTEGRATOR.out.abundance             // channel: [ val(meta), path(abundance_*.tsv) ]
-    tmt_ratio        = TMTINTEGRATOR.out.ratio                 // channel: [ val(meta), path(ratio_*.tsv) ]
     ionquant_dir     = IONQUANT.out.results_dir                // channel: [ val(meta), path(results_dir) ]
     reprint          = ch_reprint                              // channel: [ val(mode), path(reprint.<mode>.tsv) ] - REPRINT tables IonQuant leaves in the work dir
     ionquant_ms1_dir = IONQUANT_MS1.out.results_dir            // channel: [ val(meta), path(results_dir) ]
     tmt_dir          = TMTINTEGRATOR.out.results_dir           // channel: [ val(meta), path(tmt-report) ]
     tmt_unmod_dir    = TMTINTEGRATOR_UNMOD.out.results_dir     // channel: [ val(meta), path(tmt-report-unmod) ]
     isobaric_dir     = IONQUANT_ISOBARIC.out.results_dir       // channel: [ val(meta), path(results_dir) ]
-    versions         = IONQUANT.out.versions_ionquant
-        .mix(IONQUANT.out.versions_fragpipe)
-        .mix(IONQUANT_MS1.out.versions_ionquant)
-        .mix(IONQUANT_MS1.out.versions_fragpipe)
-        .mix(IONQUANT_ISOBARIC.out.versions_ionquant)
-        .mix(IONQUANT_ISOBARIC.out.versions_fragpipe)
-        .mix(TMTINTEGRATOR.out.versions_tmtintegrator)
-        .mix(TMTINTEGRATOR.out.versions_fragpipe)
-        .mix(TMTINTEGRATOR_UNMOD.out.versions_tmtintegrator)
-        .mix(TMTINTEGRATOR_UNMOD.out.versions_fragpipe)
 }

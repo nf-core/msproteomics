@@ -11,7 +11,7 @@
 
 FROM fcyucn/fragpipe:24.0
 
-LABEL maintainer="nf-fragpipe"
+LABEL org.opencontainers.image.description="FragPipe 24.0 image for nf-core/msproteomics"
 LABEL description="FragPipe 24.0 for Nextflow (commercial license, FragPipePlus)"
 
 ENV FP_BASE=/fragpipe_bin/fragpipe-24.0/fragpipe-24.0
