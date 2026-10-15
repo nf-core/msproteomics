@@ -59,6 +59,33 @@ nextflow_process {
         }
     }
 
+    test("decompress - a .d below the archive's upload path, under another name") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                // as PRIDE PXD038782's archives: the .d sits in the uploader's path, with a name unlike the archive's
+                def dotd = new File("\${workDir}/mnt/f/upload/30/run B#1.d")
+                dotd.mkdirs()
+                new File(dotd, 'analysis.tdf').text = "tdf\\n"
+                ['tar', '-czf', "\${workDir}/run_B.d.tar.gz", '-C', workDir.toString(), 'mnt'].execute().waitFor()
+
+                input[0] = channel.of([ [ id: 'run_B' ], file("\${workDir}/run_B.d.tar.gz") ])
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert process.out.decompressed_files.collect { item -> file(item[1]).name } == ['run_B.d'] },
+                { assert new File(process.out.decompressed_files[0][1].toString(), 'analysis.tdf').exists() },
+                { assert snapshot(process.out.decompressed_files, process.out.versions_tar).match() }
+            )
+        }
+    }
+
     test("decompress - stub") {
         tag "stub"
         options "-stub"

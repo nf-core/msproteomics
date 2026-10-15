@@ -1,4 +1,19 @@
 {
+    "tdf2mzml - integration": {
+        "content": [
+            "211106_NHG_benign_UDN30_PBMC_W6-32_20__DDA_Rep1.mzML",
+            77850,
+            [
+                "211106_NHG_benign_UDN30_PBMC_W6-32_20__DDA_Rep1_conversion.log"
+            ],
+            "\"TDF2MZML\":\n    tdf2mzml.py: 0.3-20200211.1\n"
+        ],
+        "timestamp": "2026-10-15T14:15:59.936885077",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
     "tdf2mzml - stub": {
         "content": [
             [
@@ -13,10 +28,10 @@
                 "sample_conversion.log:md5,1ad239c94b4b8739c6acd1bb40b24990"
             ]
         ],
+        "timestamp": "2026-10-05T14:23:39.416314544",
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-10-05T14:23:39.416314544"
+        }
     }
 }

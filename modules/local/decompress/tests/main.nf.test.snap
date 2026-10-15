@@ -63,5 +63,31 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         }
+    },
+    "decompress - a .d below the archive's upload path, under another name": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "run_B"
+                    },
+                    [
+                        "analysis.tdf:md5,9ac1aaacbf0d42636ac57b8368c3abbf"
+                    ]
+                ]
+            ],
+            [
+                [
+                    "DECOMPRESS",
+                    "tar",
+                    "1.34"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-15T13:31:07.664126334",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
     }
 }

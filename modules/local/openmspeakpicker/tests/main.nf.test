@@ -33,4 +33,38 @@ nextflow_process {
             )
         }
     }
+
+    // Real PeakPickerHiRes run (docker, quay.io/biocontainers/openms) on the public DIA mzML subset of the pipeline's DIA test.
+    // That file holds 2500 spectra, all centroided (MS:1000127, none MS:1000128), so this proves the module runs end to end
+    // and keeps every spectrum; it does not exercise profile-to-centroid conversion.
+    // The mzML embeds dates and paths, so the snapshot holds the file name, the spectrum count and the versions.
+    test("openms_peak_picker - integration") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                input[0] = channel.of([
+                    [ id: 'dia_cptac_subset' ],
+                    file("\${params.pipelines_testdata_base_path}/spectra/dia_cptac_subset.mzML", checkIfExists: true)
+                ])
+                """
+            }
+        }
+
+        then {
+            def picked = process.out.mzmls_picked[0][1].toString()
+            def spectra = new File(picked).readLines().count { line -> line.contains('<spectrum ') }
+            assertAll (
+                { assert process.success },
+                { assert spectra == 2500 },
+                { assert snapshot(
+                    file(picked).name,
+                    spectra,
+                    file(process.out.log[0][1].toString()).name,
+                    process.out.versions_openms
+                ).match() }
+            )
+        }
+    }
 }
