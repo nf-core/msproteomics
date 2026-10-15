@@ -4,4 +4,6 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
+  # Pinned (nf-core lint bioconda_latest offers 0.0.48): --enable_pmultiqc has stub tests only, so no
+  # CI run checks a newer pmultiqc on real DIA output; bump it with a real-data run.
   - bioconda::pmultiqc=0.0.39

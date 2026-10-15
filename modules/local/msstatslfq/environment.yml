@@ -4,4 +4,7 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
+  # Pinned (nf-core lint bioconda_latest offers 4.18.1, which needs R 4.5): MSSTATSLFQ runs by default in
+  # --mode diann, so its tables are part of the DIA integration results (tests/default.nf.test);
+  # bump it in a change that reruns and re-records that run.
   - bioconda::bioconductor-msstats=4.14.0
