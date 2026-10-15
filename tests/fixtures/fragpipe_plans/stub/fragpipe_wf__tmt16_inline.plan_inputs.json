@@ -1,0 +1,100 @@
+{
+  "workflow_text": "msfragger.calibrate_mass = 2\nmsfragger.precursor_mass_lower = -20\nmsfragger.precursor_mass_upper = 20\nmsfragger.run-msfragger = true\nmsbooster.run-msbooster = true\ntmtintegrator.run-tmtintegrator = true\ntmtintegrator.channel_num = TMT-16\nmsfragger.table.var-mods = 15.9949,M,true,3\nphi-report.filter = --sequential --prot 0.01 --picked\nphi-report.run-report = true\npercolator.run-percolator = true\nprotein-prophet.run-protein-prophet = true\ndatabase.decoy-tag = rev_",
+  "manifest_rows": [
+    [
+      "test_sample.mzML",
+      "test_sample",
+      null,
+      "DDA",
+      "test_sample"
+    ]
+  ],
+  "annotation_rows": [
+    [
+      "test_sample",
+      "126",
+      "Bridge"
+    ],
+    [
+      "test_sample",
+      "127N",
+      "S1"
+    ],
+    [
+      "test_sample",
+      "127C",
+      "S2"
+    ],
+    [
+      "test_sample",
+      "128N",
+      "S3"
+    ],
+    [
+      "test_sample",
+      "128C",
+      "S4"
+    ],
+    [
+      "test_sample",
+      "129N",
+      "S5"
+    ],
+    [
+      "test_sample",
+      "129C",
+      "S6"
+    ],
+    [
+      "test_sample",
+      "130N",
+      "S7"
+    ],
+    [
+      "test_sample",
+      "130C",
+      "S8"
+    ],
+    [
+      "test_sample",
+      "131N",
+      "S9"
+    ],
+    [
+      "test_sample",
+      "131C",
+      "S10"
+    ],
+    [
+      "test_sample",
+      "132N",
+      "S11"
+    ],
+    [
+      "test_sample",
+      "132C",
+      "S12"
+    ],
+    [
+      "test_sample",
+      "133N",
+      "S13"
+    ],
+    [
+      "test_sample",
+      "133C",
+      "S14"
+    ],
+    [
+      "test_sample",
+      "134N",
+      "S15"
+    ]
+  ],
+  "sources": {
+    "test_sample.mzML": "<workDir>/test_sample.mzML"
+  },
+  "database_name": "test_db_philosopher.fasta",
+  "database_source": "<PHILOSOPHERDATABASE>/test_db_philosopher.fasta (from <workDir>/test.fasta)",
+  "ext_args": "--threads 2"
+}

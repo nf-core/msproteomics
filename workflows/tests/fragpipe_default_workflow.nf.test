@@ -16,6 +16,8 @@ nextflow_workflow {
 
         when {
             params {
+                // the stub's tool configs: FragPipe's recorded dry run of LFQ-MBR on this samplesheet
+                fragpipe_plan = "${baseDir}/tests/fixtures/fragpipe_plans/stub/fragpipe_parity__lfq_mbr_experiment_bioreplicate"
                 def fixtures = "${baseDir}/tests/fixtures"
                 def ss = new File("${outputDir}/samplesheet.csv")
                 ss.parentFile.mkdirs()

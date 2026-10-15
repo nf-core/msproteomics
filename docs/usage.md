@@ -254,17 +254,17 @@ The `--fragpipe_mode` parameter controls execution mode:
 - `pipeline` (default): Modular Nextflow subworkflow execution
 - `headless`: Single-process FragPipe headless execution
 
-In pipeline mode, `--fragpipe_planner` chooses where the tool settings come from:
-
-- `parser` (default): the pipeline's `.workflow` parser (PARSEFRAGPIPEWORKFLOW).
-- `plan` (experimental, hidden): FragPipe itself configures the run (`fragpipe --headless --write-plan --msfragger-per-file`, FRAGPIPEPLAN), and PLANTOTOOLCONFIGS reads its work dir.
-  It needs a FragPipe release with the plan options proposed in [Nesvilab/FragPipe#2907](https://github.com/Nesvilab/FragPipe/pull/2907): `--write-plan` (write the tool config files and the commands, run no tool) and `--msfragger-per-file`.
-  No FragPipe release has them yet (FragPipe 24.0 does not), so the image passed with `--fragpipe_container` must be built from that change.
-  FRAGPIPEPLAN checks FragPipe's `--help` for both options first; with any other FragPipe it stops with an error that names the missing option.
-  It also needs a FASTA with decoys before the run, so it does not combine with `--add_philosopher_decoy` / `--add_philosopher_contaminants`.
-  The plan run's redacted log and FragPipe's saved workflow and manifest are published under `fragpipe/plan/`.
-
-The default `parser` runs on released FragPipe 24.0.
+In pipeline mode, FragPipe itself configures the run: FRAGPIPEPLAN runs `fragpipe --headless --write-plan --msfragger-per-file`, and PLANTOTOOLCONFIGS reads its work dir for the tool settings.
+It needs a FragPipe release with the plan options proposed in [Nesvilab/FragPipe#2907](https://github.com/Nesvilab/FragPipe/pull/2907): `--write-plan` (write the tool config files and the commands, run no tool) and `--msfragger-per-file`.
+No FragPipe release has them yet (FragPipe 24.0 does not), so the image passed with `--fragpipe_container` must be built from that change.
+FRAGPIPEPLAN checks FragPipe's `--help` for both options first; with any other FragPipe it stops with an error that names the missing option.
+`--add_philosopher_decoy` / `--add_philosopher_contaminants` run FragPipe's database update first, so the plan reads the searched FASTA.
+`--fragpipe_plan <dir>` takes the tool settings from an existing FragPipe plan work dir (FRAGPIPEPLAN's `fp_work`) instead of planning.
+Its manifest must list the run's LC-MS files with the same experiment, bioreplicate, data type and FragPipe group.
+PLANTOTOOLCONFIGS stops runs FragPipe plans but the pipeline cannot run (MSFragger off or digest-only, FreeQuant without the Philosopher filter, psm.tsv readers without the Philosopher report, transfer learning, Write sub mzML with a split database, IonQuant values with whitespace).
+Every other workflow refusal is FragPipe's own: its plan run exits non-zero.
+The plan run's redacted log and FragPipe's saved workflow and manifest are published under `fragpipe/plan/`.
+In headless mode, FragPipe checks the database itself.
 
 ### SAINTexpress
 
@@ -292,7 +292,7 @@ The task then fails with SAINTexpress's output and names the step; add control e
 | `--fragpipe_workflow` | FragPipe `.workflow` file or workflow name (FragPipe mode) | `assets/LFQ-MBR.workflow`                |
 | `--tmt_mode`          | TMT analysis mode: `labelcheck` or `quant` (FragPipe mode) | None                                     |
 | `--fragpipe_mode`     | FragPipe execution mode: `pipeline` or `headless`          | `pipeline`                               |
-| `--fragpipe_planner`  | Tool settings from the `parser` or FragPipe's `plan`       | `parser`                                 |
+| `--fragpipe_plan`     | FragPipe plan work dir to take the tool settings from      | None (FragPipe plans the run)            |
 
 ## Container Requirements
 
@@ -513,10 +513,10 @@ Each entry has:
 
 Resolution follows the nf-core iGenomes pattern: a user parameter wins over the iProteome, which wins over building in the pipeline.
 
-| Mode     | User parameter                  | iProteome                                             | Built in the pipeline                                                                                                                                                   |
-| -------- | ------------------------------- | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| DIA-NN   | `--database`, `--diann_speclib` | `fasta`; `diann_speclib` when `--database` is not set | In-silico library (`DIANN_INSILICOLIBRARYGENERATION`)                                                                                                                   |
-| FragPipe | `--database`                    | `fragpipe_fasta`, else `fasta`                        | Decoys and contaminants only with `--add_philosopher_decoy` / `--add_philosopher_contaminants`; otherwise `CHECKDBCONFIG` fails like FragPipe on a FASTA without decoys |
+| Mode     | User parameter                  | iProteome                                             | Built in the pipeline                                                                                                                                                                         |
+| -------- | ------------------------------- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DIA-NN   | `--database`, `--diann_speclib` | `fasta`; `diann_speclib` when `--database` is not set | In-silico library (`DIANN_INSILICOLIBRARYGENERATION`)                                                                                                                                         |
+| FragPipe | `--database`                    | `fragpipe_fasta`, else `fasta`                        | Decoys and contaminants only with `--add_philosopher_decoy` / `--add_philosopher_contaminants`; otherwise FragPipe's own decoy check (FragpipeRun.checkDbConfig) stops a FASTA without decoys |
 
 - `--database` replaces the iProteome FASTA, so the hosted DIA-NN library (built from the iProteome FASTA) is not used.
 - The hosted DIA-NN library is used only when the run's digest and modification settings (`--enzyme`, `--fixed_mods`, `--variable_mods`, `--max_mods`, `--allowed_missed_cleavages`, peptide length, precursor charge, `--met_excision`, the m/z ranges, the library mass accuracies and `--additional_insilico_args`) equal those recorded in the iProteome's `<iproteomes_base>/<key>/meta.json` (`diann_library_settings`, derived from `build_commands.diann`; numbers compare as numbers, modification lists as sets); otherwise the run stops and names the differing settings.

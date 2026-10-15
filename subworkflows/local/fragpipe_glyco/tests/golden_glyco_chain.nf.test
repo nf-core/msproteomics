@@ -28,12 +28,11 @@ nextflow_workflow {
     test("glyco chain - glyco-N-LFQ + MBG reproduces FragPipe 24.0") {
 
         setup {
-            run("PARSEFRAGPIPEWORKFLOW") {
-                script "../../../../modules/local/parsefragpipeworkflow/main.nf"
+            run("PLANTOTOOLCONFIGS") {
+                script "../../../../modules/local/plantotoolconfigs/main.nf"
                 process {
                     """
-                    input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
-                    input[0] = channel.of([ [ id: 'glyco' ], file((System.getenv('GOLDEN_ROOT') + '/PXD030670/glyco-N-LFQ-MBG_perfile/files/work') + '/fragpipe.workflow', checkIfExists: true), ['DDA'] ])
+                    input[0] = channel.of([ [ id: 'glyco' ], file("\${projectDir}/tests/fixtures/fragpipe_plans/glyco-N-LFQ-MBG_perfile", checkIfExists: true) ])
                     """
                 }
             }
@@ -59,8 +58,8 @@ nextflow_workflow {
                 input[0] = channel.fromList(groups.collect { g -> [[id: g, group: g], file("\${report}/\${g}", checkIfExists: true)] })
                 input[1] = channel.fromList(lcms)
                 input[2] = channel.value(fasta)
-                // the parser's tool configs; PTM-Shepherd runs for profiling or glycan assignment (FragpipeRun.java:2095)
-                input[3] = PARSEFRAGPIPEWORKFLOW.out.tool_configs_json.map { _m, json -> json.text }
+                // the tool configs of FragPipe's dry run; PTM-Shepherd runs for profiling or glycan assignment (FragpipeRun.java:2095)
+                input[3] = PLANTOTOOLCONFIGS.out.tool_configs_json.map { _m, json -> json.text }
                 """
             }
         }

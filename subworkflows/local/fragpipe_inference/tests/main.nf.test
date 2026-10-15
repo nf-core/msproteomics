@@ -106,7 +106,7 @@ nextflow_workflow {
             workflow {
                 """
                 ['interact-a.pep.xml', 'db.fasta'].each { n -> file("\${workDir}/\${n}").text = 'mock' }
-                // the parser's entries for a workflow with Abacus on (Open-crystalc): it has no manifest, so it leaves
+                // tool_configs entries for a workflow with Abacus on (Open-crystalc) that leave
                 // FragPipe's "more than one experiment group" condition (FragpipeRun.java:1785-1789) to this subworkflow
                 def tool_configs = [
                     database:       [run: true, decoy_tag: 'rev_'],

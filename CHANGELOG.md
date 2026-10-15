@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `--fragpipe_planner plan` (experimental, hidden): the FragPipe tool configs from FragPipe's own `--write-plan` run (FRAGPIPEPLAN, PLANTOTOOLCONFIGS); needs a FragPipe release with `--write-plan` ([Nesvilab/FragPipe#2907](https://github.com/Nesvilab/FragPipe/pull/2907)). The default, `parser`, runs on FragPipe 24.0.
+- The FragPipe tool configs come from FragPipe's own `--write-plan` run (FRAGPIPEPLAN, PLANTOTOOLCONFIGS), or a given plan work dir (`--fragpipe_plan`); FragPipe mode needs a FragPipe release with `--write-plan` and `--msfragger-per-file` ([Nesvilab/FragPipe#2907](https://github.com/Nesvilab/FragPipe/pull/2907)).
 - `main.nf` follows the nf-core template: `PIPELINE_INITIALISATION` (nf-schema parameter and samplesheet validation, `--help`, `--version`), the `NFCORE_MSPROTEOMICS` named workflow, a pipeline-level `MULTIQC` with software versions from the `versions` topic, and `PIPELINE_COMPLETION` (summary and email); none of these ran before.
 - `PMULTIQC` runs in the DIA workflow when `--enable_pmultiqc` is set (the default); the module existed but was never called.
 - iProteomes: `--proteome <key>` selects a versioned reference proteome from `conf/iproteomes.config` (paths under `--iproteomes_base`) with its FASTA and, when the run's settings match, a hosted DIA-NN library and FragPipe decoy database.
@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Samplesheet columns `experiment`, `bioreplicate` and `data_type` set FragPipe's experiment, bioreplicate and data type per LC-MS file.
 - The samplesheet `spectra` column accepts `.mzXML`, `.mgf` and `.mzBIN` files and `.gz`, `.tar`, `.tar.gz` and `.zip` archives (`DECOMPRESS` unpacks them in the DIA workflow).
 - `--tmt_type TMT35`.
-- FragPipe tools follow FragPipe 24.0's tool graph: `CHECKCENTROID`, `CHECKDBCONFIG`, iProphet (`PHILOSOPHERIPROPHET`), Abacus (`PHILOSOPHERABACUS`), matched-fragment export (`EXPORTMATCHEDFRAGMENTS`), write-sub-mzML second pass (`WRITESUBMZML`, `FRAGPIPESECONDPASS`), split-database calibration (`SORTFASTA`, `MSFRAGGERAPPLYCALIBRATION`), O-Pair scan pairing (`PAIRSCANS`), SAINTexpress input from IonQuant (`REPRINTTOSAINTINPUT`), FPOP coADAPTr (`FPOPCOADAPTR`) and DIA-NN quantification of a FragPipe spectral library (`DIANNFRAGPIPE`).
+- FragPipe tools follow FragPipe 24.0's tool graph: `CHECKCENTROID`, iProphet (`PHILOSOPHERIPROPHET`), Abacus (`PHILOSOPHERABACUS`), matched-fragment export (`EXPORTMATCHEDFRAGMENTS`), write-sub-mzML second pass (`WRITESUBMZML`, `FRAGPIPESECONDPASS`), split-database calibration (`SORTFASTA`, `MSFRAGGERAPPLYCALIBRATION`), O-Pair scan pairing (`PAIRSCANS`), SAINTexpress input from IonQuant (`REPRINTTOSAINTINPUT`), FPOP coADAPTr (`FPOPCOADAPTR`) and DIA-NN quantification of a FragPipe spectral library (`DIANNFRAGPIPE`).
 - New local subworkflows `fragpipe_philosopher_quant` and `fragpipe_matched_fragments`.
 - `--mode fragpipe` publishes `fragpipe/fragpipe-files.fp-manifest`, `fragpipe/fragpipe.workflow` (`FRAGPIPESAVEWORKFLOW`) and, with `workflow.misc.save-sdrf=true`, `fragpipe/sdrf.tsv` (`FRAGPIPESDRF`).
 - `--fragpipe_threads` sets the FragPipe thread count; `--metaproteomics_names_dmp` and `--metaproteomics_nodes_dmp` give the NCBI taxonomy files for FP-Meta.
@@ -55,7 +55,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   | `msstats_lfq` / `MSSTATS_LFQ`                                       | `msstatslfq` / `MSSTATSLFQ`                                   |
   | `mzml_indexing` / `MZML_INDEXING`                                   | `mzmlindexing` / `MZMLINDEXING`                               |
   | `openms_peak_picker` / `OPENMS_PEAK_PICKER`                         | `openmspeakpicker` / `OPENMSPEAKPICKER`                       |
-  | `parse_fragpipe_workflow` / `PARSE_FRAGPIPE_WORKFLOW`               | `parsefragpipeworkflow` / `PARSEFRAGPIPEWORKFLOW`             |
   | `philosopher/database` / `PHILOSOPHER_DATABASE`                     | `philosopherdatabase` / `PHILOSOPHERDATABASE`                 |
   | `philosopher/filter` / `PHILOSOPHER_FILTER`                         | `philosopherfilter` / `PHILOSOPHERFILTER`                     |
   | `philosopher/labelquant` / `PHILOSOPHER_LABELQUANT`                 | `philosopherlabelquant` / `PHILOSOPHERLABELQUANT`             |

@@ -39,7 +39,7 @@ input:
   - ch_tool_configs:
       type: channel
       description: |
-        Value channel with the parsed PARSEFRAGPIPEWORKFLOW tool configs.
+        Value channel with the tool configs of FragPipe's plan (bin/plan_to_tool_configs.py).
         Structure: val(tool_configs_map)
   - ch_emf_inputs:
       type: channel

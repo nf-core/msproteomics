@@ -50,4 +50,4 @@ No FragPipe release has it yet; with any other FragPipe the task stops with an e
 
 ## Usage
 
-Run by FRAGPIPE_TOOL_CONFIGS with `--fragpipe_planner plan`; PLANTOTOOLCONFIGS reads its work dir.
+Run by FRAGPIPE_TOOL_CONFIGS (not with `--fragpipe_plan`, which gives the work dir instead); PLANTOTOOLCONFIGS reads its work dir.

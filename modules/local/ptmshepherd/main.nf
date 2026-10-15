@@ -10,7 +10,7 @@ include { ptmShepherdCommands; taskFileCommand; shellQuote; fragpipeToolVersions
  *   - datasets: [dir_name, dataset_name] per group, in FragPipe's group order; the blank group's
  *     dataset is "dataset01" (PtmshepherdParams.java:86)
  *   - mzml_files: LC-MS files of all groups (one directory, as FragPipe requires)
- *   - config_text: sorted property block from PARSEFRAGPIPEWORKFLOW (@THREADS@/@TOOLS_DIR@/@ANNOTATION_FILE@ tokens)
+ *   - config_text: sorted property block from FragPipe's plan (bin/plan_to_tool_configs.py) (@THREADS@/@TOOLS_DIR@/@ANNOTATION_FILE@ tokens)
  *   - annotation_file: the custom annotation file of ptmshepherd.annotation_file (annotation-custom/annotation-glyco
  *     radio, PtmshepherdPanel.java:229-232), staged as annotation/<name>; [] when annotation_file is a keyword
  *   - fasta: the database FragPipe searched
@@ -26,7 +26,7 @@ process PTMSHEPHERD {
     label 'process_high'
 
     input:
-    // config_text: shepherd.config property block from the workflow parser (@THREADS@, @TOOLS_DIR@, @ANNOTATION_FILE@ tokens)
+    // config_text: shepherd.config property block from FragPipe's plan (@THREADS@, @TOOLS_DIR@, @ANNOTATION_FILE@ tokens)
     tuple val(meta), path(psm_dirs, stageAs: 'input/*'), val(datasets), path(mzml_files, stageAs: 'spectra/*'), val(config_text), path(annotation_file, stageAs: 'annotation/*')
     path fasta
 

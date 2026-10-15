@@ -4,16 +4,13 @@ Run: python3 -m unittest discover -s tests/python
 Synthetic plans only; the real-plan goldens are in test_plan_to_tool_configs.py.
 """
 
-import tempfile
 import unittest
 import xml.etree.ElementTree as ET
-from pathlib import Path
 
 import test_plan_to_tool_configs as base
 from test_fragpipe_portable import fp
 
 ptc = base.ptc
-pfw = base.load("parse_fragpipe_workflow", base.PARSER)
 step, plan = base.step, base.plan
 
 
@@ -83,12 +80,10 @@ class PlanHelpersTest(unittest.TestCase):
         self.assertEqual((props["a.opts"], props["b.lead"], props["c.uni"], props["d.cont"]),
                          ("--x #1 !2\tT\nN\rR\fF", "  two leading", "\u00e9t\u00e9", "first second"))
 
-    def test_saved_workflow_reads_as_the_workflow_parser_does(self):
+    def test_saved_workflow_keys_separators_comments_and_repeats_load_like_java_properties(self):
+        # Properties.load0: an escaped key separator, a space separator, '!' comments, the last of a repeated key
         text = "x\\:y=a\\=b c\nk v\n! bang comment\nu=\\u0041\\t\nlast=1\nlast=2\n"
-        with tempfile.TemporaryDirectory() as d:
-            f = Path(d) / "w.workflow"
-            f.write_text(text, encoding="utf-8")
-            self.assertEqual(ptc.workflow_properties(text), pfw.load_java_properties(str(f)))
+        self.assertEqual(ptc.workflow_properties(text), {"x:y": "a=b c", "k": "v", "u": "A\t", "last": "2"})
 
     def test_saved_workflow_needs_exactly_one_config(self):
         root = plan()

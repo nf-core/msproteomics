@@ -34,7 +34,7 @@ input:
       description: "Searched database. Structure: path(fasta)"
   - ch_tool_configs:
       type: channel
-      description: "PARSEFRAGPIPEWORKFLOW tool_configs.json text. Structure: val(json)"
+      description: "tool_configs.json text (FragPipe's plan, bin/plan_to_tool_configs.py). Structure: val(json)"
   - aggregate_meta:
       type: map
       description: Meta map of aggregate outputs

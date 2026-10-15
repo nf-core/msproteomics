@@ -1,4 +1,21 @@
 {
+    "Write sub mzML - label check writes _sub.mzML and the second-pass files to fragpipe/": {
+        "content": [
+            [
+                "plex1_sub.mzML",
+                "plex2_sub.mzML"
+            ],
+            [
+                "<fragpipe>/plex1_sub.mzML\tplex1\t\tDDA",
+                "<fragpipe>/plex2_sub.mzML\tplex2\t\tDDA"
+            ]
+        ],
+        "timestamp": "2026-10-11T07:41:12.142840393",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
     "TMT per-channel samplesheet - one MSFRAGGER task per raw file": {
         "content": [
             {
@@ -13,7 +30,6 @@
                 "MSPROTEOMICS_TMT_LABELCHECK:MSPROTEOMICS_FRAGPIPE:FRAGPIPESAVEWORKFLOW (fragpipe)",
                 "MSPROTEOMICS_TMT_LABELCHECK:MSPROTEOMICS_FRAGPIPE:FRAGPIPESDRF (fragpipe)",
                 "MSPROTEOMICS_TMT_LABELCHECK:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:CHECKCENTROID (plex1)",
-                "MSPROTEOMICS_TMT_LABELCHECK:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_DATABASE:CHECKDBCONFIG (database)",
                 "MSPROTEOMICS_TMT_LABELCHECK:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_INFERENCE:PHILOSOPHERFILTER (plex1)",
                 "MSPROTEOMICS_TMT_LABELCHECK:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_INFERENCE:PHILOSOPHERFILTER_LATER (plex2)",
                 "MSPROTEOMICS_TMT_LABELCHECK:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_INFERENCE:PHILOSOPHERPROTEINPROPHET (fragpipe)",
@@ -21,7 +37,7 @@
                 "MSPROTEOMICS_TMT_LABELCHECK:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSFRAGGER (plex1)",
                 "MSPROTEOMICS_TMT_LABELCHECK:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSFRAGGER (plex2)",
                 "MSPROTEOMICS_TMT_LABELCHECK:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:WRITE_FRAGGER_PARAMS (fragger)",
-                "MSPROTEOMICS_TMT_LABELCHECK:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_TOOL_CONFIGS:PARSEFRAGPIPEWORKFLOW (fragpipe_config)",
+                "MSPROTEOMICS_TMT_LABELCHECK:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_TOOL_CONFIGS:PLANTOTOOLCONFIGS (fragpipe_config)",
                 "MSPROTEOMICS_TMT_LABELCHECK:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_VALIDATE:PERCOLATOR (plex1)",
                 "MSPROTEOMICS_TMT_LABELCHECK:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_VALIDATE:PERCOLATOR (plex2)",
                 "MSPROTEOMICS_TMT_LABELCHECK:MSPROTEOMICS_FRAGPIPE:GENERATESDRFFROMSAMPLESHEET (generate_sdrf)",
@@ -30,24 +46,7 @@
                 "MSPROTEOMICS_TMT_LABELCHECK:TMTLABELCHECKANALYZE_IONQUANT (fragpipe)"
             ]
         ],
-        "timestamp": "2026-10-14T14:49:48.380912645",
-        "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.4"
-        }
-    },
-    "Write sub mzML - label check writes _sub.mzML and the second-pass files to fragpipe/": {
-        "content": [
-            [
-                "plex1_sub.mzML",
-                "plex2_sub.mzML"
-            ],
-            [
-                "<fragpipe>/plex1_sub.mzML\tplex1\t\tDDA",
-                "<fragpipe>/plex2_sub.mzML\tplex2\t\tDDA"
-            ]
-        ],
-        "timestamp": "2026-10-11T07:41:12.142840393",
+        "timestamp": "2026-10-15T14:02:23.435042336",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"

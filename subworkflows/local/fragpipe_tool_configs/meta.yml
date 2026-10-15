@@ -1,13 +1,12 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
 name: "fragpipe_tool_configs"
-description: FragPipe tool configs for the FragPipe subworkflows, from the workflow file parser or from FragPipe's own --write-plan run (--fragpipe_planner)
+description: FragPipe tool configs for the FragPipe subworkflows, from FragPipe's own configured run (headless --write-plan, or a given plan work dir with --fragpipe_plan)
 keywords:
   - proteomics
   - fragpipe
   - workflow
   - planning
 components:
-  - parsefragpipeworkflow
   - fragpipeplan
   - plantotoolconfigs
 input:
@@ -24,18 +23,18 @@ input:
   - ch_decoy_db:
       type: channel
       description: |
-        The FASTA searched as given (with decoys); needed before the run by the plan planner.
+        The searched FASTA (with decoys), which FragPipe's plan checks.
         Structure: [ val(meta), path(fasta) ]
   - ch_annotation:
       type: channel
       description: |
         Value channel with the TMT annotation (tmt_annotation.tsv: plex, channel, sample, sample_name, condition, replicate), [] when TMT-Integrator does not run.
         Structure: path(tmt_annotation.tsv)
-  - val_planner:
+  - val_plan:
       type: string
       description: |
-        'parser' (PARSEFRAGPIPEWORKFLOW reads the workflow file) or 'plan' (FRAGPIPEPLAN runs FragPipe headless
-        --write-plan --msfragger-per-file, PLANTOTOOLCONFIGS turns its work dir into the same outputs).
+        FragPipe plan work dir to take the tool configs from (--fragpipe_plan), or null: FRAGPIPEPLAN
+        then runs FragPipe headless --write-plan. A given work dir must plan the run's LC-MS files.
 output:
   - tool_configs_json:
       type: channel

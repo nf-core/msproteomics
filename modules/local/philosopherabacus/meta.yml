@@ -28,7 +28,7 @@ input:
         description: iProphet combined.pep.xml for --peptide, or []
     - abacus_cli:
         type: string
-        description: Abacus options from PARSEFRAGPIPEWORKFLOW
+        description: Abacus options from FragPipe's plan (bin/plan_to_tool_configs.py)
     - plex:
         type: integer
         description: TMT plex for --labels --plex, 0 otherwise

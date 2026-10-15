@@ -1,0 +1,5 @@
+flag	value
+--psm	exp1_1/psm.tsv
+--psm	exp2_1/psm.tsv
+--specdir	/plan/raw_files/exp2_1
+--specdir	/plan/raw_files/exp1_1

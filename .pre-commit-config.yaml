@@ -15,10 +15,9 @@ repos:
               .*ro-crate-metadata.json$|
               modules/(?!local/).*|
               subworkflows/(?!local/).*|
-              modules/local/parsefragpipeworkflow/assets/diaumpire_se\.params|
-              modules/local/parsefragpipeworkflow/assets/fragger_closed\.params|
               tests/fixtures/fragger_params/.*|
               tests/fixtures/fragpipe_plans/.*|
+              tests/fixtures/ptmshepherd_parity/plans/.*|
               tests/fixtures/(fpop|metaproteomics)/.*\.(tsv|pin)$|
               .*\.snap$
           )$
@@ -28,10 +27,9 @@ repos:
               .*ro-crate-metadata.json$|
               modules/(?!local/).*|
               subworkflows/(?!local/).*|
-              modules/local/parsefragpipeworkflow/assets/diaumpire_se\.params|
-              modules/local/parsefragpipeworkflow/assets/fragger_closed\.params|
               tests/fixtures/fragger_params/.*|
               tests/fixtures/fragpipe_plans/.*|
+              tests/fixtures/ptmshepherd_parity/plans/.*|
               .*\.snap$
           )$
       - id: check-added-large-files

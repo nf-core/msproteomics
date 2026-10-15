@@ -2,13 +2,15 @@
 
 Run: python3 -m unittest discover -s tests/python
 Unit tests use small synthetic plans (the plan load_workdir builds) and small synthetic work dirs. The parity
-test compares the planner with parse_fragpipe_workflow.py on the goldens: each work dir was written by
-FRAGPIPEPLAN (modules/local/fragpipeplan/tests/golden*.nf.test) from the golden run's saved workflow and manifest.
+test compares the planner with the frozen output of the retired workflow parser on the goldens
+(<golden>.parser_tool_configs.json and <golden>.parser_configs/): each work dir was written by FRAGPIPEPLAN
+(modules/local/fragpipeplan/tests/golden*.nf.test) from the golden run's saved workflow and manifest.
 """
 
 import importlib.util
 import json
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -29,10 +31,6 @@ def load(name, path):
 
 
 ptc = load("plan_to_tool_configs", REPO / "bin/plan_to_tool_configs.py")
-PARSER = REPO / "modules/local/parsefragpipeworkflow/resources/usr/bin/parse_fragpipe_workflow.py"
-# FragPipe 24.0 templates the PARSEFRAGPIPEWORKFLOW module stages (the script takes them as arguments)
-PARSER_TEMPLATES = ["--fragger-template", str(REPO / "modules/local/parsefragpipeworkflow/assets/fragger_closed.params"),
-                    "--diaumpire-template", str(REPO / "modules/local/parsefragpipeworkflow/assets/diaumpire_se.params")]
 
 ROOTS = '<roots><root name="{WORKDIR}" path="/w"/><root name="{FRAGPIPE}" path="/f"/></roots>'
 
@@ -301,10 +299,10 @@ GOLDENS = {
     # the bundled workflows (assets/LFQ-MBR.workflow, assets/TMT6.workflow) on the test_dda_lfq / test_tmtq data
     "LFQ-MBR_test_dda_lfq": "DDA",
     "TMT6_test_tmtq": "DDA",
+    # DIA-NN on the ccRCC tutorial, PTM-Shepherd + MBG (modules/local/fragpipeplan/tests/golden_more.nf.test)
+    "ccRCC_DIA_tutorial": "DIA",
+    "glyco-N-preptms_perfile": "DDA",
 }
-# --threads the pipeline gives the parser (PARSEFRAGPIPEWORKFLOW, params.fragpipe_threads) for workflows without
-# workflow.threads; the plans were exported with the same --threads
-PARSER_THREADS = {"LFQ-MBR_test_dda_lfq": "2", "TMT6_test_tmtq": "2"}
 # Planner vs parser differences, each with its cause; any other difference fails the test.
 EXPECTED_DIFFERENCES = {
     # FragPipe writes database_name and num_threads from its run inputs (the plan task's staged FASTA and
@@ -339,25 +337,23 @@ def msbooster_lines(text, tims_tof=False):
     return out
 
 
+def parser_tool_configs(name):
+    """tool_configs.json of the retired parser on the golden's workflow (its data types, --threads 2 for the
+    bundled workflows), frozen before the parser was removed."""
+    return json.loads((PLANS / f"{name}.parser_tool_configs.json").read_text())
+
+
 def by_class(root, cls):
     return [s for s in root.iter("step") if s.get("class") == cls]
 
 
 class PlannerParityTest(unittest.TestCase):
 
-    def run_parser(self, name, data_types, out):
-        threads = ["--threads", PARSER_THREADS[name]] if name in PARSER_THREADS else []
-        subprocess.run([sys.executable, str(PARSER), "--workflow", str(PLANS / f"{name}.workflow"), "--data-types", data_types,
-                        "--output-json", "--outdir", out, *threads, *PARSER_TEMPLATES], check=True, capture_output=True)
-        subprocess.run([sys.executable, str(PARSER), "--workflow", str(PLANS / f"{name}.workflow"), "--data-types", data_types, *threads,
-                        "--outdir", str(Path(out) / "configs"), *PARSER_TEMPLATES], check=True, capture_output=True)
-        return json.loads((Path(out) / "tool_configs.json").read_text())
-
     def test_planner_equals_parser_on_every_golden(self):
-        for name, data_types in GOLDENS.items():
-            with self.subTest(golden=name), tempfile.TemporaryDirectory() as out:
+        for name in GOLDENS:
+            with self.subTest(golden=name):
                 planner, files = ptc.tool_configs(ptc.load_workdir(PLANS / name))
-                parser = self.run_parser(name, data_types, out)
+                parser = parser_tool_configs(name)
                 self.assertEqual(set(planner), set(parser))
                 found = set()
                 groups = len(by_class(ptc.load_workdir(PLANS / name), "CmdPhilosopherFilter"))
@@ -383,7 +379,7 @@ class PlannerParityTest(unittest.TestCase):
                     if file_name == "msbooster.config" and not parser["msbooster"]["run"]:
                         self.assertEqual(text, "", "MSBooster does not run: empty msbooster.config")
                         continue
-                    parser_text = (Path(out) / "configs" / file_name).read_text()
+                    parser_text = (PLANS / f"{name}.parser_configs" / file_name).read_text()
                     if file_name.endswith(".params"):
                         self.assertEqual(strip_module_lines(text), strip_module_lines(parser_text), file_name)
                     else:
@@ -480,6 +476,162 @@ class QuantAndProphetExtractorsTest(unittest.TestCase):
         configs, _files = ptc.tool_configs(plan(ab, workflow="tmtintegrator.channel_num=TMT-16\n"))
         self.assertEqual(configs["abacus"], {"run": True, "args": "--razor --reprint --tag rev_ --protein", "config_type": "cli",
                                              "labels_channel_num": "TMT-16"})
+
+
+def golden(name):
+    return ptc.tool_configs(ptc.load_workdir(PLANS / name))
+
+
+# The fragger*.params FragPipe writes: fragger.params for DDA, fragger_dda.params when the manifest also has DIA,
+# GPF-DIA or DIA-Lib files (CmdMsfragger.java:444-447), fragger_dia.params for DIA
+FRAGGER_PARAMS = {"DIA_SpecLib_Quant_perfile": {"fragger_dia.params"}, "DIA_SpecLib_Quant_diaPASEF_perfile": {"fragger_dda.params"},
+                  "DIA_DIA-Umpire_SpecLib_Quant_perfile": {"fragger_dda.params"}, "ccRCC_DIA_tutorial": {"fragger_dia.params"}}
+SPECLIB_ASSIGNMENTS = {"SPECLIB_RT_CAL": "rt_cal", "SPECLIB_IM_CAL": "im_cal", "SPECLIB_CONVERT_ARGS": "convert_args",
+                       "SPECLIB_LIBRARY_ARGS": "library_args", "SPECLIB_INTERMEDIATE": "intermediate"}
+FPOP = "{FRAGPIPE}/tools/fpop/FragPipe_FPOP_Analysis.py"
+
+
+class FragpipeBehaviourTest(unittest.TestCase):
+    """What FragPipe produces that the consumers of tool_configs.json read, on the goldens or FragPipe-shaped steps."""
+
+    def test_msbooster_im_values_are_fragpipes_effective_ones(self):
+        # CmdMSBooster.java:170, 178: useIM = timsTOF data && predict IM; both workflows set msbooster.predict-im=true.
+        # FragPipe's plan runs wrote the same (TMT6_test_tmtq's msbooster_params.txt: useIM = false, Orbitrap data).
+        for name, use_im in (("TMT6_test_tmtq", "false"), ("DIA_SpecLib_Quant_diaPASEF_perfile", "true")):
+            with self.subTest(golden=name):
+                configs, _files = golden(name)
+                lines = configs["msbooster"]["args"].splitlines()
+                self.assertIn(f"useIM = {use_im}", lines)
+                self.assertIn("findBestImModel = false", lines)
+
+    def test_tmt_ionquant_passes_are_ms1_then_isobaric_with_modmasses(self):
+        configs, _files = golden("TMT6_test_tmtq")
+        self.assertTrue(configs["ionquant_ms1"]["args"].startswith("--perform-ms1quant 1 --perform-isoquant 0 "))
+        self.assertTrue(configs["ionquant_isobaric"]["args"].startswith("--perform-ms1quant 0 --perform-isoquant 1 "))
+        self.assertTrue(configs["ionquant_ms1"]["modmasses"] and configs["ionquant_isobaric"]["modmasses"])
+        self.assertEqual(configs["tmtintegrator"]["extraction_tool"], 0)
+
+    def test_tmt_integrator_config_ends_lines_like_tmticonfig_write_and_names_the_report_dir(self):
+        # TmtiConfig.write ends each line, the last one included, with "\n" (TmtiConfig.java:332-338)
+        text = golden("TMT6_test_tmtq")[0]["tmtintegrator"]["args"]
+        self.assertEqual(text.splitlines()[0], "tmtintegrator:")
+        self.assertTrue(text.endswith("\n") and not text.endswith("\n\n"))
+        self.assertIn("  output: @TMT_REPORT_DIR@", text.splitlines())
+
+    def test_msfragger_params_names_follow_the_manifest_data_types(self):
+        for name in GOLDENS:
+            with self.subTest(golden=name):
+                _configs, files = golden(name)
+                self.assertEqual({f for f in files if f.endswith(".params")}, FRAGGER_PARAMS.get(name, {"fragger.params"}))
+
+    def test_speclibgen_argv_parts_equal_the_sourced_assignments(self):
+        for name in ("DIA_SpecLib_Quant_perfile", "DIA_SpecLib_Quant_diaPASEF_perfile", "DIA_DIA-Umpire_SpecLib_Quant_perfile"):
+            with self.subTest(golden=name):
+                entry = golden(name)[0]["speclibgen"]
+                assigned = dict(line.split("=", 1) for line in entry["args"].splitlines())
+                self.assertEqual({SPECLIB_ASSIGNMENTS[k]: shlex.split(v) for k, v in assigned.items()},
+                                 {k: [v] for k, v in entry["argv_parts"].items()})
+
+    def test_percolator_min_prob_is_the_golden_workflow_value(self):
+        # DIA_SpecLib_Quant workflow percolator.min-prob=0.7
+        self.assertEqual(golden("DIA_SpecLib_Quant_perfile")[0]["percolator"]["min_prob"], "0.7")
+
+    def test_calibrated_mzml_needs_write_calibrated_mzml_and_mass_calibration(self):
+        # FragpipeRun.java:1613,1642: tabMsf.isWriteCalMzml() && tabMsf.getMassCalibration() > 0
+        for write, mass, expected in (("1", "2", True), ("1", "0", False), ("0", "2", False)):
+            with self.subTest(write=write, mass=mass):
+                params = config("/w/fragger.params", f"data_type = 0\ncalibrate_mass = {mass}\nwrite_calibrated_mzml = {write}\n")
+                configs, _files = ptc.tool_configs(plan(step(1, "CmdMsfragger", "MSFragger", ["java", "-jar", "m.jar", "/w/fragger.params"], params)))
+                self.assertIs(configs["msfragger"]["has_calibrated_mzml"], expected)
+
+    def test_fpop_label_free_argv_reads_combined_modified_peptide(self):
+        # CmdFpopQuant.java:60-99: table, region size, control label, FPOP label, subtract control, TMT
+        fpop = step(1, "CmdFpopQuant", "FPOP Quant", ["python3", FPOP, "{WORKDIR}/combined_modified_peptide.tsv", "2", "CTRL", "OX 1", "true", "false"])
+        self.assertEqual(ptc.tool_configs(plan(fpop))[0]["fpop"]["args"],
+                         ["combined_modified_peptide.tsv", "2", "CTRL", "OX 1", "true", "false"])
+
+    def test_fpop_tmt_argv_names_the_tables_as_fpop_stages_them(self):
+        # FPOP stages the TMT-Integrator reports as tmt-report/ and tmt-report-unmod/ (modules/local/fpop/main.nf)
+        fpop = step(1, "CmdFpopQuant", "FPOP Quant", ["python3", FPOP, "{WORKDIR}/tmt-report/abundance_multi-site_GN.tsv", "1", "", "", "false", "true",
+                                                      "{WORKDIR}/tmt-report-unmod/abundance_peptide_GN.tsv"])
+        self.assertEqual(ptc.tool_configs(plan(fpop))[0]["fpop"]["args"],
+                         ["tmt-report/abundance_multi-site_GN.tsv", "1", "", "", "false", "true", "tmt-report-unmod/abundance_peptide_GN.tsv"])
+
+    def test_metaproteomics_values_are_the_ones_metaproteomicsargv_reads(self):
+        # CmdMetaproteomics.java:70-106; cmd-opts is one trimmed element after --iterations
+        meta = step(1, "CmdMetaproteomics", "FP-Meta", ["java", "-Xmx8G", "-jar", "fpmeta.jar", "DbOptimizer", "--projectDir", "/w", "--fastaFile", "/d/db.fasta",
+                                                       "--outdir", "/w", "--decoyTag", "rev_", "--qvalue", "0.01", "--deltaHyperscore", "0.0",
+                                                       "--minPeptCntPerProt", "1", "--minUniqPeptCntPerProt", "1", "--minUniqPeptCnt", "3",
+                                                       "--taxonNameFile", "/t/names.dmp", "--taxonNodeFile", "/t/nodes.dmp",
+                                                       "--hostName", '"Homo sapiens"', "--iterations", "3", "--foo 1"])
+        self.assertEqual(ptc.tool_configs(plan(meta))[0]["metaproteomics"]["args"],
+                         {"qvalue": "0.01", "deltaHyperscore": "0.0", "minPeptCntPerProt": "1", "minUniqPeptCntPerProt": "1",
+                          "minUniqPeptCnt": "3", "hostName": '"Homo sapiens"', "iterations": "3", "cmdLineOpts": "--foo 1"})
+
+    def test_saved_workflow_values_unescape_like_properties_load(self):
+        # FragPipe saves fragpipe.workflow with PropertiesUtils.saveConvert (PropertiesUtils.java:111-167):
+        # \\ = : # ! escaped, a leading space as "\ ", tab as \t, other characters outside 0x20-0x7e as \uXXXX
+        text = "k.esc=a\\=b\\:c\\\\d\\#e\\!f\nk.uni=\\ 5\\u00B5m\\tx\n"
+        self.assertEqual(ptc.workflow_properties(text), {"k.esc": "a=b:c\\d#e!f", "k.uni": " 5µm\tx"})
+
+
+class FragpipeRefusalsTest(unittest.TestCase):
+    """Runs FragPipe's own dry run refuses (FragpipeRun.java:344 return 1, TabRun.java:179-182 exit), recorded by
+    tests/lib/record_fragpipe_plans.nf.test: <name>.refusal.txt holds the task's exit status and FragPipe's errors."""
+
+    def test_ionquant_mbr_without_experiments_is_refused_by_fragpipe(self):
+        # CmdIonquant.java:288-294; the samplesheet of the blank-experiment stub tests with LFQ-MBR
+        refusal = (PLANS / "stub/fragpipe_parity__lfq_mbr_blank_experiment.refusal.txt").read_text()
+        self.assertEqual(refusal.splitlines()[0], "exit status 1")
+        self.assertIn("IonQuant with MBR requires designating LCMS runs to experiments. Please assign the experiment groups "
+                      "in the 'Workflow' tab, and make sure that the 'Spec Lib' tab is disabled.", refusal)
+
+
+class UnsupportedRunsTest(unittest.TestCase):
+    """unsupported_runs and the run-wide refusals: runs FragPipe plans but msproteomics cannot run."""
+
+    REPORT = step(9, "CmdPhilosopherReport", "PhilosopherReport", [PHI, "report"])
+    FILTER = step(8, "CmdPhilosopherFilter", "PhilosopherFilter", [PHI, "filter", "--sequential"])
+
+    def test_a_full_quant_plan_has_no_refusal(self):
+        ionquant = step(10, "CmdIonquant", "IonQuant", ["java", "-cp", "cp", "ionquant.IonQuant", "--mbr", "1"])
+        self.assertEqual(ptc.unsupported_runs(plan(self.FILTER, self.REPORT, ionquant)), [])
+
+    def test_msfragger_off_or_digest_only_stops(self):
+        for key in ("msfragger.run-msfragger=false\n", "msfragger.digest-only=true\n"):
+            with self.subTest(key=key):
+                self.assertRegex("\n".join(ptc.unsupported_runs(plan(workflow=key))), "MSFragger does not search in this workflow")
+
+    def test_freequant_without_the_filter_stops(self):
+        fq = step(1, "CmdFreequant", "FreeQuant", [PHI, "freequant", "--dir", "/w/lcms"])
+        self.assertRegex("\n".join(ptc.unsupported_runs(plan(fq, self.REPORT))), "FreeQuant runs without the Philosopher report panel")
+
+    def test_psm_tsv_readers_without_report_stop(self):
+        ptms = step(1, "CmdPtmshepherd", "PTMShepherd", ["java", "-cp", "cp", "edu.umich.andykong.ptmshepherd.PTMShepherd"])
+        self.assertRegex("\n".join(ptc.unsupported_runs(plan(ptms))), "these steps read it: CmdPtmshepherd")
+
+    def test_transfer_learning_stops(self):
+        tl = step(1, "CmdTransferLearning", "Transfer Learning", ["python3", "-m", "koina"])
+        self.assertRegex("\n".join(ptc.unsupported_runs(plan(tl))), "Transfer learning .* needs an external prediction server")
+
+    def test_write_sub_mzml_with_a_split_database_stops(self):
+        params = ('<config path="/w/fragger.params" size="1" sha256="' + "0" * 64 + '" encoding="text">'
+                  "<![CDATA[data_type = 0\ncalibrate_mass = 2\nwrite_calibrated_mzml = false\n]]></config>")
+        split = step(1, "CmdMsfragger", "MSFragger", ["python3", "/f/msfragger_pep_split.py", "2", "java -jar", "m.jar", "/w/fragger.params"], params)
+        wsm = step(2, "CmdWriteSubMzml", "WriteSubMzml", ["java", "-cp", "cp", "org.nesvilab.fragpipe.util.WriteSubMzml",
+                                                          "/d/a.mzML", "/w/g/psm.tsv", "/w/a_sub.mzML", "0.7", "1"])
+        with self.assertRaisesRegex(ptc.PlanError, "Write sub mzML .* with a split database search"):
+            ptc.tool_configs(plan(split, wsm))
+
+    def test_ionquant_values_with_whitespace_stop(self):
+        ionquant = step(1, "CmdIonquant", "IonQuant", ["java", "-cp", "cp", "ionquant.IonQuant", "--excludemods", "M15.9949 C57"])
+        with self.assertRaisesRegex(ptc.PlanError, "IonQuant values with whitespace"):
+            ptc.tool_configs(plan(ionquant))
+
+    def test_an_unknown_fragpipe_step_stops(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaisesRegex(ptc.PlanError, "unrecognized FragPipe step name 'NotAFragPipeStep'"):
+                ptc.load_workdir(workdir(tmp, ("NotAFragPipeStep [Work dir: /run/fp_work]", "true")))
 
 
 if __name__ == "__main__":

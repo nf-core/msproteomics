@@ -1,26 +1,11 @@
 {
-    "plan - FragPipe's plan through PLANTOTOOLCONFIGS": {
-        "content": [
-            {
-                "run": true,
-                "args": "--prefix rev_",
-                "config_type": "cli",
-                "decoy_tag": "rev_"
-            }
-        ],
-        "timestamp": "2026-10-12T13:13:36.836598974",
-        "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.4"
-        }
-    },
-    "parser - tool configs from the workflow file": {
+    "given plan - --fragpipe_plan skips FRAGPIPEPLAN": {
         "content": [
             [
                 "fragger.params"
             ]
         ],
-        "timestamp": "2026-10-10T00:26:26.062440018",
+        "timestamp": "2026-10-13T13:59:24.111671787",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"

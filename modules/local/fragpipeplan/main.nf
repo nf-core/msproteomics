@@ -28,7 +28,7 @@
  *   - portable_manifest: the fragpipe-files.fp-manifest FragPipe saves into its work dir, the same way
  *   - versions_fragpipe: FragPipe version (versions topic)
  */
-include { dryRunStubLogText; fragpipePlanCommand; fragpipeTools; headlessLayout; headlessStagingLines; planSourceMapText; shellArgs; writeTextFile } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
+include { fragpipePlanCommand; headlessLayout; headlessStagingLines; planSourceMapText; shellArgs; writeTextFile } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
 
 process FRAGPIPEPLAN {
     tag "${meta.id}"
@@ -69,7 +69,7 @@ process FRAGPIPEPLAN {
     fi
     for option in ${plan_run.options.join(' ')}; do
         if ! grep -qE -- "(^|[[:space:]])\$option([[:space:]]|\$)" <<< "\$FRAGPIPE_HELP"; then
-            echo "FRAGPIPEPLAN: this FragPipe has no \$option (--fragpipe_planner plan needs a FragPipe release with --write-plan, Nesvilab/FragPipe#2907); pass such an image with --fragpipe_container" >&2
+            echo "FRAGPIPEPLAN: this FragPipe has no \$option (the pipeline's FragPipe mode needs a FragPipe release with --write-plan, Nesvilab/FragPipe#2907); pass such an image with --fragpipe_container" >&2
             exit 1
         fi
     done
@@ -93,17 +93,6 @@ ${headlessStagingLines([], layout)}
     """
 
     stub:
-    def layout = headlessLayout(manifest_rows, annotation_rows)
-    """
-${headlessStagingLines([], layout)}
-    # a dry run with no commands: FragPipe's run log and run files in its work dir
-    mkdir -p fp_work portable
-    ${writeTextFile('fp_work/log_stub.txt', dryRunStubLogText(layout))}
-    ${writeTextFile('fp_work/fragpipe.workflow', workflow_text)}
-    ${writeTextFile('fp_work/fragpipe.job', "runtime-save\t{TASK_DIR}/fp_work/fragpipe-workflow.workflow\t{TASK_DIR}/fp_work/fragpipe-files.fp-manifest\t{TASK_DIR}/fp_work\t/stub/fragpipe/tools\t{TASK_DIR}/${database.name}\t1\t1\n")}
-    cp manifest.fp-manifest fp_work/fragpipe-files.fp-manifest
-    cp fp_work/log_stub.txt fp_work/fragpipe.workflow fp_work/fragpipe-files.fp-manifest portable/
-
-    echo "${fragpipeTools(task).fragpipe_version}" > .fragpipe_version
-    """
+    // the plan is FragPipe's own dry run, which a stub cannot make; stub runs take a recorded one (--fragpipe_plan)
+    error("-stub needs --fragpipe_plan (a recorded FragPipe dry run): the stub runs no FragPipe")
 }
