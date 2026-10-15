@@ -43,7 +43,6 @@ FragPipe workflows (`--mode fragpipe`, including the TMT label check):
 - [PSM validation](#psm-validation) - Percolator, PeptideProphet and PTMProphet
 - [Protein inference](#protein-inference) - ProteinProphet, iProphet and Abacus
 - [Philosopher filter and report](#philosopher-filter-and-report) - FDR filtering and the PSM, ion, peptide and protein tables
-- [FreeQuant and LabelQuant](#freequant-and-labelquant) - Philosopher quantification
 - [PTM-Shepherd and glyco analysis](#ptm-shepherd-and-glyco-analysis) - PTM-Shepherd, PairScans, O-Pair and MBG
 - [IonQuant](#ionquant) - label-free, MS1 and isobaric quantification
 - [TMT-Integrator](#tmt-integrator) - TMT reports
@@ -335,19 +334,9 @@ PeptideProphet and PTMProphet run through [Philosopher](https://philosopher.nesv
 
 [Philosopher](https://philosopher.nesvilab.org/) filters the PSMs, peptides and proteins at the workflow's FDR and writes the tables.
 When FreeQuant or LabelQuant run, the tables come from the report that follows them.
+FreeQuant and LabelQuant only update Philosopher's `.meta` workspace, so they publish nothing of their own.
+As in FragPipe, `philosopher workspace --clean` removes each group's `.meta` workspace after its last Philosopher command (`PHILOSOPHERWORKSPACECLEAN`, or `PHILOSOPHERREPORT` after FreeQuant or LabelQuant): no published directory holds one.
 With "Export matched fragments" (or FPOP coADAPTr), `psm.tsv` is the annotated (or edited) version, as FragPipe rewrites it in place.
-
-### FreeQuant and LabelQuant
-
-<details markdown="1">
-<summary>Output files</summary>
-
-- `freequant/<group>/`: the group's Philosopher workspace and tables after `philosopher freequant`.
-- `labelquant/<group>/`
-  - `psm.tsv`, `<group>_annotation.txt`: the group's tables and isobaric channel annotation after `philosopher labelquant`.
-  - `.meta/`: the Philosopher workspace.
-
-</details>
 
 ### PTM-Shepherd and glyco analysis
 

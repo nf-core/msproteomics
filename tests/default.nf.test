@@ -20,8 +20,7 @@ nextflow_pipeline {
         then {
             // stable_name: all files and folders in ${params.outdir}/ with a stable name
             // (pipeline_info names carry the run timestamp)
-            // IonQuant splits .meta/db.bin into a run-dependent number of db.bin__<n> shards
-            def stable_name = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/**', 'ionquant/**/.meta/db.bin__*'])
+            def stable_name = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/**'])
             def combined_protein = []
             new File("${params.outdir}").eachFileRecurse { f -> if (f.name == 'combined_protein.tsv') combined_protein << f }
             assertAll(
@@ -109,6 +108,10 @@ nextflow_pipeline {
                 'AMD_EPYC_9V45_96-Core_Processor__avx512'  : 'AMD_EPYC_9V74_80-Core_Processor__avx512', // run 38018531181
                 'AMD_EPYC_9V74_80-Core_Processor__noavx512': 'AMD_EPYC_7763_64-Core_Processor__noavx512', // run 38509366906
                 'Intel_R_Xeon_R_Platinum_8370C_CPU_2.80GHz__avx512': 'Intel_R_Xeon_R_6975P-C__avx512', // run 38749439524
+                // AWS Batch instances, measured byte-identical to the Xeon 6975P-C class
+                'Intel_R_Xeon_R_Platinum_8124M_CPU_3.00GHz__avx512': 'Intel_R_Xeon_R_6975P-C__avx512',
+                'Intel_R_Xeon_R_Platinum_8175M_CPU_2.50GHz__avx512': 'Intel_R_Xeon_R_6975P-C__avx512',
+                'Intel_R_Xeon_R_Platinum_8259CL_CPU_2.50GHz__avx512': 'Intel_R_Xeon_R_6975P-C__avx512',
             ]
             def snapshot_key = cpu_group[cpu_key] ?: cpu_key
             def diann_tables = getAllFilesFromDir(params.outdir, include: ['diann/*/*.tsv', 'iq/*.tsv', 'quantmsutils/mztab/experimental_design_*'])

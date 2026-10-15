@@ -1,4 +1,65 @@
 {
+    "TMT blank experiment - group \"\" through IonQuant and TMT-Integrator": {
+        "content": [
+            "ionquant.IonQuant --perform-ms1quant 0 --perform-isoquant 1 --isotol 20.0 --isolevel 2 --isotype TMT-10 --ionmobility 0 --site-reports 0 --msstats 0 --annotation <wd>/psm.tsv=<wd>/_annotation.txt --minexps 1 --mbr 0 --maxlfq 0 --requantify 0 --mztol 10 --imtol 0.05 --rttol 1 --normalization 0 --minisotopes 1 --minscans 1 --writeindex 0 --tp 0 --minfreq 0 --minions 1 --locprob 0 --uniqueness 0 --filelist filelist_ionquant.txt --modlist modmasses_ionquant.txt",
+            [
+                "126 Bridge",
+                "127N S1",
+                "127C S2",
+                "128N S3",
+                "128C S4",
+                "129N S5",
+                "129C S6",
+                "130N S7",
+                "130C S8",
+                "131N S9"
+            ],
+            [
+                "plex\tchannel\tsample\tsample_name\tcondition\treplicate",
+                "\t126\tBridge\tBridge\tBridge\t1",
+                "\t127N\tS1\tS1\tS1\t1",
+                "\t127C\tS2\tS2\tS2\t1",
+                "\t128N\tS3\tS3\tS3\t1",
+                "\t128C\tS4\tS4\tS4\t1",
+                "\t129N\tS5\tS5\tS5\t1",
+                "\t129C\tS6\tS6\tS6\t1",
+                "\t130N\tS7\tS7\tS7\t1",
+                "\t130C\tS8\tS8\tS8\t1",
+                "\t131N\tS9\tS9\tS9\t1"
+            ],
+            [
+                "<task>/output/psm.tsv"
+            ],
+            [
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPESAVEWORKFLOW (fragpipe)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPESDRF (fragpipe)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:CHECKCENTROID (plex1)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_DATABASE:CHECKDBCONFIG (database)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_EXPORT:REPRINTTOSAINTINPUT (saintexpress-int)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_EXPORT:REPRINTTOSAINTINPUT (saintexpress-spc)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_EXPORT:SAINTEXPRESS (saintexpress-int)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_EXPORT:SAINTEXPRESS (saintexpress-spc)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_INFERENCE:PHILOSOPHERFILTER (workdir-root)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_INFERENCE:PHILOSOPHERPROTEINPROPHET (fragpipe)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_PHILOSOPHER_QUANT:PHILOSOPHERWORKSPACECLEAN (workdir-root)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_QUANT:IONQUANT_ISOBARIC (fragpipe)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_QUANT:IONQUANT_MS1 (fragpipe)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_QUANT:TMTINTEGRATOR (fragpipe)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSBOOSTER (msbooster)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSFRAGGER (plex1)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:WRITE_FRAGGER_PARAMS (fragger)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_VALIDATE:PERCOLATOR (plex1)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:PARSEFRAGPIPEWORKFLOW (fragpipe_config)",
+                "MSPROTEOMICS_FRAGPIPE:GENERATESDRFFROMSAMPLESHEET (generate_sdrf)",
+                "MSPROTEOMICS_FRAGPIPE:WRITE_FRAGPIPE_MANIFEST (fragpipe)"
+            ]
+        ],
+        "timestamp": "2026-10-15T20:53:07.616688208",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
     "TMT per-channel samplesheet - one search per raw file, one annotation per plex": {
         "content": [
             [
@@ -69,6 +130,8 @@
                 "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_INFERENCE:PHILOSOPHERFILTER (plex1)",
                 "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_INFERENCE:PHILOSOPHERFILTER_LATER (plex2)",
                 "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_INFERENCE:PHILOSOPHERPROTEINPROPHET (fragpipe)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_PHILOSOPHER_QUANT:PHILOSOPHERWORKSPACECLEAN (plex1)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_PHILOSOPHER_QUANT:PHILOSOPHERWORKSPACECLEAN (plex2)",
                 "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_QUANT:IONQUANT_ISOBARIC (fragpipe)",
                 "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_QUANT:IONQUANT_MS1 (fragpipe)",
                 "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_QUANT:TMTINTEGRATOR (fragpipe)",
@@ -83,135 +146,7 @@
                 "MSPROTEOMICS_FRAGPIPE:WRITE_FRAGPIPE_MANIFEST (fragpipe)"
             ]
         ],
-        "timestamp": "2026-10-14T14:50:24.719084165",
-        "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.4"
-        }
-    },
-    "TMT blank experiment - group \"\" through IonQuant and TMT-Integrator": {
-        "content": [
-            "ionquant.IonQuant --perform-ms1quant 0 --perform-isoquant 1 --isotol 20.0 --isolevel 2 --isotype TMT-10 --ionmobility 0 --site-reports 0 --msstats 0 --annotation <wd>/psm.tsv=<wd>/_annotation.txt --minexps 1 --mbr 0 --maxlfq 0 --requantify 0 --mztol 10 --imtol 0.05 --rttol 1 --normalization 0 --minisotopes 1 --minscans 1 --writeindex 0 --tp 0 --minfreq 0 --minions 1 --locprob 0 --uniqueness 0 --filelist filelist_ionquant.txt --modlist modmasses_ionquant.txt",
-            [
-                "126 Bridge",
-                "127N S1",
-                "127C S2",
-                "128N S3",
-                "128C S4",
-                "129N S5",
-                "129C S6",
-                "130N S7",
-                "130C S8",
-                "131N S9"
-            ],
-            [
-                "plex\tchannel\tsample\tsample_name\tcondition\treplicate",
-                "\t126\tBridge\tBridge\tBridge\t1",
-                "\t127N\tS1\tS1\tS1\t1",
-                "\t127C\tS2\tS2\tS2\t1",
-                "\t128N\tS3\tS3\tS3\t1",
-                "\t128C\tS4\tS4\tS4\t1",
-                "\t129N\tS5\tS5\tS5\t1",
-                "\t129C\tS6\tS6\tS6\t1",
-                "\t130N\tS7\tS7\tS7\t1",
-                "\t130C\tS8\tS8\tS8\t1",
-                "\t131N\tS9\tS9\tS9\t1"
-            ],
-            [
-                "<task>/output/psm.tsv"
-            ],
-            [
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPESAVEWORKFLOW (fragpipe)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPESDRF (fragpipe)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:CHECKCENTROID (plex1)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_DATABASE:CHECKDBCONFIG (database)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_EXPORT:REPRINTTOSAINTINPUT (saintexpress-int)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_EXPORT:REPRINTTOSAINTINPUT (saintexpress-spc)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_EXPORT:SAINTEXPRESS (saintexpress-int)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_EXPORT:SAINTEXPRESS (saintexpress-spc)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_INFERENCE:PHILOSOPHERFILTER (workdir-root)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_INFERENCE:PHILOSOPHERPROTEINPROPHET (fragpipe)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_QUANT:IONQUANT_ISOBARIC (fragpipe)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_QUANT:IONQUANT_MS1 (fragpipe)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_QUANT:TMTINTEGRATOR (fragpipe)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSBOOSTER (msbooster)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSFRAGGER (plex1)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:WRITE_FRAGGER_PARAMS (fragger)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_VALIDATE:PERCOLATOR (plex1)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:PARSEFRAGPIPEWORKFLOW (fragpipe_config)",
-                "MSPROTEOMICS_FRAGPIPE:GENERATESDRFFROMSAMPLESHEET (generate_sdrf)",
-                "MSPROTEOMICS_FRAGPIPE:WRITE_FRAGPIPE_MANIFEST (fragpipe)"
-            ]
-        ],
-        "timestamp": "2026-10-14T14:49:19.097814659",
-        "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.4"
-        }
-    },
-    "grouping - SpecLibGen/DIA-NN workflow puts named experiments in the single group": {
-        "content": [
-            [
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPESAVEWORKFLOW (fragpipe)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPESDRF (fragpipe)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:CHECKCENTROID (ctrl_1)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_DATABASE:CHECKDBCONFIG (database)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_INFERENCE:PHILOSOPHERFILTER (workdir-root)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_INFERENCE:PHILOSOPHERPROTEINPROPHET (fragpipe)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSBOOSTER (msbooster)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSFRAGGER (ctrl_1)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSFRAGGER (ctrl_2)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSFRAGGER (trt_1)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSFRAGGER (trt_2)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:WRITE_FRAGGER_PARAMS (fragger)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SPECLIB:SPECLIBGEN (fragpipe)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_VALIDATE:PERCOLATOR (ctrl_1)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_VALIDATE:PERCOLATOR (ctrl_2)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_VALIDATE:PERCOLATOR (trt_1)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_VALIDATE:PERCOLATOR (trt_2)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:PARSEFRAGPIPEWORKFLOW (fragpipe_config)",
-                "MSPROTEOMICS_FRAGPIPE:GENERATESDRFFROMSAMPLESHEET (generate_sdrf)",
-                "MSPROTEOMICS_FRAGPIPE:WRITE_FRAGPIPE_MANIFEST (fragpipe)"
-            ]
-        ],
-        "timestamp": "2026-10-14T14:48:55.150221524",
-        "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.4"
-        }
-    },
-    "grouping - blank experiment and bioreplicate without MBR runs IonQuant on the root group": {
-        "content": [
-            [
-                "flag\tvalue",
-                "--psm\tpsm.tsv",
-                "--specdir\t<wd>"
-            ],
-            "ionquant.IonQuant --perform-ms1quant 1 --perform-isoquant 0 --isotol 20.0 --isolevel 2 --isotype tmt10 --ionmobility 0 --site-reports 1 --msstats 1 --minexps 1 --mbr 0 --maxlfq 1 --requantify 1 --mztol 10 --imtol 0.05 --rttol 0.4 --mbrmincorr 0 --mbrrttol 1 --mbrimtol 0.05 --mbrtoprun 10 --ionfdr 0.01 --proteinfdr 1 --peptidefdr 1 --normalization 1 --minisotopes 2 --intensitymode 2 --minscans 3 --writeindex 0 --tp 0 --minfreq 0 --minions 1 --locprob 0.75 --uniqueness 0 --filelist filelist_ionquant.txt --modlist modmasses_ionquant.txt",
-            [
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPESAVEWORKFLOW (fragpipe)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPESDRF (fragpipe)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:CHECKCENTROID (ctrl_1)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_DATABASE:CHECKDBCONFIG (database)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_INFERENCE:PHILOSOPHERFILTER (workdir-root)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_INFERENCE:PHILOSOPHERPROTEINPROPHET (fragpipe)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_QUANT:IONQUANT (fragpipe)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSBOOSTER (msbooster)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSFRAGGER (ctrl_1)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSFRAGGER (ctrl_2)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSFRAGGER (trt_1)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSFRAGGER (trt_2)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:WRITE_FRAGGER_PARAMS (fragger)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_VALIDATE:PERCOLATOR (ctrl_1)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_VALIDATE:PERCOLATOR (ctrl_2)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_VALIDATE:PERCOLATOR (trt_1)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_VALIDATE:PERCOLATOR (trt_2)",
-                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:PARSEFRAGPIPEWORKFLOW (fragpipe_config)",
-                "MSPROTEOMICS_FRAGPIPE:GENERATESDRFFROMSAMPLESHEET (generate_sdrf)",
-                "MSPROTEOMICS_FRAGPIPE:WRITE_FRAGPIPE_MANIFEST (fragpipe)"
-            ]
-        ],
-        "timestamp": "2026-10-14T14:50:23.531394863",
+        "timestamp": "2026-10-15T20:52:26.185357349",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"
@@ -238,6 +173,10 @@
                 "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_INFERENCE:PHILOSOPHERFILTER_LATER (treated_1)",
                 "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_INFERENCE:PHILOSOPHERFILTER_LATER (treated_2)",
                 "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_INFERENCE:PHILOSOPHERPROTEINPROPHET (fragpipe)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_PHILOSOPHER_QUANT:PHILOSOPHERWORKSPACECLEAN (control_1)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_PHILOSOPHER_QUANT:PHILOSOPHERWORKSPACECLEAN (control_2)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_PHILOSOPHER_QUANT:PHILOSOPHERWORKSPACECLEAN (treated_1)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_PHILOSOPHER_QUANT:PHILOSOPHERWORKSPACECLEAN (treated_2)",
                 "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_QUANT:IONQUANT (fragpipe)",
                 "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSBOOSTER (msbooster)",
                 "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSFRAGGER (ctrl_1)",
@@ -254,7 +193,7 @@
                 "MSPROTEOMICS_FRAGPIPE:WRITE_FRAGPIPE_MANIFEST (fragpipe)"
             ]
         ],
-        "timestamp": "2026-10-14T14:48:55.734610561",
+        "timestamp": "2026-10-15T20:49:46.813155598",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"
@@ -269,6 +208,76 @@
         "timestamp": "2026-10-06T05:18:15.376399769",
         "meta": {
             "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "grouping - blank experiment and bioreplicate without MBR runs IonQuant on the root group": {
+        "content": [
+            [
+                "flag\tvalue",
+                "--psm\tpsm.tsv",
+                "--specdir\t<wd>"
+            ],
+            "ionquant.IonQuant --perform-ms1quant 1 --perform-isoquant 0 --isotol 20.0 --isolevel 2 --isotype tmt10 --ionmobility 0 --site-reports 1 --msstats 1 --minexps 1 --mbr 0 --maxlfq 1 --requantify 1 --mztol 10 --imtol 0.05 --rttol 0.4 --mbrmincorr 0 --mbrrttol 1 --mbrimtol 0.05 --mbrtoprun 10 --ionfdr 0.01 --proteinfdr 1 --peptidefdr 1 --normalization 1 --minisotopes 2 --intensitymode 2 --minscans 3 --writeindex 0 --tp 0 --minfreq 0 --minions 1 --locprob 0.75 --uniqueness 0 --filelist filelist_ionquant.txt --modlist modmasses_ionquant.txt",
+            [
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPESAVEWORKFLOW (fragpipe)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPESDRF (fragpipe)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:CHECKCENTROID (ctrl_1)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_DATABASE:CHECKDBCONFIG (database)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_INFERENCE:PHILOSOPHERFILTER (workdir-root)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_INFERENCE:PHILOSOPHERPROTEINPROPHET (fragpipe)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_PHILOSOPHER_QUANT:PHILOSOPHERWORKSPACECLEAN (workdir-root)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_QUANT:IONQUANT (fragpipe)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSBOOSTER (msbooster)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSFRAGGER (ctrl_1)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSFRAGGER (ctrl_2)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSFRAGGER (trt_1)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSFRAGGER (trt_2)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:WRITE_FRAGGER_PARAMS (fragger)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_VALIDATE:PERCOLATOR (ctrl_1)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_VALIDATE:PERCOLATOR (ctrl_2)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_VALIDATE:PERCOLATOR (trt_1)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_VALIDATE:PERCOLATOR (trt_2)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:PARSEFRAGPIPEWORKFLOW (fragpipe_config)",
+                "MSPROTEOMICS_FRAGPIPE:GENERATESDRFFROMSAMPLESHEET (generate_sdrf)",
+                "MSPROTEOMICS_FRAGPIPE:WRITE_FRAGPIPE_MANIFEST (fragpipe)"
+            ]
+        ],
+        "timestamp": "2026-10-15T20:51:45.093757783",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "grouping - SpecLibGen/DIA-NN workflow puts named experiments in the single group": {
+        "content": [
+            [
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPESAVEWORKFLOW (fragpipe)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPESDRF (fragpipe)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:CHECKCENTROID (ctrl_1)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_DATABASE:CHECKDBCONFIG (database)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_INFERENCE:PHILOSOPHERFILTER (workdir-root)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_INFERENCE:PHILOSOPHERPROTEINPROPHET (fragpipe)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_PHILOSOPHER_QUANT:PHILOSOPHERWORKSPACECLEAN (workdir-root)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSBOOSTER (msbooster)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSFRAGGER (ctrl_1)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSFRAGGER (ctrl_2)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSFRAGGER (trt_1)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSFRAGGER (trt_2)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:WRITE_FRAGGER_PARAMS (fragger)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SPECLIB:SPECLIBGEN (fragpipe)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_VALIDATE:PERCOLATOR (ctrl_1)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_VALIDATE:PERCOLATOR (ctrl_2)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_VALIDATE:PERCOLATOR (trt_1)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_VALIDATE:PERCOLATOR (trt_2)",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:PARSEFRAGPIPEWORKFLOW (fragpipe_config)",
+                "MSPROTEOMICS_FRAGPIPE:GENERATESDRFFROMSAMPLESHEET (generate_sdrf)",
+                "MSPROTEOMICS_FRAGPIPE:WRITE_FRAGPIPE_MANIFEST (fragpipe)"
+            ]
+        ],
+        "timestamp": "2026-10-15T20:50:26.477838841",
+        "meta": {
+            "nf-test": "0.9.5",
             "nextflow": "25.10.4"
         }
     }
