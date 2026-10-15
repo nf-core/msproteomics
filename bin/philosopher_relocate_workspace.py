@@ -6,10 +6,14 @@ philosopher lib/met/met.go New()) and writes reports and the workspace through t
 (lib/rep/rep.go: PSMReport(m.Home, ...); Serialize() to d.MetaFile). FragPipe runs Filter,
 FreeQuant, LabelQuant and Report in one group directory; a Nextflow task gets a copy of that
 directory elsewhere, so every string that starts with the old Home is rewritten to the new one.
+The workspace's Temp dir (met.Data Temp, set by `workspace --init --temp`) is a sibling of Home in the
+task that made the workspace; Restore() recreates it when it is missing (met.go Restore), so it is moved
+to <temp_dir>, a directory of the current task, before the tool runs.
 
 The msgpack stream is copied element by element; only str elements change.
 
-Usage: philosopher_relocate_workspace.py <group_dir>
+Usage: philosopher_relocate_workspace.py <group_dir> <temp_dir>   (absolute paths, as the task's $PWD
+names them: Philosopher's Home is os.Getwd(), the logical $PWD, so symlinks are not resolved)
 """
 
 import struct
@@ -90,12 +94,12 @@ class Relocator:
         return start + n
 
 
-def home_of(data: bytes) -> str:
-    """The Home value of the met.Data map (first str value after the key "Home")."""
-    key = _str_header(4) + b"Home"
+def field_of(data: bytes, name: str) -> str:
+    """The str value of a met.Data field (first str value after the key `name`)."""
+    key = _str_header(len(name)) + name.encode()
     i = data.find(key)
     if i < 0:
-        raise ValueError("meta.bin has no Home field")
+        raise ValueError(f"meta.bin has no {name} field")
     r = Relocator(data, "\0", "\0")
     pos = i + len(key)
     end = r.element(pos)
@@ -106,18 +110,31 @@ def home_of(data: bytes) -> str:
     return value[skip:].decode()
 
 
+def relocate(data: bytes, old: str, new: str) -> "tuple[bytes, int]":
+    """`data` with every str equal to `old` or under `old`/ moved to `new`, and the number changed."""
+    if not old:
+        raise ValueError("cannot relocate an empty path")
+    r = Relocator(data, old, new)
+    if r.element(0) != len(data):
+        raise ValueError("trailing bytes after the workspace record")
+    return bytes(r.out), r.changed
+
+
 def main() -> None:
-    if len(sys.argv) != 2:
+    if len(sys.argv) != 3:
         sys.exit(__doc__)
-    group = Path(sys.argv[1]).resolve()
+    group, temp = Path(sys.argv[1]), Path(sys.argv[2])
+    if not (group.is_absolute() and temp.is_absolute()):
+        sys.exit(f"absolute paths required: {group} {temp}")
     meta = group / ".meta" / "meta.bin"
     data = meta.read_bytes()
-    old = home_of(data)
-    r = Relocator(data, old, str(group))
-    if r.element(0) != len(data):
-        raise ValueError(f"{meta}: trailing bytes after the workspace record")
-    meta.write_bytes(bytes(r.out))
-    print(f"Philosopher workspace {old} -> {group} ({r.changed} paths)", file=sys.stderr)
+    old_temp = field_of(data, "Temp")
+    data, temps = relocate(data, old_temp, str(temp))
+    old = field_of(data, "Home")
+    data, homes = relocate(data, old, str(group))
+    meta.write_bytes(data)
+    print(f"Philosopher workspace {old} -> {group} ({homes} paths), temp {old_temp} -> {temp} ({temps} paths)",
+          file=sys.stderr)
 
 
 if __name__ == "__main__":

@@ -51,14 +51,17 @@ process PHILOSOPHERREPORT {
     # FreeQuant and LabelQuant built (FragpipeRun.java:2463-2471, 2573-2581): no re-init or
     # database annotation (the workspace already holds the annotated database).
     cp -rL ${results_dir}/. ${prefix}/
-    # Philosopher keeps the workspace's absolute paths in the .meta workspace binary; point them at this copy
-    philosopher_relocate_workspace.py ${prefix}
+    # Philosopher keeps the workspace's absolute paths in the .meta workspace binary; point them at this copy, and its
+    # Temp dir (in the task that made the workspace) at one in this task
+    mkdir -p phi_temp
+    philosopher_relocate_workspace.py "\$PWD"/${prefix} "\$PWD/phi_temp"
     cd ${prefix}
     REPORT_CMD=(\$PHILOSOPHER report ${report_cli} ${args})
     printf '%s\\n' "\${REPORT_CMD[*]}" > \${WORK_DIR}/philosopher_report.log
     "\${REPORT_CMD[@]}" 2>&1 | tee -a \${WORK_DIR}/philosopher_report.log
     \$PHILOSOPHER workspace --clean --nocheck 2>&1
     cd \${WORK_DIR}
+    rm -rf phi_temp
     """
 
     stub:

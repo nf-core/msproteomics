@@ -1,4 +1,5 @@
 include { peptideProphetCommands; peptideProphetDirLines; shellQuote; fragpipeToolVersions } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
+include { linkCopiesWhenPathContains } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
 
 process PHILOSOPHERPEPTIDEPROPHET {
     tag "${meta.id}"
@@ -33,6 +34,10 @@ process PHILOSOPHERPEPTIDEPROPHET {
     def gdir = shellQuote(cmds.group_dir)
     """
     export HOME=\$(pwd)
+    # Philosopher runs RefreshParser and PeptideProphetParser in place on every input whose absolute path
+    # contains the output name, "interact" as FragPipe passes no --output (lib/ext/peptideprophet/peptideprophet.go
+    # :80-96, :457): those pepXMLs are copies, the others stay links
+    ${linkCopiesWhenPathContains(pepxml_files, cmds.group_dir, 'interact')}
     mkdir -p ${prefix} ${gdir}
     ${cmds.link_inputs}
     [ -x ${shellQuote(cmds.philosopher)} ] || { echo "ERROR: ${cmds.philosopher} not found (the FragPipe tools directory set in nextflow.config)" >&2; exit 1; }

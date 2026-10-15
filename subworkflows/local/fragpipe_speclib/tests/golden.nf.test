@@ -107,6 +107,14 @@ nextflow_workflow {
                     [new File("${g}/work").canonicalPath, '<WORK>'], [new File("${g}/input").canonicalPath, '<LCMS>'], [new File("${g}/db").canonicalPath, '<DB>'],
                     [diann_wd.toString(), '<WORK>'], [speclib_wd.toString(), '<WORK>']
                 ]).sort { a, b -> b[0].length() <=> a[0].length() }
+                // gen_con_spec_lib.py names the pepXMLs, psm.tsv and spectra it reads by their resolved paths
+                // (resolve_mapped, .resolve()), and the task stages them as links: each staged file's link target
+                // (an upstream task dir, or /ro_inputs/<name> in the read-only-inputs check) stands for its staged path
+                def staged_placeholder = { String path -> actual_paths.find { p -> path.startsWith(p[0].toString()) }?.with { p -> p[1] + path.substring(p[0].toString().length()) } ?: path }
+                actual_paths = (speclib_wd.listFiles().findAll { f -> f.isFile() }.collectMany { f ->
+                    def placeholder = staged_placeholder.call(f.toString())
+                    [[f.canonicalPath, placeholder], ["/ro_inputs/${f.name}", placeholder]]
+                }.findAll { p -> p[0] != p[1] } + actual_paths).sort { a, b -> b[0].length() <=> a[0].length() }
                 def normalise = { File f, List prefixes, String rel ->
                     def text = f.getText('ISO-8859-1')
                     prefixes.each { p -> text = text.replace(p[0].toString(), p[1].toString()) }

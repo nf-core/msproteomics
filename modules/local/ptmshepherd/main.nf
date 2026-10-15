@@ -1,4 +1,4 @@
-include { fragpipeJarLines; fragpipeTools; shellArgs } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
+include { fragpipeJarLines; fragpipeTools; shellArgs; rawLinkCopies } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
 include { ptmShepherdCommands; taskFileCommand; shellQuote; fragpipeToolVersions; javaXmxGb } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
 
 /*
@@ -50,6 +50,7 @@ process PTMSHEPHERD {
     // IonQuant joins the class path only for kl glyco features; the Thermo libraries are optional
     def jar_lines = fragpipeJarLines(fragpipeTools(task), ['batmass_io'] + (cmds.class_path.contains('{IONQUANT_JAR}') ? ['ionquant'] : []), ['msfragger'])
     """
+    ${rawLinkCopies(mzml_files)}
     export HOME=\$(pwd)
     TASK_DIR=\$(pwd)
 

@@ -15,7 +15,7 @@
  *   - filelist / argv: filelist_diann.txt and the DIA-NN argv
  *   - versions_diann / versions_fragpipe: versions (topic: versions)
  */
-include { fragpipeTools; diannArgv; diannFilelistText; diannInputDirLines; writeTextFile; shellArgs; fragpipeJarLines } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
+include { fragpipeTools; diannArgv; diannFilelistText; diannInputDirLines; writeTextFile; shellArgs; fragpipeJarLines; rawLinkCopies } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
 include { javaXmxGb } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
 
 // Long work dirs: DIA-NN 1.8.2 Beta 8 aborts on a run path of 256+ characters, so the runs are then read through a
@@ -72,6 +72,7 @@ process DIANNFRAGPIPE {
     // (Diann.java:161-190) sets no LD_PRELOAD when the binary runs bare, as it does in the FragPipe image.
     // Diann.validate ignores the exit status of "--version" (Diann.java:117-131); the banner check decides.
     """
+    ${rawLinkCopies(spectra)}
     export HOME=\$(pwd)
     WD=\$(pwd)
     echo "${tools.fragpipe_version}" > .fragpipe_version

@@ -1,3 +1,4 @@
+include { rawLinkCopies } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
 include { opairCommands; taskDirArg; taskFileCommand; shellQuote; fragpipeToolVersions } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
 include { textFileCommand } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/write_text_file'
 
@@ -44,6 +45,7 @@ process OPAIR {
     }
     def cmds = opairCommands(meta.id, filelist, argv, oxonium_file, task)
     """
+    ${rawLinkCopies(spectra)}
     export HOME=\$(pwd)
     TASK_DIR=\$(pwd)
 

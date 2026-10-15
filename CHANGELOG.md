@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Tasks never write their inputs: FragPipe tasks copy only the staged inputs a tool misreads or writes through, and the docker tests mount inputs read-only (`docker.writableInputMounts = false` in `tests/nextflow.config`).
 - nf-core template 3.5.2 -> 4.1.0.
 - `manifest.nextflowVersion` `!>=25.04.0` -> `!>=25.10.4`.
 - `--precursor_mass_tolerance` default 20 -> 5 ppm and `--fragment_mass_tolerance` default 20 -> 18 ppm.

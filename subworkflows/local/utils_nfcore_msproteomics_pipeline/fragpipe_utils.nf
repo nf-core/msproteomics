@@ -1235,7 +1235,11 @@ def lfqExperimentAnnotation(entries) {
         return entry[1]
     }
     def base_name = { path ->
-        def name = new File(path).name
+        def parts = path.toString().tokenize('/')
+        if (!parts) {
+            error("lfqExperimentAnnotation: a manifest row has an empty LC-MS file path (row: ${entries.find { entry -> entry[0] == path }})")
+        }
+        def name = parts.last()
         name.lastIndexOf('.') >= 0 ? name.substring(0, name.lastIndexOf('.')) : name
     }
     def groups = entries.groupBy { entry -> group2.call(entry) }

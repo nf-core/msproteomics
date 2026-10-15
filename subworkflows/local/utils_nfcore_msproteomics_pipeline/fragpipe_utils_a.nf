@@ -280,21 +280,51 @@ def crystalcRuntimeParams(threads, fasta, lcms, out_dir) {
 }
 
 /**
- * Shell lines that replace staged Thermo .raw symlinks by the files themselves.
+ * Shell lines that replace staged links by copies of what they name (cp -rL, then the copy takes the link's
+ * place), for a tool that misreads a link or writes through it. Only these inputs are copied; the others stay
+ * links. A staged directory (a Waters .raw folder) is copied whole; rm + mv replaces the link itself, where
+ * mv onto a link to a directory would move the copy into that directory. Names are quoted with shellArgs.
  *
- * batmass-io reads .raw under Mono, where FileInfo.Length of a symlink is the link size, so a staged
- * symlink reads as an empty file. Other files
- * stay links.
+ * @param names staged file or directory names, relative to the task directory (String, Path or a List of them)
+ * @return one line per name, joined by newlines
+ */
+def linkCopies(names) {
+    def list = names instanceof List ? names : [names]
+    return list.collect { n -> n instanceof java.nio.file.Path ? n.name : n.toString() }.collect { n ->
+        def f = shellArgs([n])
+        def c = shellArgs(["${n}.copy"])
+        "[ ! -L ${f} ] || { cp -rL ${f} ${c} && rm ${f} && mv ${c} ${f}; }"
+    }.join('\n')
+}
+
+/**
+ * linkCopies() of the staged inputs whose absolute path in `dir` contains `needle`, decided when the task
+ * runs (the task directory is known only then). For Philosopher's PeptideProphet, which rewrites in place
+ * every input whose filepath.Abs path contains its output name, "interact" with FragPipe's options
+ * (philosopher lib/ext/peptideprophet/peptideprophet.go:80-96, :457): the other inputs stay links.
+ *
+ * @param names  staged file names, relative to the task directory (String, Path or a List of them)
+ * @param dir    directory, relative to the task directory, the tool reads the inputs from ('.' = task dir)
+ * @param needle text that makes the tool write the input in place
+ * @return one line per name, joined by newlines
+ */
+def linkCopiesWhenPathContains(names, dir, needle) {
+    def list = names instanceof List ? names : [names]
+    return list.collect { n -> n instanceof java.nio.file.Path ? n.name : n.toString() }.collect { n ->
+        "case \"\$PWD\"/${shellArgs(["${dir}/${n}"])} in *${shellArgs([needle])}*) ${linkCopies(n)} ;; esac"
+    }.join('\n')
+}
+
+/**
+ * linkCopies() of the Thermo .raw files among `names`: batmass-io reads .raw under Mono, where
+ * FileInfo.Length of a symlink is the link size, so a staged link reads as an empty file.
  *
  * @param names staged file names (String, Path or a List of them)
- * @return one line per .raw file, joined by newlines ('' when there is none)
+ * @return one line per .raw file ('' when there is none)
  */
-def rawSymlinksToFiles(names) {
+def rawLinkCopies(names) {
     def list = names instanceof List ? names : [names]
-    return list.collect { n -> n instanceof java.nio.file.Path ? n.name : n.toString() }
-        .findAll { n -> n.toLowerCase().endsWith('.raw') }
-        .collect { n -> "[ ! -L '${n}' ] || cp --remove-destination \"\$(readlink -f '${n}')\" '${n}'" }
-        .join('\n')
+    return linkCopies(list.findAll { n -> (n instanceof java.nio.file.Path ? n.name : n.toString()).toLowerCase().endsWith('.raw') })
 }
 
 /**
@@ -585,14 +615,17 @@ def msboosterOutputDir(pin_paths) {
 }
 
 /**
- * Shell lines that place each staged PIN at its group path (a link to the staged file); the blank group's PINs stay put.
+ * Shell lines that replace each staged PIN link by a copy and move grouped PINs to their group path; the
+ * blank group's PINs stay put. MSBooster writes <pin>_edited.pin next to the PIN's canonical path
+ * (PercolatorFormatter.java:190, 292-300), so the PIN must be a file in the task dir, not a link.
  *
  * @param pin_paths msboosterPinPaths() of the run
  * @return shell lines
  */
 def msboosterPinStaging(pin_paths) {
-    return pin_paths.findAll { path -> path.contains('/') }.collect { path ->
-        "mkdir -p '${path.substring(0, path.lastIndexOf('/'))}' && ln -s \"\$PWD/${path.substring(path.lastIndexOf('/') + 1)}\" '${path}'"
+    def copies = linkCopies(pin_paths.collect { path -> path.substring(path.lastIndexOf('/') + 1) })
+    return copies + '\n' + pin_paths.findAll { path -> path.contains('/') }.collect { path ->
+        "mkdir -p ${shellArgs([path.substring(0, path.lastIndexOf('/'))])} && mv ${shellArgs([path.substring(path.lastIndexOf('/') + 1)])} ${shellArgs([path])}"
     }.join('\n')
 }
 
@@ -1098,15 +1131,14 @@ def checkHeadlessRows(raw_files, rows, annotation_rows) {
 
 /**
  * Shell lines that lay out the FragPipe headless task directory (headlessLayout): staged .raw links
- * replaced by the files (rawSymlinksToFiles), TMT group moves, manifest.fp-manifest and the annotations.
+ * replaced by copies (rawLinkCopies), TMT group moves, manifest.fp-manifest and the annotations.
  *
  * @param raw_files staged LC-MS files (raw_files/<name>)
  * @param layout    headlessLayout() result
  * @return shell lines
  */
 def headlessStagingLines(raw_files, Map layout) {
-    def lines = [rawSymlinksToFiles(raw_files)]
-    lines += layout.moves.collect { m -> "mkdir -p '${m[1].substring(0, m[1].lastIndexOf('/'))}' && mv '${m[0]}' '${m[1]}'" }
+    def lines = [rawLinkCopies(raw_files)] + layout.moves.collect { m -> "mkdir -p '${m[1].substring(0, m[1].lastIndexOf('/'))}' && mv '${m[0]}' '${m[1]}'" }
     lines << writeTextFile('manifest.fp-manifest', layout.manifest)
     lines += layout.annotations.collect { a -> writeTextFile(a[0], a[1]) }
     return lines.findAll { l -> l }.join('\n')

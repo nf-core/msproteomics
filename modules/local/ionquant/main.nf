@@ -5,7 +5,7 @@
  * CmdIonquant.configure (CmdIonquant.java:178-337); the module stages the group directories the way
  * FragPipe's work dir holds them, writes those files and runs IonQuant.
  */
-include { fragpipeTools; requireFragpipeLicenseAgreement; writeTextFile; rawSymlinksToFiles; shellArgs; ionquantRun; ionquantStaging; ionquantFiles; ionquantCollect; fragpipeJarLines } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
+include { fragpipeTools; requireFragpipeLicenseAgreement; writeTextFile; shellArgs; ionquantRun; ionquantStaging; ionquantFiles; ionquantCollect; fragpipeJarLines; rawLinkCopies } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
 
 process IONQUANT {
     tag "${meta.id}"
@@ -70,6 +70,7 @@ process IONQUANT {
         '--threads', "${task.cpus}"] + run.args + ['--filelist', '{TASK_DIR}/filelist_ionquant.txt'] +
         (write_modlist ? ['--modlist', '{TASK_DIR}/modmasses_ionquant.txt'] : [])
     """
+    ${rawLinkCopies(spec_files)}
     export HOME=\$(pwd)
     mkdir -p ${prefix}
     ${writeTextFile('I_AGREE_FRAGPIPE_LICENSE_AGREEMENT', agreement)}
@@ -81,8 +82,6 @@ ${ionquantFiles(run, write_modlist ? modmasses : null, experiment_annotation)}
     # AppendFile: PTM-S glycan masses appended to the work dir's modmasses_ionquant.txt, duplicates
     # (0.01 Da) skipped, with FragPipe's own AppendToFile (FragpipeRun.java:1822-1830, CmdAppendFile.java)
     ${glyco_masses ? "touch modmasses_ionquant.txt\n    java -Duser.home=\"\$PWD\" -cp \"${tools.fragpipe_lib}/*\" org.nesvilab.fragpipe.util.AppendToFile modmasses_ionquant.txt \"\$(pwd)/${glyco_masses}\"" : ''}
-
-    ${rawSymlinksToFiles(spec_files)}
 
     CMD=(${shellArgs(argv)} ${args})
     printf '%s\\n' "\${CMD[*]}" > ${prefix}/ionquant.log
@@ -101,8 +100,8 @@ ${ionquantCollect(prefix, root_group_dir, run.named_groups)}
     // The logged command omits the machine-dependent java, licence and --threads arguments
     def stub_argv = ['ionquant.IonQuant'] + run.args + ['--filelist', 'filelist_ionquant.txt'] + (write_modlist ? ['--modlist', 'modmasses_ionquant.txt'] : [])
     """
+    ${rawLinkCopies(spec_files)}
     mkdir -p ${prefix}
-${rawSymlinksToFiles(spec_files)}
 ${ionquantStaging(root_group_dir, run.named_groups)}
 ${ionquantFiles(run, write_modlist ? modmasses : null, experiment_annotation)}
     CMD=(${shellArgs(stub_argv)} ${args})

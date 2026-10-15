@@ -569,12 +569,16 @@ database.decoy-tag = rev_
         then {
             def tasks = workflow.trace.tasks().collect { t -> t.name.tokenize(' ')[0].tokenize(':').last() }
             def iq_dir = new File(workflow.out.ionquant_dir[0][1].toString()).parentFile
-            // the group directory IonQuant staged (stageInMode copy: `cp -fRL <source> cancer` in .command.run)
-            def iq_input = new File(iq_dir, '.command.run').readLines().find { line -> line.trim() ==~ /cp -fRL \S+ cancer/ }?.trim()?.tokenize(' ')?.getAt(2)
+            // the group directory IonQuant staged: `ln -s <source> cancer` in .command.run (`ln -sfn` from Nextflow 26,
+            // after `mkdir -p <dir> && ` for a nested name; SimpleFileCopyStrategy.stageInputFile / stageInCommand).
+            // The task then replaces the link by a copy, so the staging line is the record of the source.
+            def iq_stage = new File(iq_dir, '.command.run').readLines().collect { line -> (line =~ /(?:^\s*|&& )ln -s(?:fn)? (\S+) cancer\s*\z/) }.find { m -> m.find() }
+            def iq_input = iq_stage ? iq_stage.group(1) : null
             def mbg_dir = workflow.out.glyco_psm_dirs[0][1].toString()
             assertAll (
                 { assert workflow.success },
                 { assert tasks.containsAll(["PTMSHEPHERD", "MBG", "IONQUANT"]) : tasks },
+                { assert iq_input != null : "no `ln -s <source> cancer` staging line in ${iq_dir}/.command.run" },
                 // IonQuant quantifies the psm.tsv MBG wrote (FragpipeRun.java:2477)
                 { assert iq_input == mbg_dir : "IonQuant read ${iq_input}, MBG wrote ${mbg_dir}" },
                 // AppendFile: glyco masses join the modlist (FragpipeRun.java:1822-1830)
@@ -622,9 +626,11 @@ database.decoy-tag = rev_
         then {
             def tasks = workflow.trace.tasks().collect { t -> t.name.tokenize(' ')[0].tokenize(':').last() }
             def ptms_dir = new File(workflow.out.ptm_results[0][1].toString()).parentFile
-            // the group directory PTM-Shepherd staged (stageInMode copy: `cp -fRL <source> input/cancer` in .command.run)
-            def tokens = new File(ptms_dir, '.command.run').readLines().find { line -> line.contains('cp -fRL ') && line.trim().endsWith(' input/cancer') }.trim().tokenize(' ')
-            def source = new File(tokens[tokens.indexOf('-fRL') + 1])
+            // the group directory PTM-Shepherd staged: `mkdir -p input && ln -s <source> input/cancer` in .command.run
+            // (`ln -sfn` from Nextflow 26; SimpleFileCopyStrategy.stageInputFile / stageInCommand)
+            def ptms_stage = new File(ptms_dir, '.command.run').readLines().collect { line -> (line =~ /(?:^\s*|&& )ln -s(?:fn)? (\S+) input\/cancer\s*\z/) }.find { m -> m.find() }
+            assert ptms_stage != null : "no `ln -s <source> input/cancer` staging line in ${ptms_dir}/.command.run"
+            def source = new File(ptms_stage.group(1))
             def task_dir = source
             while (task_dir != null && !new File(task_dir, '.command.run').exists()) { task_dir = task_dir.parentFile }
             def producer = new File(task_dir, '.command.run').readLines().find { line -> line.startsWith('### name:') }
