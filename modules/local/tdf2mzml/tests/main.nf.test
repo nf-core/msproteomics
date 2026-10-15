@@ -36,4 +36,49 @@ nextflow_process {
             )
         }
     }
+
+    // Real tdf2mzml.py run on a public timsTOF DDA run, PRIDE PXD038782 (the file nf-core/mhcquant's timsTOF
+    // samplesheet uses; nf-core/test-datasets has no Bruker .d). DECOMPRESS unpacks the archive as the DIA
+    // workflow does (the .d sits below the uploader's path in it) before TDF2MZML runs.
+    // The mzML embeds dates and paths, so the snapshot holds the file name, the spectrum count and the versions.
+    test("tdf2mzml - integration") {
+        tag "integration"
+
+        setup {
+            run("DECOMPRESS") {
+                script "../../decompress/main.nf"
+                process {
+                    """
+                    input[0] = channel.of([
+                        [ id: 'UDN30' ],
+                        file('https://ftp.pride.ebi.ac.uk/pride/data/archive/2023/11/PXD038782/211106_NHG_benign_UDN30_PBMC_W6-32_20__DDA_Rep1.d.tar.gz', checkIfExists: true)
+                    ])
+                    """
+                }
+            }
+        }
+
+        when {
+            process {
+                """
+                input[0] = DECOMPRESS.out.decompressed_files
+                """
+            }
+        }
+
+        then {
+            def mzml = process.out.mzmls_converted[0][1].toString()
+            def spectra = new File(mzml).readLines().count { line -> line.contains('<spectrum ') }
+            assertAll (
+                { assert process.success },
+                { assert spectra > 0 },
+                { assert snapshot(
+                    file(mzml).name,
+                    spectra,
+                    process.out.log.collect { log -> file(log.toString()).name },
+                    path(process.out.versions[0].toString()).text
+                ).match() }
+            )
+        }
+    }
 }

@@ -1,4 +1,23 @@
 {
+    "openms_peak_picker - integration": {
+        "content": [
+            "dia_cptac_subset.mzML",
+            2500,
+            "dia_cptac_subset_pp.log",
+            [
+                [
+                    "OPENMSPEAKPICKER",
+                    "openms",
+                    "3.5.0-pre-exported-20251212"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-14T19:49:26.113112475",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
     "openms_peak_picker - stub": {
         "content": [
             [

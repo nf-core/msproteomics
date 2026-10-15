@@ -64,9 +64,11 @@ process DECOMPRESS {
         *)        echo "Unknown archive type: ${compressed_file}" >&2; exit 1 ;;
     esac 2>&1 | tee ${prefix}_decompression.log
 
-    # A Bruker archive may hold the .d directory under another name.
+    # A Bruker archive may hold the .d directory under another name, and below other directories
+    # (PRIDE archives keep the uploader's path, e.g. mnt/f/Pride_Upload/.../<run>.d): take the one .d,
+    # not looking inside it
     if [ ! -e ${target_name} ]; then
-        found=\$(find . -maxdepth 1 -name '*.d' -type d ! -name '.')
+        found=\$(find . -mindepth 1 -type d -name '*.d' -prune -print)
         if [ "\$(printf '%s\\n' "\$found" | grep -c .)" != 1 ]; then
             echo "Archive ${compressed_file} did not contain ${target_name} (found: \$found)" >&2
             exit 1
