@@ -367,9 +367,9 @@ def fragpipeManifestText(rows, spectra_dir) {
 }
 
 /**
- * Replace the run-time tokens of a parser argv (e.g. @THREADS@, @TOOLS_DIR@) in every word.
+ * Replace the run-time tokens of a plan argv (e.g. @THREADS@, @TOOLS_DIR@) in every word.
  *
- * @param argv   argv words from parse_fragpipe_workflow.py
+ * @param argv   argv words from FragPipe's plan (bin/plan_to_tool_configs.py)
  * @param tokens Map of token to value
  * @return argv words with the tokens replaced
  */
@@ -567,11 +567,11 @@ def writeSubMzmlArgv(lcms_name, lcms_dir, Map meta, prob_threshold, ram_gb, Map 
 }
 
 /**
- * MSBooster's thread count: the numThreads line parse_fragpipe_workflow.py writes into the MSBooster params
+ * MSBooster's thread count: the numThreads line FragPipe's plan has in the MSBooster params
  * (workflow.threads / --threads; MSBooster's RT loess output depends on it, CmdMSBooster.java:164). It sizes the
  * MSBOOSTER task and is checked against the params again when the file is rendered (msboosterParamsText).
  *
- * @param params_text workflow lines (PARSEFRAGPIPEWORKFLOW msbooster.config)
+ * @param params_text workflow lines (FragPipe's plan msbooster.config)
  * @return numThreads as an Integer
  */
 def msboosterThreads(params_text) {
@@ -631,15 +631,15 @@ def msboosterPinStaging(pin_paths) {
 
 /**
  * msbooster_params.txt as CmdMSBooster.configure writes it (CmdMSBooster.java:160-212): the workflow
- * lines of parse_fragpipe_workflow.py without useIM, findBestImModel and numThreads, then the first two ANDed with
+ * lines of FragPipe's plan msbooster.config without useIM, findBestImModel and numThreads, then the first two ANDed with
  * "the run has timsTOF data" (CmdMSBooster.java:151-157, 170, 178), then the runtime keys numThreads (the
- * parser's, which must equal threads; MSBooster's output depends on it),
+ * the plan's, which must equal threads; MSBooster's output depends on it),
  * DiaNN (FragPipe's bundled DIA-NN, Diann.fallbackDiannPath), fragger, unimodObo, mzmlDirectory and
  * pinPepXMLDirectory. The keys are written in CmdMSBooster's order. Paths in the task directory use {TASK_DIR}.
  *
- * @param params_text    workflow lines (PARSEFRAGPIPEWORKFLOW msbooster.config)
+ * @param params_text    workflow lines (FragPipe's plan msbooster.config)
  * @param tims_tof       true when an LC-MS file of the run is timsTOF data
- * @param threads        FragPipe's thread count (workflow.threads / --threads), the parser's numThreads
+ * @param threads        FragPipe's thread count (workflow.threads / --threads), the plan's numThreads
  * @param tools          fragpipeTools() map
  * @param fragger_params staged MSFragger params file name MSBooster reads
  * @param pins           PIN paths relative to the task directory, in FragPipe's order (msboosterPinPaths)
@@ -654,7 +654,7 @@ def msboosterParamsText(params_text, tims_tof, threads, Map tools, fragger_param
         error("msboosterParamsText: the workflow params ${has_token ? 'name' : 'do not name'} a spectral library but ${library_files.size()} was staged")
     }
     def lines = params_text.toString().replace('{SPECTRAL_LIBRARY}', library_files ? "{TASK_DIR}/${library_files[0]}".toString() : '').readLines()
-    // numThreads is the parser's (workflow.threads / --threads): MSBooster's RT loess output depends on it,
+    // numThreads is the plan's (workflow.threads / --threads): MSBooster's RT loess output depends on it,
     // and the task is sized from the same count (conf/modules.config)
     def thread_lines = lines.findAll { line -> line.startsWith('numThreads = ') }
     if (thread_lines != ["numThreads = ${threads}".toString()]) {
@@ -713,7 +713,7 @@ def msboosterParamsText(params_text, tims_tof, threads, Map tools, fragger_param
  *
  * @param group_names      staged group directory names
  * @param root_group_dir   the staged directory of the blank group ('' when there is none)
- * @param config_cli       IonQuant options of the pass from the workflow parser, in CmdIonquant order
+ * @param config_cli       IonQuant options of the pass from FragPipe's plan, in CmdIonquant order
  * @param annotation_lines lines of the multi-plex TMT annotation (plex, channel, sample, sample_name, ...), [] if none
  * @param spectra_dir      directory of the staged LC-MS files, under {TASK_DIR}
  * @return Map with named_groups, filelist (text), annotations ([path, text] pairs) and args (List)
@@ -726,10 +726,6 @@ def ionquantRun(group_names, root_group_dir, config_cli, annotation_lines, spect
     }
     def options = config_cli.toString().tokenize()
     def option_value = { flag -> def i = options.indexOf(flag); i >= 0 && i + 1 < options.size() ? options[i + 1] : null }
-    // CmdIonquant.java:288-294: MBR needs named experiments
-    if (!named && option_value.call('--mbr') == '1') {
-        error("IonQuant with MBR requires designating LCMS runs to experiments. Please assign the experiment groups in the 'Workflow' tab, and make sure that the 'Spec Lib' tab is disabled.")
-    }
     def plexes = (root ? [''] : []) + named
     def psm = { plex -> plex ? "${plex}/psm.tsv".toString() : 'psm.tsv' }
     def filelist = (['flag\tvalue'] + plexes.collect { plex -> "--psm\t${psm.call(plex)}" } + ["--specdir\t${spectra_dir}"])
@@ -829,7 +825,7 @@ def ionquantCollect(prefix, root_group_dir, named_groups) {
  * FP-Meta DbOptimizer argv after the jar (CmdMetaproteomics.java:70-111): FragPipe passes its work dir as
  * both --projectDir and --outdir, cmd-line-opts as one last element when not blank.
  *
- * @param values      parse_fragpipe_workflow.py metaproteomics values (qvalue, deltaHyperscore, ...)
+ * @param values      metaproteomics values of FragPipe's plan (qvalue, deltaHyperscore, ...)
  * @param project_dir FragPipe work dir for FP-Meta
  * @param fasta       database path
  * @param decoy_tag   decoy prefix (FragpipeRun.java:1442)
@@ -841,7 +837,7 @@ def metaproteomicsArgv(Map values, project_dir, fasta, decoy_tag, names_dmp, nod
     def keys = ['qvalue', 'deltaHyperscore', 'minPeptCntPerProt', 'minUniqPeptCntPerProt', 'minUniqPeptCnt', 'hostName', 'iterations', 'cmdLineOpts']
     def missing = keys.findAll { k -> values[k] == null }
     if (missing) {
-        error("metaproteomicsArgv: parse_fragpipe_workflow.py metaproteomics values lack ${missing}")
+        error("metaproteomicsArgv: plan_to_tool_configs.py metaproteomics values lack ${missing}")
     }
     def argv = ['DbOptimizer', '--projectDir', project_dir, '--fastaFile', fasta, '--outdir', project_dir, '--decoyTag', decoy_tag]
     argv += ['qvalue', 'deltaHyperscore', 'minPeptCntPerProt', 'minUniqPeptCntPerProt', 'minUniqPeptCnt'].collectMany { k -> ["--${k}", values[k]] }
@@ -1150,7 +1146,7 @@ def headlessStagingLines(raw_files, Map layout) {
  * from FragPipe's own flags and lookups, as in a user's headless run: --config-tools-folder (MSFragger,
  * IonQuant, diaTracer), FragPipeMain.getPhilosopherBin and the built-in DIA-NN (Diann.java:57); no
  * component reads a tool path key from the workflow, and extra keys would change the HashMap FragPipe
- * loads the workflow from, which decides both-true radio twins (parse_fragpipe_workflow.py _resolve_radio_twins).
+ * loads the workflow from, which decides both-true radio twins (FragPipe's own resolution).
  *
  * @param workflow_text the user's .workflow text
  * @param database      staged database name
@@ -1324,16 +1320,4 @@ def fragpipePlanCommand(task, workflow_text, database, mem_gb) {
                 '--workflow', 'run.workflow', '--manifest', 'manifest.fp-manifest', '--workdir', '{TASK_DIR}/fp_work', '--ram', mem_gb,
                 '--config-tools-folder', tools.tools_dir]
     return [workflow: headlessWorkflowText(workflow_text, database), argv: argv.collect { w -> w.toString() }, options: options, tools: tools]
-}
-
-/**
- * FRAGPIPEPLAN stub: the run log of a dry run with no commands, in the format FragpipeRun prints
- * (LCMS files, FragpipeRun.java:368; "<N> commands to execute:", :412; the dry-run line, :477).
- *
- * @param layout headlessLayout() result
- * @return log text, paths under {TASK_DIR}
- */
-def dryRunStubLogText(Map layout) {
-    def files = layout.manifest.readLines().collect { l -> def c = l.split('\t', -1); "  Experiment/Group: ${c[1]}\n  - ${c[0]}\t${c[3]}\n" }
-    return "LCMS files:\n${files.join('')}\n0 commands to execute:\n~~~~~~~~~~~~~~~~~~~~~~\n\nIt's a dry-run, not running the commands.\n"
 }

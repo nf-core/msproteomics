@@ -114,7 +114,7 @@ workflow MSPROTEOMICS_FRAGPIPE {
         // Workflow file (plain path, not tuple)
         ch_wf_file = channel.of(fragpipe_workflow_file)
 
-        // FragPipe headless never generates decoys; FRAGPIPE_HEADLESS_WF checks the database
+        // FragPipe headless never generates decoys and checks the database itself
         // (and runs the database update first with --add_philosopher_decoy / --add_philosopher_contaminants).
         FRAGPIPE_HEADLESS_WF(
             ch_unique_files,

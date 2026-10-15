@@ -1,0 +1,56 @@
+// Records the FragPipe dry runs the stub tests plan from (--fragpipe_plan, tests/fixtures/fragpipe_plans/stub/):
+// FRAGPIPEPLAN for real on each <name>.plan_inputs.json, the inputs the stub test gives FRAGPIPEPLAN
+// (workflow text, manifest rows, TMT annotation rows, database name, FragPipe options).
+// FragPipe's dry run only checks that the LC-MS files exist, so each is an empty file (a .d directory holds an
+// empty analysis.tdf). The database is a FASTA with 50% rev_ decoys under the run's database name: FragPipe's dry run
+// checks the decoys (FragpipeRun.checkDbConfig) and the stub databases have none.
+// Then tests/lib/normalise_fragpipe_plan.py <task dir>/fp_work tests/fixtures/fragpipe_plans/stub/<name> per task
+// (the task's name is in its .command.run): the task dir becomes /plan, the run log is licence-redacted.
+// RECORD_SPECS: the spec dir (default tests/fixtures/fragpipe_plans/stub; tests/fixtures/ptmshepherd_parity/plans for the
+// PTM-Shepherd cases).
+// Run: FRAGPIPE_CONTAINER=<FragPipe image with --write-plan> [RECORD_SPECS=<dir>] nf-test test tests/lib/record_fragpipe_plans.nf.test
+nextflow_process {
+
+    name "Record the stub tests' FragPipe dry runs"
+    script "../../modules/local/fragpipeplan/main.nf"
+    process "FRAGPIPEPLAN"
+    config "./record_fragpipe_plans.config"
+
+    tag "record_fragpipe_plans"
+
+    test("FRAGPIPEPLAN on every plan spec") {
+
+        when {
+            process {
+                """
+                def specs = file("\${projectDir}/\${System.getenv('RECORD_SPECS') ?: 'tests/fixtures/fragpipe_plans/stub'}/*.plan_inputs.json").sort { f -> f.name }
+                input[0] = channel.fromList(specs.collect { json ->
+                    def spec = new groovy.json.JsonSlurper().parse(json.toFile())
+                    def name = json.name - '.plan_inputs.json'
+                    def dir = file("\${workDir}/record_inputs/\${name}")
+                    def files = spec.manifest_rows.collect { row ->
+                        def f = dir.resolve("lcms/\${row[0]}")
+                        def placeholder = row[0].endsWith('.d') ? f.resolve('analysis.tdf') : f
+                        placeholder.parent.mkdirs()
+                        placeholder.text = ''
+                        f
+                    }
+                    def fasta = dir.resolve(spec.database_name)
+                    fasta.parent.mkdirs()
+                    fasta.text = (1..10).collect { i -> ">sp|P\${i}|T\${i}\\nMKPEPTIDEK\\n>rev_sp|P\${i}|T\${i}\\nKEDITPEPKM\\n" }.join('')
+                    [[id: name, ext_args: spec.ext_args], files, fasta, spec.workflow_text, spec.manifest_rows, spec.annotation_rows,
+                     files.collectEntries { f -> [f.name, f.toUriString()] }, fasta.toUriString()]
+                })
+                """
+            }
+        }
+
+        then {
+            // a plan FragPipe refuses (its dry run exits non-zero) is ignored here and has no work dir
+            assertAll(
+                { assert process.success },
+                { assert process.out.workdir.size() > 0 }
+            )
+        }
+    }
+}

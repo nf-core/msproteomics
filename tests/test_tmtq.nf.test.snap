@@ -5,9 +5,6 @@
                 "CHECKCENTROID": [
                     "fragpipe"
                 ],
-                "CHECKDBCONFIG": [
-                    "python"
-                ],
                 "FRAGPIPESAVEWORKFLOW": [
                     "fragpipe"
                 ],
@@ -33,9 +30,6 @@
                     "fragpipe",
                     "msfragger"
                 ],
-                "PARSEFRAGPIPEWORKFLOW": [
-                    "python"
-                ],
                 "PERCOLATOR": [
                     "fragpipe",
                     "percolator"
@@ -60,6 +54,9 @@
                     "fragpipe",
                     "philosopher"
                 ],
+                "PLANTOTOOLCONFIGS": [
+                    "python"
+                ],
                 "TMTINTEGRATOR": [
                     "fragpipe",
                     "tmtintegrator"
@@ -75,7 +72,6 @@
                 "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPESAVEWORKFLOW",
                 "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPESDRF",
                 "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:CHECKCENTROID",
-                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_DATABASE:CHECKDBCONFIG",
                 "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_DATABASE:PHILOSOPHERDATABASE",
                 "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_INFERENCE:PHILOSOPHERFILTER",
                 "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_INFERENCE:PHILOSOPHERFILTER_LATER",
@@ -87,14 +83,14 @@
                 "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSBOOSTER",
                 "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSFRAGGER",
                 "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:WRITE_FRAGGER_PARAMS",
-                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_TOOL_CONFIGS:PARSEFRAGPIPEWORKFLOW",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_TOOL_CONFIGS:PLANTOTOOLCONFIGS",
                 "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_VALIDATE:PERCOLATOR",
                 "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:GENERATESDRFFROMSAMPLESHEET",
                 "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:WRITE_FRAGPIPE_MANIFEST",
                 "NFCORE_MSPROTEOMICS:MULTIQC"
             ]
         ],
-        "timestamp": "2026-10-15T20:39:34.243669596",
+        "timestamp": "2026-10-16T02:38:34.487454588",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"

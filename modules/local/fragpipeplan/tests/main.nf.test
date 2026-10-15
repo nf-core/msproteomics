@@ -8,7 +8,8 @@ nextflow_process {
     tag "modules_local"
     tag "fragpipe_plan"
 
-    test("fragpipe_plan - stub writes the manifest FragPipe reads and a dry-run work dir") {
+    // FragPipe's dry run is the plan, and a stub cannot run FragPipe: -stub runs take a recorded plan (--fragpipe_plan)
+    test("fragpipe_plan - stub stops: -stub needs --fragpipe_plan") {
         tag "stub"
         options "-stub"
 
@@ -28,44 +29,9 @@ nextflow_process {
         }
 
         then {
-            def manifest_lines = path(process.out.manifest[0][1]).readLines().collect { line -> line.replaceFirst(/^.*\/raw_files\//, 'raw_files/') }
             assertAll(
-                { assert process.success },
-                { assert manifest_lines == ["raw_files/sample.mzML\texp1\t1\tDDA"] },
-                { assert snapshot(manifest_lines, new File(process.out.workdir[0][1].toString()).list().sort(), process.out.versions_fragpipe).match() }
-            )
-        }
-    }
-
-    test("fragpipe_plan - stub TMT puts each group and its annotation in its own directory") {
-        tag "stub"
-        options "-stub"
-
-        when {
-            process {
-                """
-                def p1 = file("\${workDir}/p1.mzML")
-                p1.text = "mock"
-                def p2 = file("\${workDir}/p2.mzML")
-                p2.text = "mock"
-                def fasta_file = file("\${workDir}/test.fasta")
-                fasta_file.text = ">sp|P00001|TEST\\nMKTEST\\n"
-                input[0] = channel.of([
-                    [ id: 'plan' ], [p1, p2], fasta_file, 'mock',
-                    [['p1.mzML', 'plex1', null, 'DDA', 'plex1'], ['p2.mzML', 'plex2', null, 'DDA', 'plex2']],
-                    [['plex1', '126', 'S1'], ['plex2', '126', 'S2']],
-                    ['p1.mzML': 's3://bucket/p1.mzML', 'p2.mzML': 's3://bucket/p2.mzML'], 's3://bucket/test.fasta'
-                ])
-                """
-            }
-        }
-
-        then {
-            def manifest_lines = path(process.out.manifest[0][1]).readLines().collect { line -> line.replaceFirst(/^.*\/raw_files\//, 'raw_files/') }
-            assertAll(
-                { assert process.success },
-                { assert manifest_lines == ["raw_files/plex1/p1.mzML\tplex1\t\tDDA", "raw_files/plex2/p2.mzML\tplex2\t\tDDA"] },
-                { assert snapshot(manifest_lines, new File(process.out.workdir[0][1].toString()).list().sort(), process.out.versions_fragpipe).match() }
+                { assert process.failed },
+                { assert (process.stdout + process.stderr).any { line -> line.contains('-stub needs --fragpipe_plan (a recorded FragPipe dry run): the stub runs no FragPipe') } : process.stdout }
             )
         }
     }

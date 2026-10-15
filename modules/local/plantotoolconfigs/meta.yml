@@ -1,5 +1,5 @@
 name: plantotoolconfigs
-description: Tool configs (PARSEFRAGPIPEWORKFLOW's tool_configs.json and configs/ params) from FragPipe's configured run (headless --write-plan work dir).
+description: Tool configs (tool_configs.json and configs/ params) from FragPipe's configured run (headless --write-plan work dir).
 keywords:
   - FragPipe
   - proteomics

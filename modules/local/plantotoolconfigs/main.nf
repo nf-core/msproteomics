@@ -1,15 +1,15 @@
 /*
  * PLANTOTOOLCONFIGS: tool configs from FragPipe's configured run (FRAGPIPEPLAN fp_work/)
  *
- * Runs bin/plan_to_tool_configs.py, which writes the outputs PARSEFRAGPIPEWORKFLOW gives the FragPipe
- * subworkflows: tool_configs.json and the per-data-type MSFragger params and MSBooster params in configs/.
+ * Runs bin/plan_to_tool_configs.py, which writes the tool configs the FragPipe
+ * subworkflows read: tool_configs.json and the per-data-type MSFragger params and MSBooster params in configs/.
  *
  * Input:
  *   - meta: plan id map
  *   - workdir: FragPipe's work dir after --write-plan (FRAGPIPEPLAN): run log, configs, run files
  *
  * Output:
- *   - tool_configs_json: tool run flags, args and fields (PARSEFRAGPIPEWORKFLOW's contract)
+ *   - tool_configs_json: tool run flags, args and fields (one entry per tool: run, args, config_type and tool-specific fields)
  *   - msfragger_*_config: MSFragger params of each data type the run has (FragPipe's files)
  *   - msbooster_config:   MSBooster params without the run-time keys (empty when MSBooster does not run)
  *   - versions_python:    Python version

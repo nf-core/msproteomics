@@ -25,6 +25,7 @@ nextflow_workflow {
 
         when {
             params {
+                fragpipe_plan = "${baseDir}/tests/fixtures/fragpipe_plans/stub/tmt_labelcheck_parity__labelcheck229_two_plex"
                 def fixtures = "${baseDir}/tests/fixtures"
                 def ss = new File("${outputDir}/samplesheet.csv")
                 ss.parentFile.mkdirs()
@@ -60,6 +61,7 @@ nextflow_workflow {
 
         when {
             params {
+                fragpipe_plan = "${baseDir}/tests/fixtures/fragpipe_plans/stub/tmt_labelcheck_parity__labelcheck229_no_sdrf"
                 def fixtures = "${baseDir}/tests/fixtures"
                 def ss = new File("${outputDir}/samplesheet.csv")
                 ss.parentFile.mkdirs()
@@ -93,6 +95,7 @@ nextflow_workflow {
 
         when {
             params {
+                fragpipe_plan = "${baseDir}/tests/fixtures/fragpipe_plans/stub/tmt_labelcheck_parity__labelcheck229_write_sub_mzml"
                 def fixtures = "${baseDir}/tests/fixtures"
                 def ss = new File("${outputDir}/samplesheet.csv")
                 ss.parentFile.mkdirs()

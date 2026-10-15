@@ -102,7 +102,7 @@ workflow FRAGPIPE_SEARCH {
     //   4. merge the chunk results per file (:401-496)
     // ---------------------------------------------------------------------
 
-    // FragPipe's split database checks (CmdMsfragger.java:337-357) run in PARSEFRAGPIPEWORKFLOW,
+    // FragPipe's split database checks (CmdMsfragger.java:337-357) run in FragPipe's plan (headless --write-plan),
     // which knows the manifest data types and fails the run as FragPipe does. calibrate_mass of
     // each file's params set comes from tool_configs (no params file read on the head node).
     ch_split_input = ch_search_mode.split
@@ -346,7 +346,7 @@ workflow FRAGPIPE_SEARCH {
             pin_dirs: items.collect { item -> item[2] }
         }
 
-    // numThreads the parser wrote (workflow.threads / --fragpipe_threads); it sizes the task (conf/modules.config)
+    // numThreads FragPipe's plan gives (workflow.threads / --fragpipe_threads); it sizes the task (conf/modules.config)
     // value channel: the MSBooster params are read once and the text reused below
     ch_msbooster_text = ch_msbooster_params.map { f -> f.text }
     ch_msbooster_threads = ch_msbooster_in.msbooster.combine(ch_msbooster_text).map { _meta, _pins, _spectra, text -> msboosterThreads(text) }
@@ -412,7 +412,7 @@ workflow FRAGPIPE_SEARCH {
     msfragger_logs    = ch_msfragger_logs                  // channel: [ val(meta), path(log) ] - per-sample logs, or the split-mode calibration log
     msfragger_split_logs = ch_msfragger_out.log.split     // channel: [ val(meta), path(log) ] - split-mode chunk search logs (meta.id <file>_chunk_<i>)
     lcms              = ch_lcms                            // channel: [ val(meta), [ path(lcms), path(msfragger side files)... ] ] - FragPipe's LC-MS directory after the search
-    // Write sub mzML (write_mzbin_all = 1): split database searches are refused with it (parse_fragpipe_workflow.py check_write_sub_mzml)
+    // Write sub mzML (write_mzbin_all = 1): split database searches are refused with it (FragPipe's own check)
     mzbin_all         = MSFRAGGER.out.mzbin_all.filter { meta, _f -> meta.chunk_id == null }  // channel: [ val(meta), path(<stem>.mzBIN_all) ] - read by WRITESUBMZML
     validation_lcms   = ch_validation_lcms                 // channel: [ val(meta), path(spectra) ] - spectra file named by Percolator / PeptideProphet
     uncalibrated_mzml = ch_lcms.flatMap { meta, files -> files.findAll { f -> f.name.endsWith('_uncalibrated.mzML') }.collect { f -> [meta, f] } }  // channel: [ val(meta), path(*_uncalibrated.mzML) ] - for .d/.raw

@@ -425,14 +425,13 @@
                     "fa_icon": "fas fa-exchange-alt",
                     "help_text": "Controls how MSFragger search is executed:\n- pipeline: Modular Nextflow-orchestrated execution with per-sample parallelization.\n- headless: Run FragPipe headless in a single process, producing results identical to the FragPipe GUI."
                 },
-                "fragpipe_planner": {
+                "fragpipe_plan": {
                     "type": "string",
-                    "default": "parser",
-                    "description": "Where the FragPipe tool configs come from: parser (default, the workflow file parser) or plan (FragPipe's own --write-plan run). Experimental: needs a FragPipe release with --write-plan (Nesvilab/FragPipe#2907).",
-                    "enum": ["parser", "plan"],
-                    "hidden": true,
+                    "format": "directory-path",
+                    "exists": true,
+                    "description": "FragPipe plan work dir to take the tool configs from, instead of planning the run.",
                     "fa_icon": "fas fa-project-diagram",
-                    "help_text": "- parser (default): PARSEFRAGPIPEWORKFLOW reads the .workflow file; works with released FragPipe 24.0.\n- plan (opt-in): FragPipe headless --write-plan --msfragger-per-file configures the run without running it, and PLANTOTOOLCONFIGS derives the same tool configs from its work dir. Needs a FragPipe build with the plan options --write-plan and --msfragger-per-file (Nesvilab/FragPipe#2907, in no FragPipe release yet), passed with --fragpipe_container; with any other FragPipe the FRAGPIPEPLAN task stops with an error naming the missing option. Needs a FASTA with decoys before the run (not with --add_philosopher_decoy / --add_philosopher_contaminants)."
+                    "help_text": "The tool configs come from FragPipe's own configured run: FRAGPIPEPLAN runs FragPipe headless --write-plan on the run's workflow, LC-MS files and database, and PLANTOTOOLCONFIGS reads its work dir (fp_work). With --fragpipe_plan, that work dir is given instead (a dry run of the same workflow and manifest), and FRAGPIPEPLAN does not run. Its manifest must list the run's LC-MS files with the same experiment, bioreplicate and data type."
                 },
                 "fragpipe_threads": {
                     "type": "integer",

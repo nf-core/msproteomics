@@ -13,31 +13,11 @@
                 "erwinia_db_philosopher.fasta:md5,5c424db03e0132905f6abcb80858b8ff"
             ]
         ],
+        "timestamp": "2026-10-09T01:16:36.254587147",
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-10-09T01:16:36.254587147"
-    },
-    "fragpipe_database - no FDR tool enabled skips the decoy check": {
-        "content": [
-            [
-                [
-                    {
-                        "id": "prebuilt"
-                    },
-                    "prebuilt.fasta:md5,a9ff42c842f6363da6f6a00709e8e9d9"
-                ]
-            ],
-            [
-                "prebuilt.fasta:md5,a9ff42c842f6363da6f6a00709e8e9d9"
-            ]
-        ],
-        "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-10-04T22:59:33.669672988"
+        }
     },
     "fragpipe_database - stub": {
         "content": [
@@ -53,31 +33,31 @@
                 "database_philosopher.fasta:md5,d41d8cd98f00b204e9800998ecf8427e"
             ]
         ],
+        "timestamp": "2026-03-25T03:54:13.955620214",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.2"
-        },
-        "timestamp": "2026-03-25T03:54:13.955620214"
+        }
     },
-    "fragpipe_database - prebuilt database passes the decoy check": {
+    "fragpipe_database - prebuilt database is searched as given": {
         "content": [
             [
                 [
                     {
                         "id": "prebuilt"
                     },
-                    "prebuilt.fasta:md5,4e4289e1f55ae25261a822e036dd1abf"
+                    "prebuilt.fasta:md5,32cc2e5acd207df45d6c183b98895ea8"
                 ]
             ],
             [
-                "prebuilt.fasta:md5,4e4289e1f55ae25261a822e036dd1abf"
+                "prebuilt.fasta:md5,32cc2e5acd207df45d6c183b98895ea8"
             ]
         ],
+        "timestamp": "2026-10-13T13:59:35.343598837",
         "meta": {
-            "nf-test": "0.9.3",
+            "nf-test": "0.9.5",
             "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-10-04T22:59:29.412805827"
+        }
     },
     "fragpipe_database - stub workflow decoy tag reaches the decoy check": {
         "content": [
@@ -93,11 +73,31 @@
                 "database_philosopher.fasta:md5,d41d8cd98f00b204e9800998ecf8427e"
             ]
         ],
+        "timestamp": "2026-10-05T14:44:20.70378398",
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-10-05T14:44:20.70378398"
+        }
+    },
+    "fragpipe_database - stub database update argv": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "database"
+                    },
+                    "database_philosopher.fasta:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                "database_philosopher.fasta:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ]
+        ],
+        "timestamp": "2026-10-13T13:59:23.555528048",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
     },
     "fragpipe_database - stub workflow decoy tag reaches philosopher database": {
         "content": [
@@ -113,10 +113,10 @@
                 "database_philosopher.fasta:md5,d41d8cd98f00b204e9800998ecf8427e"
             ]
         ],
+        "timestamp": "2026-10-04T22:59:20.211021587",
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-10-04T22:59:20.211021587"
+        }
     }
 }

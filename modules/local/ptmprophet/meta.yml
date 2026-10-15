@@ -34,7 +34,7 @@ input:
         description: The names FragPipe writes as base_name in the pepXML
     - ptmprophet_cli:
         type: string
-        description: PtmProphetPanel.getCmdLineOpts() options, "--" style already translated by parse_fragpipe_workflow.py
+        description: PtmProphetPanel.getCmdLineOpts() options, "--" style already translated by FragPipe's plan (bin/plan_to_tool_configs.py)
 output:
   results_dir:
     - - meta:

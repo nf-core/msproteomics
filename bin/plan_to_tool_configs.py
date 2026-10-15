@@ -8,8 +8,8 @@ printProcessDescription). load_workdir reads that work dir into the plan the ext
 argv (decode_command, told apart by the run's values; a line no single reading explains stops), its Cmd class
 (step_kind), the config files its argv names, paths under the run's roots ({WORKDIR}, {LCMS_DIR},
 {DB_DIR}, {FRAGPIPE}, {TMP}) and the licence as {LICENSE} (redact_lines). This script derives, per tool
-key, the same ``run`` / ``args`` / ``config_type`` and tool-specific fields that PARSEFRAGPIPEWORKFLOW
-(parse_fragpipe_workflow.py --output-json) writes, so the two can be diffed and the workflow parser removed.
+key, the ``run`` / ``args`` / ``config_type`` and tool-specific fields the FragPipe subworkflows read
+(the schema the retired workflow parser wrote; tests/python/test_plan_to_tool_configs.py compares with its frozen output).
 
 ``args`` holds what the msproteomics module passes through: the step's argv minus the elements the
 module builds itself (binary, JVM options, threads, licence, input and output files).
@@ -19,8 +19,9 @@ Quant, glyco N-LFQ, split DB, open search + Crystal-C, diaPASEF diaTracer, DIA-U
 MSFragger, MSBooster, Crystal-C, diaTracer, DIA-Umpire, Percolator, PeptideProphet, ProteinProphet,
 Philosopher filter/report/abacus, IonQuant (label-free, TMT MS1 + isobaric), TMT-Integrator,
 PTM-Shepherd, PairScans, O-Pair, AppendFile, database, SpecLibGen, DIA-NN, SAINTexpress,
-FreeQuant, LabelQuant, PTMProphet, iProphet, MBG, FP-Meta, FPOP, FPOP coADAPTr, Write sub mzML, Export matched fragments. A tool that has a plan step but
-no extractor stops the script, so nothing is silently dropped. The legacy configs/ files the
+FreeQuant, LabelQuant, PTMProphet, iProphet, MBG, FP-Meta, FPOP, FPOP coADAPTr, Write sub mzML, Export matched fragments.
+A tool that has a plan step but no extractor stops the script, so nothing is silently dropped, and so do the
+runs FragPipe plans but msproteomics cannot run (unsupported_runs). The legacy configs/ files the
 subworkflows read (fragger*.params per data type, msbooster.config) are written next to the JSON.
 """
 
@@ -37,7 +38,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import fragpipe_log_to_manifest as fpm  # noqa: E402
 
-# config_type per tool key, as parse_fragpipe_workflow.py writes it
+# config_type per tool key, as the FragPipe subworkflows read it
 CONFIG_TYPES = {
     "msfragger": "params_file", "msbooster": "params_file", "percolator": "cli", "peptideprophet": "cli",
     "proteinprophet": "cli", "filter": "cli", "ionquant": "cli", "tmtintegrator": "params_file",
@@ -283,7 +284,7 @@ def msfragger_config(steps: list[ET.Element], plan: Plan) -> dict:
 # MSBooster keys CmdMSBooster.configure adds from the run (CmdMSBooster.java:160-212); msboosterParamsText re-adds them
 MSBOOSTER_RUNTIME_KEYS = ("DiaNN", "fragger", "unimodObo", "mzmlDirectory", "pinPepXMLDirectory")
 MSBOOSTER_LIBRARY_KEYS = ("spectraPredFile", "RTPredFile", "IMPredFile")
-MSBOOSTER_LIBRARY_TOKEN = "{SPECTRAL_LIBRARY}"  # parse_fragpipe_workflow.py MSBOOSTER_LIBRARY_TOKEN
+MSBOOSTER_LIBRARY_TOKEN = "{SPECTRAL_LIBRARY}"  # msboosterParamsText fills it with the staged library
 
 
 def msbooster_config(steps: list[ET.Element], plan: Plan) -> dict:
@@ -445,6 +446,12 @@ def _ionquant_entry(step: ET.Element, plan: Plan) -> dict:
     a = a[a.index("ionquant.IonQuant") + 1:]
     modlist = a[a.index("--modlist") + 1] if "--modlist" in a else None
     a = strip_options(a, {"--license", "--threads", "--multidir", "--filelist", "--modlist", "--annotation"})
+    # FragPipe passes each value as one argv element (CmdIonquant.java:303-304); msproteomics splits the
+    # IonQuant options on spaces (shellArgs), so a value with whitespace would become several
+    spaced = [x for x in a if re.search(r"\s", x)]
+    if spaced:
+        raise PlanError(f"ionquant: IonQuant values with whitespace {spaced}: FragPipe passes each as one argument, "
+                        "but msproteomics splits the IonQuant options on spaces")
     return {
         "run": True,
         "args": " ".join(a),
@@ -626,7 +633,7 @@ def saved_workflow(plan: Plan) -> dict[str, str]:
 
 def _java_properties_unescape(text: str) -> str:
     """Properties.loadConvert: \\uXXXX, \\t, \\n, \\r, \\f, and any other escaped character as itself
-    (parse_fragpipe_workflow.py's loader, the same code)."""
+    (PropertiesUtils.saveConvert writes them, PropertiesUtils.java:111-167)."""
     out, i = [], 0
     while i < len(text):
         if text[i] == "\\" and i + 1 < len(text):
@@ -802,7 +809,7 @@ def workflow_value(plan: Plan, key: str) -> str:
 def freequant_config(steps: list[ET.Element], plan: Plan) -> dict:
     """philosopher freequant <options> [--raw] --dir <LC-MS dir> (CmdFreequant.java:112-125). Before LabelQuant
     it is the TMT FreeQuant (FragpipeRun.java:1932, 2049-2055): the label-free FreeQuant (key run) does not run,
-    but its options are the ones the TMT FreeQuant passes, as in the parser."""
+    but its options are the ones the TMT FreeQuant passes."""
     variants = [strip_options(argv(s)[2:], {"--dir"}, {"--raw"}) for s in steps]  # philosopher freequant
     labelquant = [s for s in plan.steps if s.get("class") == "CmdLabelquant"]
     # label-free FreeQuant as well (FragpipeRun.java:1813) would add a second FreeQuant step per group
@@ -850,7 +857,7 @@ def iprophet_config(steps: list[ET.Element], plan: Plan) -> dict:
             "config_type": CONFIG_TYPES["iprophet"]}
 
 
-# MBG options the MBG task fills from the run (CmdMBGMatch.java:137-208), as parse_fragpipe_workflow.py's tokens
+# MBG options the MBG task fills from the run (CmdMBGMatch.java:137-208), as tokens
 MBG_RUNTIME_OPTIONS = {"--psm": "@PSM@", "--manifest": "@MANIFEST@", "--nopasef": "@NOPASEF@", "--numthreads": "@THREADS@"}
 
 
@@ -918,6 +925,50 @@ CLASS_TO_TOOL = {
     "CmdMetaproteomics": "metaproteomics", "CmdFpopQuant": "fpop", "CmdFPOPcoadaptr": "fpop_coadaptr",
     "CmdWriteSubMzml": "writesubmzml", "CmdExportMatchedFragments": "exportmatchedfragments",
 }
+# FragPipe steps msproteomics does not run: FragPipe plans them, and the run stops here instead
+UNSUPPORTED_CLASSES = {
+    # CmdTransferLearning needs a credential file with the URL and API key of an external prediction server
+    # (CmdTransferLearning.java:123-147); CmdMsfraggerDigest runs only with transfer learning (FragpipeRun.java:2255)
+    "CmdTransferLearning": "Transfer learning (transfer-learning.run-transfer-learning=true) needs an external prediction "
+                           "server, and msproteomics does not run it. Please disable Transfer learning in the workflow.",
+    "CmdMsfraggerDigest": "Transfer learning's MSFragger digest (transfer-learning.run-transfer-learning=true) needs an external "
+                          "prediction server, and msproteomics does not run it. Please disable Transfer learning in the workflow.",
+}
+# Steps that read Philosopher report's <group>/psm.tsv: CmdIonquant.java:318, CmdTmtIntegrator.java:295,
+# PtmshepherdParams.java:85, CmdMBGMatch.java:139, CmdOPair.java:176, CmdSpecLibGen.java:135
+PSM_TSV_READERS = ("CmdIonquant", "CmdTmtIntegrator", "CmdPtmshepherd", "CmdMBGMatch", "CmdOPair", "CmdSpecLibGen")
+
+
+def unsupported_runs(root: ET.Element) -> list[str]:
+    """The runs FragPipe plans but msproteomics cannot run, each with its message.
+
+    - MSFragger off or digest only: FragPipe skips the search and hands the MSFragger outputs of its work
+      directory to the later steps (FragpipeRun.java:1519-1521, outside `if isRun()`; TabMsfragger.java:1932-1934),
+      i.e. it reuses a previous run's search; msproteomics starts from LC-MS files.
+    - FreeQuant without the Report panel: FragPipe runs Philosopher report (FragpipeRun.java:1767,
+      reportPanel.isRun() || isRunFreeQuant()) with no DbAnnotate (:1690) or Filter (:1702); msproteomics
+      reports after the filter only.
+    - psm.tsv readers without Philosopher report: they read the <group>/psm.tsv of a previous run.
+    """
+    plan = Plan(root)
+    props = saved_workflow(plan)
+    classes = {s.get("class") for s in plan.steps}
+    errors = []
+    flag = lambda key, default: props.get(key, default).strip().lower() == "true"  # noqa: E731
+    if not flag("msfragger.run-msfragger", "true") or flag("msfragger.digest-only", "false"):
+        errors.append("MSFragger does not search in this workflow (msfragger.run-msfragger=false or msfragger.digest-only=true): "
+                      "FragPipe then reuses the search results of a previous run in its work directory, but msproteomics "
+                      "starts from LC-MS files. Please enable the MSFragger search in the workflow.")
+    if "CmdFreequant" in classes and "CmdPhilosopherFilter" not in classes:
+        errors.append("FreeQuant runs without the Philosopher report panel (phi-report.run-report=false or run-validation-tab=false): "
+                      "FragPipe then runs Philosopher report on a workspace with no database annotation and no FDR filter, "
+                      "which msproteomics does not support. Please enable Generate reports or use IonQuant.")
+    readers = sorted(classes & set(PSM_TSV_READERS))
+    if readers and "CmdPhilosopherReport" not in classes:
+        errors.append(f"Philosopher report does not run, so no psm.tsv is written, but these steps read it: {', '.join(readers)}. "
+                      "Please enable Generate reports and Run validation tools, or disable these tools in the workflow.")
+    errors += [UNSUPPORTED_CLASSES[c] for c in sorted(classes & set(UNSUPPORTED_CLASSES))]
+    return errors
 
 
 def tool_configs(root: ET.Element) -> tuple[dict, dict]:
@@ -933,7 +984,7 @@ def tool_configs(root: ET.Element) -> tuple[dict, dict]:
             raise PlanError(f"step {s.get('order')} ({cls}, {s.get('name')}) has no extractor yet")
         steps_by_tool.setdefault(CLASS_TO_TOOL[cls], []).append(s)
     out = {tool: {"run": False, "args": "", "config_type": ct} for tool, ct in CONFIG_TYPES.items()}
-    # msbooster.config always exists, as the parser's: the subworkflows read it as a value (empty when MSBooster does not run)
+    # msbooster.config always exists: the subworkflows read it as a value (empty when MSBooster does not run)
     files: dict[str, str] = {"msbooster.config": ""}
     out["database"] = database_config(props, plan)
     out["abacus"] = abacus_off_config(props)
@@ -944,6 +995,13 @@ def tool_configs(root: ET.Element) -> tuple[dict, dict]:
         entry = EXTRACTORS[tool](steps, plan)
         files.update(entry.pop("_files", {}))
         out[tool] = entry
+    # FragPipe appends --no-ptm-score-in-pin after the LC-MS files (CmdMsfragger.java:586, :628-630), and
+    # msfragger_pep_split.py takes it as an LC-MS file (:67-72), so FragPipe's MSFragger stops with
+    # "Could not find MS file at <workdir>/--no-ptm-score-in-pin" (FragPipe 24.0 headless, 2026-10-11)
+    if out["writesubmzml"]["run"] and out["msfragger"].get("num_slices", 1) > 1:
+        raise PlanError("Write sub mzML (tab-run.write_sub_mzml=true) with a split database search (msfragger.misc.slice-db > 1): "
+                        "FragPipe's MSFragger then stops with 'Could not find MS file at <workdir>/--no-ptm-score-in-pin'. "
+                        "Please set msfragger.misc.slice-db to 1 or disable Write sub mzML in the Run tab.")
     # the GUI quant tab is "on" when label-free MS1 quant runs (IonQuant)
     out["quantitation"]["run"] = out["ionquant"]["run"]
     if props.get("saintexpress.run-saint-express", "false").strip().lower() == "true":
@@ -957,7 +1015,11 @@ def main(argv_: list[str] | None = None) -> int:
     ap.add_argument("--outdir", required=True, type=Path, help="writes tool_configs.json and configs/ (MSFragger, MSBooster params)")
     args = ap.parse_args(argv_)
     try:
-        configs_, files = tool_configs(load_workdir(args.workdir))
+        root = load_workdir(args.workdir)
+        errors = unsupported_runs(root)
+        if errors:
+            raise PlanError("\n".join(errors))
+        configs_, files = tool_configs(root)
     except PlanError as ex:
         print(f"plan_to_tool_configs.py: {ex}", file=sys.stderr)
         return 1
