@@ -26,18 +26,18 @@ input:
         type: file
         description: Search results in pepXML format from MSFragger
         pattern: "*.pepXML"
-    - mzml_file:
+    - lcms_file:
         type: file
-        description: Mass spectrometry data file for spectrum access
-        pattern: "*.{mzML,mzXML}"
+        description: LC-MS file the pepXML was searched from (Crystal-C reads .mzML, .mzXML and Thermo .raw)
+        pattern: "*.{mzML,mzXML,raw}"
     - config_file:
         type: file
-        description: Crystal-C parameters file with paths configured
+        description: Crystal-C algorithm settings (the jar's crystalc.params defaults, as CrystalcPanel.toParams); the module adds the runtime keys
         pattern: "*.params"
-  - - fasta:
-        type: file
-        description: Protein sequence database FASTA (shared resource, required by CrystalC)
-        pattern: "*.{fasta,fas,fa}"
+  - fasta:
+      type: file
+      description: Protein sequence database FASTA (shared resource, required by CrystalC)
+      pattern: "*.{fasta,fas,fa}"
 
 output:
   results_dir:
@@ -56,11 +56,47 @@ output:
           type: file
           description: Filtered pepXML files with chimeric artifacts removed
           pattern: "*_c.pepXML"
+  versions_crystalc:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - crystalc:
+          type: string
+          description: The name of the tool
+      - "cat .crystalc_version":
+          type: eval
+          description: The Crystal-C version recorded from the FragPipe tools directory
+  versions_fragpipe:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - fragpipe:
+          type: string
+          description: The name of the tool
+      - "cat .fragpipe_version":
+          type: eval
+          description: The FragPipe version of the tools directory
+
+topics:
   versions:
-    - versions.yml:
-        type: file
-        description: File containing software versions
-        pattern: "versions.yml"
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - crystalc:
+          type: string
+          description: The name of the tool
+      - "cat .crystalc_version":
+          type: eval
+          description: The Crystal-C version recorded from the FragPipe tools directory
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - fragpipe:
+          type: string
+          description: The name of the tool
+      - "cat .fragpipe_version":
+          type: eval
+          description: The FragPipe version of the tools directory
 
 authors:
   - "@dongzehe"

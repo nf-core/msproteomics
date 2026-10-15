@@ -7,24 +7,18 @@
                         "id": "test_freequant"
                     },
                     [
-                        "freequant.log:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        [
+                            "psm.bin:md5,17404a596cbd0d1e6c7d23fcd845ab82"
+                        ],
+                        "psm.tsv:md5,083b3053d8f5380e8d1645ac54346e51"
                     ]
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "test_freequant"
-                    },
-                    "ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
             ],
             [
                 [
                     "FREEQUANT",
                     "philosopher",
-                    "24.0"
+                    "5.1.3"
                 ]
             ],
             [
@@ -35,10 +29,10 @@
                 ]
             ]
         ],
-        "timestamp": "2026-03-31T19:39:33.083477439",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
-        }
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-09T03:02:34.940312032"
     }
 }

@@ -1,0 +1,93 @@
+name: "fragpipesecondpass"
+description: FragPipe's second-pass workflow and manifest, written by the finalizer when Write sub mzML is on (FragpipeRun.java:589-700)
+keywords:
+  - proteomics
+  - fragpipe
+  - workflow
+  - manifest
+  - two-pass search
+tools:
+  - fragpipe:
+      description: |
+        bin/fragpipe_second_pass.py, a port of FragPipe 24.0's finalizer step for tab-run.write_sub_mzml=true: it rewrites the run's
+        fragpipe.workflow for the second pass on the _sub.mzML files (MSFragger values from the console
+        text) and writes the manifest of the _sub.mzML files.
+      homepage: "https://fragpipe.nesvilab.org/"
+      tool_dev_url: "https://github.com/Nesvilab/FragPipe"
+      licence: ["GPL-3.0-or-later"]
+
+input:
+  - - meta:
+        type: map
+        description: Run metadata map
+    - workflow_file:
+        type: file
+        description: The run's fragpipe.workflow
+        pattern: "*.workflow"
+    - manifest:
+        type: file
+        description: The run's fragpipe-files.fp-manifest
+        pattern: "*.fp-manifest"
+    - logs:
+        type: file
+        description: MSFragger console output of the run, in FragPipe's order
+    - workdir:
+        type: string
+        description: FragPipe's work dir (the published fragpipe/ folder)
+output:
+  workflow:
+    - - meta:
+          type: map
+          description: Run metadata map
+      - "fragpipe-second-pass.workflow":
+          type: file
+          description: Workflow of FragPipe's second pass
+          pattern: "fragpipe-second-pass.workflow"
+  manifest:
+    - - meta:
+          type: map
+          description: Run metadata map
+      - "fragpipe-files-second-pass.fp-manifest":
+          type: file
+          description: Manifest of the _sub.mzML files
+          pattern: "fragpipe-files-second-pass.fp-manifest"
+  versions_python:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - python:
+          type: string
+          description: The tool name
+      - python3 --version | sed 's/Python //':
+          type: string
+          description: The Python version
+
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: Process name
+      - python:
+          type: string
+          description: Tool name
+      - "python3 --version | sed 's/Python //'":
+          type: eval
+          description: Version of Python
+containers:
+  conda:
+    linux/amd64:
+      lock_file: modules/local/fragpipesecondpass/.conda-lock/linux_amd64-bd-27a817c2c0890658_1.txt
+  docker:
+    linux/amd64:
+      name: community.wave.seqera.io/library/python:3.12.13--27a817c2c0890658
+      build_id: bd-27a817c2c0890658_1
+      scan_id: sc-e07391e6e5fbddf7_1
+  singularity:
+    linux/amd64:
+      name: oras://community.wave.seqera.io/library/python:3.12.13--7eb61448497e5133
+      build_id: bd-7eb61448497e5133_1
+      https: https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/37/370b76e81fbff1ab2427ad3a246bca8a4aa578a68216a5e800dceaedf7bcfa40/data
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

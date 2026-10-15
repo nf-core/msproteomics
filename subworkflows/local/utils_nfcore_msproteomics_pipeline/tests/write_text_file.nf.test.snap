@@ -1,0 +1,32 @@
+{
+    "textFileCommand - empty": {
+        "content": [
+            ": > 'x.txt'"
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-07T05:56:19.612845646"
+    },
+    "textFileCommand - trailing newline": {
+        "content": [
+            "cat > 'x.txt' <<'WRITE_TEXT_FILE_END'\na\tb\nWRITE_TEXT_FILE_END"
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-07T05:56:11.31730178"
+    },
+    "textFileCommand - no final newline": {
+        "content": [
+            "printf '%s' \"$(cat <<'WRITE_TEXT_FILE_END'\na\tb\nWRITE_TEXT_FILE_END\n)\" > 'x.txt'"
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-07T05:56:14.867106458"
+    }
+}

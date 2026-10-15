@@ -1,0 +1,45 @@
+nextflow_process {
+
+    name "Test Process PAIRSCANS"
+    script "../main.nf"
+    process "PAIRSCANS"
+
+    tag "modules"
+    tag "modules_local"
+    tag "pairscans"
+
+    // argv after the JVM options as FragPipe 24.0 builds it for glyco-O-Pair.workflow (CmdPairScans.java:118-126;
+    // a headless --dry-run --export-plan of that workflow gives -cp <install>/lib/fragpipe-<version>.jar:
+    // <tools>/batmass-io-1.36.6.jar org.nesvilab.fragpipe.util.PairScans <file> <threads> HCD ETD false false)
+    test("pairscans - stub - <basename>.pairs per LC-MS file and FragPipe's argv") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def mzml = file("\${workDir}/run_A.mzML")
+                mzml.text = "mock"
+                input[0] = channel.of([ [ id: 'run_A', group: 'g1' ], mzml, ['HCD', 'ETD', 'false', 'false'] ])
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert file(process.out.pairs[0][1]).name == 'run_A.pairs' },
+                { assert path(process.out.log[0][1]).readLines() == [
+                    '-cp',
+                    // the stub has no FragPipe image: the batmass-io jar is the token the task resolves (fragpipeJarLines)
+                    '/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/lib/fragpipe-24.0.jar:{BATMASS_IO_JAR}',
+                    'org.nesvilab.fragpipe.util.PairScans',
+                    '{TASK_DIR}/spectra/run_A.mzML',
+                    '2',
+                    'HCD', 'ETD', 'false', 'false'
+                ] },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}

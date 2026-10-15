@@ -1,0 +1,25 @@
+{
+    "mzml_indexing - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "sample.mzML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                "sample_mzmlindexing.log:md5,1ad239c94b4b8739c6acd1bb40b24990"
+            ],
+            [
+                "versions.yml:md5,4a968ac1dfd8acce3c88dbb24008c4ae"
+            ]
+        ],
+        "timestamp": "2026-10-14T20:18:09.532832229",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

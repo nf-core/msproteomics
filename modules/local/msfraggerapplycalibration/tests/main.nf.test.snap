@@ -1,0 +1,38 @@
+{
+    "msfragger_apply_calibration - optimized values and the calibrated spectra": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "s1"
+                    },
+                    "s1.mzBIN_calibrated:md5,339a38ba1ed694cdec45ebc8db62d8d9",
+                    "fragger.params:md5,dc123a6237fcf9808a65d25e0f6ae8c3"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-07T10:13:17.28046796"
+    },
+    "msfragger_apply_calibration - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "s1"
+                    },
+                    "s1.mzBIN_calibrated:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "fragger.params:md5,4180b2d78fac8c6d0eac504216fe267a"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-07T10:06:27.397532092"
+    }
+}

@@ -1,0 +1,240 @@
+// Glyco tool arguments and FragPipe hard stops.
+//
+// Every expected value is derived here from the FragPipe 24.0 workflow file with FragPipe's own
+// rules (FP = FragPipe-GUI/src/main/java/org/nesvilab/fragpipe/), never from parser output:
+//   O-Pair  FP/cmd/CmdOPair.java:177-209 - one token per flag ("-b " + double), "-z " always,
+//           -f default tools/opair/Glycan_Mods/oxonium_filter.txt
+//           or the user's file (staged: -f @OXONIUM_FILE@, opair.oxonium_file), -x/-y tools/Glycan_Databases
+//   PairScans FP/FragpipeRun.java:2068 (run-opair && !single_scan_type), FP/cmd/CmdPairScans.java:121-126
+//   MBG     FP/cmd/CmdMBGMatch.java:137-208 (flag order; tolerances from ionquant.*; --runtmt = TMT-I run)
+//   AppendFile FP/FragpipeRun.java:1822-1830; no IonQuant modlist with O-Pair FP/FragpipeRun.java:1885
+//   PTM-S   FP/tools/ptmshepherd/PtmshepherdParams.java:57-99 + PtmshepherdPanel.toPtmsParamsMap
+//   Stops   FP/FragpipeRun.java:2099-2111, FP/cmd/CmdOPair.java:89-96, FP/cmd/CmdMBGMatch.java:145-158
+// The real parser runs (the module stub runs it); it needs only python3.
+
+nextflow_process {
+
+    name "Test Process PARSEFRAGPIPEWORKFLOW - glyco"
+    script "../main.nf"
+    process "PARSEFRAGPIPEWORKFLOW"
+    config "./nextflow.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "parsefragpipeworkflow"
+    tag "glyco"
+
+    test("parse_fragpipe_workflow - glyco - O-Pair, PairScans, MBG, AppendFile and PTM-S arguments of bundled workflows") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def fixtures = "${baseDir}/tests/fixtures/fragpipe_workflows"
+                // glyco-N-LFQ with MBG switched on (no bundled workflow runs MBG)
+                def mbg_wf = file("\${workDir}/glyco-N-LFQ-MBG.workflow")
+                mbg_wf.text = file("\${fixtures}/glyco-N-LFQ.workflow").text.replace('mbg.run-mbg=false', 'mbg.run-mbg=true')
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
+                input[0] = channel.of(
+                    [ [ id: 'glyco-O-Pair' ], file("\${fixtures}/glyco-O-Pair.workflow", checkIfExists: true), ['DDA'] ],
+                    [ [ id: 'glyco-O-Hybrid' ], file("\${fixtures}/glyco-O-Hybrid.workflow", checkIfExists: true), ['DDA'] ],
+                    [ [ id: 'glyco-N-TMT' ], file("\${fixtures}/glyco-N-TMT.workflow", checkIfExists: true), ['DDA'] ],
+                    [ [ id: 'glyco-N-LFQ-MBG' ], mbg_wf, ['DDA'] ]
+                )
+                """
+            }
+        }
+
+        then {
+            def fixtures = "${baseDir}/tests/fixtures/fragpipe_workflows"
+            def slurper = new groovy.json.JsonSlurper()
+            def load = { name ->
+                def props = new Properties()
+                def text = new File("${fixtures}/${name.replace('-MBG', '')}.workflow").text
+                if (name.endsWith('-MBG')) { text = text.replace('mbg.run-mbg=false', 'mbg.run-mbg=true') }
+                props.load(new StringReader(text))
+                props
+            }
+            def cfg = process.out.tool_configs_json.collectEntries { meta, json -> [meta.id, slurper.parse(new File(json.toString()))] }
+            def dbl = { v -> Double.toString(Double.parseDouble(v)) }
+            def T = '@TOOLS_DIR@'
+
+            def expOpair = { p ->
+                def a = ["-b ${dbl(p.getProperty('opair.ms2_tol'))}", "-c ${dbl(p.getProperty('opair.ms1_tol'))}"]
+                if (p.getProperty('opair.filterOxonium') == 'true') {
+                    def oxo = p.getProperty('opair.oxonium_filtering_file')
+                    a << (oxo ? "-f @OXONIUM_FILE@" : "-f ${T}/opair/Glycan_Mods/oxonium_filter.txt")
+                    a << "-m ${dbl(p.getProperty('opair.oxonium_minimum_intensity'))}"
+                }
+                if (p.getProperty('opair.glyco_db')) { a << "-g ${p.getProperty('opair.glyco_db')}" }
+                a += ["-x ${T}/Glycan_Databases/glycan_residues.txt", "-y ${T}/Glycan_Databases/glycan_mods.txt",
+                      "-n ${p.getProperty('opair.max_glycans')}", "-z ${p.getProperty('opair.allowed_sites')}", "-t @THREADS@",
+                      "-i ${p.getProperty('opair.min_isotope_error')}", "-j ${p.getProperty('opair.max_isotope_error')}",
+                      "-r @FILELIST@", "-s @PSM@", "-o @OUTDIR@"]
+                a.collect { t -> t.toString() }
+            }
+            def pOP = load('glyco-O-Pair')
+            def pOH = load('glyco-O-Hybrid')
+            def pNT = load('glyco-N-TMT')
+            def pMB = load('glyco-N-LFQ-MBG')
+            def expMbg = ['--match', '--psm', '@PSM@', '--manifest', '@MANIFEST@',
+                '--toaddresiduals', pMB.getProperty('mbg.residues_to_add'),
+                '--residuedb', "${T}/Glycan_Databases/glycan_residues.txt".toString(), '--glycanmoddb', "${T}/Glycan_Databases/glycan_mods.txt".toString(),
+                '--maxq', dbl(pMB.getProperty('mbg.max_glycan_q')), '--minpsms', pMB.getProperty('mbg.min_psms'),
+                '--minglycans', pMB.getProperty('mbg.min_glycans'), '--fdr', dbl(pMB.getProperty('mbg.fdr')),
+                '--mztol', pMB.getProperty('ionquant.mztol'), '--rttol', pMB.getProperty('ionquant.rttol'), '--imtol', pMB.getProperty('ionquant.imtol'),
+                '--nopasef', '@NOPASEF@', '--numthreads', '@THREADS@', '--runtmt', pMB.getProperty('tmtintegrator.run-tmtintegrator'),
+                '--expanddb', pMB.getProperty('mbg.expand_db'), '--maxskips', pMB.getProperty('mbg.max_skips'),
+                '--allowchimeric', pMB.getProperty('mbg.allow_chimeric')]
+            def ptmsLines = cfg['glyco-N-TMT'].ptmshepherd.args.split('\n', -1) as List
+            def ptmsKeys = ptmsLines.collect { line -> line.split(' = ', 2)[0] }
+
+            assertAll(
+                // O-Pair argv
+                { assert cfg['glyco-O-Pair'].opair.args == expOpair(pOP) },
+                { assert cfg['glyco-O-Hybrid'].opair.args == expOpair(pOH) },
+                { assert cfg['glyco-O-Pair'].opair.config_type == 'argv' },
+                { assert cfg['glyco-O-Pair'].opair.oxonium_file == '' },
+                // O-Pair reads <base>_calibrated.mzML (write_calibrated_mzml && calibrate_mass > 0)
+                { assert cfg['glyco-O-Pair'].opair.spectra == ((pOP.getProperty('msfragger.write_calibrated_mzml') == 'true' && pOP.getProperty('msfragger.calibrate_mass').toInteger() > 0) ? 'calibrated' : 'uncalibrated_or_input') },
+                // PairScans
+                { assert cfg['glyco-O-Pair'].pairscans.run == (pOP.getProperty('opair.single_scan_type') != 'true') },
+                { assert cfg['glyco-O-Pair'].pairscans.args == ['opair.activation1', 'opair.activation2', 'opair.reverse_scan_order', 'opair.single_scan_type'].collect { k -> pOP.getProperty(k) } },
+                { assert cfg['glyco-O-Hybrid'].pairscans.run == false },
+                // No IonQuant modlist when O-Pair runs
+                { assert !cfg['glyco-O-Pair'].ionquant.containsKey('modmasses') },
+                // AppendFile: glycan assignment and an IonQuant pass (TMT-I extraction tool 0)
+                { assert cfg['glyco-N-TMT'].appendfile.run == (pNT.getProperty('ptmshepherd.run_glyco_mode') == 'true') },
+                { assert cfg['glyco-O-Pair'].appendfile.run == false },
+                // MBG argv
+                { assert cfg['glyco-N-LFQ-MBG'].mbg.args == expMbg },
+                { assert cfg['glyco-N-LFQ-MBG'].mbg.im_ms == (pMB.getProperty('workflow.input.data-type.im-ms') == 'true') },
+                // PTM-S property block (G-10, G-12, G-13): sorted, defaults seeded, empty values kept,
+                // annotation-glyco copies the empty custom-file field, keys keep their hyphens
+                { assert ptmsKeys == ptmsKeys.toSorted() },
+                { assert ptmsLines.contains('annotation_file = ') },
+                { assert ptmsLines.contains('histo_bindivs = 5000') },
+                { assert ptmsLines.contains('peakpicking_topN = 500') },
+                { assert ptmsLines.contains('isotope_states = ') },
+                { assert ptmsLines.contains('run-shepherd = ' + pNT.getProperty('ptmshepherd.run-shepherd')) },
+                { assert ptmsLines.contains('glyco_residue_list = @TOOLS_DIR@/Glycan_Databases/glycan_residues.txt') },
+                { assert ptmsLines.contains('threads = @THREADS@') },
+                { assert ptmsLines.contains('msfragger_massdiff_to_varmod = ' + pNT.getProperty('msfragger.mass_diff_to_variable_mod')) },
+                { assert !ptmsKeys.contains('annotation-glyco') },
+                // tabMsf.getMassOffsets(): the unbound uiTextMassOffsets field ("0") without detailed offsets
+                { assert ptmsLines.contains('mass_offsets = 0') },
+                { assert !ptmsLines.any { line -> line.contains('/fragpipe_bin/') } },
+                { assert snapshot(cfg['glyco-O-Pair'].opair, cfg['glyco-O-Pair'].pairscans, cfg['glyco-N-LFQ-MBG'].mbg, cfg['glyco-N-TMT'].appendfile, ptmsLines).match() }
+            )
+        }
+    }
+
+    // CmdOPair.java:171-181: a user oxonium file is "-f " + its path; the pipeline stages it
+    test("parse_fragpipe_workflow - glyco - O-Pair user oxonium file is an entry field and a staged -f token") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def fixtures = "${baseDir}/tests/fixtures/fragpipe_workflows"
+                def wf = file("\${workDir}/glyco-O-Pair-oxo.workflow")
+                wf.text = file("\${fixtures}/glyco-O-Pair.workflow").text.replace('opair.oxonium_filtering_file=\\n', 'opair.oxonium_filtering_file=/data/my_oxonium.txt\\n')
+                def off = file("\${workDir}/glyco-O-Pair-off.workflow")
+                off.text = wf.text.replace('opair.filterOxonium=true', 'opair.filterOxonium=false')
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
+                input[0] = channel.of(
+                    [ [ id: 'oxo' ], wf, ['DDA'] ],
+                    [ [ id: 'off' ], off, ['DDA'] ]
+                )
+                """
+            }
+        }
+
+        then {
+            def slurper = new groovy.json.JsonSlurper()
+            def cfg = process.out.tool_configs_json.collectEntries { meta, json -> [meta.id, slurper.parse(new File(json.toString()))] }
+            assertAll(
+                { assert process.success },
+                { assert cfg.oxo.opair.oxonium_file == '/data/my_oxonium.txt' },
+                { assert cfg.oxo.opair.args.contains('-f @OXONIUM_FILE@') },
+                { assert !cfg.oxo.opair.args.any { t -> t.contains('oxonium_filter.txt') || t.contains('/data/') } },
+                // filterOxonium=false: no -f, no -m, nothing staged
+                { assert cfg.off.opair.oxonium_file == '' },
+                { assert !cfg.off.opair.args.any { t -> t.startsWith('-f ') || t.startsWith('-m ') } },
+                { assert snapshot(cfg.oxo.opair, cfg.off.opair).match() }
+            )
+        }
+    }
+
+    test("parse_fragpipe_workflow - glyco - O-Pair with PTM-Shepherd glycan assignment is refused") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def wf = file("\${workDir}/stop.workflow")
+                wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/glyco-O-Pair.workflow").text.replace('ptmshepherd.run_glyco_mode=false', 'ptmshepherd.run_glyco_mode=true')
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
+                input[0] = channel.of([ [ id: 'stop' ], wf, ['DDA'] ])
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.failed },
+                { assert (process.stdout + process.stderr).any { line -> line.contains('O-Pair and PTM-Shepherd (including glycan composition assignment) cannot be run in the same workflow') } }
+            )
+        }
+    }
+
+    test("parse_fragpipe_workflow - glyco - O-Pair with activation1 CID is refused") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def wf = file("\${workDir}/stop.workflow")
+                wf.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/glyco-O-Pair.workflow").text.replace('opair.activation1=HCD', 'opair.activation1=CID')
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
+                input[0] = channel.of([ [ id: 'stop' ], wf, ['DDA'] ])
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.failed },
+                { assert (process.stdout + process.stderr).any { line -> line.contains('Single activation type must be hybrid, not HCD/CID, for O-Pair') } }
+            )
+        }
+    }
+
+    test("parse_fragpipe_workflow - glyco - MBG without residues is refused") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def wf = file("\${workDir}/stop.workflow")
+                def text = file("${baseDir}/tests/fixtures/fragpipe_workflows/glyco-N-LFQ.workflow").text
+                wf.text = text.replace('mbg.run-mbg=false', 'mbg.run-mbg=true').replaceAll(/(?m)^mbg\\.residues_to_add=.*\$/, 'mbg.residues_to_add=')
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
+                input[0] = channel.of([ [ id: 'stop' ], wf, ['DDA'] ])
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.failed },
+                { assert (process.stdout + process.stderr).any { line -> line.contains('no glycan residues or mods specified for MBG') } }
+            )
+        }
+    }
+}

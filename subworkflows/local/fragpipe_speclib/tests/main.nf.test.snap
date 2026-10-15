@@ -1,50 +1,28 @@
 {
-    "fragpipe_speclib - stub": {
+    "fragpipe_speclib - stub - FPOP coADAPTr: DIA-NN's unedited report.tsv is not published": {
         "content": [
             [
                 [
                     {
-                        "id": "speclib"
+                        "id": "fragpipe",
+                        "fpop_coadaptr": "diann"
                     },
-                    "library.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "speclib"
-                    },
-                    "library.speclib:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                
-            ],
-            [
-                [
-                    {
-                        "id": "speclib"
-                    },
-                    [
-                        "library.speclib:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "library.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "speclibgen.log:md5,d41d8cd98f00b204e9800998ecf8427e"
-                    ]
+                    "report.pg_matrix.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
             ]
         ],
-        "timestamp": "2026-03-25T03:56:41.131386973",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
-        }
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-06T20:40:53.221774344"
     },
-    "fragpipe_speclib - stub single sample": {
+    "fragpipe_speclib - stub - SpecLibGen and DIA-NN on DIA and DIA-Quant files": {
         "content": [
             [
                 [
                     {
-                        "id": "single_speclib"
+                        "id": "fragpipe"
                     },
                     "library.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
@@ -52,31 +30,99 @@
             [
                 [
                     {
-                        "id": "single_speclib"
+                        "id": "fragpipe"
                     },
-                    "library.speclib:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    "report.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
-            ],
-            [
-                
             ],
             [
                 [
                     {
-                        "id": "single_speclib"
+                        "id": "fragpipe"
                     },
-                    [
-                        "library.speclib:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "library.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "speclibgen.log:md5,d41d8cd98f00b204e9800998ecf8427e"
-                    ]
+                    "report.pg_matrix.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "fragpipe"
+                    },
+                    "report.pr_matrix.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "fragpipe"
+                    },
+                    "report-tsv.speclib:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "fragpipe"
+                    },
+                    "msstats.csv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    "FRAGPIPE_SPECLIB:DIANNFRAGPIPE",
+                    "diann",
+                    "1.8.2 Beta 8"
+                ],
+                [
+                    "FRAGPIPE_SPECLIB:DIANNFRAGPIPE",
+                    "fragpipe",
+                    "24.0"
+                ],
+                [
+                    "FRAGPIPE_SPECLIB:SPECLIBGEN",
+                    "fragpipe",
+                    "24.0"
+                ],
+                [
+                    "FRAGPIPE_SPECLIB:SPECLIBGEN",
+                    "fragpipe-speclib",
+                    "0.1.58"
                 ]
             ]
         ],
-        "timestamp": "2026-03-25T03:56:47.222331487",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
-        }
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-07T22:30:09.171436816"
+    },
+    "fragpipe_speclib - stub - DIA-NN off, no DIA files": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "fragpipe"
+                    },
+                    "library.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    "FRAGPIPE_SPECLIB:SPECLIBGEN",
+                    "fragpipe",
+                    "24.0"
+                ],
+                [
+                    "FRAGPIPE_SPECLIB:SPECLIBGEN",
+                    "fragpipe-speclib",
+                    "0.1.58"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-07T22:30:34.689951393"
     }
 }

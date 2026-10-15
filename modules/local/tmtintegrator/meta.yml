@@ -14,83 +14,109 @@ tools:
         at gene, protein, peptide, and PTM site levels.
       homepage: https://github.com/Nesvilab/TMT-Integrator
       documentation: https://fragpipe.nesvilab.org/docs/tutorial_tmt.html
-      licence: ["Academic/Commercial"]
-      note: |
-        Commercial license pre-installed in container.
-        Contact Nesvilab for academic or commercial licenses.
+      licence: ["Apache-2.0"]
+      note: Runs from the FragPipe image (--fragpipe_container).
 
 input:
   - - meta:
         type: map
-        description: |
-          Groovy Map containing sample information
-          e.g. [ id:'experiment1' ]
-    - psm_dirs:
+        description: Groovy Map with the run's metadata, e.g. [ id:'fragpipe' ]
+    - group_dirs:
         type: directory
-        description: |
-          Per-sample directories containing psm.tsv and protein.tsv from
-          PHILOSOPHER_FILTER. Staged under input_results/ via stageAs.
-        pattern: "*"
-  - - annotation_files:
+        description: One directory per FragPipe group holding its psm.tsv and protein.tsv, staged under input_results/
+    - root_group_dir:
+        type: string
+        description: The group_dirs name holding FragPipe's blank group, '' when there is none
+    - msstats_annotation:
         type: file
-        description: |
-          TMT annotation file. Either 2-column IonQuant format (channel sample)
-          for single-plex, or 6-column TSV (plex/channel/sample/sample_name/
-          condition/replicate) for multi-plex. Pass empty list [] if not applicable.
-        pattern: "*.{txt,tsv}"
-  - - config_file:
-        type: file
-        description: |
-          TMT-Integrator YAML configuration file containing parameters like
-          ref_tag, min_pep_prob, prot_norm, groupby, etc.
-        pattern: "*.yml"
+        description: MSstatsTMT_annotation.csv (WRITETEXTFILE), [] when Philosopher MSstats is off
+        pattern: "MSstatsTMT_annotation.csv"
+  - config_text:
+      type: string
+      description: "tmt-integrator-conf.yml text from PARSEFRAGPIPEWORKFLOW, with the line `output: @TMT_REPORT_DIR@`"
 
 output:
   results_dir:
     - - meta:
           type: map
           description: Sample metadata
-      - "tmt-report":
+      - "${work_dir}/${report_dir}":
           type: directory
           description: TMT-Integrator output directory
-          pattern: "tmt-report"
+          pattern: "*/tmt-report"
   abundance:
     - - meta:
           type: map
           description: Sample metadata
-      - "tmt-report/abundance_*.tsv":
+      - "${work_dir}/${report_dir}/abundance_*.tsv":
           type: file
           description: Abundance tables at various levels (gene, protein, peptide)
-          pattern: "tmt-report/abundance_*.tsv"
+          pattern: "*/tmt-report/abundance_*.tsv"
   ratio:
     - - meta:
           type: map
           description: Sample metadata
-      - "tmt-report/ratio_*.tsv":
+      - "${work_dir}/${report_dir}/ratio_*.tsv":
           type: file
           description: Ratio tables (log2 fold changes)
-          pattern: "tmt-report/ratio_*.tsv"
-  proteins_txt:
+          pattern: "*/tmt-report/ratio_*.tsv"
+  config:
     - - meta:
           type: map
           description: Sample metadata
-      - "tmt-report/*_Proteins.txt":
+      - "${work_dir}/${config_name}":
           type: file
-          description: Protein-level summary
-          pattern: "tmt-report/*_Proteins.txt"
-  peptides_txt:
+          description: tmt-integrator-conf.yml as TMT-Integrator read it (output path filled in)
+          pattern: "*/tmt-integrator-conf*.yml"
+  msstats_annotation:
     - - meta:
           type: map
           description: Sample metadata
-      - "tmt-report/*_Peptides.txt":
+      - "${work_dir}/MSstatsTMT_annotation.csv":
           type: file
-          description: Peptide-level summary
-          pattern: "tmt-report/*_Peptides.txt"
+          description: MSstatsTMT annotation in the work dir (Philosopher MSstats on)
+          pattern: "*/MSstatsTMT_annotation.csv"
+  versions_tmtintegrator:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - tmtintegrator:
+          type: string
+          description: The tool name
+      - fragpipeToolVersions().tmtintegrator:
+          type: string
+          description: TMT-Integrator version pinned by the FragPipe 24.0 tools directory; fixed value (fragpipeToolVersions()), held by the version-named jar tools/TMT-Integrator-6.1.3.jar that the module checks exists
+  versions_fragpipe:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - fragpipe:
+          type: string
+          description: The tool name
+      - cat .fragpipe_version:
+          type: eval
+          description: FragPipe version of the tools directory
+
+topics:
   versions:
-    - versions.yml:
-        type: file
-        description: Software versions
-        pattern: "versions.yml"
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - tmtintegrator:
+          type: string
+          description: The tool name
+      - fragpipeToolVersions().tmtintegrator:
+          type: string
+          description: The expression to obtain the version of the tool; fixed value (fragpipeToolVersions()), held by the version-named jar tools/TMT-Integrator-6.1.3.jar that the module checks exists
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - fragpipe:
+          type: string
+          description: The tool name
+      - cat .fragpipe_version:
+          type: eval
+          description: The expression to obtain the version of the tool
 
 authors:
   - "@dongzehe"

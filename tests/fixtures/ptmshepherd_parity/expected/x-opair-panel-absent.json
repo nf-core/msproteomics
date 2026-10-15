@@ -1,0 +1,21 @@
+{
+    "shepherd_config": null,
+    "pairscans": ["HCD", "HCD", "false", "false"],
+    "opair": [
+        "-b 20.0",
+        "-c 20.0",
+        "-f @TOOLS_DIR@/opair/Glycan_Mods/oxonium_filter.txt",
+        "-m 0.05",
+        "-x @TOOLS_DIR@/Glycan_Databases/glycan_residues.txt",
+        "-y @TOOLS_DIR@/Glycan_Databases/glycan_mods.txt",
+        "-n 2",
+        "-z ",
+        "-t @THREADS@",
+        "-i 0",
+        "-j 2",
+        "-r @FILELIST@",
+        "-s @PSM@",
+        "-o @OUTDIR@"
+    ],
+    "mbg": null
+}

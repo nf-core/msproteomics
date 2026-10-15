@@ -155,8 +155,6 @@ workflow DIA_PROTEOMICS_ANALYSIS {
     ch_empirical_log_in      // Channel of path(assembly_log) to use for all inputs
 
     main:
-
-    ch_versions = channel.empty()
     (random_preanalysis, random_preanalysis_n, random_preanalysis_seed) = random_preanalysis ?: [false, null, null]
 
     //
@@ -166,12 +164,14 @@ workflow DIA_PROTEOMICS_ANALYSIS {
     //   - Multiple channel views are created with different metadata granularities for downstream processes
     //   - Each view groups data at the appropriate level (per-sample, per-experiment, per-enzyme, etc.)
     //
+    // Each optional file is paired with every input as one list element: [file] when given, or the
+    // sentinel [[]] (an empty list element) when the channel is empty
     input = ch_expdesign
         .combine(ch_searchdb)
         .combine(ch_input)
-        .combine(ch_speclib_in.ifEmpty(null))
-        .combine(ch_empirical_library_in.ifEmpty(null))
-        .combine(ch_empirical_log_in.ifEmpty(null))
+        .combine(ch_speclib_in.map { speclib -> [speclib] }.ifEmpty([[]]))
+        .combine(ch_empirical_library_in.map { empirical_library -> [empirical_library] }.ifEmpty([[]]))
+        .combine(ch_empirical_log_in.map { empirical_log -> [empirical_log] }.ifEmpty([[]]))
         .multiMap{
             meta_exp,
             expdesign,
@@ -223,8 +223,8 @@ workflow DIA_PROTEOMICS_ANALYSIS {
             empirical: [meta_exp_searchdb, empirical_lib, empirical_log]
         }
 
-    ch_speclib = input.speclib.filter{ tuple -> tuple[1] != null }.unique()
-    ch_empirical = input.empirical.filter{ tuple -> tuple[1] != null }.unique()
+    ch_speclib = input.speclib.filter{ tuple -> tuple[1] !instanceof List }.unique()
+    ch_empirical = input.empirical.filter{ tuple -> tuple[1] !instanceof List }.unique()
 
     //
     // Compute initial mass accuracy settings (before any DIA-NN analysis)
@@ -250,19 +250,18 @@ workflow DIA_PROTEOMICS_ANALYSIS {
     //
     // Only run config generation and speclib generation if no speclib is provided
     // Conditional execution pattern:
-    //   - combine with ifEmpty(null) pairs each input with either existing speclib or null
-    //   - filter keeps only tuples containing null (i.e., no pre-generated speclib exists)
+    //   - combine with the speclib count pairs each input with the number of existing speclibs
+    //   - filter keeps only tuples with a count of 0 (i.e., no pre-generated speclib exists)
     //   - downstream processes only execute when needed
 
     ch_config_input = input.enzyme_mods.unique() // [meta_enzyme_mods, enzyme, fixed_mods, variable_mods]
-        .combine(ch_speclib.ifEmpty(null))
-        .filter{tuple -> tuple.any { elem -> elem == null }}
-        .map{ meta, enzyme, fixed_mods, variable_mods, _speclib ->
+        .combine(ch_speclib.count())
+        .filter{ _meta, _enzyme, _fixed_mods, _variable_mods, n_speclib -> n_speclib == 0 }
+        .map{ meta, enzyme, fixed_mods, variable_mods, _n_speclib ->
             [meta, enzyme, fixed_mods, variable_mods]
         }
 
     QUANTMSUTILS_DIANNCFG(ch_config_input)
-    ch_versions = ch_versions.mix(QUANTMSUTILS_DIANNCFG.out.versions)
 
     //
     // MODULE: In-silico library generation. Needs to run once for every unique config/ FASTA dataset combination.
@@ -291,18 +290,14 @@ workflow DIA_PROTEOMICS_ANALYSIS {
     // MODULE: Preliminary analysis
     //
 
-    // We only need to do preliminary analysis and empirical library assembly if no empirical library is provided
-    // Conditional execution pattern:
-    //   - join with remainder: true preserves inputs even if no empirical library exists
-    //   - filter keeps only tuples containing null (i.e., no pre-generated empirical library)
-    //   - downstream processes only execute when needed
+    // We only need to do preliminary analysis and empirical library assembly if no empirical library is provided.
+    // The provided library applies to every input, so count it: inputs pass only when none was given.
+    // (A join keyed on meta_input_fasta never matches the experiment-keyed ch_empirical.)
 
     preliminary_branches = ch_fasta_input_with_speclib
-        .join(ch_empirical, remainder: true)
-        .filter { tuple ->
-            tuple.any { elem -> elem == null } // ch_empirical was an empty channel
-        }
-        .map { meta_input_fasta, ms_file, speclib, _empirical ->
+        .combine(ch_empirical_library_in.count())
+        .filter { _meta_input_fasta, _ms_file, _speclib, n_empirical -> n_empirical == 0 }
+        .map { meta_input_fasta, ms_file, speclib, _n_empirical ->
             [meta_input_fasta, ms_file, speclib]
         }
         .branch {
@@ -339,9 +334,11 @@ workflow DIA_PROTEOMICS_ANALYSIS {
         .groupTuple()                                                // [meta_exp_searchdb, [ms_file], [speclib], [diann_quant]]  (clean groupTuple)
         .map{ tuple -> sortListsByPathName(tuple, 1) }
         .combine(ch_initial_mass_settings_by_exp, by: 0)             // [meta_exp_searchdb, [ms_files], [speclib], [quant], mass_settings]
-        .map { meta, ms_files, speclib, diann_quant, mass_settings ->
-            [meta + mass_settings, ms_files, [], [], speclib.unique{ it.name }, diann_quant]
-        }
+        .map { meta, ms_files, speclib, diann_quant, mass_settings -> [
+            meta + mass_settings, ms_files, [], [],
+            speclib.unique{ speclib_file -> speclib_file.name },
+            diann_quant
+        ]}
 
     DIANN_ASSEMBLEEMPIRICALLIBRARY(ch_empirical_input)
 
@@ -392,9 +389,13 @@ workflow DIA_PROTEOMICS_ANALYSIS {
         .map { tuple -> [tuple[0].experiment] + tuple.drop(1) }     // [meta_exp_searchdb, ms_file, fasta, empirical_library, diann_quant]
         .groupTuple()                                                // [meta_exp_searchdb, [ms_file], [fasta], [empirical_library], [diann_quant]]
         .map{ tuple -> sortListsByPathName(tuple, 1) }              // [meta_exp_searchdb, [sorted_ms_file], [sorted_fasta], [sorted_empirical_library], [sorted_diann_quant]]
-        .map { meta, ms_files, fasta, empirical_library, diann_quant ->
-            [meta, [], ms_files.collect{ f -> f.name}, fasta.unique{ it.name }, empirical_library.unique{ it.name }, diann_quant] // Use ms_file_names instead of ms_files for final quant; deduplicate shared files
-        }
+        .map { meta, ms_files, fasta, empirical_library, diann_quant -> [
+            meta, [],
+            ms_files.collect{ f -> f.name},
+            fasta.unique{ f -> f.name },
+            empirical_library.unique{ f -> f.name },
+            diann_quant
+        ]} // Use ms_file_names instead of ms_files for final quant; deduplicate shared files
 
     DIANN_FINALQUANTIFICATION(ch_final_quantification_input)
     ch_final_quantification_combined_output = DIANN_FINALQUANTIFICATION.out.main_report
@@ -414,7 +415,6 @@ workflow DIA_PROTEOMICS_ANALYSIS {
         .unique()
 
     QUANTMSUTILS_MZMLSTATISTICS(ch_mzml_stats_input)
-    ch_versions = ch_versions.mix(QUANTMSUTILS_MZMLSTATISTICS.out.versions)
 
     ch_statistics = QUANTMSUTILS_MZMLSTATISTICS.out.ms_statistics   // [meta_input, ms_statistics]
         .map{ tuple -> [tuple[0].experiment, tuple[1]] }             // [meta_exp_searchdb, ms_statistics]
@@ -444,10 +444,8 @@ workflow DIA_PROTEOMICS_ANALYSIS {
         }
 
     QUANTMSUTILS_DIANN2MZTAB(ch_diann2mztab_input)
-    ch_versions = ch_versions.mix(QUANTMSUTILS_DIANN2MZTAB.out.versions)
 
     emit:
-    versions                = ch_versions
     diann_report            = DIANN_FINALQUANTIFICATION.out.main_report
     diann_report_parquet    = DIANN_FINALQUANTIFICATION.out.report_parquet
     pg_matrix               = DIANN_FINALQUANTIFICATION.out.pg_matrix

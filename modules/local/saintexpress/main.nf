@@ -1,24 +1,22 @@
+include { saintexpressCommand; shellQuote; fragpipeToolVersions } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
+
 process SAINTEXPRESS {
     tag "${meta.id}"
     label 'process_medium'
 
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'docker://fcyucn/fragpipe:24.0' :
-        'docker.io/fcyucn/fragpipe:24.0' }"
-
     input:
-    // SAINTexpress performs AP-MS scoring for protein-protein interactions
-    // inter_file: interaction file (inter.dat)
-    // bait_file: bait definitions (bait.dat)
-    // prey_file: prey definitions (prey.dat)
-    // mode: "spc" (spectral count) or "int" (intensity)
-    // config_cli: SAINTexpress parameters as CLI string (coupled with sample inputs)
-    tuple val(meta), path(inter_file), path(bait_file), path(prey_file), val(mode), val(config_cli)
+    // FragPipe's Downstream SAINTexpress run for one mode (TabDownstream.java:114-160, CmdSaintExpress.java:56-96):
+    // saint_input (staged files): inter.dat, bait.dat and prey.dat of REPRINTTOSAINTINPUT (CmdSaintExpress.reprintTsvToSaintInput);
+    //   a mode without a reprint.<mode>.tsv never reaches this process (REPRINTTOSAINTINPUT reports the skip)
+    // mode: 'spc' (SAINTexpress-spc) or 'int' (SAINTexpress-int) (TabDownstream.java:70-83)
+    // saint_cli: "-R<max-replicates> -L<virtual-controls>"
+    // cmd_opts: saintexpress.cmd-opts, passed as ONE argument when not empty (CmdSaintExpress.java:88-90)
+    tuple val(meta), path(saint_input, stageAs: 'saint_input/*'), val(mode), val(saint_cli), val(cmd_opts)
 
     output:
-    tuple val(meta), path("${prefix}")                          , emit: results_dir
-    tuple val(meta), path("${prefix}/list.txt")                 , emit: results_list
-    tuple val("${task.process}"), val('saintexpress'), eval("cat .saintexpress_version"), emit: versions_saintexpress, topic: versions
+    tuple val(meta), path("saintexpress-${mode}")            , emit: results_dir
+    tuple val(meta), path("saintexpress-${mode}/list.txt")   , emit: results_list
+    tuple val("${task.process}"), val('saintexpress'), val(fragpipeToolVersions().saintexpress), emit: versions_saintexpress, topic: versions
     tuple val("${task.process}"), val('fragpipe'), eval("cat .fragpipe_version"), emit: versions_fragpipe, topic: versions
 
     when:
@@ -26,74 +24,33 @@ process SAINTEXPRESS {
 
     script:
     def args = task.ext.args ?: ''
-    prefix = task.ext.prefix ?: "${meta.id}"
-    def tools_dir = task.ext.fragpipe_tools_dir ?: '/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools'
-    def saint_suffix = mode == 'int' ? 'SAINTexpress-int' : 'SAINTexpress-spc'
-
-    // SAINTexpress CLI parameters:
-    // -R: max replicates per bait
-    // -L: virtual controls
-    // Input files must be in current directory: inter.dat, bait.dat, prey.dat
-
+    def cmds = saintexpressCommand(saint_input, mode, saint_cli, cmd_opts, args, task)
     """
-
     export HOME=\$(pwd)
-    mkdir -p ${prefix}
+    [ -x ${shellQuote(cmds.argv[0])} ] || { echo "ERROR: ${cmds.argv[0]} not found (the FragPipe tools directory set in nextflow.config)" >&2; exit 1; }
+    printf '%s\\n' ${shellQuote(cmds.fragpipe_version)} > .fragpipe_version
 
-    TOOLS_DIR="${tools_dir}"
-
-    SAINTEXPRESS_SPC_SRC=\$(find "\$TOOLS_DIR" -path '*/SAINTexpress/SAINTexpress-spc' -type f 2>/dev/null | head -1 || true)
-    SAINTEXPRESS_SPC="\$(pwd)/SAINTexpress-spc"
-    cp "\$SAINTEXPRESS_SPC_SRC" "\$SAINTEXPRESS_SPC"
-    chmod +x "\$SAINTEXPRESS_SPC"
-    SAINTEXPRESS_INT_SRC=\$(find "\$TOOLS_DIR" -path '*/SAINTexpress/SAINTexpress-int' -type f 2>/dev/null | head -1 || true)
-    SAINTEXPRESS_INT="\$(pwd)/SAINTexpress-int"
-    cp "\$SAINTEXPRESS_INT_SRC" "\$SAINTEXPRESS_INT"
-    chmod +x "\$SAINTEXPRESS_INT"
-    # Version capture
-    _se_ver=\$("\$SAINTEXPRESS_SPC" --version 2>&1 | grep -oP 'version \\K[\\d.]+' | head -1 || true)
-
-    echo "\$_se_ver" > .saintexpress_version
-    _fp_ver=\$(echo "\$TOOLS_DIR" | grep -oP 'fragpipe-\\K[0-9]+\\.[0-9]+[0-9.]*' | head -1 || true)
-
-    echo "\$_fp_ver" > .fragpipe_version
-
-    # Select binary based on mode
-    if [ "${saint_suffix}" = "SAINTexpress-int" ]; then
-        SAINT_BIN="\$SAINTEXPRESS_INT"
-    else
-        SAINT_BIN="\$SAINTEXPRESS_SPC"
+    # SAINTexpress reads inter/bait/prey.dat from, and writes list.txt to, saintexpress-<mode> (CmdSaintExpress.java:84-93)
+    mkdir -p saintexpress-${mode}
+    cp saint_input/* saintexpress-${mode}/
+    saint_cmd=(${cmds.argv.collect { t -> shellQuote(t) }.join(' ')})
+    printf '%s\\n' "\${saint_cmd[*]}" > saintexpress-${mode}.log
+    saint_status=0
+    (cd saintexpress-${mode} && "\${saint_cmd[@]}") 2>&1 | tee -a saintexpress-${mode}.log || saint_status=\$?
+    if [ "\$saint_status" -ne 0 ]; then
+        echo "ERROR: SAINTexpress-${mode}, FragPipe's optional Downstream step (TabDownstream.java:114-145), exited \$saint_status; its output is above (saintexpress-${mode}.log). The run's other results do not depend on it." >&2
+        exit "\$saint_status"
     fi
-
-    # SAINTexpress requires input files in working directory
-    cp ${inter_file} ${prefix}/inter.dat
-    cp ${bait_file} ${prefix}/bait.dat
-    cp ${prey_file} ${prefix}/prey.dat
-
-    cd ${prefix}
-
-    # Run SAINTexpress
-    CMD="\$SAINT_BIN ${config_cli} ${args}"
-    printf '%s\\n' "\$CMD" > saintexpress.log
-    \$SAINT_BIN ${config_cli} ${args} 2>&1 | tee -a saintexpress.log
-
-    cd ..
-
+    mv saintexpress-${mode}.log saintexpress-${mode}/saintexpress.log
     """
 
     stub:
-    prefix = task.ext.prefix ?: "${meta.id}"
+    def cmds = saintexpressCommand(saint_input, mode, saint_cli, cmd_opts, task.ext.args ?: '', task)
     """
-    mkdir -p ${prefix}
-    touch ${prefix}/list.txt
-    touch ${prefix}/saintexpress.log
-    TOOLS_DIR="${task.ext.fragpipe_tools_dir ?: '/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools'}"
-    _se_ver=\$(echo "\$TOOLS_DIR" | grep -oP 'fragpipe-\\K[0-9]+\\.[0-9]+[0-9.]*' | head -1 || true)
-
-    echo "\$_se_ver" > .saintexpress_version
-    _fp_ver=\$(echo "\$TOOLS_DIR" | grep -oP 'fragpipe-\\K[0-9]+\\.[0-9]+[0-9.]*' | head -1 || true)
-
-    echo "\$_fp_ver" > .fragpipe_version
-
+    mkdir -p saintexpress-${mode}
+    cp saint_input/* saintexpress-${mode}/
+    touch saintexpress-${mode}/list.txt
+    printf '%s\\n' ${shellQuote(cmds.argv.join(' '))} > saintexpress-${mode}/saintexpress.log
+    printf '%s\\n' ${shellQuote(cmds.fragpipe_version)} > .fragpipe_version
     """
 }

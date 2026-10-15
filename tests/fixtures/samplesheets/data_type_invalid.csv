@@ -1,0 +1,2 @@
+sample,spectra,data_type
+ctrl_1,${FIXTURES}/spectra/ctrl_1.mzML,dia

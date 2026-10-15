@@ -5,7 +5,7 @@ nextflow_process {
     process "MSBOOSTER"
 
     tag "modules"
-    tag "modules_nfcore"
+    tag "modules_local"
     tag "msbooster"
 
     test("msbooster - stub") {
@@ -20,11 +20,16 @@ nextflow_process {
                 pin_file.text = "SpecId\\tLabel\\nmock\\t1"
                 mzml_file.text = "mock"
 
-                // Four inputs: tuple [meta, pin_files, mzml_files], path params_file, path fragger_params, val has_ion_mobility
+                // Inputs: tuple [meta, pin_files, mzml_files], val params_text, path fragger_params, path library, val has_ion_mobility, val threads, val pin_dirs
+                def fragger_params = file("\${projectDir}/tests/fixtures/fragger_params/TMT-labelcheck-304/fragger.params", checkIfExists: true)
+                def params_text = "useDetect = false\\nrenamePin = 1\\nuseRT = true\\nuseSpectra = true\\nuseIM = true\\ndeletePreds = false\\nrtModel = DIA-NN\\nspectraModel = DIA-NN\\nimModel = DIA-NN\\nfindBestRtModel = false\\nfindBestSpectraModel = false\\nfindBestImModel = false\\nKoinaURL = \\nFragmentationType = auto\\nnumThreads = 1\\n"
                 input[0] = channel.of([[ id: 'test' ], pin_file, mzml_file])
-                input[1] = []  // params_file (CLI mode, uses ext.args)
-                input[2] = []  // fragger_params (not provided)
-                input[3] = false  // has_ion_mobility (no timsTOF data)
+                input[1] = params_text
+                input[2] = fragger_params
+                input[3] = []  // library (no msbooster.spectral-library-path)
+                input[4] = false  // has_ion_mobility (no timsTOF data)
+                input[5] = 1  // threads
+                input[6] = ['']  // pin_dirs: the blank group
                 """
             }
         }
@@ -33,6 +38,47 @@ nextflow_process {
             assertAll (
                 { assert process.success },
                 { assert snapshot(process.out.results_dir, process.out.pin_edited, process.out.versions_msbooster, process.out.versions_fragpipe).match() }
+            )
+        }
+    }
+
+    test("msbooster - stub, spectral library staged and named by the three prediction keys") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def pin_file = file("\${workDir}/test.pin")
+                def mzml_file = file("\${workDir}/test.mzML")
+                def library = file("\${workDir}/user_library.tsv")
+                pin_file.text = "SpecId\\tLabel\\nmock\\t1"
+                mzml_file.text = "mock"
+                library.text = "mock library"
+
+                def fragger_params = file("\${projectDir}/tests/fixtures/fragger_params/TMT-labelcheck-304/fragger.params", checkIfExists: true)
+                // parse_fragpipe_workflow.py writes the token for msbooster.spectral-library-path
+                def params_text = "useDetect = false\\nrenamePin = 1\\nuseRT = true\\nuseSpectra = true\\nuseIM = true\\ndeletePreds = false\\nrtModel = DIA-NN\\nspectraModel = DIA-NN\\nimModel = DIA-NN\\nfindBestRtModel = false\\nfindBestSpectraModel = false\\nfindBestImModel = false\\nKoinaURL = \\nspectraPredFile = {SPECTRAL_LIBRARY}\\nRTPredFile = {SPECTRAL_LIBRARY}\\nIMPredFile = {SPECTRAL_LIBRARY}\\nFragmentationType = auto\\nnumThreads = 1\\n"
+                input[0] = channel.of([[ id: 'test' ], pin_file, mzml_file])
+                input[1] = params_text
+                input[2] = fragger_params
+                input[3] = library
+                input[4] = false
+                input[5] = 1
+                input[6] = ['']
+                """
+            }
+        }
+
+        then {
+            def params_file = new File(file(process.out.results_dir[0][1]), 'msbooster_params.txt')
+            def staged = new File(file(process.out.results_dir[0][1]).parentFile, 'spectral_library/user_library.tsv')
+            assertAll (
+                { assert process.success },
+                { assert params_file.text.contains('spectraPredFile = <task dir>/spectral_library/user_library.tsv\nRTPredFile = <task dir>/spectral_library/user_library.tsv\nIMPredFile = <task dir>/spectral_library/user_library.tsv\n') },
+                { assert !params_file.text.contains('{SPECTRAL_LIBRARY}') },
+                { assert staged.exists() : "the library is staged as spectral_library/user_library.tsv in the task directory" },
+                { assert snapshot(params_file.readLines().findAll { l -> l.contains('PredFile') }).match() }
             )
         }
     }
@@ -49,11 +95,16 @@ nextflow_process {
                 def pin_file = file("\${params.pipelines_testdata_base_path}/module_inputs/tmt_erwinia_subset.pin", checkIfExists: true)
                 def mzml_file = file("\${params.pipelines_testdata_base_path}/spectra/tmt_erwinia_subset.mzML", checkIfExists: true)
 
-                // Four inputs: tuple [meta, pin_files, mzml_files], path params_file, path fragger_params, val has_ion_mobility
+                // Inputs: tuple [meta, pin_files, mzml_files], val params_text, path fragger_params, path library, val has_ion_mobility, val threads, val pin_dirs
+                def fragger_params = file("\${projectDir}/tests/fixtures/fragger_params/TMT-labelcheck-304/fragger.params", checkIfExists: true)
+                def params_text = "useDetect = false\\nrenamePin = 1\\nuseRT = true\\nuseSpectra = true\\nuseIM = true\\ndeletePreds = false\\nrtModel = DIA-NN\\nspectraModel = DIA-NN\\nimModel = DIA-NN\\nfindBestRtModel = false\\nfindBestSpectraModel = false\\nfindBestImModel = false\\nKoinaURL = \\nFragmentationType = auto\\nnumThreads = 1\\n"
                 input[0] = channel.of([ [ id: 'msbooster_test' ], pin_file, mzml_file ])
-                input[1] = []  // params_file (CLI mode, uses ext.args)
-                input[2] = []  // fragger_params (not provided)
-                input[3] = false  // has_ion_mobility (no timsTOF data)
+                input[1] = params_text
+                input[2] = fragger_params
+                input[3] = []  // library (no msbooster.spectral-library-path)
+                input[4] = false  // has_ion_mobility (no timsTOF data)
+                input[5] = 1  // threads
+                input[6] = ['']  // pin_dirs: the blank group
                 """
             }
         }

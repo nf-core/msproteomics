@@ -1,0 +1,106 @@
+{
+    "reprint_to_saint_input - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "saintexpress-spc"
+                    },
+                    [
+                        "bait.dat:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "inter.dat:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "prey.dat:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ],
+                    "spc"
+                ]
+            ],
+            [
+                
+            ]
+        ],
+        "timestamp": "2026-10-07T05:46:01.70601992",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "reprint_to_saint_input - missing table writes FragPipe's message": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "saintexpress-spc"
+                    },
+                    "skipped_mode.txt"
+                ]
+            ],
+            [
+                [
+                    "REPRINTTOSAINTINPUT",
+                    "python",
+                    "3.12.13"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-14T15:21:06.765473369",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "reprint_to_saint_input - stub missing REPRINT table skips the mode": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "saintexpress-int"
+                    },
+                    "skipped_mode.txt"
+                ]
+            ],
+            [
+                [
+                    "REPRINTTOSAINTINPUT",
+                    "python",
+                    "3.12.13"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-14T15:20:53.582137453",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "reprint_to_saint_input - int table to inter, bait and prey.dat": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "saintexpress-int"
+                    },
+                    [
+                        "bait.dat:md5,7c415bfa70d219e84a11f5ec289cf9c1",
+                        "inter.dat:md5,79debfa40351220774b3117985ebda36",
+                        "prey.dat:md5,ce1123c65eb158de52d1ef6082ce901c"
+                    ],
+                    "int"
+                ]
+            ],
+            [
+                
+            ],
+            [
+                [
+                    "REPRINTTOSAINTINPUT",
+                    "python"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-08T18:04:59.038969837",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    }
+}

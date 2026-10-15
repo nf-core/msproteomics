@@ -1,10 +1,21 @@
+/*
+ * DECOMPRESS: Decompress a .tar, .tar.gz, .gz or .zip archive of an MS file (X.d.tar.gz gives X.d)
+ *
+ * Input:
+ *   - meta: Sample metadata map
+ *   - compressed_file: the archive
+ *
+ * Output:
+ *   - decompressed_files: the decompressed file or Bruker .d directory
+ *   - log: tool output
+ *   - versions_gunzip / versions_tar / versions_unzip: tool versions (topic: versions)
+ */
 
 process DECOMPRESS {
-    tag "$meta.mzml_id"
+    tag "$meta.id"
     label 'process_low'
-    label 'error_retry'
     conda "${moduleDir}/environment.yml"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+    container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/mulled-v2-796b0610595ad1995b121d0b85375902097b78d4:a3a3220eb9ee55710d743438b2ab9092867c98c6-0' :
         'quay.io/biocontainers/mulled-v2-796b0610595ad1995b121d0b85375902097b78d4:a3a3220eb9ee55710d743438b2ab9092867c98c6-0' }"
 
@@ -30,88 +41,48 @@ process DECOMPRESS {
     tuple val(meta), path(compressed_file)
 
     output:
-    tuple val(meta), path('*.d'),   emit: decompressed_files
-    path 'versions.yml',   emit: versions
-    path '*.log',   emit: log
+    tuple val(meta), path("${target_name}"), emit: decompressed_files
+    tuple val("${task.process}"), val('gunzip'), eval('gunzip --version 2>&1 | head -1 | grep -oE "[0-9]+\\.[0-9]+(\\.[0-9]+)?" | head -1'), emit: versions_gunzip, topic: versions
+    tuple val("${task.process}"), val('tar'), eval('tar --version 2>&1 | head -1 | grep -oE "[0-9]+\\.[0-9]+(\\.[0-9]+)?" | head -1'), emit: versions_tar, topic: versions
+    tuple val("${task.process}"), val('unzip'), eval('unzip -v 2>&1 | head -1 | grep -oE "[0-9]+\\.[0-9]+" | head -1'), emit: versions_unzip, topic: versions
+    path '*.log'                           , emit: log
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
-    String prefix = task.ext.prefix ?: "${meta.mzml_id}"
-    def target_name = file(compressed_file.baseName).baseName
-
+    def args = task.ext.args ?: ''
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    // X.d.tar.gz -> X.d, X.mzML.gz -> X.mzML, X.raw.zip -> X.raw
+    target_name = compressed_file.name.replaceAll(/\.(tar\.gz|tar|gz|zip)$/, '')
     """
-    function verify_tar {
-        exit_code=0
-        error=\$(tar df \$1 2>&1) || exit_code=\$?
-        if [ \$exit_code -eq 2 ]; then
-            echo "\${error}"
-            exit 2
+    case ${compressed_file} in
+        *.tar.gz) tar xvzf ${compressed_file} ${args} ;;
+        *.tar)    tar xvf ${compressed_file} ${args} ;;
+        *.gz)     gunzip -c ${args} ${compressed_file} > ${target_name} ;;
+        *.zip)    unzip ${args} ${compressed_file} ;;
+        *)        echo "Unknown archive type: ${compressed_file}" >&2; exit 1 ;;
+    esac 2>&1 | tee ${prefix}_decompression.log
+
+    # A Bruker archive may hold the .d directory under another name.
+    if [ ! -e ${target_name} ]; then
+        found=\$(find . -maxdepth 1 -name '*.d' -type d ! -name '.')
+        if [ "\$(printf '%s\\n' "\$found" | grep -c .)" != 1 ]; then
+            echo "Archive ${compressed_file} did not contain ${target_name} (found: \$found)" >&2
+            exit 1
         fi
-
-        case \${error} in
-            *'No such file'* )
-                echo "\${error}" | grep "No such file"
-                exit 1
-                ;;
-            *'Size differs'* )
-                echo "\${error}" | grep "Size differs"
-                exit 1
-                ;;
-        esac
-    }
-
-    function extract {
-        if [ -z "\$1" ]; then
-            echo "Usage: extract <path/file_name>.<gz|tar|tar.bz2>"
-        else
-            if [ -f \$1 ]; then
-                case \$1 in
-                    *.tar.gz)    tar xvzf \$1 && verify_tar \$1               ;;
-                    *.gz)        gunzip \$1                                     ;;
-                    *.tar)       tar xvf \$1 && verify_tar \$1                ;;
-                    *.zip)       unzip \$1                                      ;;
-                    *)           echo "extract: '\$1' - unknown archive method" ;;
-                esac
-            else
-                echo "\$1 - file does not exist"
-            fi
-        fi
-    }
-
-    tar --help 2>&1 | tee -a ${prefix}_decompression.log
-    gunzip --help 2>&1 | tee -a ${prefix}_decompression.log
-    (unzip --help 2>&1 || zip --help 2>&1) | tee -a ${prefix}_decompression.log
-    echo "Unpacking..." | tee -a ${prefix}_decompression.log
-
-    extract ${compressed_file} 2>&1 | tee -a ${prefix}_decompression.log
-    [ -d ${target_name}.d ] && \\
-        echo "Found ${target_name}.d" || \\
-        mv *.d ${target_name}.d
+        mv "\$found" ${target_name}
+    fi
 
     ls -l | tee -a ${prefix}_decompression.log
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        gunzip: \$(gunzip --help 2>&1 | head -1 | grep -oE "\\d+\\.\\d+(\\.\\d+)?")
-        tar: \$(tar --help 2>&1 | head -1 | grep -oE "\\d+\\.\\d+(\\.\\d+)?")
-        unzip: \$((unzip --help 2>&1 || zip --help 2>&1) | head -2 | tail -1 | grep -oE "\\d+\\.\\d+")
-    END_VERSIONS
     """
 
     stub:
-    String prefix = task.ext.prefix ?: "${meta.mzml_id}"
-
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    target_name = compressed_file.name.replaceAll(/\.(tar\.gz|tar|gz|zip)$/, '')
+    def create_target = target_name.endsWith('.d') ? "mkdir -p ${target_name} && touch ${target_name}/analysis.tdf" : "touch ${target_name}"
     """
-    mkdir -p ${prefix}.d
+    ${create_target}
     echo "Stub execution" > ${prefix}_decompression.log
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        gunzip: stub
-        tar: stub
-        unzip: stub
-    END_VERSIONS
     """
 }

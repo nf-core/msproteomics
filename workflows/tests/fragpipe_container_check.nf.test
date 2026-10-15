@@ -1,0 +1,38 @@
+// A real (non-stub) FragPipe run with a container engine and no --fragpipe_container stops before any
+// task: there is no public FragPipe image, so the licensed one must be passed at runtime.
+nextflow_workflow {
+
+    name "Test Workflow MSPROTEOMICS_FRAGPIPE - --fragpipe_container check"
+    script "../fragpipe.nf"
+    workflow "MSPROTEOMICS_FRAGPIPE"
+    config "./docker_enabled.config"
+
+    tag "workflows"
+    tag "msproteomics_fragpipe"
+    tag "fragpipe_container"
+
+    // tagged stub so the CI stub suite runs it; it runs no task (the check stops the run first)
+    test("a non-stub run with docker and without --fragpipe_container fails") {
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                input    = ss.toString()
+                database = "${fixtures}/test.fasta"
+                outdir   = "$outputDir"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.failed },
+                { assert workflow.trace.tasks().size() == 0 },
+                { assert (workflow.stdout + workflow.stderr).any { line -> line.contains('--mode fragpipe with docker needs --fragpipe_container') } : workflow.stdout }
+            )
+        }
+    }
+}

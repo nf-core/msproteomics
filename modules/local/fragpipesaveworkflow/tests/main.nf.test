@@ -1,0 +1,147 @@
+nextflow_process {
+
+    name "Test Process FRAGPIPESAVEWORKFLOW"
+    script "../main.nf"
+    process "FRAGPIPESAVEWORKFLOW"
+    config "./nextflow.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "fragpipesaveworkflow"
+
+    // The workflow names the DIA-NN binary (fragpipe-config.bin-diann, as in a workflow FragPipe saved): FragPipe
+    // validates it and writes its --version text, "1.8.2 beta 8" (Diann.java:102-130, TabConfig.java:566-584).
+    test("fragpipe_save_workflow - DIA-NN version text when the workflow names the DIA-NN binary") {
+        tag "integration"
+        config "./golden.config"
+
+        when {
+            process {
+                """
+                def wf = file("\${workDir}/input.workflow")
+                wf.text = new File("\${baseDir}/assets/TMT-labelcheck-304.workflow").text + "workflow.ram=64\\nworkflow.threads=32\\nfragpipe-config.bin-diann=/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools/diann/1.8.2_beta_8/linux/diann-1.8.1.8\\n"
+                def manifest = file("\${workDir}/staged.fp-manifest")
+                manifest.text = ''
+                input[0] = [
+                    [ id: 'fragpipe' ],
+                    wf,
+                    manifest,
+                    file("\${baseDir}/assets/fragpipe_ui_state", checkIfExists: true),
+                    file("\${baseDir}/tests/fixtures/test.fasta", checkIfExists: true),
+                    '/results/fragpipe',
+                    []
+                ]
+                """
+            }
+        }
+
+        then {
+            def lines = path(process.out.workflow[0][1]).readLines()
+            assertAll(
+                { assert process.success },
+                { assert lines.find { line -> line.startsWith('# DIA-NN version ') } == '# DIA-NN version 1.8.2 beta 8' },
+                { assert snapshot(lines.size()).match() }
+            )
+        }
+    }
+
+    test("fragpipe_save_workflow - stub") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            process {
+                """
+                def manifest = file("\${workDir}/run.fp-manifest")
+                manifest.text = "/data/input/run_C02.raw\\tC02\\t\\tDDA\\n/data/input/run_D02.raw\\tD02\\t\\tDDA\\n"
+                input[0] = [
+                    [ id: 'fragpipe' ],
+                    file("\${baseDir}/assets/TMT-labelcheck-304.workflow", checkIfExists: true),
+                    manifest,
+                    file("\${baseDir}/assets/fragpipe_ui_state", checkIfExists: true),
+                    file("\${baseDir}/tests/fixtures/test.fasta", checkIfExists: true),
+                    '/results/fragpipe',
+                    []
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+
+    test("fragpipe_save_workflow - stub with the manifest's spectra staged") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            process {
+                """
+                def manifest = file("\${workDir}/run.fp-manifest")
+                manifest.text = "/data/input/run_C02.raw\\tC02\\t\\tDDA\\n/data/input/run_D02.raw\\tD02\\t\\tDDA\\n"
+                input[0] = [
+                    [ id: 'fragpipe' ],
+                    file("\${baseDir}/assets/TMT-labelcheck-304.workflow", checkIfExists: true),
+                    manifest,
+                    file("\${baseDir}/assets/fragpipe_ui_state", checkIfExists: true),
+                    file("\${baseDir}/tests/fixtures/test.fasta", checkIfExists: true),
+                    '/results/fragpipe',
+                    [file("\${baseDir}/tests/fixtures/test.fasta", checkIfExists: true)]
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+
+    // The run's workflow file is often called fragpipe.workflow (a saved FragPipe workflow). It is staged under
+    // input/, so writing the output fragpipe.workflow cannot go through the staged link into the user's file.
+    test("fragpipe_save_workflow - stub leaves an input named fragpipe.workflow unchanged") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            process {
+                """
+                def manifest = file("\${workDir}/run.fp-manifest")
+                manifest.text = "/data/input/run_C02.raw\\tC02\\t\\tDDA\\n/data/input/run_D02.raw\\tD02\\t\\tDDA\\n"
+                def wf = file("\${workDir}/user/fragpipe.workflow")
+                wf.parent.mkdirs()
+                wf.text = new File("\${baseDir}/assets/TMT-labelcheck-304.workflow").text
+                input[0] = [
+                    [ id: 'fragpipe' ],
+                    wf,
+                    manifest,
+                    file("\${baseDir}/assets/fragpipe_ui_state", checkIfExists: true),
+                    file("\${baseDir}/tests/fixtures/test.fasta", checkIfExists: true),
+                    '/results/fragpipe',
+                    []
+                ]
+                """
+            }
+        }
+
+        then {
+            def output = path(process.out.workflow[0][1])
+            def staged = output.parent.resolve('input/fragpipe.workflow')
+            def original = new File("${baseDir}/assets/TMT-labelcheck-304.workflow").text
+            assertAll(
+                { assert process.success },
+                { assert staged.toRealPath() != output.toRealPath() },
+                { assert staged.toRealPath().text == original },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}

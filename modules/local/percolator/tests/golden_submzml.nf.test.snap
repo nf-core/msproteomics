@@ -1,0 +1,25 @@
+{
+    "PXD001468 Basic-Search_submzml - Percolator saves FragPipe's weights": {
+        "content": [
+            [
+                [
+                    "PERCOLATOR",
+                    "percolator",
+                    "3.07.1"
+                ]
+            ],
+            [
+                [
+                    "PERCOLATOR",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-10T20:54:17.627295549",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

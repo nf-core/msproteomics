@@ -1,65 +1,120 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
 name: "fragpipe_speclib"
-description: Spectral library generation for DIA analysis using EasyPQP/FragPipe-SpecLib
+description: |
+  FragPipe's spectral library generation (SpecLibGen, gen_con_spec_lib.py) and DIA-NN quantification
+  (DIA-Quant with FragPipe's bundled DIA-NN and its post-steps) on FragPipe's single group.
 keywords:
   - proteomics
   - spectral-library
   - dia
   - speclibgen
-  - easypqp
+  - diann
 components:
   - speclibgen
+  - diannfragpipe
+  - diannsizeorder
+  - writetextfile
 input:
-  - ch_psm_files:
+  - ch_psms:
       type: channel
       description: |
-        PSM tables from PHILOSOPHER_FILTER for spectral library generation.
+        The group's psm.tsv from PHILOSOPHERFILTER (exactly one: SpecLibGen / DIA-NN force one group).
         Structure: [ val(meta), path(psm.tsv) ]
-  - ch_mzml:
+  - ch_peptides:
       type: channel
       description: |
-        Spectra files in mzML format.
-        Structure: [ val(meta), path(mzml) ]
+        The group's peptide.tsv from PHILOSOPHERFILTER.
+        Structure: [ val(meta), path(peptide.tsv) ]
+  - ch_proteins:
+      type: channel
+      description: |
+        The group's protein.tsv (FragReporter).
+        Structure: [ val(meta), path(protein.tsv) ]
+  - ch_pepxml:
+      type: channel
+      description: |
+        Validated pepXML per searched file (interact-*.pep.xml or PTMProphet *.mod.pep.xml; a list for ranked DIA results).
+        Structure: [ val(meta), path(pepxml) ]
+  - ch_searched:
+      type: channel
+      description: |
+        Spectra MSFragger searched (after DIA-Umpire / diaTracer).
+        Structure: [ val(meta), path(spectra) ]
+  - ch_uncalibrated:
+      type: channel
+      description: |
+        MSFragger's _uncalibrated.mzML per searched file.
+        Structure: [ val(meta), path(*_uncalibrated.mzML) ]
+  - ch_files:
+      type: channel
+      description: |
+        LC-MS table (samplesheet files with meta.data_type, meta.experiment, meta.bioreplicate); DIA-NN quantifies the DIA / DIA-Quant ones.
+        Structure: [ val(meta), path(spectra) ]
+  - ch_manifest:
+      type: channel
+      description: |
+        fragpipe-files.fp-manifest (value channel).
+        Structure: path(fragpipe-files.fp-manifest)
   - ch_fasta:
       type: channel
       description: |
-        Protein database FASTA as a value channel for broadcasting.
+        Protein database FASTA (value channel).
         Structure: path(fasta)
   - ch_tool_configs:
       type: channel
       description: |
-        Parsed JSON tool configuration map controlling SPECLIBGEN execution.
-        Structure: val(tool_configs_map)
+        PARSEFRAGPIPEWORKFLOW tool_configs JSON (value channel); speclibgen and diann entries.
+        Structure: val(tool_configs_json)
   - aggregate_meta:
       type: value
       description: |
-        Metadata map for aggregate outputs (e.g., [id: 'fragpipe']).
+        Metadata map for the group outputs (e.g., [id: 'fragpipe']).
 output:
   - library_tsv:
       type: channel
       description: |
-        Spectral library in TSV format.
+        SpecLibGen's library.tsv.
         Structure: [ val(meta), path(library.tsv) ]
-  - library_speclib:
+  - diann_results:
       type: channel
       description: |
-        Spectral library in speclib format for DIA-NN.
-        Structure: [ val(meta), path(library.speclib) ]
-  - library_parquet:
+        Every file of DIA-NN's dia-quant-output directory.
+        Structure: [ val(meta), [ path(dia-quant-output/*) ] ]
+  - diann_report:
       type: channel
       description: |
-        Spectral library in Parquet format.
-        Structure: [ val(meta), path(library.parquet) ]
-  - results_dir:
+        DIA-NN report.tsv.
+        Structure: [ val(meta), path(report.tsv) ]
+  - diann_pg_matrix:
       type: channel
       description: |
-        SPECLIBGEN results directory.
-        Structure: [ val(meta), path(results_dir) ]
+        DIA-NN protein group matrix.
+        Structure: [ val(meta), path(report.pg_matrix.tsv) ]
+  - diann_pr_matrix:
+      type: channel
+      description: |
+        DIA-NN precursor matrix.
+        Structure: [ val(meta), path(report.pr_matrix.tsv) ]
+  - diann_speclib:
+      type: channel
+      description: |
+        DIA-NN's library renamed report-tsv.speclib (Skyline input).
+        Structure: [ val(meta), path(report-tsv.speclib) ]
+  - diann_msstats:
+      type: channel
+      description: |
+        DiannToMsstats output.
+        Structure: [ val(meta), path(msstats.csv) ]
+  - diann_experiment_annotation:
+      type: channel
+      description: |
+        experiment_annotation.tsv of the DIA-Quant work dir (WRITE_DIANN_EXPERIMENT_ANNOTATION).
+        Structure: [ val(meta), path(experiment_annotation.tsv) ]
   - versions:
-      type: file
+      type: channel
       description: |
-        File containing software versions.
-        Structure: [ path(versions.yml) ]
+        Software versions (topic tuples).
+        Structure: [ val(process), val(tool), val(version) ]
 authors:
   - "@dongzehe"
 maintainers:

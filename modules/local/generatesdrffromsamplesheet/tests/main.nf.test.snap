@@ -1,0 +1,45 @@
+{
+    "generate_sdrf_from_samplesheet - stub": {
+        "content": [
+            [
+                "samplesheet.sdrf.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ]
+        ],
+        "timestamp": "2026-03-25T03:49:02.202399661",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.2"
+        }
+    },
+    "generate_sdrf_from_samplesheet - JSON value with a single quote": {
+        "content": [
+            {
+                "0": [
+                    "samplesheet.sdrf.tsv:md5,ed61baa1aef89cb5751fbe3c5def5f30"
+                ],
+                "1": [
+                    [
+                        "GENERATESDRFFROMSAMPLESHEET",
+                        "python",
+                        "3.12.13"
+                    ]
+                ],
+                "sdrf": [
+                    "samplesheet.sdrf.tsv:md5,ed61baa1aef89cb5751fbe3c5def5f30"
+                ],
+                "versions_python": [
+                    [
+                        "GENERATESDRFFROMSAMPLESHEET",
+                        "python",
+                        "3.12.13"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-10-14T19:59:58.329303429",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

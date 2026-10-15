@@ -1,5 +1,8 @@
 name: "speclibgen"
-description: Spectral library generation using EasyPQP via FragPipe-SpecLib
+description: |
+  FragPipe's spectral library generation step: runs FragPipe's own tools/speclib/gen_con_spec_lib.py
+  (FragPipe-SpecLib convert/convertpsm + library + easypqp_lib_export) with the argv and group work
+  dir layout of CmdSpecLibGen.java.
 keywords:
   - proteomics
   - mass spectrometry
@@ -9,11 +12,10 @@ keywords:
 tools:
   - speclibgen:
       description: |
-        SpecLibGen generates spectral libraries from database search results
-        using EasyPQP (Easy Peptide Quantification Pipeline) within the FragPipe
-        framework. The generated libraries can be used for DIA data analysis
-        or targeted proteomics. Supports multiple output formats including TSV,
-        speclib, and parquet.
+        gen_con_spec_lib.py from the FragPipe 24.0 tools directory. With --decoy_prefix in the convert
+        extras it converts psm.tsv rows (convertpsm), otherwise the validated pepXMLs (convert --pepxml).
+        It aligns retention times (automatic, Biognosys/ciRT/Pierce iRT or a user file), builds the
+        EasyPQP library and post-processes it into the Spectronaut-style library.tsv that DIA-NN reads.
       homepage: "https://fragpipe.nesvilab.org/"
       documentation: "https://fragpipe.nesvilab.org/docs/tutorial_speclib.html"
       tool_dev_url: "https://github.com/Nesvilab/FragPipe"
@@ -22,61 +24,145 @@ tools:
 input:
   - - meta:
         type: map
-        description: Groovy Map containing sample information
-    - psm_files:
+        description: Groovy Map of the FragPipe group (e.g. [ id:'fragpipe' ])
+    - psm:
         type: file
-        description: PSM files from Philosopher filter
-        pattern: "*.tsv"
-    - mzml_files:
+        description: The group's psm.tsv from Philosopher (staged as psm.tsv)
+        pattern: "psm.tsv"
+    - peptide:
         type: file
-        description: Mass spectrometry files for spectrum extraction
-        pattern: "*.{mzML,mzXML}"
-    - config_cli:
-        type: string
-        description: SpecLibGen parameters as CLI string
-  - - fasta:
+        description: The group's peptide.tsv from Philosopher (staged as peptide.tsv)
+        pattern: "peptide.tsv"
+    - pepxml_files:
         type: file
-        description: Protein sequence database
-        pattern: "*.{fasta,fas,fa}"
+        description: Validated pepXML files (interact-*.pep.xml, or PTMProphet *.mod.pep.xml)
+        pattern: "*.pep.xml"
+    - spectra:
+        type: file
+        description: LC-MS files written to filelist_speclibgen.txt (MSFragger's _uncalibrated.mzML for .raw / timsTOF .d)
+        pattern: "*.{mzML,mzXML,mgf,d}"
+    - rt_cal_file:
+        type: file
+        description: User RT calibration file ("User provided RT calibration file"), [] otherwise
+        pattern: "*.{tsv,txt}"
+    - im_cal_file:
+        type: file
+        description: User IM calibration file ("User provided IM calibration file"), [] otherwise
+        pattern: "*.{tsv,txt}"
+    - argv_parts:
+        type: map
+        description: gen_con_spec_lib.py argv values from PARSEFRAGPIPEWORKFLOW (speclibgen.argv_parts - rt_cal, im_cal, convert_args, library_args, intermediate)
+  - fasta:
+      type: file
+      description: Protein database with decoys (gen_con_spec_lib.py argv[1])
+      pattern: "*.{fasta,fas,fa}"
 
 output:
-  results_dir:
-    - - meta:
-          type: map
-          description: Groovy Map containing sample information
-      - "${prefix}":
-          type: directory
-          description: Directory containing spectral library output files and log
-          pattern: "${prefix}"
   library_tsv:
     - - meta:
           type: map
-          description: Groovy Map containing sample information
-      - "${prefix}/library.tsv":
+          description: Groovy Map of the FragPipe group
+      - library.tsv:
           type: file
-          description: Spectral library in TSV format
+          description: Spectral library after easypqp_lib_export('Spectronaut'), the DIA-NN input
           pattern: "library.tsv"
-  library_speclib:
+  easypqp_files:
     - - meta:
           type: map
-          description: Groovy Map containing sample information
-      - "${prefix}/library.speclib":
-          type: file
-          description: Spectral library in speclib binary format
-          pattern: "library.speclib"
-  library_parquet:
+          description: Groovy Map of the FragPipe group
+      - easypqp_files:
+          type: directory
+          description: cmds.txt and the RT/IM alignment PDFs
+          pattern: "easypqp_files"
+  rt_reference:
     - - meta:
           type: map
-          description: Groovy Map containing sample information
-      - "${prefix}/library.parquet":
+          description: Groovy Map of the FragPipe group
+      - easypqp_rt_reference_run.tsv:
           type: file
-          description: Spectral library in Parquet columnar format
-          pattern: "library.parquet"
+          description: EasyPQP reference run RT table (automatic RT calibration)
+          pattern: "easypqp_rt_reference_run.tsv"
+  im_reference:
+    - - meta:
+          type: map
+          description: Groovy Map of the FragPipe group
+      - easypqp_im_reference_run.tsv:
+          type: file
+          description: EasyPQP reference run ion mobility table (IM calibration, ion mobility data)
+          pattern: "easypqp_im_reference_run.tsv"
+  im_alignments:
+    - - meta:
+          type: map
+          description: Groovy Map of the FragPipe group
+      - easypqp_im_alignment_*.alignment_pkl:
+          type: file
+          description: EasyPQP ion mobility alignment of each run to the reference run (pickled)
+          pattern: "easypqp_im_alignment_*.alignment_pkl"
+  filelists:
+    - - meta:
+          type: map
+          description: Groovy Map of the FragPipe group
+      - filelist_*.txt:
+          type: file
+          description: filelist_speclibgen.txt and filelist_easypqp_library.txt
+          pattern: "filelist_*.txt"
+  argv:
+    - - meta:
+          type: map
+          description: Groovy Map of the FragPipe group
+      - speclibgen_argv.txt:
+          type: file
+          description: The gen_con_spec_lib.py command, one argument per line
+          pattern: "speclibgen_argv.txt"
+  intermediates:
+    - - meta:
+          type: map
+          description: Groovy Map of the FragPipe group
+      - "{irt.tsv,im.tsv,*_temp-psm.tsv,*.psmpkl,*.peakpkl,*_run_peaks.tsv,easypqp_lib_openswath.tsv}":
+          type: file
+          description: Calibration references, per-run psm.tsv splits and, with keep_intermediate_files, the EasyPQP intermediates
+          pattern: "*"
+  versions_speclibgen:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - fragpipe-speclib:
+          type: string
+          description: The tool name
+      - fragpipeToolVersions().fragpipe_speclib:
+          type: string
+          description: "FragPipe-SpecLib version pinned by FragPipe 24.0 (python/python_packages/requirements.txt), checked against pip show at run time; fixed value (fragpipeToolVersions()): FragPipe 24.0 pins fragpipe-speclib==0.1.58 (python/python_packages/requirements.txt)"
+  versions_fragpipe:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - fragpipe:
+          type: string
+          description: The tool name
+      - cat .fragpipe_version:
+          type: eval
+          description: FragPipe version of the tools directory
+
+topics:
   versions:
-    - versions.yml:
-        type: file
-        description: File containing software versions
-        pattern: "versions.yml"
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - fragpipe-speclib:
+          type: string
+          description: The tool name
+      - fragpipeToolVersions().fragpipe_speclib:
+          type: string
+          description: "The tool version; fixed value (fragpipeToolVersions()): FragPipe 24.0 pins fragpipe-speclib==0.1.58 (python/python_packages/requirements.txt)"
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - fragpipe:
+          type: string
+          description: The tool name
+      - cat .fragpipe_version:
+          type: eval
+          description: The expression to obtain the version of the tool
 
 authors:
   - "@dongzehe"

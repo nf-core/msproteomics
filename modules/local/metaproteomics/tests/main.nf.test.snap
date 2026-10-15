@@ -1,80 +1,79 @@
 {
-    "metaproteomics - stub": {
+    "metaproteomics - stub stages the project files flat": {
         "content": [
-            [
-                [
-                    {
-                        "id": "test_meta"
-                    },
+            {
+                "0": [
                     [
-                        "metaproteomics.log:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "sample_metaproteomics_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "sample_optimized.fasta:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "sample_taxonomy_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        {
+                            "id": "fragpipe"
+                        },
+                        [
+                            "combined_PSM_species.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "metaproteomics.log:md5,e2fe3aaef9848402887eb26dc11eaef6",
+                            "refined_db.fasta:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ],
+                "1": [
+                    [
+                        "METAPROTEOMICS",
+                        "metaproteomics",
+                        "1.0.1"
+                    ]
+                ],
+                "2": [
+                    [
+                        "METAPROTEOMICS",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "results_dir": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        [
+                            "combined_PSM_species.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "metaproteomics.log:md5,e2fe3aaef9848402887eb26dc11eaef6",
+                            "refined_db.fasta:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ],
+                "versions_fragpipe": [
+                    [
+                        "METAPROTEOMICS",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "versions_metaproteomics": [
+                    [
+                        "METAPROTEOMICS",
+                        "metaproteomics",
+                        "1.0.1"
                     ]
                 ]
-            ],
-            [
-                [
-                    {
-                        "id": "test_meta"
-                    },
-                    "sample_optimized.fasta:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "test_meta"
-                    },
-                    "sample_taxonomy_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "test_meta"
-                    },
-                    "sample_metaproteomics_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                [
-                    "METAPROTEOMICS",
-                    "metaproteomics",
-                    "24.0"
-                ]
-            ],
-            [
-                [
-                    "METAPROTEOMICS",
-                    "fragpipe",
-                    "24.0"
-                ]
-            ]
+            }
         ],
-        "timestamp": "2026-03-31T19:40:30.82722746",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
-        }
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-05T14:39:02.439842051"
     },
-    "metaproteomics - integration with test data": {
+    "metaproteomics - integration DbOptimizer over Percolator and MSFragger outputs": {
         "content": [
-            [
-                
-            ],
-            [
-                
-            ],
-            [
-                
-            ]
+            "DbOptimizerConfig.yaml",
+            "inferred_most_abundant_1_species_proteomes.fasta",
+            "metaproteomics.log",
+            "species_score_matrix_final.tsv",
+            "taxon_lineage.tsv"
         ],
-        "timestamp": "2026-03-27T19:33:57.596421775",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
-        }
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-05T14:39:08.401683961"
     }
 }

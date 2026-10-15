@@ -1,0 +1,74 @@
+// Golden differential test: DIATRACER vs FragPipe 24.0 (step diaTracer, PXD047839/DIA_SpecLib_Quant_diaPASEF_perfile).
+// Input is the first diaPASEF .d of the golden run (data/diapasef/PXD047839/d next to the golden root); the diaTracer settings come
+// from parse_fragpipe_workflow.py (tool_configs.json, as the pipeline passes them). Compares the java argv and the pseudo-DDA
+// <name>_diatracer.mzML byte for byte. The manifest records no input or output of diaTracer (io_convention_not_implemented),
+// so the output is compared as a pair.
+// Run: FRAGPIPE_CONTAINER=<licensed image> GOLDEN_ROOT=<golden root> nf-test test modules/local/diatracer/tests/golden.nf.test
+nextflow_process {
+
+    name "Golden DIATRACER vs FragPipe 24.0"
+    script "../main.nf"
+    process "DIATRACER"
+    config "./golden.config"
+
+    tag "golden"
+    tag "diatracer"
+
+    // every golden diaPASEF run is compared
+    [
+        [name: 'XTT001_EVOSEP04_TIMS04_HT_PRO_PLATE002_0078_S3-D10_1_1671', tail: '1671'],
+        [name: 'XTT001_EVOSEP04_TIMS04_HT_PRO_PLATE002_0088_S3-B3_1_1681', tail: '1681'],
+    ].each { run ->
+
+    test("PXD047839 diaPASEF run ${run.tail} - argv and _diatracer.mzML reproduce FragPipe's") {
+
+        when {
+            params {
+                golden_set = "${System.getenv('GOLDEN_ROOT')}/PXD047839/DIA_SpecLib_Quant_diaPASEF_perfile"
+                d_dir      = "${System.getenv('GOLDEN_ROOT')}/../diapasef/PXD047839/d"
+            }
+            process {
+                """
+                assert System.getenv('GOLDEN_ROOT') : 'set GOLDEN_ROOT to the golden data root'
+                def golden = file(params.golden_set, checkIfExists: true)
+                def configs = new File("\${workDir}/parser")
+                configs.mkdirs()
+                def proc = ['python3', "\${baseDir}/modules/local/parsefragpipeworkflow/resources/usr/bin/parse_fragpipe_workflow.py",
+                            '--workflow', "\${golden}/files/work/fragpipe.workflow", '--data-types', 'DIA', '--output-json', '--outdir', configs.path].execute()
+                proc.waitForProcessOutput(System.out, System.err)
+                assert proc.exitValue() == 0
+                def cli = new groovy.json.JsonSlurper().parse(new File(configs, 'tool_configs.json')).diatracer.args
+                input[0] = channel.of([ [ id: '${run.name}', data_type: 'DIA' ],
+                    file("\${params.d_dir}/${run.name}.d", checkIfExists: true), cli ])
+                """
+            }
+        }
+
+        then {
+            def golden   = new File(params.golden_set)
+            def manifest = new groovy.json.JsonSlurper().parse(new File(golden, 'manifest.json'))
+            def name     = run.name
+            def step     = manifest.steps.find { s -> s.cmd_name == 'diaTracer' && s.argv_raw.any { t -> t.endsWith("/${name}.d".toString()) } }
+            def outDir   = new File(process.out.results_dir[0][1].toString())
+            def taskDir  = outDir.parentFile
+            // the module's results dir stands for FragPipe's work dir: diaTracer's --workDir is FragPipe's cwd
+            def cmdFile  = new File(outputDir, 'step.cmd'); cmdFile.text = new File(outDir, 'diatracer.log').readLines()[0]
+            def outs     = new File(outputDir, 'outs'); outs.mkdirs()
+            def argvCheck = ['python3', "${baseDir}/tests/tools/golden_step_check.py", '--golden', golden.path, '--steps', "${step.step_index}",
+                '--actual-cwd', outDir.path, '--actual-workdir', outDir.path, '--actual-outdir', outs.path,
+                '--actual-input-dir', taskDir.path,
+                '--actual-argv', "${step.step_index}=${cmdFile.path}", '--argv-only', '--json', new File(outputDir, 'golden_report.json').path].execute()
+            def argvOut = new StringBuffer(); argvCheck.waitForProcessOutput(argvOut, argvOut); println argvOut
+            def cmp = ['python3', "${baseDir}/tests/tools/golden_compare.py", 'pairs', '--expected-prefix', manifest.roots['{WORKDIR}'], '--expected-prefix', manifest.roots['{LCMS_DIR}'], '--actual-prefix', taskDir.path,
+                '--pair', "${name}_diatracer.mzML".toString(), "${golden}/files/input/${name}_diatracer.mzML".toString(), new File(outDir, "${name}_diatracer.mzML").path]
+            def compare = cmp.execute()
+            def cmpOut = new StringBuffer(); compare.waitForProcessOutput(cmpOut, cmpOut); println cmpOut
+            assertAll(
+                { assert process.success },
+                { assert argvCheck.exitValue() == 0 : "argv comparison failed:\n${argvOut}" },
+                { assert compare.exitValue() == 0 : "output comparison failed:\n${cmpOut}" }
+            )
+        }
+    }
+    }
+}

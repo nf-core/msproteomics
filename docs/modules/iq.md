@@ -33,7 +33,7 @@ Used in the main DIA workflow for protein-level quantification after DIA-NN anal
 
 ## Container
 
-`docker.io/dongzehe/iq:0.0.1`
+`community.wave.seqera.io/library/r-iq_r-readr:2434db545350cb42` (conda-forge r-iq 2.0.1, r-readr 2.2.0, r-base 4.5.3; `environment.yml`)
 
 ## Usage
 

@@ -10,7 +10,8 @@
                         "diaumpire.log:md5,d41d8cd98f00b204e9800998ecf8427e",
                         "test_Q1.mzML:md5,d41d8cd98f00b204e9800998ecf8427e",
                         "test_Q2.mzML:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "test_Q3.mzML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        "test_Q3.mzML:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "umpire-se.params:md5,ba9cc6bfc818862ea3bc36b230e09b69"
                     ]
                 ]
             ],
@@ -43,9 +44,17 @@
             ],
             [
                 [
+                    {
+                        "id": "test_diaumpire"
+                    },
+                    "diaumpire_se.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
                     "DIAUMPIRE",
                     "diaumpire",
-                    "24.0"
+                    "2.3.3"
                 ]
             ],
             [
@@ -56,10 +65,10 @@
                 ]
             ]
         ],
-        "timestamp": "2026-03-31T19:38:38.596505419",
+        "timestamp": "2026-10-15T00:04:50.968694823",
         "meta": {
             "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
+            "nextflow": "25.10.4"
         }
     },
     "file_names": {

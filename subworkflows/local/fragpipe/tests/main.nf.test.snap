@@ -35,12 +35,114 @@
             "nextflow": "25.10.2"
         }
     },
+    "fragpipe_wf - stub - glyco chain on a FreeQuant group reads the final Philosopher report": {
+        "content": [
+            [
+                "CHECKCENTROID",
+                "CHECKDBCONFIG",
+                "FREEQUANT",
+                "MSFRAGGER",
+                "PARSEFRAGPIPEWORKFLOW",
+                "PHILOSOPHERDATABASE",
+                "PHILOSOPHERFILTER",
+                "PHILOSOPHERPEPTIDEPROPHET",
+                "PHILOSOPHERPROTEINPROPHET",
+                "PHILOSOPHERREPORT",
+                "PTMSHEPHERD",
+                "WRITE_FRAGGER_PARAMS"
+            ]
+        ],
+        "timestamp": "2026-10-14T19:09:32.265691056",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "fragpipe_wf - stub glyco-N-LFQ workflow: tsv_pepXML search without PIN, PeptideProphet per file": {
+        "content": [
+            {
+                "CHECKCENTROID": 1,
+                "CHECKDBCONFIG": 1,
+                "IONQUANT": 1,
+                "MSFRAGGER": 2,
+                "PARSEFRAGPIPEWORKFLOW": 1,
+                "PHILOSOPHERDATABASE": 1,
+                "PHILOSOPHERFILTER": 1,
+                "PHILOSOPHERFILTER_LATER": 1,
+                "PHILOSOPHERPEPTIDEPROPHET": 2,
+                "PHILOSOPHERPROTEINPROPHET": 1,
+                "PTMSHEPHERD": 1,
+                "REPRINTTOSAINTINPUT": 2,
+                "SAINTEXPRESS": 2,
+                "WRITE_FRAGGER_PARAMS": 1
+            },
+            [
+                
+            ],
+            [
+                [
+                    {
+                        "id": "A",
+                        "group": "A",
+                        "data_type": "DDA",
+                        "spectra_name": "glyco_a.mzML",
+                        "lcms_ids": [
+                            "glyco_a"
+                        ]
+                    },
+                    "interact.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                [
+                    {
+                        "id": "B",
+                        "group": "B",
+                        "data_type": "DDA",
+                        "spectra_name": "glyco_b.mzML",
+                        "lcms_ids": [
+                            "glyco_b"
+                        ]
+                    },
+                    "interact.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-14T19:10:25.621247482",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "fragpipe_wf - stub - glyco chain: PTM-Shepherd -> MBG -> IonQuant with AppendFile": {
+        "content": [
+            [
+                "CHECKCENTROID",
+                "CHECKDBCONFIG",
+                "IONQUANT",
+                "MBG",
+                "MSFRAGGER",
+                "PARSEFRAGPIPEWORKFLOW",
+                "PHILOSOPHERDATABASE",
+                "PHILOSOPHERFILTER",
+                "PHILOSOPHERPEPTIDEPROPHET",
+                "PHILOSOPHERPROTEINPROPHET",
+                "PTMSHEPHERD",
+                "WRITE_FRAGGER_PARAMS"
+            ]
+        ],
+        "timestamp": "2026-10-14T19:09:04.998173284",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
     "fragpipe_wf - stub test with prebuilt philosopher database": {
         "content": [
             [
                 [
                     {
-                        "id": "test_sample"
+                        "id": "test_sample",
+                        "group": "test_sample",
+                        "data_type": "DDA"
                     },
                     "test_sample.mzML:md5,61925a3470e2e42cbe35fda6003a35a0"
                 ]
@@ -48,7 +150,9 @@
             [
                 [
                     {
-                        "id": "test_sample"
+                        "id": "test_sample",
+                        "group": "test_sample",
+                        "data_type": "DDA"
                     },
                     "test_sample.pepXML:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
@@ -56,7 +160,9 @@
             [
                 [
                     {
-                        "id": "test_sample"
+                        "id": "test_sample",
+                        "group": "test_sample",
+                        "data_type": "DDA"
                     },
                     "test_sample.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
@@ -64,9 +170,14 @@
             [
                 [
                     {
-                        "id": "test_sample"
+                        "id": "test_sample",
+                        "group": "test_sample",
+                        "data_type": "DDA",
+                        "spectra_name": "test_sample.mzML"
                     },
-                    "interact-test_sample.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    [
+                        "interact-test_sample.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
                 ]
             ],
             [
@@ -81,7 +192,9 @@
                 [
                     {
                         "id": "test_sample",
-                        "group": "test_sample"
+                        "group": "test_sample",
+                        "report_after_quant": false,
+                        "export_matched_fragments": false
                     },
                     "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
@@ -90,7 +203,9 @@
                 [
                     {
                         "id": "test_sample",
-                        "group": "test_sample"
+                        "group": "test_sample",
+                        "report_after_quant": false,
+                        "export_matched_fragments": false
                     },
                     "peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
@@ -99,7 +214,9 @@
                 [
                     {
                         "id": "test_sample",
-                        "group": "test_sample"
+                        "group": "test_sample",
+                        "report_after_quant": false,
+                        "export_matched_fragments": false
                     },
                     "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
@@ -108,11 +225,18 @@
                 [
                     {
                         "id": "test_sample",
-                        "group": "test_sample"
+                        "group": "test_sample",
+                        "report_after_quant": false,
+                        "export_matched_fragments": false
                     },
                     [
+                        [
+                            "meta.bin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ],
+                        "filter.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
                         "peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "philosopher_filter.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "philosopher_filter.log:md5,fb33f8694a197fb532ab33170aef7e5b",
                         "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
                         "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                     ]
@@ -148,18 +272,17 @@
                         "id": "fragpipe"
                     },
                     [
-                        "combined_ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "combined_modified_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "combined_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "combined_protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "fragpipe_ionquant.log:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        [
-                            "peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                            "philosopher_filter.log:md5,d41d8cd98f00b204e9800998ecf8427e",
-                            "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                            "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                        ]
+                        "combined_ion.tsv",
+                        "combined_modified_peptide.tsv",
+                        "combined_peptide.tsv",
+                        "combined_protein.tsv",
+                        "filelist_ionquant.txt",
+                        "ion.tsv",
+                        "ionquant.log",
+                        "modmasses_ionquant.txt",
+                        "reprint.int.tsv",
+                        "reprint.spc.tsv",
+                        "test_sample"
                     ]
                 ]
             ],
@@ -167,10 +290,10 @@
                 
             ]
         ],
-        "timestamp": "2026-03-25T03:53:55.518045092",
+        "timestamp": "2026-10-08T14:55:22.789341501",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
         }
     },
     "fragpipe_wf - stub test with LFQ workflow": {
@@ -178,7 +301,9 @@
             [
                 [
                     {
-                        "id": "test_sample"
+                        "id": "test_sample",
+                        "group": "test_sample",
+                        "data_type": "DDA"
                     },
                     "test_sample.mzML:md5,61925a3470e2e42cbe35fda6003a35a0"
                 ]
@@ -186,7 +311,9 @@
             [
                 [
                     {
-                        "id": "test_sample"
+                        "id": "test_sample",
+                        "group": "test_sample",
+                        "data_type": "DDA"
                     },
                     "test_sample.pepXML:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
@@ -194,7 +321,9 @@
             [
                 [
                     {
-                        "id": "test_sample"
+                        "id": "test_sample",
+                        "group": "test_sample",
+                        "data_type": "DDA"
                     },
                     "test_sample.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
@@ -202,9 +331,14 @@
             [
                 [
                     {
-                        "id": "test_sample"
+                        "id": "test_sample",
+                        "group": "test_sample",
+                        "data_type": "DDA",
+                        "spectra_name": "test_sample.mzML"
                     },
-                    "interact-test_sample.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    [
+                        "interact-test_sample.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
                 ]
             ],
             [
@@ -219,7 +353,9 @@
                 [
                     {
                         "id": "test_sample",
-                        "group": "test_sample"
+                        "group": "test_sample",
+                        "report_after_quant": false,
+                        "export_matched_fragments": false
                     },
                     "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
@@ -228,7 +364,9 @@
                 [
                     {
                         "id": "test_sample",
-                        "group": "test_sample"
+                        "group": "test_sample",
+                        "report_after_quant": false,
+                        "export_matched_fragments": false
                     },
                     "peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
@@ -237,7 +375,9 @@
                 [
                     {
                         "id": "test_sample",
-                        "group": "test_sample"
+                        "group": "test_sample",
+                        "report_after_quant": false,
+                        "export_matched_fragments": false
                     },
                     "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
@@ -246,11 +386,18 @@
                 [
                     {
                         "id": "test_sample",
-                        "group": "test_sample"
+                        "group": "test_sample",
+                        "report_after_quant": false,
+                        "export_matched_fragments": false
                     },
                     [
+                        [
+                            "meta.bin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ],
+                        "filter.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
                         "peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "philosopher_filter.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "philosopher_filter.log:md5,dd82315826e8a4fbbf221d6e322b32cc",
                         "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
                         "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                     ]
@@ -286,18 +433,17 @@
                         "id": "fragpipe"
                     },
                     [
-                        "combined_ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "combined_modified_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "combined_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "combined_protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "fragpipe_ionquant.log:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        [
-                            "peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                            "philosopher_filter.log:md5,d41d8cd98f00b204e9800998ecf8427e",
-                            "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                            "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                        ]
+                        "combined_ion.tsv",
+                        "combined_modified_peptide.tsv",
+                        "combined_peptide.tsv",
+                        "combined_protein.tsv",
+                        "filelist_ionquant.txt",
+                        "ion.tsv",
+                        "ionquant.log",
+                        "modmasses_ionquant.txt",
+                        "reprint.int.tsv",
+                        "reprint.spc.tsv",
+                        "test_sample"
                     ]
                 ]
             ],
@@ -305,10 +451,62 @@
                 
             ]
         ],
-        "timestamp": "2026-03-25T03:53:23.218841476",
+        "timestamp": "2026-10-08T14:54:21.656738966",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "fragpipe_wf - stub glyco O-Pair workflow: PairScans and O-Pair see one LC-MS file per run": {
+        "content": [
+            {
+                "CHECKCENTROID": 1,
+                "CHECKDBCONFIG": 1,
+                "MSFRAGGER": 2,
+                "OPAIR": 2,
+                "PAIRSCANS": 2,
+                "PARSEFRAGPIPEWORKFLOW": 1,
+                "PHILOSOPHERDATABASE": 1,
+                "PHILOSOPHERFILTER": 1,
+                "PHILOSOPHERFILTER_LATER": 1,
+                "PHILOSOPHERPEPTIDEPROPHET": 2,
+                "PHILOSOPHERPROTEINPROPHET": 1,
+                "WRITE_FRAGGER_PARAMS": 1
+            },
+            [
+                
+            ],
+            [
+                [
+                    {
+                        "id": "A",
+                        "group": "A",
+                        "data_type": "DDA",
+                        "spectra_name": "glyco_a.mzML",
+                        "lcms_ids": [
+                            "glyco_a"
+                        ]
+                    },
+                    "interact.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                [
+                    {
+                        "id": "B",
+                        "group": "B",
+                        "data_type": "DDA",
+                        "spectra_name": "glyco_b.mzML",
+                        "lcms_ids": [
+                            "glyco_b"
+                        ]
+                    },
+                    "interact.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-14T19:09:58.252309049",
         "meta": {
             "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
+            "nextflow": "25.10.4"
         }
     },
     "fragpipe_wf - stub test with TMT workflow": {
@@ -316,7 +514,9 @@
             [
                 [
                     {
-                        "id": "test_sample"
+                        "id": "test_sample",
+                        "group": "test_sample",
+                        "data_type": "DDA"
                     },
                     "test_sample.mzML:md5,61925a3470e2e42cbe35fda6003a35a0"
                 ]
@@ -324,7 +524,9 @@
             [
                 [
                     {
-                        "id": "test_sample"
+                        "id": "test_sample",
+                        "group": "test_sample",
+                        "data_type": "DDA"
                     },
                     "test_sample.pepXML:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
@@ -332,7 +534,9 @@
             [
                 [
                     {
-                        "id": "test_sample"
+                        "id": "test_sample",
+                        "group": "test_sample",
+                        "data_type": "DDA"
                     },
                     "test_sample.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
@@ -340,9 +544,14 @@
             [
                 [
                     {
-                        "id": "test_sample"
+                        "id": "test_sample",
+                        "group": "test_sample",
+                        "data_type": "DDA",
+                        "spectra_name": "test_sample.mzML"
                     },
-                    "interact-test_sample.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    [
+                        "interact-test_sample.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
                 ]
             ],
             [
@@ -357,7 +566,9 @@
                 [
                     {
                         "id": "test_sample",
-                        "group": "test_sample"
+                        "group": "test_sample",
+                        "report_after_quant": false,
+                        "export_matched_fragments": false
                     },
                     "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
@@ -366,7 +577,9 @@
                 [
                     {
                         "id": "test_sample",
-                        "group": "test_sample"
+                        "group": "test_sample",
+                        "report_after_quant": false,
+                        "export_matched_fragments": false
                     },
                     "peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
@@ -375,7 +588,9 @@
                 [
                     {
                         "id": "test_sample",
-                        "group": "test_sample"
+                        "group": "test_sample",
+                        "report_after_quant": false,
+                        "export_matched_fragments": false
                     },
                     "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
@@ -384,12 +599,75 @@
                 [
                     {
                         "id": "test_sample",
-                        "group": "test_sample"
+                        "group": "test_sample",
+                        "report_after_quant": false,
+                        "export_matched_fragments": false
                     },
                     [
+                        [
+                            "meta.bin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ],
+                        "filter.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
                         "peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "philosopher_filter.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "philosopher_filter.log:md5,dd82315826e8a4fbbf221d6e322b32cc",
                         "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                
+            ],
+            [
+                
+            ],
+            [
+                
+            ],
+            [
+                
+            ],
+            [
+                [
+                    {
+                        "id": "fragpipe"
+                    },
+                    [
+                        "abundance_gene_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "abundance_protein_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-08T14:55:00.830913248",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "fragpipe_wf - stub FPOP workflow runs FPOP Quant, coADAPTr and Metaproteomics on the final tables": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "fragpipe"
+                    },
+                    [
+                        "FPOP_peptides.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "FPOP_sites.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "fpop.log:md5,1db9cd185a96c85543d0cf1a2ecffc08"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "fragpipe",
+                        "fpop_source": "ionquant"
+                    },
+                    [
+                        "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
                         "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                     ]
                 ]
@@ -399,7 +677,31 @@
                     {
                         "id": "fragpipe"
                     },
-                    "combined_protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    [
+                        "combined_PSM_species.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "metaproteomics.log:md5,f09f4248b108f655d419e1eb0a451eb3",
+                        "refined_db.fasta:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-06T20:37:10.158854263",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "fragpipe_wf - stub test with the bundled DIA_SpecLib_Quant workflow (SpecLibGen + DIA-NN)": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "workdir-root",
+                        "group": "",
+                        "report_after_quant": false,
+                        "export_matched_fragments": false
+                    },
+                    "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
             ],
             [
@@ -407,7 +709,7 @@
                     {
                         "id": "fragpipe"
                     },
-                    "combined_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    "library.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
             ],
             [
@@ -415,7 +717,15 @@
                     {
                         "id": "fragpipe"
                     },
-                    "combined_ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    "report.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "fragpipe"
+                    },
+                    "report.pg_matrix.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
             ],
             [
@@ -424,29 +734,39 @@
                         "id": "fragpipe"
                     },
                     [
-                        "combined_ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "combined_modified_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "combined_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "combined_protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "fragpipe_ionquant.log:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        [
-                            "peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                            "philosopher_filter.log:md5,d41d8cd98f00b204e9800998ecf8427e",
-                            "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                            "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                        ]
+                        "msstats.csv",
+                        "report-tsv.speclib",
+                        "report.pg_matrix.tsv",
+                        "report.pr_matrix.tsv",
+                        "report.tsv"
                     ]
                 ]
-            ],
-            [
-                
             ]
         ],
-        "timestamp": "2026-03-25T03:53:39.011120678",
+        "timestamp": "2026-10-07T00:13:17.547146258",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "fragpipe_wf - stub - export matched fragments with Report off is a no-op like FragPipe": {
+        "content": [
+            [
+                "CHECKCENTROID",
+                "CHECKDBCONFIG",
+                "MSBOOSTER",
+                "MSFRAGGER",
+                "PARSEFRAGPIPEWORKFLOW",
+                "PERCOLATOR",
+                "PHILOSOPHERDATABASE",
+                "PHILOSOPHERPROTEINPROPHET",
+                "WRITE_FRAGGER_PARAMS"
+            ]
+        ],
+        "timestamp": "2026-10-14T00:24:23.742093888",
         "meta": {
             "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
+            "nextflow": "25.10.4"
         }
     }
 }

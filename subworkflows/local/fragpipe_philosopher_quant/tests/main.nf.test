@@ -1,0 +1,274 @@
+nextflow_workflow {
+
+    name "Test Subworkflow FRAGPIPE_PHILOSOPHER_QUANT (followed by FRAGPIPE_QUANT)"
+    script "./quant_chain.nf"
+    workflow "QUANT_CHAIN"
+    config "../../fragpipe_quant/tests/test.config"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "fragpipe_philosopher_quant"
+    tag "fragpipe_quant"
+
+    test("fragpipe_philosopher_quant - stub with freequant") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+            workflow {
+                """
+                def sample_dir = file("\${workDir}/sample_fq")
+                sample_dir.mkdirs()
+                file("\${sample_dir}/psm.tsv").text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
+                file("\${sample_dir}/.meta").mkdirs()
+                def mzml_file = file("\${workDir}/sample_fq.mzML")
+                mzml_file.text = "<?xml version='1.0'?><mzML></mzML>"
+                def tool_configs = [
+                    ionquant:       [run: false, args: ''],
+                    tmtintegrator:  [run: false, args: ''],
+                    freequant:      [run: true, args: '--ptw 0.4 --tol 10'],
+                    filter:         [run: true, args: '', report_args: '']
+                ]
+                input[0] = channel.of([[ id: 'sample_fq', group: 'sample_fq', report_after_quant: true ], sample_dir])
+                input[1] = channel.of([[ id: 'sample_fq', group: 'sample_fq' ], mzml_file])
+                input[2] = channel.of([[ id: 'sample_fq', experiment: 'sample_fq', data_type: 'DDA', group: 'sample_fq' ], mzml_file])
+                input[3] = channel.value([])
+                input[4] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[5] = channel.value([[], [], []])  // ch_emf_inputs (matched fragments not exported)
+                input[6] = []                  // ch_glyco_masses (no AppendFile)
+                input[7] = [ id: 'freequant_out' ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.out.combined_protein,
+                    workflow.out.tmt_abundance,
+                    workflow.out.report_results_dir.collect { item -> [item[0], new File(item[1].toString()).list().sort()] },
+                    workflow.out.report_psms
+                ).match() }
+            )
+        }
+    }
+
+    // FreeQuant runs once per FragPipe group with all of the group's LC-MS files in its --dir
+    // (FP/cmd/CmdFreequant.java:90-125 iterates LcmsFileGroups).
+    test("fragpipe_philosopher_quant - stub freequant stages every LC-MS file of a group") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+            workflow {
+                """
+                def group_dir = file("\${workDir}/control")
+                group_dir.mkdirs()
+                file("\${group_dir}/psm.tsv").text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
+                def mzml_a = file("\${workDir}/ctrl_a.mzML")
+                mzml_a.text = "<?xml version='1.0'?><mzML></mzML>"
+                def mzml_b = file("\${workDir}/ctrl_b.mzML")
+                mzml_b.text = "<?xml version='1.0'?><mzML></mzML>"
+                def tool_configs = [
+                    ionquant:       [run: false, args: ''],
+                    tmtintegrator:  [run: false, args: ''],
+                    freequant:      [run: true, args: '--ptw 0.4 --tol 10'],
+                    filter:         [run: true, args: '', report_args: '']
+                ]
+                input[0] = channel.of([[ id: 'control', group: 'control', report_after_quant: true ], group_dir])
+                input[1] = channel.of(
+                    [[ id: 'ctrl_a', group: 'control' ], mzml_a],
+                    [[ id: 'ctrl_b', group: 'control' ], mzml_b]
+                )
+                input[2] = channel.of(
+                    [[ id: 'ctrl_a', experiment: 'control', data_type: 'DDA', group: 'control' ], mzml_a],
+                    [[ id: 'ctrl_b', experiment: 'control', data_type: 'DDA', group: 'control' ], mzml_b]
+                )
+                input[3] = channel.value([])
+                input[4] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[5] = channel.value([[], [], []])  // ch_emf_inputs (matched fragments not exported)
+                input[6] = []                  // ch_glyco_masses (no AppendFile)
+                input[7] = [ id: 'freequant_out' ]
+                """
+            }
+        }
+
+        then {
+            def freequant_tasks = workflow.trace.tasks().findAll { task -> task.name.contains(':FREEQUANT') }.collect { task -> task.name }
+            def staged = []
+            new File("${launchDir}/work").eachFileRecurse { f -> if (f.name == 'lcms_files' && f.isDirectory()) staged << f.list().sort() }
+            assertAll(
+                { assert workflow.success },
+                { assert freequant_tasks == ['QUANT_CHAIN:FRAGPIPE_PHILOSOPHER_QUANT:FREEQUANT (control)'] : "one FREEQUANT task per group, got ${freequant_tasks}" },
+                { assert staged == [['ctrl_a.mzML', 'ctrl_b.mzML']] : "FREEQUANT must stage all LC-MS files of the group, got ${staged}" },
+                { assert snapshot(freequant_tasks, staged, workflow.out.report_psms).match() }
+            )
+        }
+    }
+
+    // TMT with Philosopher extraction: FreeQuant -> LabelQuant -> Report per group, then
+    // TMT-Integrator on the report output (FragpipeRun.java:2049-2066, 2469-2480)
+    test("fragpipe_philosopher_quant - stub Philosopher TMT extraction") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+            workflow {
+                """
+                def groups = ['p1', 'p2'].collect { g ->
+                    def d = file("\${workDir}/\${g}")
+                    d.mkdirs()
+                    file("\${d}/.meta").mkdirs()
+                    file("\${d}/psm.tsv").text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
+                    d
+                }
+                def spectra = ['a', 'b'].collect { n -> def f = file("\${workDir}/\${n}.mzML"); f.text = 'mock'; f }
+                def annotation = file("\${workDir}/tmt_annotation.tsv")
+                annotation.text = "plex\\tchannel\\tsample\\tsample_name\\tcondition\\treplicate\\np1\\t126\\tA_1\\tA_1\\tA\\t1\\np2\\t126\\tA_2\\tA_2\\tA\\t1\\n"
+                def tool_configs = [
+                    // label-free IonQuant too: it reads the tables Report wrote after LabelQuant (FragpipeRun.java:2477)
+                    ionquant: [run: true, args: '--perform-ms1quant 1 --perform-isoquant 0 --isotol 20.0 --isolevel 2 --isotype tmt10 --ionmobility 0 --site-reports 1 --msstats 1 --minexps 1 --mbr 0', modmasses: []],
+                    tmtintegrator: [run: true, args: file("\${baseDir}/subworkflows/local/fragpipe_quant/tests/tmt10_tmtintegrator_conf.txt", checkIfExists: true).text  /* parser's tmt-integrator-conf.yml text */, extraction_tool: 1, philosopher_msstats: true],
+                    freequant: [run: false, args: '--ptw 0.4 --tol 10'],
+                    labelquant: [run: true, args: '--tol 20 --level 2 --minprob 0.900 --purity 0.500 --removelow 0.050 --plex 10', brand: 'tmt'],
+                    filter: [run: true, args: '', report_args: '']
+                ]
+                input[0] = channel.of([[ id: 'p1', group: 'p1', report_after_quant: true ], groups[0]], [[ id: 'p2', group: 'p2', report_after_quant: true ], groups[1]])
+                input[1] = channel.of([[ id: 'a', group: 'p1' ], spectra[0]], [[ id: 'b', group: 'p2' ], spectra[1]])
+                input[2] = channel.of(
+                    [[ id: 'a', experiment: 'p1', data_type: 'DDA', group: 'p1' ], spectra[0]],
+                    [[ id: 'b', experiment: 'p2', data_type: 'DDA', group: 'p2' ], spectra[1]]
+                )
+                input[3] = channel.of(annotation)
+                input[4] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[5] = channel.value([[], [], []])  // ch_emf_inputs (matched fragments not exported)
+                input[6] = []                  // ch_glyco_masses (no AppendFile)
+                input[7] = [ id: 'fragpipe' ]
+                """
+            }
+        }
+
+        then {
+            def names = workflow.trace.tasks().collect { task -> task.name.tokenize(':')[-1] }.sort()
+            def annotations = workflow.out.experiment_annotation.collect { item -> new File(item[1].toString()).readLines() }
+            def reports = workflow.out.report_results_dir.collect { item -> [item[0].id, new File(item[1].toString()).list().sort()] }.sort { item -> item[0] }
+            def ionquant_cmd = workflow.trace.tasks().find { task -> task.name.endsWith(':IONQUANT (fragpipe)') }
+            def staged = []
+            new File("${launchDir}/work").eachFileRecurse { f -> if (f.name == '.command.run' && f.text.contains("### name: 'QUANT_CHAIN:FRAGPIPE_QUANT:IONQUANT (fragpipe)'")) staged = f.readLines().findAll { l -> l.contains('cp -fRL ') && (l.trim().endsWith(' p1') || l.trim().endsWith(' p2')) }.collect { l -> l.trim().split(' ')[-2] } }
+            def report_dirs = workflow.out.report_results_dir.collect { item -> item[1].toString() }
+            assertAll(
+                { assert workflow.success },
+                { assert names == ['FREEQUANT (p1)', 'FREEQUANT (p2)', 'IONQUANT (fragpipe)', 'PHILOSOPHERLABELQUANT (p1)', 'PHILOSOPHERLABELQUANT (p2)', 'PHILOSOPHERREPORT (p1)', 'PHILOSOPHERREPORT (p2)', 'TMTINTEGRATOR (fragpipe)', 'WRITE_LABELQUANT_ANNOTATION (p1)', 'WRITE_LABELQUANT_ANNOTATION (p2)', 'WRITE_LABELQUANT_EXPERIMENT_ANNOTATION (p1)', 'WRITE_MSSTATS_TMT_ANNOTATION (fragpipe)'] : names },
+                // IonQuant reads Report's tables, never Filter's placeholders
+                { assert staged.size() == 2 && staged.every { src -> report_dirs.any { d -> new File(d).canonicalPath == new File(src).canonicalPath } } : "${staged} vs ${report_dirs}" },
+                { assert annotations == [['plex\tchannel\tsample\tsample_name\tcondition\treplicate', 'p1\t126\tA_1\tA_1\tA\t1', 'p2\t126\tA_2\tA_2\tA\t2']] },
+                { assert reports.every { item -> item[1].contains("${item[0]}_annotation.txt".toString()) } : reports },
+                { assert snapshot(
+                    annotations,
+                    reports,
+                    workflow.out.tmt_abundance.collect { item -> [item[0], item[1].collect { f -> new File(f.toString()).name }] }
+                ).match() }
+            )
+        }
+    }
+
+    test("fragpipe_philosopher_quant - stub FreeQuant refuses non-mzML input like FragPipe") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+            workflow {
+                """
+                def d = file("\${workDir}/g1")
+                d.mkdirs()
+                file("\${d}/psm.tsv").text = "peptide\\nPEPTIDEK"
+                def mzml_file = file("\${workDir}/a.mzML")
+                mzml_file.text = 'mock'
+                def tool_configs = [ionquant: [run: false], tmtintegrator: [run: false], freequant: [run: true, args: '--ptw 0.4 --tol 10'], filter: [run: true, report_args: '']]
+                input[0] = channel.of([[ id: 'g1', group: 'g1', report_after_quant: true ], d])
+                input[1] = channel.of([[ id: 'a', group: 'g1' ], mzml_file])
+                input[2] = channel.of([[ id: 'a', experiment: 'g1', data_type: 'DDA', group: 'g1' ], file('/data/a.raw')])
+                input[3] = channel.value([])
+                input[4] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[5] = channel.value([[], [], []])  // ch_emf_inputs (matched fragments not exported)
+                input[6] = []                  // ch_glyco_masses (no AppendFile)
+                input[7] = [ id: 'fragpipe' ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.failed },
+                { assert (workflow.stdout + workflow.stderr).any { line -> line.contains("FreeQuant doesn't support '.raw' files") } }
+            )
+        }
+    }
+
+    // FragPipe exports matched fragments right after the final PhilosopherReport and before IonQuant
+    // (FragpipeRun.java:2411-2417, :2490): IonQuant reads the annotated psm.tsv
+    test("fragpipe_philosopher_quant - stub freequant group: IonQuant reads the final report with matched fragments") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+            workflow {
+                """
+                def group_dir = file("\${workDir}/control")
+                group_dir.mkdirs()
+                file("\${group_dir}/psm.tsv").text = "Spectrum\\tPeptide\\nctrl_a.00001.00001.2\\tPEPTIDEK"
+                file("\${group_dir}/.meta").mkdirs()
+                def mzml = file("\${workDir}/ctrl_a.mzML")
+                mzml.text = "<?xml version='1.0'?><mzML></mzML>"
+                def manifest = file("\${workDir}/fragpipe-files.fp-manifest")
+                manifest.text = "../spectra/ctrl_a.mzML\\tcontrol\\t\\tDDA"
+                def tool_configs = [
+                    ionquant:       [run: true, args: '--perform-ms1quant 1 --perform-isoquant 0 --isotol 20.0 --isolevel 2 --ionmobility 0 --minexps 1 --mbr 0', modmasses: []],
+                    tmtintegrator:  [run: false, args: ''],
+                    freequant:      [run: true, args: '--ptw 0.4 --tol 10'],
+                    filter:         [run: true, args: '', report_args: ''],
+                    exportmatchedfragments: [run: true, args: ''],
+                    diaumpire:      [run: false, args: ''],
+                    speclibgen:     [run: false, args: '']
+                ]
+                input[0] = channel.of([[ id: 'control', group: 'control', report_after_quant: true, export_matched_fragments: true ], group_dir])
+                input[1] = channel.of([[ id: 'ctrl_a', group: 'control' ], mzml])
+                input[2] = channel.of([[ id: 'ctrl_a', experiment: 'control', bioreplicate: null, data_type: 'DDA', group: 'control' ], mzml])
+                input[3] = channel.value([])
+                input[4] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[5] = channel.value([manifest, [mzml], []])
+                input[6] = []                  // ch_glyco_masses (no AppendFile)
+                input[7] = [ id: 'fragpipe' ]
+                """
+            }
+        }
+
+        then {
+            def final_dirs = workflow.out.final_results_dir.collect { item -> new File(item[1].toString()) }
+            assertAll(
+                { assert workflow.success },
+                { assert final_dirs.size() == 1 },
+                { assert new File(final_dirs[0], 'psm.tsv').readLines()[0].endsWith('\tions\tion_mz\tion_int') },
+                { assert final_dirs[0].path.contains('/results/') : "final tables come from EXPORTMATCHEDFRAGMENTS, got ${final_dirs[0]}" },
+                { assert new File(workflow.out.ionquant_dir[0][1].toString(), 'control/psm.tsv').readLines()[0].endsWith('\tions\tion_mz\tion_int') : 'IonQuant must read the annotated psm.tsv' },
+                { assert snapshot(workflow.out.final_results_dir.collect { item -> [item[0], file("${item[1]}/psm.tsv")] }).match() }
+            )
+        }
+    }
+}

@@ -1,0 +1,418 @@
+{
+    "Diagnostic-ion-mining": {
+        "base": "Diagnostic-ion-mining.workflow"
+    },
+    "Mass-Offset-CommonPTMs": {
+        "base": "Mass-Offset-CommonPTMs.workflow"
+    },
+    "Nonspecific-HLA-glyco": {
+        "base": "Nonspecific-HLA-glyco.workflow"
+    },
+    "Open-quickscan": {
+        "base": "Open-quickscan.workflow"
+    },
+    "Open": {
+        "base": "Open.workflow"
+    },
+    "TMT10-Open": {
+        "base": "TMT10-Open.workflow"
+    },
+    "XRNAX-MassOffset": {
+        "base": "XRNAX-MassOffset.workflow"
+    },
+    "chemprot-PAL": {
+        "base": "chemprot-PAL.workflow"
+    },
+    "glyco-N-DIA": {
+        "base": "glyco-N-DIA.workflow"
+    },
+    "glyco-N-HCD": {
+        "base": "glyco-N-HCD.workflow"
+    },
+    "glyco-N-Hybrid": {
+        "base": "glyco-N-Hybrid.workflow"
+    },
+    "glyco-N-LFQ": {
+        "base": "glyco-N-LFQ.workflow"
+    },
+    "glyco-N-open-HCD": {
+        "base": "glyco-N-open-HCD.workflow"
+    },
+    "glyco-N-open-Hybrid": {
+        "base": "glyco-N-open-Hybrid.workflow"
+    },
+    "glyco-O-DIA-OPair": {
+        "base": "glyco-O-DIA-OPair.workflow"
+    },
+    "glyco-O-HCD": {
+        "base": "glyco-O-HCD.workflow"
+    },
+    "glyco-O-Hybrid": {
+        "base": "glyco-O-Hybrid.workflow"
+    },
+    "glyco-O-Pair": {
+        "base": "glyco-O-Pair.workflow"
+    },
+    "glyco-O-open-HCD": {
+        "base": "glyco-O-open-HCD.workflow"
+    },
+    "glyco-O-open-Hybrid": {
+        "base": "glyco-O-open-Hybrid.workflow"
+    },
+    "x-open-condRatio-absent": {
+        "base": "Open.workflow",
+        "drop": ["ptmshepherd\\.spectra_condRatio"]
+    },
+    "x-open-condRatio-0.0005": {
+        "base": "Open.workflow",
+        "set": {
+            "ptmshepherd.spectra_condRatio": "0.0005"
+        }
+    },
+    "x-open-condRatio-1e-4": {
+        "base": "Open.workflow",
+        "set": {
+            "ptmshepherd.spectra_condRatio": "0.00010"
+        }
+    },
+    "x-open-isotope_error-absent": {
+        "base": "Open.workflow",
+        "drop": ["msfragger\\.isotope_error"]
+    },
+    "x-open-isotope_error-0-1": {
+        "base": "Open.workflow",
+        "set": {
+            "msfragger.isotope_error": "0/1"
+        }
+    },
+    "x-open-massdiff-absent": {
+        "base": "Open.workflow",
+        "drop": ["msfragger\\.mass_diff_to_variable_mod"]
+    },
+    "x-open-massdiff-2": {
+        "base": "Open.workflow",
+        "set": {
+            "msfragger.mass_diff_to_variable_mod": "2"
+        }
+    },
+    "x-open-ptms-all-absent": {
+        "base": "Open.workflow",
+        "drop": ["ptmshepherd\\.(?!run-shepherd$).*"]
+    },
+    "x-open-ppmtol-20.0": {
+        "base": "Open.workflow",
+        "set": {
+            "ptmshepherd.spectra_ppmtol": "20.0"
+        }
+    },
+    "x-glyco-glyco_ppm_tol-absent": {
+        "base": "glyco-N-HCD.workflow",
+        "drop": ["ptmshepherd\\.glyco_ppm_tol"]
+    },
+    "x-glyco-glyco_ppm_tol-25": {
+        "base": "glyco-N-HCD.workflow",
+        "set": {
+            "ptmshepherd.glyco_ppm_tol": "25"
+        }
+    },
+    "x-glyco-prob_mass-absent": {
+        "base": "glyco-N-HCD.workflow",
+        "drop": ["ptmshepherd\\.prob_mass"]
+    },
+    "x-glyco-prob_mass-0.75": {
+        "base": "glyco-N-HCD.workflow",
+        "set": {
+            "ptmshepherd.prob_mass": "0.75"
+        }
+    },
+    "x-glyco-glyco_isotope_min-absent": {
+        "base": "glyco-N-HCD.workflow",
+        "drop": ["ptmshepherd\\.glyco_isotope_min"]
+    },
+    "x-glyco-glyco_isotope_min--2": {
+        "base": "glyco-N-HCD.workflow",
+        "set": {
+            "ptmshepherd.glyco_isotope_min": "-2"
+        }
+    },
+    "x-glyco-glyco_isotope_max-absent": {
+        "base": "glyco-N-HCD.workflow",
+        "drop": ["ptmshepherd\\.glyco_isotope_max"]
+    },
+    "x-glyco-glyco_isotope_max-1": {
+        "base": "glyco-N-HCD.workflow",
+        "set": {
+            "ptmshepherd.glyco_isotope_max": "1"
+        }
+    },
+    "x-glyco-isomin-2-max-absent": {
+        "base": "glyco-N-HCD.workflow",
+        "drop": ["ptmshepherd\\.glyco_isotope_max"],
+        "set": {
+            "ptmshepherd.glyco_isotope_min": "-2"
+        }
+    },
+    "x-glyco-isomax1-min-absent": {
+        "base": "glyco-N-HCD.workflow",
+        "drop": ["ptmshepherd\\.glyco_isotope_min"],
+        "set": {
+            "ptmshepherd.glyco_isotope_max": "1"
+        }
+    },
+    "x-glyco-ppm_tol-50.0": {
+        "base": "glyco-N-HCD.workflow",
+        "set": {
+            "ptmshepherd.glyco_ppm_tol": "50.0"
+        }
+    },
+    "x-glyco-condRatio-absent": {
+        "base": "glyco-N-HCD.workflow",
+        "drop": ["ptmshepherd\\.spectra_condRatio"]
+    },
+    "x-glyco-isotope_error-absent": {
+        "base": "glyco-N-HCD.workflow",
+        "drop": ["msfragger\\.isotope_error"]
+    },
+    "x-glyco-ptms-all-absent": {
+        "base": "glyco-N-HCD.workflow",
+        "drop": ["ptmshepherd\\.(?!run-shepherd$|run_glyco_mode$).*"]
+    },
+    "x-glyco-only": {
+        "base": "glyco-N-HCD.workflow",
+        "set": {
+            "ptmshepherd.run-shepherd": "false"
+        }
+    },
+    "x-labile-ptms-on": {
+        "base": "Labile_ADP-ribosylation.workflow",
+        "set": {
+            "ptmshepherd.run-shepherd": "true"
+        }
+    },
+    "x-fpop-ptms-on": {
+        "base": "FPOP.workflow",
+        "set": {
+            "ptmshepherd.run-shepherd": "true"
+        }
+    },
+    "x-opair-reverse": {
+        "base": "glyco-O-Pair.workflow",
+        "set": {
+            "opair.reverse_scan_order": "true"
+        }
+    },
+    "x-opair-act-CID-EThcD": {
+        "base": "glyco-O-Pair.workflow",
+        "set": {
+            "opair.activation1": "CID",
+            "opair.activation2": "EThcD"
+        }
+    },
+    "x-opair-single": {
+        "base": "glyco-O-Pair.workflow",
+        "set": {
+            "opair.single_scan_type": "true"
+        }
+    },
+    "x-opair-pairs-absent": {
+        "base": "glyco-O-Pair.workflow",
+        "drop": ["opair\\.(activation1|activation2|reverse_scan_order|single_scan_type)"]
+    },
+    "x-glyco-N-TMT-addref": {
+        "base": "glyco-N-TMT.workflow",
+        "set": {
+            "tmtintegrator.add_Ref": "1"
+        }
+    },
+    "x-open-diagMinSpecDiff-5": {
+        "base": "Open.workflow",
+        "set": {
+            "ptmshepherd.diagmine_diagMinSpecDiff": "5"
+        }
+    },
+    "x-open-width-0.0025": {
+        "base": "Open.workflow",
+        "set": {
+            "ptmshepherd.peakpicking_width": "0.0025"
+        }
+    },
+    "x-open-smoothbins-3": {
+        "base": "Open.workflow",
+        "set": {
+            "ptmshepherd.histo_smoothbins": "3"
+        }
+    },
+    "x-open-stray-keys": {
+        "base": "Open.workflow",
+        "set": {
+            "ptmshepherd.iterloc_mode": "true",
+            "ptmshepherd.zzz": "1",
+            "ptmshepherd.localization_background": "3",
+            "ptmshepherd.histo_bindivs": "4000"
+        }
+    },
+    "x-open-bool-TRUE": {
+        "base": "Open.workflow",
+        "set": {
+            "ptmshepherd.output_extended": "TRUE",
+            "ptmshepherd.iontype_a": "TRUE"
+        }
+    },
+    "x-open-annotate-custom": {
+        "base": "Open.workflow",
+        "set": {
+            "ptmshepherd.annotation-unimod": "false",
+            "ptmshepherd.annotation-custom": "true"
+        }
+    },
+    "x-glyco-fdr-0.015": {
+        "base": "glyco-N-HCD.workflow",
+        "set": {
+            "ptmshepherd.glyco_fdr": "0.015"
+        }
+    },
+    "x-glyco-lda-kl": {
+        "base": "glyco-N-HCD.workflow",
+        "set": {
+            "ptmshepherd.glyco_lda": "true",
+            "ptmshepherd.glyco_lda_features": "yscore,kl"
+        }
+    },
+    "x-glyco-prob_mass-1": {
+        "base": "glyco-N-HCD.workflow",
+        "set": {
+            "ptmshepherd.prob_mass": "1"
+        }
+    },
+    "x-opair-act2-ECD": {
+        "base": "glyco-O-Pair.workflow",
+        "set": {
+            "opair.activation2": "ECD"
+        }
+    },
+    "x-opair-act2-EThcD": {
+        "base": "glyco-O-Pair.workflow",
+        "set": {
+            "opair.activation2": "EThcD"
+        }
+    },
+    "x-opair-single-ETD": {
+        "base": "glyco-O-Pair.workflow",
+        "set": {
+            "opair.single_scan_type": "true",
+            "opair.activation1": "ETD"
+        }
+    },
+    "x-opair-act1-ETD-reverse": {
+        "base": "glyco-O-Pair.workflow",
+        "set": {
+            "opair.activation1": "ETD",
+            "opair.activation2": "HCD",
+            "opair.reverse_scan_order": "true"
+        }
+    },
+    "x-open-width-0.00025": {
+        "base": "Open.workflow",
+        "set": {
+            "ptmshepherd.peakpicking_width": "0.00025"
+        }
+    },
+    "x-open-units-1": {
+        "base": "Open.workflow",
+        "set": {
+            "ptmshepherd.peakpicking_mass_units": "1"
+        }
+    },
+    "x-open-units-PPM": {
+        "base": "Open.workflow",
+        "set": {
+            "ptmshepherd.precursor_mass_units": "PPM"
+        }
+    },
+    "x-open-units-2": {
+        "base": "Open.workflow",
+        "set": {
+            "ptmshepherd.peakpicking_mass_units": "2"
+        }
+    },
+    "x-open-norm-scans": {
+        "base": "Open.workflow",
+        "set": {
+            "ptmshepherd.normalization-psms": "false",
+            "ptmshepherd.normalization-scans": "true"
+        }
+    },
+    "x-open-annotate-common": {
+        "base": "Open.workflow",
+        "set": {
+            "ptmshepherd.annotation-unimod": "false",
+            "ptmshepherd.annotation-common": "true"
+        }
+    },
+    "glyco-N-TMT": {
+        "base": "glyco-N-TMT.workflow"
+    },
+    "x-mbg-on": {
+        "base": "glyco-N-LFQ.workflow",
+        "set": {
+            "mbg.run-mbg": "true"
+        }
+    },
+    "x-mbg-iq-tol-absent": {
+        "base": "glyco-N-LFQ.workflow",
+        "drop": ["ionquant\\.(mztol|rttol|imtol)"],
+        "set": {
+            "mbg.run-mbg": "true"
+        }
+    },
+    "x-mbg-iq-tol-set": {
+        "base": "glyco-N-LFQ.workflow",
+        "set": {
+            "mbg.run-mbg": "true",
+            "ionquant.mztol": "15",
+            "ionquant.rttol": "0.60",
+            "ionquant.imtol": "0.1"
+        }
+    },
+    "x-mbg-panel-absent": {
+        "base": "glyco-N-LFQ.workflow",
+        "drop": ["mbg\\.(?!run-mbg$|residues_to_add$).*"],
+        "set": {
+            "mbg.run-mbg": "true"
+        }
+    },
+    "x-mbg-fdr-format": {
+        "base": "glyco-N-LFQ.workflow",
+        "set": {
+            "mbg.run-mbg": "true",
+            "mbg.fdr": "0.0100",
+            "mbg.max_glycan_q": "0.020"
+        }
+    },
+    "x-opair-tols": {
+        "base": "glyco-O-Pair.workflow",
+        "set": {
+            "opair.ms1_tol": "10.0",
+            "opair.ms2_tol": "15",
+            "opair.oxonium_minimum_intensity": "0.050",
+            "opair.max_glycans": "3"
+        }
+    },
+    "x-opair-panel-absent": {
+        "base": "glyco-O-Pair.workflow",
+        "drop": ["opair\\.(?!run-opair$).*"]
+    },
+    "x-opair-no-oxo-filter": {
+        "base": "glyco-O-Pair.workflow",
+        "set": {
+            "opair.filterOxonium": "false"
+        }
+    },
+    "x-opair-isotopes": {
+        "base": "glyco-O-Pair.workflow",
+        "set": {
+            "opair.min_isotope_error": "-1",
+            "opair.max_isotope_error": "3"
+        }
+    }
+}

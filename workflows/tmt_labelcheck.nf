@@ -2,46 +2,21 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     TMT LABEL CHECK WORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
+    A label check workflow is an ordinary FragPipe workflow (assets/TMT-labelcheck-{229,304}.workflow:
+    TMT as a variable modification). MSPROTEOMICS_FRAGPIPE runs it, in pipeline or headless mode, with
+    every FragPipe check; TMTLABELCHECKANALYZE then computes the labeling efficiency from each group's
+    Report psm.tsv and, when IonQuant runs, from combined_modified_peptide.tsv.
 
-include { paramsSummaryMap       } from 'plugin/nf-schema'
-include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_msproteomics_pipeline'
-
-// SDRF generation (bookkeeping only)
-include { GENERATE_SDRF_FROM_SAMPLESHEET } from '../modules/local/generate_sdrf_from_samplesheet/main'
-
-// TMT Label Check subworkflow
-include { TMT_LABELCHECK } from '../subworkflows/local/tmt_labelcheck/main'
-
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    HELPER FUNCTIONS
+    Labeling efficiency:
+        Total_Sites   = peptide.count('K') + 1  (lysines + N-terminus)
+        Labeled_Sites = count(TMT modifications)
+        Efficiency    = sum(Labeled_Sites) / sum(Total_Sites) * 100
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-def parse_samplesheet() {
-    return Channel.fromPath(params.input, checkIfExists: true)
-        .splitCsv(header: true)
-        .map { row ->
-            def sample    = row.sample
-            def filepath  = row.spectra
-            def condition = row.condition ?: sample
-            def fraction  = row.fraction ?: null
-            def label     = row.label ?: null
-
-            def meta = [
-                id:        fraction ? "${sample}_f${fraction}" : sample,
-                group:     condition,
-                sample:    sample,
-                condition: condition,
-                label:     label,
-                fraction:  fraction ? fraction as int : 1
-            ]
-            [ meta, file(filepath) ]
-        }
-}
+include { MSPROTEOMICS_FRAGPIPE } from './fragpipe'
+include { TMTLABELCHECKANALYZE                                } from '../modules/local/tmtlabelcheckanalyze/main'
+include { TMTLABELCHECKANALYZE as TMTLABELCHECKANALYZE_IONQUANT } from '../modules/local/tmtlabelcheckanalyze/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -52,32 +27,30 @@ def parse_samplesheet() {
 workflow MSPROTEOMICS_TMT_LABELCHECK {
 
     main:
-    ch_input = parse_samplesheet()
+    // --tmt_type names the label TMTLABELCHECKANALYZE counts, and selects the shipped label check workflow
+    // when --fragpipe_workflow is not given (MSPROTEOMICS_FRAGPIPE)
+    if (!params.tmt_type) {
+        error("--tmt_mode labelcheck requires --tmt_type (e.g. --tmt_type TMT16): the label the label check counts")
+    }
 
-    GENERATE_SDRF_FROM_SAMPLESHEET(
-        Channel.fromPath(params.input, checkIfExists: true),
-        WorkflowUtils.generateSdrfBookkeeping(params)
-    )
+    MSPROTEOMICS_FRAGPIPE()
 
-    def organism = WorkflowUtils.convertOrganismToStandardName(params.organism ?: 'Homo sapiens')
-    def db_channels = WorkflowUtils.resolveFragPipeDatabaseChannels(organism, params)
-
-    // Auto-select TMT labelcheck workflow file based on tmt_type if not explicitly provided
-    def tmt_workflow = params.fragpipe_workflow ?: WorkflowUtils.getTmtLabelcheckWorkflow(params.tmt_type, projectDir)
-    ch_workflow_file = Channel.of(
-        [[id: 'labelcheck_workflow'], file(tmt_workflow, checkIfExists: true)]
-    )
-
-    TMT_LABELCHECK(
-        ch_input,
-        db_channels.ch_fasta,
-        ch_workflow_file,
+    // Per-group labeling efficiency from each group's Report psm.tsv
+    TMTLABELCHECKANALYZE(
+        MSPROTEOMICS_FRAGPIPE.out.group_psms.map { psms -> [[id: 'tmt_labelcheck'], psms] },
         params.tmt_type,
-        db_channels.ch_prebuilt_db
+        'psm'
+    )
+
+    // Combined labeling efficiency from IonQuant's combined_modified_peptide.tsv
+    TMTLABELCHECKANALYZE_IONQUANT(
+        MSPROTEOMICS_FRAGPIPE.out.combined_modified_peptide,
+        params.tmt_type,
+        'ionquant'
     )
 
     emit:
-    versions = Channel.empty()
+    multiqc_files = MSPROTEOMICS_FRAGPIPE.out.multiqc_files
 }
 
 /*

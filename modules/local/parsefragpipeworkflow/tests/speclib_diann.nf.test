@@ -1,0 +1,188 @@
+// SpecLibGen and DIA-NN arguments PARSEFRAGPIPEWORKFLOW derives from the bundled FragPipe 24.0
+// DIA workflows (tests/fixtures/fragpipe_workflows/, verbatim copies of FragPipe/workflows/).
+// FP = FragPipe-GUI/src/main/java/org/nesvilab/fragpipe/. Expected values, per workflow keys:
+//
+// SpecLibGen (FP/cmd/CmdSpecLibGen.java):
+//   argv[8]  :147-152  getEasypqpCalOption():getEasypqpIMCalOption() (SpeclibPanel.java:459-464);
+//                      rt-cal=noiRT is no combo item, so the combo stays at index 0 = noiRT;
+//                      im-cal "Automatic selection of a run as reference IM" = noIM
+//   argv[10] :160-168  String.format("--max_delta_unimod %s --max_delta_ppm %s --fragment_types %s %s%s%s%s"),
+//                      doubles via Double.toString (15 -> 15.0), fragment list "['b','y',]" with
+//                      escaped quotes (:163, SpeclibPanel.java:497-512), --decoy_prefix / --labile_mods /
+//                      --max_glycan_q only when convert-psm is selected (:165-167), trimmed (OsUtils.asSingleArgument)
+//   argv[11] :170      --rt_lowess_fraction <Double.toString> (0 -> 0.0)
+//   argv[12] :186-187  keep-intermediate-files=false -> delete_intermediate_files
+//
+// DIA-NN 1.8.2 Beta 8 (FP/cmd/CmdDiann.java:313-399; every compareVersion branch takes "< 1.9" / "< 2.0"):
+//   --qvalue 0.01 (:333-334, Float.toString), --matrix-qvalue 0.01 --matrices (:342-344),
+//   --no-prot-inf (:351, redo-protein-inference=false), --smart-profiling (:361),
+//   quantification-strategy=3 -> --peak-center --no-ifs-removal (DiannPanel.java:482-497; HashSet order:
+//   "--peak-center" bucket 2 before "--no-ifs-removal" bucket 10), --report-lib-info when
+//   generate-msstats=true (:367-373); FragReporter --level "peptide;modified-peptide" (DiannPanel.java:546-565),
+//   --min-site-prob 0.75 (FragReporter args, CmdDiann.java:519-547; Float.toString).
+
+nextflow_process {
+
+    name "Test Process PARSEFRAGPIPEWORKFLOW - SpecLibGen and DIA-NN arguments"
+    script "../main.nf"
+    process "PARSEFRAGPIPEWORKFLOW"
+    config "./nextflow.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "parsefragpipeworkflow"
+
+    test("parse_fragpipe_workflow - SpecLibGen and DIA-NN argv for DIA_SpecLib_Quant, DIA_SpecLib_Quant_diaPASEF, glyco-N-DIA") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
+                input[0] = channel.fromList(['DIA_SpecLib_Quant', 'DIA_SpecLib_Quant_diaPASEF', 'glyco-N-DIA']).map { n ->
+                    // the DIA workflows search DIA files (data types of the manifest, TabWorkflow.adjustToolsBasedOnDataTypes)
+                    [ [ id: n ], file("\${baseDir}/tests/fixtures/fragpipe_workflows/\${n}.workflow", checkIfExists: true), ['DIA'] ]
+                }
+                """
+            }
+        }
+
+        then {
+            def pepxml_convert = /--max_delta_unimod 0.02 --max_delta_ppm 15.0 --fragment_types [\'b\',\'y\',]/
+            def expected = [
+                DIA_SpecLib_Quant: [
+                    speclibgen: ['noiRT:noIM', pepxml_convert, '--rt_lowess_fraction 0.0', 'delete_intermediate_files'],
+                    diann: '--qvalue 0.01 --matrix-qvalue 0.01 --matrices --no-prot-inf --smart-profiling --peak-center --no-ifs-removal --report-lib-info',
+                    msstats: true
+                ],
+                DIA_SpecLib_Quant_diaPASEF: [
+                    speclibgen: ['noiRT:noIM', pepxml_convert, '--rt_lowess_fraction 0.0', 'delete_intermediate_files'],
+                    diann: '--qvalue 0.01 --matrix-qvalue 0.01 --matrices --no-prot-inf --smart-profiling --peak-center --no-ifs-removal --report-lib-info',
+                    msstats: true
+                ],
+                // speclibgen.convert-psm=true, labile_mode=N-glyco+HexNAc -> nglyc+, max_glycan_qval=0.01;
+                // diann.generate-msstats=false -> no --report-lib-info
+                'glyco-N-DIA': [
+                    speclibgen: ['noiRT:noIM', pepxml_convert + ' --decoy_prefix rev_ --labile_mods nglyc+ --max_glycan_q 0.01', '--rt_lowess_fraction 0.0', 'delete_intermediate_files'],
+                    diann: '--qvalue 0.01 --matrix-qvalue 0.01 --matrices --no-prot-inf --smart-profiling --peak-center --no-ifs-removal',
+                    msstats: false
+                ]
+            ]
+            def results = process.out.tool_configs_json.collectEntries { meta, json_path ->
+                def configs = new groovy.json.JsonSlurper().parse(new File(json_path.toString()))
+                def env = File.createTempFile('speclibgen', '.env')
+                env.text = configs.speclibgen.args
+                def speclibgen = ['bash', '-c', '. "$1"; printf "%s\\n" "$SPECLIB_RT_CAL:$SPECLIB_IM_CAL" "$SPECLIB_CONVERT_ARGS" "$SPECLIB_LIBRARY_ARGS" "$SPECLIB_INTERMEDIATE"', '_', env.path]
+                    .execute().text.readLines()
+                env.delete()
+                def diann = configs.diann
+                def prot_inf = diann.redo_protein_inference ? '--relaxed-prot-inf --fasta <fasta>' : '--no-prot-inf'
+                [(meta.id): [
+                    run: [configs.speclibgen.run, diann.run],
+                    speclibgen: speclibgen,
+                    calibration_files: [configs.speclibgen.rt_cal_file, configs.speclibgen.im_cal_file],
+                    diann: "${diann.args} ${prot_inf} ${diann.args_post}".toString(),
+                    msstats: diann.generate_msstats,
+                    reporter: [diann.mod_tag, diann.min_site_prob, diann.report_levels],
+                    tabrun: configs.tabrun.run
+                ]]
+            }
+            assertAll(
+                { assert process.success },
+                { assert results.keySet() == expected.keySet() },
+                { expected.each { name, want ->
+                    assert results[name].run == [true, true]
+                    assert results[name].speclibgen == want.speclibgen
+                    assert results[name].calibration_files == ['', '']
+                    assert results[name].diann == want.diann
+                    assert results[name].msstats == want.msstats
+                    assert results[name].reporter == ['', '0.75', 'peptide;modified-peptide']
+                    // tab-run.write_sub_mzml=false and export_matched_fragments=false (FragpipeRun.java:2388-2411)
+                    assert results[name].tabrun == false
+                } },
+                { assert snapshot(results).match() }
+            )
+        }
+    }
+
+    test("parse_fragpipe_workflow - user RT/IM calibration files and Biognosys iRT") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                def user_cal = file("\${workDir}/user_cal.workflow")
+                user_cal.text = '''
+speclibgen.run-speclibgen=true
+speclibgen.easypqp.rt-cal=User provided RT calibration file
+speclibgen.easypqp.select-file.text=/data/irt.tsv
+speclibgen.easypqp.im-cal=User provided IM calibration file
+speclibgen.easypqp.select-im-file.text=/data/im.tsv
+speclibgen.keep-intermediate-files=true
+speclibgen.easypqp.neutral_loss=true
+speclibgen.easypqp.fragment.y=false
+database.decoy-tag=rev_
+'''.trim()
+                def biognosys = file("\${workDir}/biognosys.workflow")
+                biognosys.text = '''
+speclibgen.run-speclibgen=true
+speclibgen.easypqp.rt-cal=Biognosys_iRT
+database.decoy-tag=rev_
+'''.trim()
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
+                input[0] = channel.of([[ id: 'user_cal' ], user_cal, ['DIA']], [[ id: 'biognosys' ], biognosys, ['DIA']])  // DIA manifest files
+                """
+            }
+        }
+
+        then {
+            def results = process.out.tool_configs_json.collectEntries { meta, json_path ->
+                def configs = new groovy.json.JsonSlurper().parse(new File(json_path.toString()))
+                def env = File.createTempFile('speclibgen', '.env')
+                env.text = configs.speclibgen.args
+                def values = ['bash', '-c', '. "$1"; printf "%s\\n" "$SPECLIB_RT_CAL" "$SPECLIB_IM_CAL" "$SPECLIB_CONVERT_ARGS" "$SPECLIB_LIBRARY_ARGS" "$SPECLIB_INTERMEDIATE"', '_', env.path]
+                    .execute().text.readLines()
+                env.delete()
+                [(meta.id): values + [configs.speclibgen.rt_cal_file, configs.speclibgen.im_cal_file]]
+            }
+            assertAll(
+                { assert process.success },
+                // "a tsv file": the calibration paths replace the keywords (CmdSpecLibGen.java:151-152);
+                // the module stages them. Panel defaults: fragment b only here, 0.01 lowess fraction.
+                { assert results.user_cal == ['', '', /--max_delta_unimod 0.02 --max_delta_ppm 15.0 --fragment_types [\'b\',] --enable_unspecific_losses/,
+                                              '--rt_lowess_fraction 0.01', 'keep_intermediate_files', '/data/irt.tsv', '/data/im.tsv'] },
+                { assert results.biognosys == ['Biognosys_iRT', 'noIM', /--max_delta_unimod 0.02 --max_delta_ppm 15.0 --fragment_types [\'b\',\'y\',]/,
+                                               '--rt_lowess_fraction 0.01', 'delete_intermediate_files', '', ''] },
+                { assert snapshot(results).match() }
+            )
+        }
+    }
+
+    test("parse_fragpipe_workflow - glyco mode with pepXML conversion fails like FragPipe") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                def wf = file("\${workDir}/glyco_pepxml.workflow")
+                wf.text = '''
+speclibgen.run-speclibgen=true
+speclibgen.convert-psm=false
+speclibgen.easypqp.labile_mode=N-glyco
+database.decoy-tag=rev_
+'''.trim()
+                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
+                input[0] = channel.of([[ id: 'glyco_pepxml' ], wf, ['DIA']])
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.failed },
+                // CmdSpecLibGen.java:104-112
+                { assert (process.stdout + process.stderr).join('\n').contains('FragPipe-SpecLib glyco modes are only supported for psm.tsv conversion') }
+            )
+        }
+    }
+}

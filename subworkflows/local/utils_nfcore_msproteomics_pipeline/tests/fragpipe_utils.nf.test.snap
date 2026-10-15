@@ -1,0 +1,419 @@
+{
+    "fpopCoadaptrSource - Philosopher report after FreeQuant, filter without quantification": {
+        "content": [
+            "report"
+        ],
+        "timestamp": "2026-10-06T00:49:51.727277127",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "fragpipeGroup - experiment is trimmed and sanitised, no bioreplicate gives experiment": {
+        "content": [
+            "Ctrl_A_1"
+        ],
+        "timestamp": "2026-10-04T22:50:40.841648803",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "fpopCoadaptrSource - Philosopher filter tables when nothing quantifies": {
+        "content": [
+            "filter"
+        ],
+        "timestamp": "2026-10-06T00:49:57.142503296",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "fragpipeManifestEntries - staged_dir names the files as staged in the task": {
+        "content": [
+            [
+                [
+                    "spectra/a.raw",
+                    "control",
+                    1,
+                    "DDA"
+                ],
+                [
+                    "spectra/b.d",
+                    "",
+                    null,
+                    "DIA"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-08T14:06:20.369601549",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "fragpipeManifestEntries - local path absolute, S3 path as its URI": {
+        "content": [
+            [
+                [
+                    "/data/runs/a.raw",
+                    "control",
+                    1,
+                    "DDA"
+                ],
+                [
+                    "s3://bucket/runs/b.d",
+                    "",
+                    null,
+                    "DIA"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-08T14:06:09.790668342",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "fragpipeGroup - blank experiment with bioreplicate gives exp_bioreplicate": {
+        "content": [
+            "exp_3"
+        ],
+        "timestamp": "2026-10-04T22:50:37.338667112",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "parseSamplesheet - accepts Bruker .d directories, compressed and raw spectra": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "bruker_dir",
+                        "sample": "bruker_dir",
+                        "condition": "bruker_dir",
+                        "label": null,
+                        "fraction": 1,
+                        "experiment": null,
+                        "bioreplicate": null,
+                        "group": "",
+                        "data_type": "DDA"
+                    },
+                    "bruker.d"
+                ],
+                [
+                    {
+                        "id": "dia_gz",
+                        "sample": "dia_gz",
+                        "condition": "dia_gz",
+                        "label": null,
+                        "fraction": 1,
+                        "experiment": null,
+                        "bioreplicate": null,
+                        "group": "",
+                        "data_type": "DDA"
+                    },
+                    "dia.mzML.gz"
+                ],
+                [
+                    {
+                        "id": "thermo",
+                        "sample": "thermo",
+                        "condition": "thermo",
+                        "label": null,
+                        "fraction": 1,
+                        "experiment": null,
+                        "bioreplicate": null,
+                        "group": "",
+                        "data_type": "DDA"
+                    },
+                    "thermo.raw"
+                ],
+                [
+                    {
+                        "id": "bruker_tar",
+                        "sample": "bruker_tar",
+                        "condition": "bruker_tar",
+                        "label": null,
+                        "fraction": 1,
+                        "experiment": null,
+                        "bioreplicate": null,
+                        "group": "",
+                        "data_type": "DDA"
+                    },
+                    "bruker2.d.tar.gz"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-05T02:00:58.251069933",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "fragpipeGroup - speclib or DIA-NN run gives the single group": {
+        "content": [
+            ""
+        ],
+        "timestamp": "2026-10-04T22:50:47.741571505",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "fpopCoadaptrMeta - flags the task whose psm.tsv coADAPTr replaces": {
+        "content": [
+            {
+                "id": "fragpipe",
+                "fpop_coadaptr": "ionquant"
+            }
+        ],
+        "timestamp": "2026-10-06T00:50:09.257286339",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "tmtAnnotationLines - user annotation per group and FragPipe default for a group without labels": {
+        "content": [
+            [
+                "plex\tchannel\tsample\tsample_name\tcondition\treplicate",
+                "\t126\t_126\t_126\t_126\t1",
+                "\t127N\t_127N\t_127N\t_127N\t1",
+                "\t128C\t_128C\t_128C\t_128C\t1",
+                "\t129N\t_129N\t_129N\t_129N\t1",
+                "\t130C\t_130C\t_130C\t_130C\t1",
+                "\t131N\t_131N\t_131N\t_131N\t1",
+                "plex1\t126\tS0\tS0\tcontrol\t1",
+                "plex1\t127N\tS1\tS1\ttreated\t1",
+                "plex1\t128C\tS2\tS2\tcontrol\t1",
+                "plex1\t129N\tS3\tS3\ttreated\t1",
+                "plex1\t130C\tS4\tS4\tcontrol\t1",
+                "plex1\t131N\tNA\tNA\ttreated\t1"
+            ]
+        ],
+        "timestamp": "2026-10-04T23:35:05.119905373",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "parseSamplesheet - data_type column carried in meta, blank guessed": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "ctrl_1",
+                        "sample": "ctrl_1",
+                        "condition": "ctrl_1",
+                        "label": null,
+                        "fraction": 1,
+                        "experiment": "control",
+                        "bioreplicate": null,
+                        "group": "control",
+                        "data_type": "DIA"
+                    },
+                    "ctrl_1.mzML"
+                ],
+                [
+                    {
+                        "id": "ctrl_2",
+                        "sample": "ctrl_2",
+                        "condition": "ctrl_2",
+                        "label": null,
+                        "fraction": 1,
+                        "experiment": "control",
+                        "bioreplicate": null,
+                        "group": "control",
+                        "data_type": "DDA"
+                    },
+                    "ctrl_2.mzML"
+                ],
+                [
+                    {
+                        "id": "trt_1",
+                        "sample": "trt_1",
+                        "condition": "trt_1",
+                        "label": null,
+                        "fraction": 1,
+                        "experiment": "treated",
+                        "bioreplicate": null,
+                        "group": "treated",
+                        "data_type": "DIA-Quant"
+                    },
+                    "trt_1.mzML"
+                ],
+                [
+                    {
+                        "id": "trt_2",
+                        "sample": "trt_2",
+                        "condition": "trt_2",
+                        "label": null,
+                        "fraction": 1,
+                        "experiment": "treated",
+                        "bioreplicate": null,
+                        "group": "treated",
+                        "data_type": "GPF-DIA"
+                    },
+                    "trt_2.mzML"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-05T01:57:40.863035796",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "fpopCoadaptrMeta - leaves other tasks' meta unchanged": {
+        "content": [
+            {
+                "id": "control",
+                "group": "control"
+            }
+        ],
+        "timestamp": "2026-10-06T00:50:15.042343853",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "fragpipeGroup - blank experiment and bioreplicate gives the single group": {
+        "content": [
+            ""
+        ],
+        "timestamp": "2026-10-04T22:50:44.283288955",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "checkFpopTools - FPOP.workflow settings pass on DDA data": {
+        "content": [
+            "{\"fpop\":{\"run\":false},\"fpop_coadaptr\":{\"run\":true},\"ionquant\":{\"run\":true},\"diann\":{\"run\":false}}"
+        ],
+        "timestamp": "2026-10-05T14:59:37.042680475",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "checkTimsTofTools - timsTOF input without the incompatible tools passes": {
+        "content": [
+            "{\"crystalc\": {\"run\": false}, \"freequant\": {\"run\": false}, \"labelquant\": {\"run\": false}, \"ionquant\": {\"run\": true}}"
+        ],
+        "timestamp": "2026-10-06T00:40:38.593860606",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "matchedFragmentsManifest - FragPipe's work-dir manifest: sanitised experiment, bioreplicate, data type": {
+        "content": [
+            "../spectra/C02.mzML\tCtrl_A_1\t\tDDA\n../spectra/b.d\te\t3\tDDA+\n../spectra/run1.mzML\t\t2\tDIA\n../spectra/run2.raw\tx\t\tDDA"
+        ],
+        "timestamp": "2026-10-05T19:15:47.298747022",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "fragpipeGroup - experiment and bioreplicate give experiment_bioreplicate": {
+        "content": [
+            "control_2"
+        ],
+        "timestamp": "2026-10-04T22:50:33.772175782",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "checkTimsTofTools - .raw input is regular MS even with the IM-MS data type": {
+        "content": [
+            "{\"crystalc\": {\"run\": true}, \"freequant\": {\"run\": true}, \"labelquant\": {\"run\": false}}"
+        ],
+        "timestamp": "2026-10-06T00:40:34.007373778",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "generateFragpipeManifest - writes experiment, bioreplicate and data type per file": {
+        "content": [
+            "a.mzML\tcontrol\t1\tDIA\nb.mzML\t\t\tDDA+"
+        ],
+        "timestamp": "2026-10-05T01:56:55.591576588",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "crystalcRunIndex - index counts over the run in FragPipe's LC-MS order, then by rank": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "A",
+                        "experiment": "a",
+                        "bioreplicate": null,
+                        "data_type": "DIA",
+                        "spectra_name": "Z.mzML",
+                        "crystalc_index": 0
+                    },
+                    "Z_rank1.pepXML",
+                    "Z.mzML"
+                ],
+                [
+                    {
+                        "id": "A",
+                        "experiment": "a",
+                        "bioreplicate": null,
+                        "data_type": "DIA",
+                        "spectra_name": "Z.mzML",
+                        "crystalc_index": 1
+                    },
+                    "Z_rank2.pepXML",
+                    "Z.mzML"
+                ],
+                [
+                    {
+                        "id": "B",
+                        "experiment": "b",
+                        "bioreplicate": null,
+                        "data_type": "DDA",
+                        "spectra_name": "A.mzML",
+                        "crystalc_index": 2
+                    },
+                    "B.pepXML",
+                    "A.mzML"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-07T01:34:47.049881393",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "fpopCoadaptrSource - DIA-NN report.tsv when DIA-NN runs": {
+        "content": [
+            "diann"
+        ],
+        "timestamp": "2026-10-06T00:50:02.048078325",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "fpopCoadaptrSource - IonQuant psm.tsv files are the final ones in label-free runs": {
+        "content": [
+            "ionquant"
+        ],
+        "timestamp": "2026-10-06T00:49:46.365860356",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    }
+}

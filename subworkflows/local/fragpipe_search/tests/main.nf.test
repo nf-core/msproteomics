@@ -23,17 +23,22 @@ nextflow_workflow {
 
                 // Tool configs: only msfragger enabled
                 def tool_configs = [
-                    msfragger: [run: true, args: '--precursor_mass_tolerance 20'],
+                    msfragger: [run: true, args: '--precursor_mass_tolerance 20', calibrate_mass: [DDA: '2']],
                     msbooster: [run: false, args: ''],
                     crystalc:  [run: false, args: '']
                 ]
 
-                input[0] = channel.of([[ id: 'test_search' ], mzml_file])
+                input[0] = channel.of([[ id: 'test_search', data_type: 'DDA' ], mzml_file])
                 input[1] = channel.value(fasta_file)
                 input[2] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
-                input[3] = []          // ch_fragger_params (CLI mode)
-                input[4] = []          // ch_msbooster_params (CLI mode)
-                input[5] = 1          // ch_num_slices (standard, no split)
+                def fragger_params = file("\${workDir}/fragger.params")
+                fragger_params.text = "database_name = test.fasta\\ndata_type = 0\\nprecursor_mass_tolerance = 20\\ncalibrate_mass = 2\\nwrite_calibrated_mzml = 0\\noutput_format = tsv_pepXML_pin\\noutput_report_topN = 1"
+                input[3] = channel.value([['DDA', fragger_params]])  // ch_fragger_params, one set per data type
+                input[4] = channel.value(fragger_params)             // ch_msbooster_fragger_params
+                def msbooster_params = file("\${workDir}/msbooster_params.txt")
+                msbooster_params.text = "useIM = true\\nfindBestImModel = false\\nnumThreads = 4\\n"
+                input[5] = channel.value(msbooster_params)  // ch_msbooster_params (workflow-derived keys)
+                input[6] = channel.value(1)          // ch_num_slices (standard, no split)
                 """
             }
         }
@@ -47,7 +52,8 @@ nextflow_workflow {
                     workflow.out.pin_rescored,
                     workflow.out.tsv,
                     workflow.out.results_dir,
-                    workflow.out.uncalibrated_mzml
+                    workflow.out.lcms,
+                    workflow.out.validation_lcms
                 ).match() }
             )
         }
@@ -67,17 +73,22 @@ nextflow_workflow {
 
                 // Tool configs: msfragger + msbooster enabled
                 def tool_configs = [
-                    msfragger: [run: true, args: '--precursor_mass_tolerance 20'],
-                    msbooster: [run: true, args: '--predictRT true'],
+                    msfragger: [run: true, args: '--precursor_mass_tolerance 20', calibrate_mass: [DDA: '2']],
+                    msbooster: [run: true, args: ''],
                     crystalc:  [run: false, args: '']
                 ]
 
-                input[0] = channel.of([[ id: 'test_search_boost' ], mzml_file])
+                input[0] = channel.of([[ id: 'test_search_boost', group: '', data_type: 'DDA' ], mzml_file])
                 input[1] = channel.value(fasta_file)
                 input[2] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
-                input[3] = []          // ch_fragger_params (CLI mode)
-                input[4] = []          // ch_msbooster_params (CLI mode)
-                input[5] = 1          // ch_num_slices (standard, no split)
+                def fragger_params = file("\${workDir}/fragger.params")
+                fragger_params.text = "database_name = test.fasta\\ndata_type = 0\\nprecursor_mass_tolerance = 20\\ncalibrate_mass = 2\\nwrite_calibrated_mzml = 0\\noutput_format = tsv_pepXML_pin\\noutput_report_topN = 1"
+                input[3] = channel.value([['DDA', fragger_params]])  // ch_fragger_params, one set per data type
+                input[4] = channel.value(fragger_params)             // ch_msbooster_fragger_params
+                def msbooster_params = file("\${workDir}/msbooster_params.txt")
+                msbooster_params.text = "useIM = true\\nfindBestImModel = false\\nnumThreads = 4\\n"
+                input[5] = channel.value(msbooster_params)  // ch_msbooster_params (workflow-derived keys)
+                input[6] = channel.value(1)          // ch_num_slices (standard, no split)
                 """
             }
         }
@@ -91,8 +102,57 @@ nextflow_workflow {
                     workflow.out.pin_rescored,
                     workflow.out.tsv,
                     workflow.out.results_dir,
-                    workflow.out.uncalibrated_mzml
+                    workflow.out.lcms,
+                    workflow.out.validation_lcms
                 ).match() }
+            )
+        }
+    }
+
+    test("fragpipe_search - stub with msbooster and a spectral library stages the library") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                def mzml_file = file("\${workDir}/test.mzML")
+                mzml_file.text = "<?xml version='1.0'?><mzML></mzML>"
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">PROT1\\nPEPTIDEK"
+                def library = file("\${workDir}/user_library.tsv")
+                library.text = "mock library"
+
+                def tool_configs = [
+                    msfragger: [run: true, args: '--precursor_mass_tolerance 20', calibrate_mass: [DDA: '2']],
+                    msbooster: [run: true, args: '', spectral_library: library.toString()],
+                    crystalc:  [run: false, args: '']
+                ]
+
+                input[0] = channel.of([[ id: 'test_search_boost', group: '', data_type: 'DDA' ], mzml_file])
+                input[1] = channel.value(fasta_file)
+                input[2] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                def fragger_params = file("\${workDir}/fragger.params")
+                fragger_params.text = "database_name = test.fasta\\ndata_type = 0\\nprecursor_mass_tolerance = 20\\ncalibrate_mass = 2\\nwrite_calibrated_mzml = 0\\noutput_format = tsv_pepXML_pin\\noutput_report_topN = 1"
+                input[3] = channel.value([['DDA', fragger_params]])
+                input[4] = channel.value(fragger_params)
+                def msbooster_params = file("\${workDir}/msbooster_params.txt")
+                msbooster_params.text = "useIM = true\\nfindBestImModel = false\\nspectraPredFile = {SPECTRAL_LIBRARY}\\nRTPredFile = {SPECTRAL_LIBRARY}\\nIMPredFile = {SPECTRAL_LIBRARY}\\nnumThreads = 4\\n"
+                input[5] = channel.value(msbooster_params)
+                input[6] = channel.value(1)
+                """
+            }
+        }
+
+        then {
+            // MSBOOSTER's task directory holds msbooster/msbooster_params.txt
+            def params_texts = []
+            new File(workDir.toString()).eachFileRecurse { f -> if (f.path.endsWith('/msbooster/msbooster_params.txt')) { params_texts << f } }
+            assertAll(
+                { assert workflow.success },
+                { assert params_texts.size() == 1 },
+                { assert snapshot(params_texts[0].readLines().findAll { l -> l.contains('PredFile') }).match() },
+                { assert params_texts[0].text.contains('spectraPredFile = <task dir>/spectral_library/user_library.tsv\nRTPredFile = <task dir>/spectral_library/user_library.tsv\nIMPredFile = <task dir>/spectral_library/user_library.tsv\n') }
             )
         }
     }
@@ -111,17 +171,22 @@ nextflow_workflow {
 
                 // Tool configs: msfragger + crystalc enabled
                 def tool_configs = [
-                    msfragger: [run: true, args: '--precursor_mass_tolerance 20'],
+                    msfragger: [run: true, args: '--precursor_mass_tolerance 20', calibrate_mass: [DDA: '2']],
                     msbooster: [run: false, args: ''],
-                    crystalc:  [run: true, args: '# Crystal-C params']
+                    crystalc:  [run: true, args: 'precursor_charge = 1 6']
                 ]
 
-                input[0] = channel.of([[ id: 'test_search_cc' ], mzml_file])
+                input[0] = channel.of([[ id: 'test_search_cc', data_type: 'DDA' ], mzml_file])
                 input[1] = channel.value(fasta_file)
                 input[2] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
-                input[3] = []          // ch_fragger_params (CLI mode)
-                input[4] = []          // ch_msbooster_params (CLI mode)
-                input[5] = 1          // ch_num_slices (standard, no split)
+                def fragger_params = file("\${workDir}/fragger.params")
+                fragger_params.text = "database_name = test.fasta\\ndata_type = 0\\nprecursor_mass_tolerance = 20\\ncalibrate_mass = 2\\nwrite_calibrated_mzml = 0\\noutput_format = tsv_pepXML_pin\\noutput_report_topN = 1"
+                input[3] = channel.value([['DDA', fragger_params]])  // ch_fragger_params, one set per data type
+                input[4] = channel.value(fragger_params)             // ch_msbooster_fragger_params
+                def msbooster_params = file("\${workDir}/msbooster_params.txt")
+                msbooster_params.text = "useIM = true\\nfindBestImModel = false\\nnumThreads = 4\\n"
+                input[5] = channel.value(msbooster_params)  // ch_msbooster_params (workflow-derived keys)
+                input[6] = channel.value(1)          // ch_num_slices (standard, no split)
                 """
             }
         }
@@ -135,7 +200,8 @@ nextflow_workflow {
                     workflow.out.pin_rescored,
                     workflow.out.tsv,
                     workflow.out.results_dir,
-                    workflow.out.uncalibrated_mzml
+                    workflow.out.lcms,
+                    workflow.out.validation_lcms
                 ).match() }
             )
         }
@@ -155,17 +221,22 @@ nextflow_workflow {
 
                 // Tool configs: all tools enabled
                 def tool_configs = [
-                    msfragger: [run: true, args: '--precursor_mass_tolerance 20'],
-                    msbooster: [run: true, args: '--predictRT true'],
-                    crystalc:  [run: true, args: '# Crystal-C params']
+                    msfragger: [run: true, args: '--precursor_mass_tolerance 20', calibrate_mass: [DDA: '2']],
+                    msbooster: [run: true, args: ''],
+                    crystalc:  [run: true, args: 'precursor_charge = 1 6']
                 ]
 
-                input[0] = channel.of([[ id: 'test_search_all' ], mzml_file])
+                input[0] = channel.of([[ id: 'test_search_all', group: '', data_type: 'DDA' ], mzml_file])
                 input[1] = channel.value(fasta_file)
                 input[2] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
-                input[3] = []          // ch_fragger_params (CLI mode)
-                input[4] = []          // ch_msbooster_params (CLI mode)
-                input[5] = 1          // ch_num_slices (standard, no split)
+                def fragger_params = file("\${workDir}/fragger.params")
+                fragger_params.text = "database_name = test.fasta\\ndata_type = 0\\nprecursor_mass_tolerance = 20\\ncalibrate_mass = 2\\nwrite_calibrated_mzml = 0\\noutput_format = tsv_pepXML_pin\\noutput_report_topN = 1"
+                input[3] = channel.value([['DDA', fragger_params]])  // ch_fragger_params, one set per data type
+                input[4] = channel.value(fragger_params)             // ch_msbooster_fragger_params
+                def msbooster_params = file("\${workDir}/msbooster_params.txt")
+                msbooster_params.text = "useIM = true\\nfindBestImModel = false\\nnumThreads = 4\\n"
+                input[5] = channel.value(msbooster_params)  // ch_msbooster_params (workflow-derived keys)
+                input[6] = channel.value(1)          // ch_num_slices (standard, no split)
                 """
             }
         }
@@ -179,7 +250,8 @@ nextflow_workflow {
                     workflow.out.pin_rescored,
                     workflow.out.tsv,
                     workflow.out.results_dir,
-                    workflow.out.uncalibrated_mzml
+                    workflow.out.lcms,
+                    workflow.out.validation_lcms
                 ).match() }
             )
         }
@@ -201,26 +273,29 @@ nextflow_workflow {
                 def fasta_file = file("\${workDir}/test.fasta")
                 fasta_file.text = ">PROT1\\nPEPTIDEK\\n>PROT2\\nANOTHERK"
 
-                // Fragger params file required by MSFRAGGER_CALIBRATE (stub copies it)
+                // Fragger params file required by MSFRAGGERCALIBRATE (stub copies it)
                 def fragger_params = file("\${workDir}/fragger.params")
-                fragger_params.text = "calibrate_mass = 2\\nnum_threads = 2\\nprecursor_mass_tolerance = 20"
+                fragger_params.text = "database_name = test.fasta\\ndata_type = 0\\ncalibrate_mass = 2\\nnum_threads = 2\\noutput_report_topN = 1\\nlocalize_delta_mass = 0\\ncheck_spectral_files = 1\\nwrite_calibrated_mzml = 0\\noutput_format = tsv_pepXML_pin"
 
                 // Tool configs: only msfragger enabled (simplest split path)
                 def tool_configs = [
-                    msfragger: [run: true, args: '--precursor_mass_tolerance 20'],
+                    msfragger: [run: true, args: '--precursor_mass_tolerance 20', calibrate_mass: [DDA: '2']],
                     msbooster: [run: false, args: ''],
                     crystalc:  [run: false, args: '']
                 ]
 
                 input[0] = channel.of(
-                    [[ id: 'sample_A' ], mzml_file_1],
-                    [[ id: 'sample_B' ], mzml_file_2]
+                    [[ id: 'sample_A', data_type: 'DDA' ], mzml_file_1],
+                    [[ id: 'sample_B', data_type: 'DDA' ], mzml_file_2]
                 )
                 input[1] = channel.value(fasta_file)
                 input[2] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
-                input[3] = channel.value(fragger_params)  // ch_fragger_params (needed for calibration)
-                input[4] = []          // ch_msbooster_params (CLI mode)
-                input[5] = 2          // ch_num_slices (split database search)
+                input[3] = channel.value([['DDA', fragger_params]])  // ch_fragger_params (needed for calibration)
+                input[4] = channel.value(fragger_params)             // ch_msbooster_fragger_params
+                def msbooster_params = file("\${workDir}/msbooster_params.txt")
+                msbooster_params.text = "useIM = true\\nfindBestImModel = false\\nnumThreads = 4\\n"
+                input[5] = channel.value(msbooster_params)  // ch_msbooster_params (workflow-derived keys)
+                input[6] = channel.value(2)          // ch_num_slices (split database search)
                 """
             }
         }
@@ -234,8 +309,269 @@ nextflow_workflow {
                     workflow.out.pin_rescored,
                     workflow.out.tsv,
                     workflow.out.results_dir,
-                    workflow.out.uncalibrated_mzml
+                    workflow.out.lcms,
+                    workflow.out.validation_lcms
                 ).match() }
+            )
+        }
+    }
+
+    // each file is searched with its data type's params set (CmdMsfragger.java:541-552):
+    // DDA -> fragger_dda.params (fragger.params without DIA/GPF-DIA/DIA-Lib files, :444), DIA and DIA-Lib ->
+    // fragger_dia.params, GPF-DIA -> fragger_gpfdia.params, DDA+ -> fragger_dda_plus.params; each search
+    // writes its set under that name; one pepindex is shared.
+    test("fragpipe_search - stub picks the MSFragger params of each file's data type") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">PROT1\\nPEPTIDEK"
+                def sets = [['DDA', 'fragger_dda.params', 0, 1], ['DIA', 'fragger_dia.params', 1, 5], ['GPF-DIA', 'fragger_gpfdia.params', 2, 5], ['DDA+', 'fragger_dda_plus.params', 3, 5]].collect { type, name, dt, topn ->
+                    def f = file("\${workDir}/\${name}")
+                    f.text = "database_name = test.fasta\\ndata_type = \${dt}\\noutput_report_topN = \${topn}\\ncalibrate_mass = 2\\nwrite_calibrated_mzml = 0\\noutput_format = tsv_pepXML_pin\\n"
+                    [type, f]
+                }
+                def spectra = ['DDA', 'DIA', 'DIA-Lib', 'GPF-DIA', 'DDA+'].collect { t ->
+                    def f = file("\${workDir}/run_\${t.replace('+', 'plus')}.mzML")
+                    f.text = "<?xml version='1.0'?><mzML></mzML>"
+                    [[id: f.baseName, data_type: t], f]
+                }
+                def tool_configs = [msfragger: [run: true, args: ''], msbooster: [run: false, args: ''], crystalc: [run: false, args: '']]
+                input[0] = channel.fromList(spectra)
+                input[1] = channel.value(fasta_file)
+                input[2] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[3] = channel.value(sets)
+                input[4] = channel.value(sets[0][1])
+                input[5] = channel.empty()  // ch_msbooster_params (MSBooster off)
+                input[6] = channel.value(1)
+                """
+            }
+        }
+
+        then {
+            def params_used = workflow.out.results_dir.collectEntries { meta, dir ->
+                def written = new File(dir.toString()).listFiles().findAll { f -> f.name.endsWith('.params') }
+                [meta.id, written.collect { f -> "${f.name}: ${f.readLines().find { line -> line.startsWith('data_type') }}".toString() }]
+            }
+            def pepxmls = workflow.out.pepxml.collectEntries { meta, f -> [meta.id, [f].flatten().collect { x -> file(x).name }.sort()] }
+            assertAll(
+                { assert workflow.success },
+                { assert params_used == [run_DDA: ['fragger_dda.params: data_type = 0'], run_DIA: ['fragger_dia.params: data_type = 1'], 'run_DIA-Lib': ['fragger_dia.params: data_type = 1'], 'run_GPF-DIA': ['fragger_gpfdia.params: data_type = 2'], run_DDAplus: ['fragger_dda_plus.params: data_type = 3']] : params_used },
+                { assert snapshot(params_used, pepxmls).match() }
+            )
+        }
+    }
+
+    // MSBooster's useIM is on only when the run has timsTOF data (CmdMSBooster.java:151-170);
+    // MSBooster finds the MSFragger _uncalibrated.mzML of a .raw file in the LC-MS directory.
+    test("fragpipe_search - stub MSBooster gets the uncalibrated mzML of a RAW file, useIM off without timsTOF") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                def raw_file = file("\${workDir}/run1.raw")
+                raw_file.text = "mock"
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">PROT1\\nPEPTIDEK"
+                def tool_configs = [msfragger: [run: true, args: ''], msbooster: [run: true, args: ''], crystalc: [run: false, args: '']]
+                def fragger_params = file("\${workDir}/fragger.params")
+                fragger_params.text = "database_name = test.fasta\\ndata_type = 0\\ncalibrate_mass = 2\\nwrite_calibrated_mzml = 0\\noutput_format = tsv_pepXML_pin\\noutput_report_topN = 1"
+                def msbooster_params = file("\${workDir}/msbooster_params.txt")
+                msbooster_params.text = "useIM = true\\nfindBestImModel = true\\nnumThreads = 4\\n"
+                input[0] = channel.of([[ id: 'run1', group: '', data_type: 'DDA' ], raw_file])
+                input[1] = channel.value(fasta_file)
+                input[2] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[3] = channel.value([['DDA', fragger_params]])
+                input[4] = channel.value(fragger_params)
+                input[5] = channel.value(msbooster_params)
+                input[6] = channel.value(1)
+                """
+            }
+        }
+
+        then {
+            // MSBOOSTER's task directory holds msbooster/msbooster_params.txt
+            def boost_dir = java.nio.file.Files.walk(java.nio.file.Paths.get(workDir.toString()))
+                .filter { p -> p.toString().endsWith('/msbooster/msbooster_params.txt') }
+                .findFirst().get().parent.parent
+            def params_txt = boost_dir.resolve('msbooster/msbooster_params.txt').readLines()
+            def staged = boost_dir.toFile().list().toList()
+            assertAll(
+                { assert workflow.success },
+                { assert params_txt.contains('useIM = false') && params_txt.contains('findBestImModel = false') },
+                { assert staged.containsAll(['run1.raw', 'run1_uncalibrated.mzML', 'run1.pin']) },
+                { assert workflow.out.validation_lcms.collect { item -> file(item[1]).name } == ['run1_uncalibrated.mzML'] }
+            )
+        }
+    }
+
+    // one MSBooster runs over every file, as in FragPipe (per-file runs are not equivalent)
+    test("fragpipe_search - stub MSBooster runs once over every file") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                def files = ['a', 'b'].collect { n -> def f = file("\${workDir}/" + n + ".mzML"); f.text = 'mock'; f }
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">PROT1\\nPEPTIDEK"
+                def tool_configs = [msfragger: [run: true, args: ''], msbooster: [run: true, args: ''], crystalc: [run: false, args: '']]
+                def fragger_params = file("\${workDir}/fragger.params")
+                fragger_params.text = "database_name = test.fasta\\ndata_type = 0\\ncalibrate_mass = 2\\nwrite_calibrated_mzml = 0\\noutput_format = tsv_pepXML_pin\\noutput_report_topN = 1"
+                def msbooster_params = file("\${workDir}/msbooster_params.txt")
+                msbooster_params.text = "useIM = false\\nfindBestImModel = false\\nnumThreads = 4\\n"
+                input[0] = channel.fromList(files.collect { f -> [[ id: f.baseName, group: 'g' + (f.baseName == 'a' ? '1' : '2'), data_type: 'DDA' ], f] })
+                input[1] = channel.value(fasta_file)
+                input[2] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[3] = channel.value([['DDA', fragger_params]])
+                input[4] = channel.value(fragger_params)
+                input[5] = channel.value(msbooster_params)
+                input[6] = channel.value(1)
+                """
+            }
+        }
+
+        then {
+            def boosts = workflow.trace.tasks().findAll { t -> t.name.contains('MSBOOSTER') }
+            assertAll(
+                { assert workflow.success },
+                { assert boosts.size() == 1 },
+                { assert java.nio.file.Files.walk(java.nio.file.Paths.get(workDir.toString())).filter { p -> p.toString().endsWith('/msbooster/msbooster_params.txt') }.findFirst().get().readLines().contains('pinPepXMLDirectory = g1/a.pin g2/b.pin') },
+                { assert workflow.out.pin_rescored.collect { item -> [item[0].id, file(item[1]).name] }.sort() == [['a', 'a_edited.pin'], ['b', 'b_edited.pin']] }
+            )
+        }
+    }
+
+    // Crystal-C runs with the jar defaults on mzML/mzXML/RAW and stops on other formats
+    test("fragpipe_search - stub Crystal-C on a .d file fails like FragPipe") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                def d = file("\${workDir}/run1.d")
+                d.mkdirs()
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">PROT1\\nPEPTIDEK"
+                def tool_configs = [msfragger: [run: true, args: ''], msbooster: [run: false, args: ''], crystalc: [run: true, args: 'precursor_charge = 1 6']]
+                def fragger_params = file("\${workDir}/fragger.params")
+                fragger_params.text = "database_name = test.fasta\\ndata_type = 0\\ncalibrate_mass = 2\\nwrite_calibrated_mzml = 0\\noutput_format = tsv_pepXML_pin\\noutput_report_topN = 1"
+                input[0] = channel.of([[ id: 'run1', data_type: 'DDA' ], d])
+                input[1] = channel.value(fasta_file)
+                input[2] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[3] = channel.value([['DDA', fragger_params]])
+                input[4] = channel.value(fragger_params)
+                input[5] = channel.empty()  // ch_msbooster_params (MSBooster off)
+                input[6] = channel.value(1)
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.failed },
+                { assert (workflow.stdout + workflow.stderr).any { line -> line.contains("Crystal-C can't work with '.d' files") } }
+            )
+        }
+    }
+
+    // FragPipe never prebuilds the pepindex for a search; MSFragger builds it inside each
+    // search call next to the FASTA, one file per digestion parameter set (first search + main
+    // search with calibrate_mass 2). The pepindex header stores the absolute database_name, so an
+    // index from another task directory is never reused.
+    test("fragpipe_search - stub builds the pepindex inside each search, no index task") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">PROT1\\nPEPTIDEK"
+                def params_file = file("\${workDir}/fragger.params")
+                params_file.text = "database_name = test.fasta\\ncalibrate_mass = 2\\ndata_type = 0\\noutput_report_topN = 1\\nwrite_calibrated_mzml = 0\\noutput_format = tsv_pepXML_pin\\n"
+                def spectra = ['C02', 'D02'].collect { s ->
+                    def f = file("\${workDir}/\${s}.mzML")
+                    f.text = "<?xml version='1.0'?><mzML></mzML>"
+                    [[id: s, data_type: 'DDA'], f]
+                }
+                def tool_configs = [msfragger: [run: true, args: ''], msbooster: [run: false, args: ''], crystalc: [run: false, args: '']]
+                input[0] = channel.fromList(spectra)
+                input[1] = channel.value(fasta_file)
+                input[2] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[3] = channel.value([['DDA', params_file]])
+                input[4] = channel.value(params_file)
+                input[5] = channel.empty()  // ch_msbooster_params (MSBooster off)
+                input[6] = channel.value(1)
+                """
+            }
+        }
+
+        then {
+            def tasks = workflow.trace.tasks()*.name
+            def pepindex = workflow.out.results_dir.collectEntries { meta, dir ->
+                [meta.id, new File("${dir}").parentFile.listFiles().findAll { f -> f.name.endsWith('.pepindex') }*.name.sort()]
+            }
+            assertAll(
+                { assert workflow.success },
+                { assert !tasks.any { name -> name.contains('MSFRAGGER_INDEX') } : tasks },
+                { assert pepindex == [C02: ['test.fasta.1.pepindex', 'test.fasta.2.pepindex'], D02: ['test.fasta.1.pepindex', 'test.fasta.2.pepindex']] : pepindex },
+                { assert snapshot(pepindex).match() }
+            )
+        }
+    }
+
+    // split database search runs msfragger_pep_split.py per params set, here per file:
+    // calibrate_mass 1/2 files are calibrated alone (MSFRAGGERCALIBRATE per file), calibrate_mass 0
+    // files are searched as they are (msfragger_pep_split.py:630-632); each file keeps its data type's
+    // params through the chunk searches and the merge.
+    test("fragpipe_search - stub split database search with DDA and DIA params sets, per-file calibration") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">PROT1\\nPEPTIDEK\\n>PROT2\\nANOTHERK"
+                def dda = file("\${workDir}/fragger.params")
+                dda.text = "database_name = test.fasta\\ndata_type = 0\\ncalibrate_mass = 2\\noutput_report_topN = 1\\nlocalize_delta_mass = 0\\ncheck_spectral_files = 1\\nwrite_calibrated_mzml = 0\\noutput_format = tsv_pepXML_pin\\n"
+                def dia = file("\${workDir}/fragger_dia.params")
+                dia.text = "database_name = test.fasta\\ndata_type = 1\\ncalibrate_mass = 0\\noutput_report_topN = 1\\nlocalize_delta_mass = 0\\ncheck_spectral_files = 1\\nwrite_calibrated_mzml = 0\\noutput_format = tsv_pepXML_pin\\n"
+                def spectra = ['A_DDA': 'DDA', 'B_DDA': 'DDA', 'C_DIA': 'DIA'].collect { id, t ->
+                    def f = file("\${workDir}/\${id}.mzML")
+                    f.text = "<?xml version='1.0'?><mzML></mzML>"
+                    [[id: id, data_type: t], f]
+                }
+                def tool_configs = [msfragger: [run: true, args: '', calibrate_mass: [DDA: '2', DIA: '0']], msbooster: [run: false, args: ''], crystalc: [run: false, args: '']]
+                input[0] = channel.fromList(spectra)
+                input[1] = channel.value(fasta_file)
+                input[2] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[3] = channel.value([['DDA', dda], ['DIA', dia]])
+                input[4] = channel.value(dda)
+                input[5] = channel.empty()  // ch_msbooster_params (MSBooster off)
+                input[6] = channel.value(2)
+                """
+            }
+        }
+
+        then {
+            def tasks = workflow.trace.tasks()*.name
+            def count = { pattern -> tasks.count { it.contains(pattern) } }
+            def pepxmls = workflow.out.pepxml.collectEntries { meta, f -> [meta.id, [f].flatten().collect { x -> file(x).name }.sort()] }
+            assertAll(
+                { assert workflow.success },
+                { assert count('MSFRAGGERCALIBRATE') == 2 : tasks },
+                { assert count(':MSFRAGGER (') == 6 : tasks },
+                { assert count('MERGESPLITSEARCH') == 3 : tasks },
+                { assert snapshot(pepxmls).match() }
             )
         }
     }

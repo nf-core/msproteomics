@@ -1,0 +1,82 @@
+name: "reprinttosaintinput"
+description: SAINTexpress inputs (inter.dat, bait.dat, prey.dat) from a REPRINT table, as FragPipe 24.0 CmdSaintExpress.configure prepares them
+keywords:
+  - proteomics
+  - AP-MS
+  - SAINTexpress
+  - REPRINT
+tools:
+  - reprint_to_saint_input.py:
+      description: Port of CmdSaintExpress.reprintTsvToSaintInput and its input check (FragPipe 24.0)
+      homepage: https://fragpipe.nesvilab.org/
+      licence:
+        - GPL-3.0
+input:
+  - - meta:
+        type: map
+        description: Aggregate information
+    - reprint_tsv:
+        type: file
+        description: reprint.<mode>.tsv, or [] when the work dir has none
+    - mode:
+        type: string
+        description: spc or int
+output:
+  saint_input:
+    - - meta:
+          type: map
+          description: Aggregate information
+      - saintexpress-${mode}/{inter,bait,prey}.dat:
+          type: file
+          description: SAINTexpress inputs
+      - mode:
+          type: string
+          description: spc or int
+  skipped:
+    - - meta:
+          type: map
+          description: Aggregate information
+      - saintexpress-${mode}/skipped_mode.txt:
+          type: file
+          description: FragPipe's error for a missing REPRINT table (the mode is skipped)
+  versions_python:
+    - - ${task.process}:
+          type: string
+          description: Process name
+      - python:
+          type: string
+          description: Tool name
+      - "python3 --version | sed 's/Python //'":
+          type: eval
+          description: Version of Python
+
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: Process name
+      - python:
+          type: string
+          description: Tool name
+      - "python3 --version | sed 's/Python //'":
+          type: eval
+          description: Version of Python
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"
+containers:
+  conda:
+    linux/amd64:
+      lock_file: modules/local/reprinttosaintinput/.conda-lock/linux_amd64-bd-27a817c2c0890658_1.txt
+  docker:
+    linux/amd64:
+      name: community.wave.seqera.io/library/python:3.12.13--27a817c2c0890658
+      build_id: bd-27a817c2c0890658_1
+      scan_id: sc-e07391e6e5fbddf7_1
+  singularity:
+    linux/amd64:
+      name: oras://community.wave.seqera.io/library/python:3.12.13--7eb61448497e5133
+      build_id: bd-7eb61448497e5133_1
+      https: https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/37/370b76e81fbff1ab2427ad3a246bca8a4aa578a68216a5e800dceaedf7bcfa40/data

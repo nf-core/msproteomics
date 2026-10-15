@@ -1,0 +1,64 @@
+{
+    "fragpipe_second_pass - stub workflow and manifest": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "fragpipe"
+                    },
+                    "fragpipe-second-pass.workflow:md5,f2c35747187fd0fd60583c64e25dff05"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "fragpipe"
+                    },
+                    "fragpipe-files-second-pass.fp-manifest:md5,3e19477cc15ec52ba4b41d0270117dcf"
+                ]
+            ],
+            [
+                [
+                    "FRAGPIPESECONDPASS",
+                    "python"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-14T20:05:06.449828467",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "fragpipe_second_pass - integration workflow and manifest": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "fragpipe"
+                    },
+                    "fragpipe-second-pass.workflow:md5,a98654241d7bd6489eb3469011ca160b"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "fragpipe"
+                    },
+                    "fragpipe-files-second-pass.fp-manifest:md5,3e19477cc15ec52ba4b41d0270117dcf"
+                ]
+            ],
+            [
+                [
+                    "FRAGPIPESECONDPASS",
+                    "python"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-11T08:31:01.062257057",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

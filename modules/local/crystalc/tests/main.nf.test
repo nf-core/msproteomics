@@ -6,7 +6,7 @@ nextflow_process {
     process "CRYSTALC"
 
     tag "modules"
-    tag "modules_nfcore"
+    tag "modules_local"
     tag "crystalc"
 
     test("crystalc - stub") {
@@ -26,7 +26,7 @@ nextflow_process {
                 fasta_file.text = ">PROT1\\nPEPTIDEK"
 
                 input[0] = channel.of([
-                    [ id: 'test_crystalc' ],
+                    [ id: 'test_crystalc', crystalc_index: 0 ],
                     pepxml_file,
                     mzml_file,
                     config_file
@@ -66,7 +66,7 @@ nextflow_process {
                     "database_name = erwinia_carotovora.fasta"
 
                 input[0] = channel.of([
-                    [ id: 'crystalc_test' ],
+                    [ id: 'crystalc_test', crystalc_index: 0 ],
                     pepxml_file,
                     mzml_file,
                     config_file

@@ -1,0 +1,42 @@
+{
+    "generateSdrfBookkeeping - fragpipe mode gives DDA JSON": {
+        "content": [
+            "{\"organism\":\"Mus musculus\",\"enzyme\":\"Trypsin/P\",\"fixed_mods\":\"\",\"variable_mods\":\"\",\"instrument\":\"\",\"acquisition_method\":\"DDA\",\"precursor_mass_tolerance\":\"10 ppm\",\"fragment_mass_tolerance\":\"20 ppm\",\"dissociation_method\":\"HCD\"}"
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-06T16:51:07.476069916"
+    },
+    "getTmtLabelcheckWorkflow - TMT16 selects the 304 workflow": {
+        "content": [
+            "/pipeline/assets/TMT-labelcheck-304.workflow"
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-06T16:51:11.991210404"
+    },
+    "convertOrganismToStandardName - aliases map to binomial names": {
+        "content": [
+            "Mus musculus"
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-06T16:48:01.510062129"
+    },
+    "convertOrganismToStandardName - unknown organism is returned unchanged": {
+        "content": [
+            "Erwinia carotovora"
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-06T16:48:06.53337252"
+    }
+}

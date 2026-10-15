@@ -1,0 +1,165 @@
+// FPOP coADAPTr (FragPipe 24.0 CmdFPOPcoadaptr.java, FPOP_PSMwriter.java, FPOP_DiannReport_Editor.java):
+// every psm.tsv (or, with DIA-NN, report.tsv) gets an "FPOP Modifications" column with the
+// modifications within 0.01 Da of an FPOP mass. The masses are those of FPOP.workflow, formatted %.4f.
+nextflow_process {
+    name "Test Process FPOPCOADAPTR"
+    script "../main.nf"
+    process "FPOPCOADAPTR"
+    config "./nextflow.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "fpopcoadaptr"
+
+    def fpop_mods = '15.9949,31.9898,47.9847,13.9793,-43.0534,-22.0320,-23.0159,-10.0319,4.9735,-30.0106,-27.9949,-43.9898,-25.0316,-9.0367'
+
+    test("fpop_coadaptr - stub groups layout copies each group's psm.tsv") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                input[0] = channel.of([
+                    [ id: 'fragpipe' ],
+                    [
+                        file("${baseDir}/tests/fixtures/fpop/psm_dirs/control", checkIfExists: true),
+                        file("${baseDir}/tests/fixtures/fpop/psm_dirs/workdir-root", checkIfExists: true)
+                    ],
+                    'groups',
+                    '${fpop_mods}'
+                ])
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.psms[0][1].collect { f -> new File(f.toString()).parentFile.name }.sort() == ['control', 'workdir-root'] },
+                { assert process.out.diann_report.isEmpty() },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+
+    test("fpop_coadaptr - stub tree layout keeps the whole IonQuant results directory") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                input[0] = channel.of([
+                    [ id: 'fragpipe' ],
+                    [ file("${baseDir}/tests/fixtures/fpop/ionquant/fragpipe", checkIfExists: true) ],
+                    'tree',
+                    '${fpop_mods}'
+                ])
+                """
+            }
+        }
+
+        then {
+            def files = process.out.tables[0][1].collect { f -> f.toString().split('/fragpipe/fragpipe/')[1] }
+            assertAll(
+                { assert process.success },
+                { assert files.sort() == ['combined_protein.tsv', 'control/psm.tsv', 'psm.tsv'] },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+
+    test("fpop_coadaptr - stub DIA-NN layout runs FPOP_DiannReport_Editor on report.tsv") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                input[0] = channel.of([
+                    [ id: 'fragpipe' ],
+                    [ file("${baseDir}/tests/fixtures/fpop/dia-quant-output", checkIfExists: true) ],
+                    'diann',
+                    '${fpop_mods}'
+                ])
+                """
+            }
+        }
+
+        then {
+            def log_line = new File(process.out.log[0][1].toString()).text.trim()
+            assertAll(
+                { assert process.success },
+                { assert log_line.startsWith('java -cp lib/\\* org.nesvilab.fragpipe.tools.fpop.FPOP_DiannReport_Editor fragpipe ') },
+                { assert new File(process.out.diann_report[0][1].toString()).parentFile.name == 'dia-quant-output' },
+                { assert process.out.psms.isEmpty() },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+
+    test("fpop_coadaptr - integration adds the FPOP Modifications column to every psm.tsv of the tree") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                input[0] = channel.of([
+                    [ id: 'fragpipe' ],
+                    [ file("${baseDir}/tests/fixtures/fpop/ionquant/fragpipe", checkIfExists: true) ],
+                    'tree',
+                    '${fpop_mods}'
+                ])
+                """
+            }
+        }
+
+        then {
+            def edited = process.out.psms[0][1].collectEntries { f -> [new File(f.toString()).parentFile.name, new File(f.toString()).readLines()] }
+            def header = edited.control[0].split('\t') as List
+            def assigned = header.indexOf('Assigned Modifications')
+            def ox_row = edited.control.find { line -> line.contains('M(15.9949)') }.split('\t', -1) as List
+            def original = new File("${baseDir}/tests/fixtures/fpop/ionquant/fragpipe/control/psm.tsv").readLines()
+            assertAll(
+                { assert process.success },
+                { assert edited.keySet() == ['control', 'fragpipe'] as Set },
+                { assert edited.every { _name, lines -> lines[0].split('\t')[assigned + 1] == 'FPOP Modifications' } },
+                { assert ox_row[assigned + 1] == '2M(15.9949)' },
+                { assert !original[0].contains('FPOP Modifications') },
+                { assert snapshot(process.out.psms).match() }
+            )
+        }
+    }
+
+    // A long work dir makes DIANNFRAGPIPE read its runs through /tmp/diann.XXXXXX/s (diannInputDirLines), so
+    // report.tsv's File.Name names that link. FPOP_DiannReport_Editor keys on Modified.Sequence only
+    // (FPOP_DiannReport_Editor.java:29-30, 85-95): the edit is the same for either File.Name.
+    test("fpop_coadaptr - integration DIA-NN report edit does not depend on the File.Name directory") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                input[0] = channel.of(
+                    [ [ id: 'task_path' ], [ file("${baseDir}/tests/fixtures/fpop/diann_task/dia-quant-output", checkIfExists: true) ], 'diann', '${fpop_mods}' ],
+                    [ [ id: 'link_path' ], [ file("${baseDir}/tests/fixtures/fpop/diann_link/dia-quant-output", checkIfExists: true) ], 'diann', '${fpop_mods}' ]
+                )
+                """
+            }
+        }
+
+        then {
+            def edited = process.out.diann_report.collectEntries { meta, f -> [meta.id, new File(f.toString()).readLines()] }
+            def without_file = { List lines -> lines.collect { line -> line.split('\t', -1).drop(1).join('\t') } }
+            assertAll(
+                { assert process.success },
+                { assert edited.task_path[0].split('\t').contains('FPOP Modifications') },
+                { assert edited.task_path.drop(1).every { line -> line.startsWith('/data/work/ab/cdef/spectra/dia_cptac_subset.mzML\t') } },
+                { assert edited.link_path.drop(1).every { line -> line.startsWith('/tmp/diann.Ab12Cd/s/dia_cptac_subset.mzML\t') } },
+                { assert without_file.call(edited.task_path) == without_file.call(edited.link_path) },
+                { assert snapshot(without_file.call(edited.task_path)).match() }
+            )
+        }
+    }
+}

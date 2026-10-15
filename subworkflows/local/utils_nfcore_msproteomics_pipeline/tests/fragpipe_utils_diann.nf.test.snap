@@ -1,0 +1,92 @@
+{
+    "diannSpectraFiles - DIA / DIA-Quant only, DIA .raw replaced by MSFragger's uncalibrated mzML": {
+        "content": [
+            [
+                "/work/dia1_uncalibrated.mzML",
+                "/data/dia2.mzML",
+                "/data/quant.raw"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-06T00:54:38.984018138"
+    },
+    "diannSpectraFiles - DIA-Umpire keeps the original DIA files": {
+        "content": [
+            [
+                "/data/dia1.raw",
+                "/data/dia2.raw"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-06T00:54:46.896977549"
+    },
+    "lfqExperimentAnnotation - experiment groups in TreeMap order, GPF-DIA / DIA-Lib skipped": {
+        "content": [
+            "file\tsample\tsample_name\tcondition\treplicate\n/data/c0.mzML\t/data/c0.mzML\tctrl\tctrl\t1\n/data/c1.mzML\t/data/c1.mzML\tctrl_1\tctrl\t1\n/data/t2.mzML\t/data/t2.mzML\ttreat_a_2\ttreat\t2\n"
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-06T00:54:35.257594738"
+    },
+    "speclibSpectraFiles - experiment_bioreplicate groups first, as FragPipe lists NAT_1..NAT_5 before T_1": {
+        "content": [
+            [
+                "/data/p1_NAT.mzML",
+                "/data/p2_NAT.mzML",
+                "/data/p1_T.mzML",
+                "/data/p2_T.mzML"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-06T00:55:01.347856226"
+    },
+    "speclibSpectraFiles - diaTracer outputs ordered by FragPipe's path next to the .d, not the task dir": {
+        "content": [
+            [
+                "/work/9f/run_0078_diatracer.mzML",
+                "/work/1a/run_0088_diatracer.mzML"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-08T19:49:39.512605162"
+    },
+    "lfqExperimentAnnotation - no experiment or bioreplicate: sample names after the common file-name prefix": {
+        "content": [
+            "file\tsample\tsample_name\tcondition\treplicate\n/data/exp_ctrl_a_1.mzML\t/data/exp_ctrl_a_1.mzML\ta_1\ta\t1\n/data/exp_ctrl_b_x.mzML\t/data/exp_ctrl_b_x.mzML\tb_x\tx\t1\n"
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-06T00:54:31.356345786"
+    },
+    "speclibSpectraFiles - InputLcmsFile order (group2, data type, path), uncalibrated mzML for .raw / .d": {
+        "content": [
+            [
+                "/work/a_uncalibrated.mzML",
+                "/work/b_uncalibrated.mzML",
+                "/work/c_Q1.mzML",
+                "/work/c_Q2.mzML"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-06T00:54:54.099321308"
+    }
+}

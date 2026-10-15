@@ -1,0 +1,57 @@
+// FragPipe headless searches database.db-path as given (FragpipeRun.checkDbConfig only checks
+// its decoys). The database update philosopher database --custom <fasta> (CmdDatabaseUpdate.java:44-53)
+// runs only on request: --add_philosopher_decoy adds rev_ decoys (else --nodecoys),
+// --add_philosopher_contaminants adds --contam --contamprefix (PHI cmd/database.go:43-48).
+nextflow_workflow {
+
+    name "Test Workflow MSPROTEOMICS_FRAGPIPE - database update parity"
+    script "../fragpipe.nf"
+    workflow "MSPROTEOMICS_FRAGPIPE"
+
+    tag "workflows"
+    tag "msproteomics_fragpipe"
+    tag "parity"
+
+    [
+        [false, false, null],
+        [true,  false, 'philosopher database --custom test.fasta'],
+        [true,  true,  'philosopher database --custom test.fasta --contam --contamprefix'],
+        [false, true,  'philosopher database --custom test.fasta --nodecoys --contam --contamprefix']
+    ].each { decoy, contam, expected ->
+
+        test("database - decoy=${decoy} contaminants=${contam}") {
+            options "-stub"
+            tag "stub"
+
+            when {
+                params {
+                    def fixtures = "${baseDir}/tests/fixtures"
+                    def ss = new File("${outputDir}/samplesheet.csv")
+                    ss.parentFile.mkdirs()
+                    ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                    input                        = ss.toString()
+                    database                     = "${fixtures}/test.fasta"
+                    fragpipe_workflow            = "${fixtures}/fragpipe_workflows/LFQ-MBR.workflow"
+                    fragpipe_mode                = 'pipeline'
+                    add_philosopher_decoy        = decoy
+                    add_philosopher_contaminants = contam
+                    save_reference               = true
+                    outdir                       = "$outputDir"
+                }
+            }
+
+            then {
+                def update = workflow.trace.tasks().findAll { t -> t.name.contains(':PHILOSOPHERDATABASE') }
+                def check  = workflow.trace.tasks().findAll { t -> t.name.contains(':CHECKDBCONFIG') }
+                def log    = new File("${outputDir}/proteome/fragpipe/philosopher_database.log")
+                assertAll(
+                    { assert workflow.success },
+                    { assert snapshot(workflow.trace.succeeded().collect { task -> task.name }.sort()).match() },
+                    { assert check.size() == 1 : "FragPipe's decoy check runs on every database" },
+                    { assert update.size() == (expected ? 1 : 0) },
+                    { assert !expected || log.text.trim() == expected }
+                )
+            }
+        }
+    }
+}

@@ -1,104 +1,228 @@
 {
-    "fpop - stub with TMT mode": {
+    "fpop - integration TMT on TMT-Integrator multi-site and unmodified peptide tables": {
         "content": [
             [
                 [
                     {
-                        "id": "test_fpop_tmt"
+                        "id": "fragpipe"
                     },
-                    [
-                        "fpop.log:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "sample_fpop_results.csv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "sample_fpop_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                    ]
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "test_fpop_tmt"
-                    },
-                    "sample_fpop_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "test_fpop_tmt"
-                    },
-                    "sample_fpop_results.csv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                [
-                    "FPOP",
-                    "fpop",
-                    "24.0"
-                ]
-            ],
-            [
-                [
-                    "FPOP",
-                    "fragpipe",
-                    "24.0"
+                    "FPOP_sites.tsv:md5,27c6677b044ed5cf22cbdc8db8302ab4"
                 ]
             ]
         ],
-        "timestamp": "2026-03-31T20:13:53.116211424",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
-        }
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-06T00:44:51.592704291"
     },
-    "fpop - stub": {
+    "fpop - stub label-free keeps empty labels as arguments": {
         "content": [
-            [
-                [
-                    {
-                        "id": "test_fpop"
-                    },
+            {
+                "0": [
                     [
-                        "fpop.log:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "sample_fpop_results.csv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "sample_fpop_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        {
+                            "id": "fragpipe"
+                        },
+                        [
+                            "FPOP_peptides.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "FPOP_sites.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "fpop.log:md5,56c556fbcd107adb4bb683a4029db8eb"
+                        ]
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        "FPOP_peptides.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        "FPOP_sites.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "3": [
+                    [
+                        "FPOP",
+                        "fpop",
+                        "24.0"
+                    ]
+                ],
+                "4": [
+                    [
+                        "FPOP",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "peptides": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        "FPOP_peptides.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "results_dir": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        [
+                            "FPOP_peptides.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "FPOP_sites.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "fpop.log:md5,56c556fbcd107adb4bb683a4029db8eb"
+                        ]
+                    ]
+                ],
+                "sites": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        "FPOP_sites.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions_fpop": [
+                    [
+                        "FPOP",
+                        "fpop",
+                        "24.0"
+                    ]
+                ],
+                "versions_fragpipe": [
+                    [
+                        "FPOP",
+                        "fragpipe",
+                        "24.0"
                     ]
                 ]
-            ],
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-05T14:36:33.511709041"
+    },
+    "fpop - stub TMT reads the tmt-report tables of the normalisation": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        [
+                            "FPOP_peptides.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "FPOP_sites.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "fpop.log:md5,15e84d41ea06a048a4ef3204aeda8f87"
+                        ]
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        "FPOP_peptides.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        "FPOP_sites.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "3": [
+                    [
+                        "FPOP",
+                        "fpop",
+                        "24.0"
+                    ]
+                ],
+                "4": [
+                    [
+                        "FPOP",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "peptides": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        "FPOP_peptides.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "results_dir": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        [
+                            "FPOP_peptides.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "FPOP_sites.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "fpop.log:md5,15e84d41ea06a048a4ef3204aeda8f87"
+                        ]
+                    ]
+                ],
+                "sites": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        "FPOP_sites.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions_fpop": [
+                    [
+                        "FPOP",
+                        "fpop",
+                        "24.0"
+                    ]
+                ],
+                "versions_fragpipe": [
+                    [
+                        "FPOP",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-05T14:36:39.598188719"
+    },
+    "fpop - integration label-free on an IonQuant combined_modified_peptide.tsv": {
+        "content": [
+            3,
+            "Group Name\tProtein\tProtein ID\tEntry Name\tGene\tProtein Description\tMapped Proteins\tMapped Genes\tPeptide Sequence\tStart\tEnd\tFPOP Mods\tOther Mods\tcontrol\ttreatment",
             [
                 [
                     {
-                        "id": "test_fpop"
+                        "id": "fragpipe"
                     },
-                    "sample_fpop_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "test_fpop"
-                    },
-                    "sample_fpop_results.csv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                [
-                    "FPOP",
-                    "fpop",
-                    "24.0"
-                ]
-            ],
-            [
-                [
-                    "FPOP",
-                    "fragpipe",
-                    "24.0"
+                    "FPOP_sites.tsv:md5,5552e6ae3fd6aa6c5ce307c639fcb0ad"
                 ]
             ]
         ],
-        "timestamp": "2026-03-31T20:13:40.870935734",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
-        }
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-05T14:36:46.385621632"
     }
 }

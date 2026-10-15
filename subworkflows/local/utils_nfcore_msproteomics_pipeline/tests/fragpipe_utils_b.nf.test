@@ -1,0 +1,1074 @@
+// Unit tests for the command builders in fragpipe_utils_b.nf (FragPipe 24.0 argv the modules run).
+// `task` is a map with the fields the builders read (cpus, memory, ext.fragpipe_tools_dir).
+
+nextflow_function {
+
+    name "Test Functions fragpipe_utils_b"
+    script "../fragpipe_utils_b.nf"
+
+    tag "subworkflows"
+    tag "fragpipe_utils_b"
+    tag "stub"
+
+    test("shellQuote - one bash word, single quotes escaped") {
+        function "shellQuote"
+        when {
+            function {
+                """
+                input[0] = "it's a/b c"
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == "'it'\\''s a/b c'" }
+            )
+        }
+    }
+
+    // a jar token (fragpipeJarLines finds the jar in the task) becomes its double-quoted variable inside the word
+    test("shellQuote - jar tokens become shell variables") {
+        function "shellQuote"
+        when {
+            function {
+                """
+                input[0] = '-Dlibs.thermo.dir={MSFRAGGER_DIR}/ext/thermo'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == "'-Dlibs.thermo.dir='\"\${MSFRAGGER_DIR}\"'/ext/thermo'" }
+            )
+        }
+    }
+
+    // CmdPercolator.java:152-213 (Percolator) and :280-300 (PercolatorOutputToPepXML), MSBooster PIN, DDA
+    test("percolatorCommands - MSBooster edited PIN, DDA") {
+        function "percolatorCommands"
+        when {
+            function {
+                """
+                input[0] = [ id: 'C02', group: 'C02_1', data_type: 'DDA' ]
+                input[1] = file('run_C02.pin')
+                input[2] = file('run_C02_edited.pin')
+                input[3] = [ file('run_C02.pepXML') ]
+                input[4] = '--only-psms --no-terminate --post-processing-tdc'
+                input[5] = ''
+                input[6] = '0.5'
+                input[7] = false
+                input[8] = 'rev_'
+                input[9] = false
+                input[10] = []
+                input[11] = true
+                input[12] = false
+                input[13] = 'C02'
+                input[14] = [ cpus: 32, ext: [ fragpipe_tools_dir: '/opt/fragpipe-24.0/tools' ] ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    // DDA+ rank pepXMLs share one basename; Crystal-C drops the _c suffix from PIN/TSV names (CmdPercolator.java:133-150)
+    test("percolatorCommands - rank pepXMLs after Crystal-C, DIA") {
+        function "percolatorCommands"
+        when {
+            function {
+                """
+                input[0] = [ id: 'A01', group: '', data_type: 'DIA' ]
+                input[1] = file('run_A01.pin')
+                input[2] = []
+                input[3] = [ file('run_A01_c_rank1.pepXML'), file('run_A01_c_rank2.pepXML') ]
+                input[4] = '--no-terminate'
+                input[5] = '--seed 1'
+                input[6] = '0.5'
+                input[7] = true
+                input[8] = 'rev_'
+                input[9] = false
+                input[10] = []
+                input[11] = true
+                input[12] = false
+                input[13] = 'A01'
+                input[14] = [ cpus: 8, ext: [ fragpipe_tools_dir: '/opt/fragpipe-24.0/tools/' ] ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                // blank group: FragPipe's work dir itself (checked here: nf-test snapshots a string naming an existing path as that path)
+                { assert function.result.group_dir == '.' },
+                { assert snapshot(function.result.findAll { k, _v -> k != 'group_dir' }).match() }
+            )
+        }
+    }
+
+    // CmdPercolator.java:180-183: --weights <stripped>_percolator.weights after the decoy pattern, before the PIN (Write sub mzML)
+    test("percolatorCommands - Write sub mzML saves the weights") {
+        function "percolatorCommands"
+        when {
+            function {
+                """
+                input[0] = [ id: 'C02', group: 'C02', data_type: 'DDA' ]
+                input[1] = file('run_C02.pin')
+                input[2] = []
+                input[3] = [ file('run_C02.pepXML') ]
+                input[4] = '--only-psms'
+                input[5] = ''
+                input[6] = '0.5'
+                input[7] = false
+                input[8] = 'rev_'
+                input[9] = true
+                input[10] = []
+                input[11] = true
+                input[12] = false
+                input[13] = 'C02'
+                input[14] = [ cpus: 4, ext: [ fragpipe_tools_dir: '/opt/fragpipe-24.0/tools' ] ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                // the group dir is the prefix: the outputs stay; the decoy TSV is deleted (CmdPercolator.java:233-247), the weights move to the task dir
+                { assert function.result.link_inputs == "ln -s \"\$PWD\"/'run_C02.pin' 'C02'/'run_C02.pin'\n    ln -s \"\$PWD\"/'run_C02.pepXML' 'C02'/'run_C02.pepXML'" },
+                { assert function.result.unlink_inputs == "rm 'C02'/'run_C02.pin' 'C02'/'run_C02.pepXML'" },
+                { assert function.result.drop_tsv == "rm 'C02'/'run_C02_percolator_decoy_psms.tsv'" },
+                { assert function.result.move_outputs == '' },
+                { assert function.result.move_weights == "mv 'C02'/'run_C02_percolator.weights' ." },
+                { assert function.result.percolator.drop(1) == ['--only-psms', '--num-threads', '4',
+                    '--results-psms', 'run_C02_percolator_target_psms.tsv', '--decoy-results-psms', 'run_C02_percolator_decoy_psms.tsv',
+                    '--protein-decoy-pattern', 'rev_', '--weights', 'run_C02_percolator.weights', 'run_C02.pin'] }
+            )
+        }
+    }
+
+    // CmdPercolator.java:185-201: second pass, --init-weights <weights> --static --override after the decoy pattern, before the PIN
+    test("percolatorCommands - second pass reads the first pass's weights") {
+        function "percolatorCommands"
+        when {
+            function {
+                """
+                input[0] = [ id: 'C02', group: 'C02', data_type: 'DDA' ]
+                input[1] = file('run_C02_sub.pin')
+                input[2] = file('run_C02_sub_edited.pin')
+                input[3] = [ file('run_C02_sub.pepXML') ]
+                input[4] = '--only-psms'
+                input[5] = ''
+                input[6] = '0.5'
+                input[7] = false
+                input[8] = 'rev_'
+                input[9] = false
+                input[10] = file('run_C02_percolator.weights')
+                input[11] = true
+                input[12] = false
+                input[13] = 'C02'
+                input[14] = [ cpus: 4, ext: [ fragpipe_tools_dir: '/opt/fragpipe-24.0/tools' ] ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.percolator.drop(1) == ['--only-psms', '--num-threads', '4',
+                    '--results-psms', 'run_C02_sub_percolator_target_psms.tsv', '--decoy-results-psms', 'run_C02_sub_percolator_decoy_psms.tsv',
+                    '--protein-decoy-pattern', 'rev_', '--init-weights', '{TASK_DIR}/weights/run_C02_percolator.weights', '--static', '--override', 'run_C02_sub_edited.pin'] }
+            )
+        }
+    }
+
+    // CmdPercolator.java:214,228 run in the pepXML's group dir: the searched file's group is required
+    test("percolatorCommands - missing meta.group fails") {
+        function "percolatorCommands"
+        when {
+            function {
+                """
+                input[0] = [ id: 'C02', data_type: 'DDA' ]
+                input[1] = file('run_C02.pin')
+                input[2] = []
+                input[3] = [ file('run_C02.pepXML') ]
+                input[4] = ''
+                input[5] = ''
+                input[6] = '0.5'
+                input[7] = false
+                input[8] = 'rev_'
+                input[9] = false
+                input[10] = []
+                input[11] = true
+                input[12] = false
+                input[13] = 'C02'
+                input[14] = [ cpus: 8, ext: [ fragpipe_tools_dir: '/opt/fragpipe-24.0/tools' ] ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains('meta.group is missing') } : (function.stdout + function.stderr).join('\n') }
+            )
+        }
+    }
+
+    // CmdPhilosopherAbacus.java:106-135: two groups, TMT plex
+    test("abacusCommand - two groups with TMT plex") {
+        function "abacusCommand"
+        when {
+            function {
+                """
+                input[0] = [ file('group_meta1'), file('group_meta2') ]
+                input[1] = [ 'C02', 'D02' ]
+                input[2] = [ file('combined.prot.xml') ]
+                input[3] = '--razor --reprint --tag rev_ --protein --peptide'
+                input[4] = ''
+                input[5] = '16'
+                input[6] = [ cpus: 32, memory: nextflow.util.MemoryUnit.of('64 GB'), ext: [ fragpipe_tools_dir: '/opt/fragpipe-24.0/tools' ] ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.stage == "mkdir -p 'C02' && ln -s \"\$PWD\"/group_meta1/.meta 'C02'/.meta\n    mkdir -p 'D02' && ln -s \"\$PWD\"/group_meta2/.meta 'D02'/.meta" },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    // CmdPhilosopherAbacus.java:76-87: one group is not a multi-experiment report
+    test("abacusCommand - one group fails") {
+        function "abacusCommand"
+        when {
+            function {
+                """
+                input[0] = [ file('group_meta1') ]
+                input[1] = [ 'C02' ]
+                input[2] = [ file('combined.prot.xml') ]
+                input[3] = '--razor'
+                input[4] = ''
+                input[5] = '0'
+                input[6] = [ cpus: 32, memory: nextflow.util.MemoryUnit.of('64 GB'), ext: [ fragpipe_tools_dir: '/opt/fragpipe-24.0/tools' ] ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert !function.success },
+                { assert (function.stdout + function.stderr).any { l -> l.contains('requires more than one experiment/group') } }
+            )
+        }
+    }
+
+    // CmdIprophet.java:41-58: threads after the workflow options
+    test("iprophetCommand - pepXMLs at their group locations") {
+        function "iprophetCommand"
+        when {
+            function {
+                """
+                input[0] = [ file('interact-a.pep.xml'), file('interact-b.pep.xml') ]
+                input[1] = [ 'A01/interact-a.pep.xml', 'B01/interact-b.pep.xml' ]
+                input[2] = '--decoy rev_ --nonsp --output combined'
+                input[3] = ''
+                input[4] = [ cpus: 32, memory: nextflow.util.MemoryUnit.of('64 GB'), ext: [ fragpipe_tools_dir: '/opt/fragpipe-24.0/tools' ] ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.stage == "mkdir -p 'A01'\n    ln -s \"\$PWD\"/'pepxml_inputs/1/interact-a.pep.xml' 'A01/interact-a.pep.xml'\n    mkdir -p 'B01'\n    ln -s \"\$PWD\"/'pepxml_inputs/2/interact-b.pep.xml' 'B01/interact-b.pep.xml'" },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    // CmdPhilosopherFilter.java:79-115: first group, with protXML
+    test("philosopherFilterCommands - first group with protXML") {
+        function "philosopherFilterCommands"
+        when {
+            function {
+                """
+                input[0] = [ id: 'C02', group: 'C02' ]
+                input[1] = [ file('interact-C02.pep.xml') ]
+                input[2] = [ file('combined.prot.xml') ]
+                input[3] = []
+                input[4] = 'C02'
+                input[5] = '--sequential --picked --prot 0.01'
+                input[6] = ''
+                input[7] = false
+                input[8] = ''
+                input[9] = file('human.fasta')
+                input[10] = 'rev_'
+                input[11] = 'C02'
+                input[12] = [ cpus: 32, memory: nextflow.util.MemoryUnit.of('64 GB'), ext: [ fragpipe_tools_dir: '/opt/fragpipe-24.0/tools' ] ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                // CmdPhilosopherDbAnnotate.java:58-74 in the first group, logged to <prefix>.log
+                { assert function.result.annotate_lines == "annotate_cmd=('/opt/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9' 'database' '--annotate' \"\$PWD\"'/human.fasta' '--prefix' 'rev_')\n    printf '%s\\n' \"\${annotate_cmd[*]}\" >> C02.log\n    (cd 'C02' && GOMEMLIMIT=62GiB GOGC=100 GOMAXPROCS=32 \"\${annotate_cmd[@]}\") 2>&1 | tee -a C02.log" },
+                { assert function.result.link_pepxml == "ln -s \"\$PWD\"/pepxml_inputs/'interact-C02.pep.xml' 'C02'/'interact-C02.pep.xml'" },
+                { assert function.result.link_first == '' },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    // CmdPhilosopherFilter.java:79-115: later group reads --dbbin and --probin of the first group
+    test("philosopherFilterCommands - later group with protXML") {
+        function "philosopherFilterCommands"
+        when {
+            function {
+                """
+                input[0] = [ id: 'D02', group: 'D02' ]
+                input[1] = [ file('interact-D02.pep.xml') ]
+                input[2] = [ file('combined.prot.xml') ]
+                input[3] = [ file('first_group_meta') ]
+                input[4] = 'C02'
+                input[5] = '--sequential --picked --prot 0.01'
+                input[6] = ''
+                input[7] = false
+                input[8] = '--msstats'
+                input[9] = file('human.fasta')
+                input[10] = 'rev_'
+                input[11] = 'D02'
+                input[12] = [ cpus: 32, memory: nextflow.util.MemoryUnit.of('64 GB'), ext: [ fragpipe_tools_dir: '/opt/fragpipe-24.0/tools' ] ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.link_first == "mkdir -p 'C02' && ln -s \"\$PWD\"/first_group_meta 'C02'/.meta" },
+                { assert function.result.annotate_lines == '' },
+                { assert function.result.move_results == '' },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    // blank group is the work dir itself, no protXML
+    test("philosopherFilterCommands - blank first group without protXML") {
+        function "philosopherFilterCommands"
+        when {
+            function {
+                """
+                input[0] = [ id: 'all', group: '' ]
+                input[1] = [ file('interact-a.pep.xml') ]
+                input[2] = []
+                input[3] = []
+                input[4] = ''
+                input[5] = '--psm 0.01'
+                input[6] = ''
+                input[7] = true
+                input[8] = ''
+                input[9] = file('human.fasta')
+                input[10] = 'rev_'
+                input[11] = 'all'
+                input[12] = [ cpus: 32, memory: nextflow.util.MemoryUnit.of('64 GB'), ext: [ fragpipe_tools_dir: '/opt/fragpipe-24.0/tools' ] ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                // the blank group's results are in the work dir: moved to <prefix>/
+                { assert function.result.move_results == "mkdir -p 'all'; for f in psm.tsv peptide.tsv ion.tsv protein.tsv protein.fas filter.log; do if [ -e \"\$f\" ]; then mv \"\$f\" 'all'/; fi; done; mv .meta 'all'/" },
+                // '.' (the work dir) is checked here: nf-test snapshots a string naming an existing path as that path
+                { assert function.result.group_dir == '.' },
+                { assert function.result.first_dir == '.' },
+                { assert snapshot(function.result.findAll { k, _v -> !(k in ['group_dir', 'first_dir']) }).match() }
+            )
+        }
+    }
+
+    // {WORKDIR} token becomes "$PWD" plus the quoted rest
+    test("workdirWord - work-dir token") {
+        function "workdirWord"
+        when {
+            function {
+                """
+                input[0] = '{WORKDIR}/C02'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    // GOMEMLIMIT is task memory minus 2 GiB (CmdPhilosopherFilter.java:117)
+    test("goMemLimitGb - 64 GB task") {
+        function "goMemLimitGb"
+        when {
+            function {
+                """
+                input[0] = [ cpus: 32, memory: nextflow.util.MemoryUnit.of('64 GB'), ext: [ fragpipe_tools_dir: '/opt/fragpipe-24.0/tools' ] ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    // -Xmx from the task memory minus the headroom (PairScans, PTM-Shepherd, SpecLibGen keep 2 GB, WriteSubMzml none)
+    test("javaXmxGb - task memory minus the headroom") {
+        function "javaXmxGb"
+        when {
+            function {
+                """
+                input[0] = [ process: 'PAIRSCANS', cpus: 4, memory: nextflow.util.MemoryUnit.of('16 GB') ]
+                input[1] = 2
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == 14 }
+            )
+        }
+    }
+
+    // FragPipe's RAM default is the machine's (FragpipeRun.java:1308), not a fixed size: no task memory stops
+    test("javaXmxGb - task without memory fails") {
+        function "javaXmxGb"
+        when {
+            function {
+                """
+                input[0] = [ process: 'WRITESUBMZML', cpus: 4 ]
+                input[1] = 0
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert !function.success },
+                { assert (function.stdout + function.stderr).any { l -> l.contains('WRITESUBMZML: task.memory is not set') } }
+            )
+        }
+    }
+
+    // CmdPeptideProphet.java:86-150: per-file run dir and interact name
+    test("peptideProphetCommands - per-file pepXML") {
+        function "peptideProphetCommands"
+        when {
+            function {
+                """
+                input[0] = [ id: 'A01', group: 'A_1' ]
+                input[1] = [ file('A01.pepXML') ]
+                input[2] = [ 'A01_calibrated.mzML' ]
+                input[3] = '--nonparam --expectscore --decoyprobs --ppm --accmass'
+                input[4] = ''
+                input[5] = false
+                input[6] = file('human.fasta')
+                input[7] = 'rev_'
+                input[8] = 'A01'
+                input[9] = [ cpus: 32, memory: nextflow.util.MemoryUnit.of('64 GB'), ext: [ fragpipe_tools_dir: '/opt/fragpipe-24.0/tools' ] ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    // CmdPeptideProphet.java: --combine over the group's pepXMLs
+    test("peptideProphetCommands - combined group") {
+        function "peptideProphetCommands"
+        when {
+            function {
+                """
+                input[0] = [ id: 'saliva', group: 'saliva' ]
+                input[1] = [ file('a.pepXML'), file('b.pepXML') ]
+                input[2] = [ 'a.mzML', 'b.mzML' ]
+                input[3] = '--nonparam --expectscore'
+                input[4] = ''
+                input[5] = true
+                input[6] = file('human.fasta')
+                input[7] = 'rev_'
+                input[8] = 'saliva'
+                input[9] = [ cpus: 32, memory: nextflow.util.MemoryUnit.of('64 GB'), ext: [ fragpipe_tools_dir: '/opt/fragpipe-24.0/tools' ] ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.link_inputs == "ln -s \"\$PWD\"/'a.pepXML' 'saliva'/'a.pepXML'\n    ln -s \"\$PWD\"/'b.pepXML' 'saliva'/'b.pepXML'" },
+                { assert function.result.unlink_inputs == "rm 'saliva'/'a.pepXML' 'saliva'/'b.pepXML'" },
+                { assert function.result.lcms_args == "\"\$PWD\"/'a.mzML' \"\$PWD\"/'b.mzML'" },
+                // the group dir is the prefix: interact.pep.xml stays
+                { assert function.result.move_interact == '' },
+                // CmdPeptideProphet.java:316-332: --combine runs in the group dir, which holds interact.pep.xml
+                { assert function.result.run_dir == 'saliva' && function.result.interact_path == 'saliva/interact.pep.xml' },
+                // run_sub '.' names an existing path, which nf-test would snapshot as the md5 of every file under it
+                { assert function.result.run_sub == '.' },
+                { assert snapshot(function.result.findAll { key, _value -> key != 'run_sub' }).match() }
+            )
+        }
+    }
+
+    // InteractParser joins -a<pepXML dir> with a run's base name in a 256-byte buffer (measured: 206-character
+    // dir + 48-character base name passes, 207 crashes): the lines keep <task>/<group> while the path fits and
+    // read the group dir through a short /tmp link otherwise. Run in bash from a short and a long task dir.
+    test("peptideProphetDirLines - group dir when it fits, /tmp link for a long one") {
+        function "peptideProphetDirLines"
+        when {
+            function {
+                """
+                input[0] = 'G'
+                input[1] = [ '20250101_LAB_INSTR_TMT18_SAMPLE_PLEX0001_C02s011.pepXML', 'a.mzML' ]
+                """
+            }
+        }
+        then {
+            def run = { int len ->
+                def base = java.nio.file.Files.createTempDirectory('ppdir').toFile()
+                def dir = new File(base, 'x' * Math.max(1, len - base.path.length() - 1))
+                new File(dir, 'G').mkdirs()
+                def pb = new ProcessBuilder('bash', '-c', function.result + '\necho "$PP_GROUP_DIR"; [ "$PP_GROUP_DIR" = "$PWD/G" ] || (cd "$PP_GROUP_DIR" && pwd -P)')
+                pb.directory(dir)
+                def out = pb.start().text.readLines()
+                base.deleteDir()
+                [dir.path, out]
+            }
+            // task dir + '/G' + '/' + 55-character name: the group dir is linked from a 198-character task dir
+            def fits = run(150)
+            def longdir = run(230)
+            assertAll(
+                { assert function.success },
+                { assert fits[1] == [fits[0] + '/G'] },
+                { assert longdir[1].size() == 2 && longdir[1][0] ==~ /\/tmp\/pp\.[A-Za-z0-9]{6}\/g/ && longdir[1][1] == longdir[0] + '/G' },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    // CmdProteinProphet: --output combined is added when the options name none
+    test("proteinProphetCommand - default output") {
+        function "proteinProphetCommand"
+        when {
+            function {
+                """
+                input[0] = [ file('interact-a.pep.xml'), file('interact-b.pep.xml') ]
+                input[1] = [ 'A01/interact-a.pep.xml', 'B01/interact-b.pep.xml' ]
+                input[2] = '--maxppmdiff 2000000'
+                input[3] = ''
+                input[4] = [ cpus: 32, memory: nextflow.util.MemoryUnit.of('64 GB'), ext: [ fragpipe_tools_dir: '/opt/fragpipe-24.0/tools' ] ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    // Combined PeptideProphet writes interact.pep.xml in every group (CmdPeptideProphet.java:302-336): the
+    // pepXMLs are staged one per numbered directory and linked to their group locations
+    test("proteinProphetCommand - groups that share the pepXML name interact.pep.xml") {
+        function "proteinProphetCommand"
+        when {
+            function {
+                """
+                input[0] = [ file('a/interact.pep.xml'), file('b/interact.pep.xml') ]
+                input[1] = [ 'A/interact.pep.xml', 'B/interact.pep.xml' ]
+                input[2] = ''
+                input[3] = ''
+                input[4] = [ cpus: 32, memory: nextflow.util.MemoryUnit.of('64 GB'), ext: [ fragpipe_tools_dir: '/opt/fragpipe-24.0/tools' ] ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                // CmdProteinProphet.java:150-166: the filelist names each pepXML at its FragPipe location
+                { assert function.result.stage == "mkdir -p 'A'\n    ln -s \"\$PWD\"/'pepxml_inputs/1/interact.pep.xml' 'A/interact.pep.xml'\n    printf '%s\\n' \"\$PWD\"/'A/interact.pep.xml' >> filelist_proteinprophet.txt\n    mkdir -p 'B'\n    ln -s \"\$PWD\"/'pepxml_inputs/2/interact.pep.xml' 'B/interact.pep.xml'\n    printf '%s\\n' \"\$PWD\"/'B/interact.pep.xml' >> filelist_proteinprophet.txt" },
+                { assert function.result.links == [['pepxml_inputs/1/interact.pep.xml', 'A/interact.pep.xml'], ['pepxml_inputs/2/interact.pep.xml', 'B/interact.pep.xml']] }
+            )
+        }
+    }
+
+    // CmdPtmProphet.java: MAXTHREADS=1 replaces the workflow's MAXTHREADS
+    test("ptmProphetCommand - mod.pep.xml output") {
+        function "ptmProphetCommand"
+        when {
+            function {
+                """
+                input[0] = file('interact-A01.pep.xml')
+                input[1] = 'KEEPOLD STATIC EM=1 NIONS=b STY:79.966331 MINPROB=0.5 MAXTHREADS=8'
+                input[2] = ''
+                input[3] = [ cpus: 32, memory: nextflow.util.MemoryUnit.of('64 GB'), ext: [ fragpipe_tools_dir: '/opt/fragpipe-24.0/tools' ] ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    test("saintexpressCommand - cmd-opts as one argument (CmdSaintExpress.java:84-90)") {
+        function "saintexpressCommand"
+        when {
+            function {
+                """
+                input[0] = [ file('inter.dat'), file('bait.dat'), file('prey.dat') ]
+                input[1] = 'spc'
+                input[2] = '-R3 -L100'
+                input[3] = '-f -x'
+                input[4] = ''
+                input[5] = [ cpus: 4, ext: [ fragpipe_tools_dir: '/opt/fragpipe-24.0/tools' ] ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    test("saintexpressCommand - empty cmd-opts adds no argument") {
+        function "saintexpressCommand"
+        when {
+            function {
+                """
+                input[0] = [ file('prey.dat'), file('inter.dat'), file('bait.dat') ]
+                input[1] = 'int'
+                input[2] = '-R10 -L100'
+                input[3] = ''
+                input[4] = ''
+                input[5] = [ cpus: 4, ext: [ fragpipe_tools_dir: '/opt/fragpipe-24.0/tools' ] ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    test("saintexpressCommand - missing prey.dat fails") {
+        function "saintexpressCommand"
+        when {
+            function {
+                """
+                input[0] = [ file('inter.dat'), file('bait.dat') ]
+                input[1] = 'int'
+                input[2] = '-R10 -L100'
+                input[3] = ''
+                input[4] = ''
+                input[5] = [ cpus: 4, ext: [ fragpipe_tools_dir: '/opt/fragpipe-24.0/tools' ] ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert !function.success },
+                { assert (function.stdout + function.stderr).any { l -> l.contains('needs inter.dat, bait.dat and prey.dat') } }
+            )
+        }
+    }
+
+    // TmtiPanel.java:712-720: "<channel> <sample_name>" per row of the group, header skipped
+    test("labelquantAnnotationText - rows of one plex") {
+        function "labelquantAnnotationText"
+        when {
+            function {
+                """
+                input[0] = ['plex\\tchannel\\tsample\\tsample_name\\tcondition\\treplicate',
+                            'g1\\t126\\tBridge\\tBridge\\tref\\t1', 'g2\\t126\\tB2\\tB2\\tref\\t1', 'g1\\t127C\\tS1\\tS1_name\\tc\\t1']
+                input[1] = 'g1'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == '126 Bridge\n127C S1_name\n' }
+            )
+        }
+    }
+
+    test("labelquantAnnotationText - group without rows fails") {
+        function "labelquantAnnotationText"
+        when {
+            function {
+                """
+                input[0] = ['plex\\tchannel\\tsample\\tsample_name', 'g1\\t126\\tB\\tB']
+                input[1] = 'g3'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert !function.success },
+                { assert (function.stdout + function.stderr).any { l -> l.contains("TMT annotation has no rows for group 'g3'") } }
+            )
+        }
+    }
+
+    // CmdTmtIntegrator / labelquant: no annotation file at all
+    test("labelquantAnnotationText - no annotation fails like FragPipe") {
+        function "labelquantAnnotationText"
+        when {
+            function {
+                """
+                input[0] = []
+                input[1] = 'g1'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert !function.success },
+                { assert (function.stdout + function.stderr).any { l -> l.contains('Need to specify TMT file annotations in TMT-Integrator configuration.') } }
+            )
+        }
+    }
+
+    // CmdTmtIntegrator.java:144-170, 288-296: blank group at the work-dir top, named groups sorted
+    test("tmtIntegratorCommands - blank group first, named groups by name") {
+        function "tmtIntegratorCommands"
+        when {
+            function {
+                """
+                input[0] = [ file('input_results/workdir-root'), file('input_results/g2'), file('input_results/g1') ]
+                input[1] = 'workdir-root'
+                input[2] = 'tmtintegrator:\\n  channel_num: 10\\n  output: @TMT_REPORT_DIR@\\n  ref_tag: Bridge'
+                input[3] = 'fragpipe'
+                input[4] = 'tmt-report'
+                input[5] = [ cpus: 4, ext: [ fragpipe_tools_dir: '/opt/fragpipe-24.0/tools' ] ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.config == 'tmtintegrator:\n  channel_num: 10\n  output: {TASK_DIR}/fragpipe/tmt-report\n  ref_tag: Bridge' },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    test("tmtIntegratorCommands - named groups only, FPOP unmod report dir") {
+        function "tmtIntegratorCommands"
+        when {
+            function {
+                """
+                input[0] = [ file('input_results/P1') ]
+                input[1] = ''
+                input[2] = 'tmtintegrator:\\n  output: @TMT_REPORT_DIR@\\n'
+                input[3] = 'fragpipe'
+                input[4] = 'tmt-report-unmod'
+                input[5] = [ cpus: 4, ext: [ fragpipe_tools_dir: '/opt/fragpipe-24.0/tools' ] ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    test("tmtIntegratorCommands - config without the output placeholder fails") {
+        function "tmtIntegratorCommands"
+        when {
+            function {
+                """
+                input[0] = [ file('input_results/g1') ]
+                input[1] = ''
+                input[2] = 'tmtintegrator:\\n  channel_num: 10\\n'
+                input[3] = 'fragpipe'
+                input[4] = 'tmt-report'
+                input[5] = [ cpus: 4, ext: [ fragpipe_tools_dir: '/opt/fragpipe-24.0/tools' ] ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert !function.success },
+                { assert (function.stdout + function.stderr).any { l -> l.contains("is not the parser's tmt-integrator-conf.yml") } }
+            )
+        }
+    }
+
+    test("taskDirWord - task-dir token") {
+        function "taskDirWord"
+        when {
+            function {
+                """
+                input[0] = '{TASK_DIR}/fragpipe/g1/psm.tsv'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == '"\$TASK_DIR"' + "'/fragpipe/g1/psm.tsv'" }
+            )
+        }
+    }
+
+    // here-doc body escaped ($, backticks, backslashes) with {TASK_DIR} expanded; printf keeps a missing final newline
+    [['final newline', "'a \$x `y` \\\\\\\\ {TASK_DIR}/r\\n'"], ['no final newline', "'out: {TASK_DIR}/r'"]].each { label, text ->
+        test("taskFileCommand - ${label}") {
+            function "taskFileCommand"
+            when {
+                function {
+                    """
+                    input[0] = 'fragpipe/conf.yml'
+                    input[1] = ${text}
+                    """
+                }
+            }
+            then {
+                assertAll(
+                    { assert function.success },
+                    { assert snapshot(function.result).match() }
+                )
+            }
+        }
+    }
+
+    // PtmshepherdParams.createConfig: database, dataset lines, blank line, properties (CmdPtmshepherd.java:52-55, 150-165)
+    test("ptmShepherdCommands - glyco mode with kl features adds IonQuant") {
+        function "ptmShepherdCommands"
+        when {
+            function {
+                """
+                input[0] = [ ['workdir-root', 'dataset01'], ['cancer', 'cancer'] ]
+                input[1] = 'glyco_lda_features = kl,ox\\nglyco_residue_list = @TOOLS_DIR@/Glycan_Databases/glycan_residues.txt\\nrun_glyco_mode = true\\nthreads = @THREADS@\\n'
+                input[2] = 'human_decoys.fasta'
+                input[3] = []
+                input[4] = [ cpus: 32, ext: [ fragpipe_tools_dir: '/opt/fragpipe-24.0/tools' ] ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    // PtmshepherdParams.createConfig: database, dataset lines, blank line, properties (CmdPtmshepherd.java:52-55, 150-165)
+    test("ptmShepherdCommands - plain mass-offset profile") {
+        function "ptmShepherdCommands"
+        when {
+            function {
+                """
+                input[0] = [ ['workdir-root', 'dataset01'], ['cancer', 'cancer'] ]
+                input[1] = 'histo_bindivs = 5000\\nthreads = @THREADS@\\n'
+                input[2] = 'human_decoys.fasta'
+                input[3] = []
+                input[4] = [ cpus: 32, ext: [ fragpipe_tools_dir: '/opt/fragpipe-24.0/tools' ] ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    // PtmshepherdPanel.toPtmsParamsMap (PtmshepherdPanel.java:229-232): the custom annotation file is staged, the config names the copy
+    test("ptmShepherdCommands - custom annotation file fills @ANNOTATION_FILE@") {
+        function "ptmShepherdCommands"
+        when {
+            function {
+                """
+                input[0] = [ ['workdir-root', 'dataset01'] ]
+                input[1] = 'annotation_file = @ANNOTATION_FILE@\\nthreads = @THREADS@\\n'
+                input[2] = 'human_decoys.fasta'
+                input[3] = [ 'annotation/my_annotations.tsv' ]
+                input[4] = [ cpus: 32, ext: [ fragpipe_tools_dir: '/opt/fragpipe-24.0/tools' ] ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.config.contains('annotation_file = {TASK_DIR}/annotation/my_annotations.tsv') },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    // CmdOPair.java:100-190: run-time tokens filled, tools-dir files listed for the existence check
+    test("opairCommands - filelist and argv of one group") {
+        function "opairCommands"
+        when {
+            function {
+                """
+                input[0] = 'stce'
+                input[1] = [ 'run_calibrated.mzML' ]
+                input[2] = [ '-b 20.0', '-f @TOOLS_DIR@/opair/Glycan_Mods/oxonium_filter.txt', '-t @THREADS@', '-r @FILELIST@', '-s @PSM@', '-o @OUTDIR@', '-z ' ]
+                input[3] = []
+                input[4] = [ cpus: 48, ext: [ fragpipe_tools_dir: '/opt/fragpipe-24.0/tools/' ] ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    // CmdOPair.java:178-180: "-f " + the user's oxonium file, here its staged copy (not listed as a tools-dir file)
+    test("opairCommands - user oxonium file names the staged copy") {
+        function "opairCommands"
+        when {
+            function {
+                """
+                input[0] = 'stce'
+                input[1] = [ 'run_calibrated.mzML' ]
+                input[2] = [ '-b 20.0', '-f @OXONIUM_FILE@', '-m 0.05', '-t @THREADS@' ]
+                input[3] = 'oxonium/my_oxonium.txt'
+                input[4] = [ cpus: 48, ext: [ fragpipe_tools_dir: '/opt/fragpipe-24.0/tools/' ] ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.argv == ['-b 20.0', '-f {TASK_DIR}/oxonium/my_oxonium.txt', '-m 0.05', '-t 48'] },
+                { assert function.result.tool_files == [] },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    test("taskDirArg - task dir inside a flag token") {
+        function "taskDirArg"
+        when {
+            function {
+                """
+                input[0] = '-s {TASK_DIR}/stce/psm.tsv'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == "'-s '" + '"\$TASK_DIR"' + "'/stce/psm.tsv'" }
+            )
+        }
+    }
+
+    test("speclibgenCommand - keyword calibration (CmdSpecLibGen.java:123-212)") {
+        function "speclibgenCommand"
+        when {
+            function {
+                """
+                input[0] = [ rt_cal: 'noiRT', im_cal: 'noIM', convert_args: '--max_delta_ppm 15.0 --decoy_prefix rev_', library_args: '--rt_lowess_fraction 0.0', intermediate: 'delete_intermediate_files' ]
+                input[1] = 'db.fasta'
+                input[2] = [ 'b.mzML', 'a.mzML' ]
+                input[3] = []
+                input[4] = []
+                input[5] = 30
+                input[6] = [ cpus: 16, ext: [ fragpipe_tools_dir: '/opt/fragpipe-24.0/tools' ] ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    test("speclibgenCommand - user RT calibration file replaces the keyword") {
+        function "speclibgenCommand"
+        when {
+            function {
+                """
+                input[0] = [ rt_cal: 'noiRT', im_cal: 'noIM', convert_args: '--max_delta_ppm 15.0 --decoy_prefix rev_', library_args: '--rt_lowess_fraction 0.0', intermediate: 'delete_intermediate_files' ]
+                input[1] = 'db.fasta'
+                input[2] = [ 'b.mzML', 'a.mzML' ]
+                input[3] = 'rt_calibration/my_irt.tsv'
+                input[4] = []
+                input[5] = 30
+                input[6] = [ cpus: 16, ext: [ fragpipe_tools_dir: '/opt/fragpipe-24.0/tools' ] ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    test("speclibgenCommand - parser values missing fails") {
+        function "speclibgenCommand"
+        when {
+            function {
+                """
+                input[0] = [ rt_cal: 'noiRT' ]
+                input[1] = 'db.fasta'
+                input[2] = [ 'a.mzML' ]
+                input[3] = []
+                input[4] = []
+                input[5] = 30
+                input[6] = [ cpus: 1, ext: [ fragpipe_tools_dir: '/opt/fragpipe-24.0/tools' ] ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert !function.success },
+                { assert (function.stdout + function.stderr).any { l -> l.contains('speclibgen.argv_parts has no im_cal') } }
+            )
+        }
+    }
+
+    // versions of the fixed FragPipe 24.0 binaries (script and stub report the same)
+    test("fragpipeToolVersions - FragPipe 24.0 tool versions") {
+        function "fragpipeToolVersions"
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.philosopher == '5.1.3' && function.result.fragpipe_speclib == '0.1.58' },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+}

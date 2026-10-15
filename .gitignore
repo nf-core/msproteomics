@@ -7,14 +7,16 @@ testing/
 testing*
 *.pyc
 null/
+.lineage/
+__pycache__/
 test-datasets/
 .nf-test/
 .nf-test.log
-nf-fragpipe/
 .nf-test-*.nf
 tmp/
-.claude/
-CLAUDE.md
-docs/plans/
-docs/failures/
-docs/knowledge_graph.md
+
+# FragPipe, MSFragger, IonQuant and diaTracer license files: never commit
+license.dat
+**/license.dat
+*.lic
+licenses/

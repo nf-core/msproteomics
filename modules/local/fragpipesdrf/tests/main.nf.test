@@ -1,0 +1,120 @@
+nextflow_process {
+
+    name "Test Process FRAGPIPESDRF"
+    script "../main.nf"
+    process "FRAGPIPESDRF"
+
+    tag "modules"
+    tag "modules_local"
+    tag "fragpipesdrf"
+
+    test("fragpipe_sdrf - stub") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def wf = file("\${workDir}/fragpipe.workflow");        wf.text = "workflow.misc.save-sdrf=true\\n"
+                def mf = file("\${workDir}/fragpipe-files.fp-manifest"); mf.text = "/data/a.mzML\\texp\\t1\\tDDA\\n"
+                def fa = file("\${workDir}/db.fasta");                 fa.text = ">sp|P1|A_HUMAN A OS=Homo sapiens OX=9606\\nMK\\n"
+                def ob = file("\${workDir}/unimod.obo");               ob.text = "[Term]\\nid: UNIMOD:0\\nname: unimod root node\\n"
+                def lg = file("\${workDir}/msfragger.log");            lg.text = "a.mzML: Scans = 1; x; Instrument = Q Exactive\\n"
+
+                input[0] = channel.of([ [ id: 'test_sdrf' ], wf, mf, [], fa, ob, [ lg ], '' ])
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                // Stub runs use whatever python3 is on PATH (host or container), so only the version format is pinned
+                { assert process.out.versions_python.every { entry -> entry[2] ==~ /^3\.\d+\.\d+$/ } : process.out.versions_python },
+                { assert snapshot(process.out.sdrf, process.out.versions_python.collect { entry -> entry.take(2) }).match() }
+            )
+        }
+    }
+
+    test("fragpipe_sdrf - lfq and tmt inline inputs") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                def wf = file("\${workDir}/fragpipe.workflow")
+                wf.text = [
+                    "msfragger.search_enzyme_name_1=stricttrypsin",
+                    "msfragger.search_enzyme_cut_1=KR",
+                    "msfragger.search_enzyme_nocut_1=",
+                    "msfragger.search_enzyme_sense_1=C",
+                    "msfragger.search_enzyme_name_2=null",
+                    "msfragger.search_enzyme_cut_2=",
+                    "msfragger.search_enzyme_nocut_2=",
+                    "msfragger.search_enzyme_sense_2=C",
+                    "msfragger.table.var-mods=15.9949,M,true,3; 42.0106,[^,true,1; 79.96633,STY,false,3",
+                    "msfragger.table.fix-mods=0.0,N-Term Peptide,true,-1; 57.02146,C (cysteine),true,-1",
+                    "msfragger.mass_offsets=0",
+                    "msfragger.mass_offsets_detailed=",
+                    "msfragger.use_detailed_offsets=false",
+                    "msfragger.restrict_deltamass_to=all",
+                    "msfragger.labile_search_mode=off",
+                    "msfragger.precursor_mass_units=1",
+                    "msfragger.precursor_mass_lower=-20",
+                    "msfragger.precursor_mass_upper=20",
+                    "msfragger.fragment_mass_units=1",
+                    "msfragger.fragment_mass_tolerance=20",
+                    "msfragger.calibrate_mass=2",
+                    "workflow.misc.save-sdrf=true",
+                    "workflow.misc.sdrf-type=Default"
+                ].join("\\n") + "\\n"
+                def mf = file("\${workDir}/fragpipe-files.fp-manifest")
+                mf.text = "/data/a.raw\\texp1\\t1\\tDDA\\n/data/b.mzML\\texp2\\t\\tDDA\\n"
+                // a.raw was converted: MSFragger searched (and logged) a.mzML
+                def sn = file("\${workDir}/searched_files.tsv")
+                sn.text = "a.raw\\ta.mzML\\nb.mzML\\tb.mzML\\n"
+                def fa = file("\${workDir}/db.fasta")
+                fa.text = ">sp|P1|A_HUMAN A OS=Homo sapiens OX=9606 GN=A PE=1 SV=1\\nMK\\n>sp|P2|B_MOUSE B OS=Mus musculus OX=10090 PE=1\\nMK\\n>sp|P3|C_HUMAN C OS=Homo sapiens OX=9606 PE=1\\nMK\\n"
+                def ob = file("\${workDir}/unimod.obo")
+                ob.text = [
+                    "[Term]", "id: UNIMOD:0", "name: unimod root node", "",
+                    "[Term]", "id: UNIMOD:1", "name: Acetyl", 'xref: delta_mono_mass "42.010565"', 'xref: spec_1_site "K"', 'xref: spec_2_site "N-term"', "",
+                    "[Term]", "id: UNIMOD:4", "name: Carbamidomethyl", 'xref: delta_mono_mass "57.021464"', 'xref: spec_1_site "C"', "",
+                    "[Term]", "id: UNIMOD:35", "name: Oxidation", 'xref: delta_mono_mass "15.994915"', 'xref: spec_1_site "M"'
+                ].join("\\n") + "\\n"
+                def lg1 = file("\${workDir}/a.msfragger.log")
+                lg1.text = "/data/a.mzML: Scans = 451; MS2 ITMS = false; MS2 FTMS = true; MS2 ASTMS = false; MS1 ITMS = false; Isolation sizes = [2.0]; Instrument = Q Exactive\\nNew fragment_mass_tolerance = 5.000000 PPM\\n"
+                def lg2 = file("\${workDir}/b.msfragger.log")
+                lg2.text = "/data/b.mzML: Scans = 12; MS2 ITMS = true; MS2 FTMS = false; MS2 ASTMS = false; MS1 ITMS = false; Isolation sizes = [0.7]; Instrument = Orbitrap Ascend\\n"
+
+                input[0] = channel.of(
+                    [ [ id: 'test_lfq' ], wf, mf, sn, fa, ob, [ lg1, lg2 ], '' ],
+                    [ [ id: 'test_tmt' ], wf, mf, sn, fa, ob, [ lg1, lg2 ], 'TMT-6' ]
+                )
+                """
+            }
+        }
+
+        then {
+            def lfq = process.out.sdrf.find { it[0].id == 'test_lfq' }[1]
+            def tmt = process.out.sdrf.find { it[0].id == 'test_tmt' }[1]
+            assertAll(
+                { assert process.success },
+                { assert path(lfq).text.readLines().size() == 3 },
+                { assert path(lfq).text.readLines()[1].split('\t', -1).toList() == [
+                    'not available', 'Homo sapiens', 'not available', 'not available', 'not available',
+                    'not available', 'not available', 'not available', 'a.raw', '1', 'not available',
+                    'not available', 'NT=Q Exactive', '40.0 ppm', '5.0 ppm', 'NT=Trypsin/P;CS=(?<=[KR])',
+                    'NT=Oxidation;MT=Variable;PP=Anywhere;TA=M;MM=15.99490',
+                    'NT=Acetyl;MT=Variable;PP=Protein N-term;MM=42.01060',
+                    'NT=Carbamidomethyl;MT=Fixed;PP=Anywhere;TA=C;MM=57.02146' ] },
+                { assert !path(lfq).text.endsWith('\n') },
+                { assert path(tmt).text.readLines().size() == 13 },
+                { assert path(tmt).text.readLines()[7].split('\t', -1)[8..12].toList() == [ 'b.mzML', '', 'not available', 'TMT126', 'NT=Orbitrap Ascend' ] },
+                // the python3 on PATH (host or container) differs between runs, so only the version format is pinned
+                { assert process.out.versions_python.every { entry -> entry[2] ==~ /^3\.\d+\.\d+$/ } : process.out.versions_python },
+                { assert snapshot(process.out.sdrf, process.out.versions_python.collect { entry -> entry.take(2) }).match() }
+            )
+        }
+    }
+}

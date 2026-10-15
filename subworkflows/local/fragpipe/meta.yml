@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
-name: "fragpipe_wf"
+name: "fragpipe"
 description: General FragPipe orchestration subworkflow that composes all focused subworkflows into a complete proteomics analysis pipeline
 keywords:
   - proteomics
@@ -9,7 +9,7 @@ keywords:
   - quantification
   - pipeline
 components:
-  - parse/fragpipe/workflow
+  - parsefragpipeworkflow
   - shouldruntool
   - fragpipe_database
   - fragpipe_convert
@@ -21,6 +21,10 @@ components:
   - fragpipe_speclib
   - fragpipe_glyco
   - fragpipe_export
+  - checkcentroid
+  - fragpipe_matched_fragments_inputs
+  - fragpipe_philosopher_quant
+  - writesubmzml
 input:
   - ch_file:
       type: channel
@@ -53,7 +57,17 @@ input:
       description: |
         FragPipe manifest file for glycoproteomics workflows. Pass [] when not used.
         Structure: path(manifest.fp-manifest)
+  - ch_taxon_files:
+      type: channel
+      description: |
+        Metaproteomics taxonomy dumps (value channel); [] uses FragPipe's tools/metaproteomics/{names,nodes}.dmp.
+        Structure: [ path(names.dmp) or [], path(nodes.dmp) or [] ]
 output:
+  - searched_lcms:
+      type: channel
+      description: |
+        The LC-MS file MSFragger searched.
+        Structure: [ val(meta), path(file) ]
   - mzml:
       type: channel
       description: |
@@ -69,6 +83,21 @@ output:
       description: |
         Percolator input (PIN) files from FRAGPIPE_SEARCH.
         Structure: [ val(meta), path(pin) ]
+  - database:
+      type: channel
+      description: |
+        The run database (decoys, contaminants).
+        Structure: path(fasta)
+  - msfragger_logs:
+      type: channel
+      description: |
+        MSFragger console output.
+        Structure: [ val(meta), path(log) ]
+  - sub_mzml:
+      type: channel
+      description: |
+        Write sub mzML (tab-run.write_sub_mzml): the scans of each LC-MS file without a PSM above the threshold.
+        Structure: [ val(meta), path(<stem>_sub.mzML) ]
   - validated_pepxml:
       type: channel
       description: |
@@ -129,41 +158,61 @@ output:
       description: |
         TMTIntegrator results directory.
         Structure: [ val(meta), path(tmt-report) ]
+  - combined_modified_peptide:
+      type: channel
+      description: |
+        IonQuant's combined_modified_peptide.tsv, when IonQuant runs (the TMT label check analyses it).
+        Structure: [ val(meta), path(combined_modified_peptide.tsv) ]
   - ptm_results:
       type: channel
       description: |
         PTMShepherd results directory.
         Structure: [ val(meta), path(results_dir) ]
+  - glyco_psm_dirs:
+      type: channel
+      description: |
+        Glyco psm dirs.
+        Structure: [ val(meta), path(group_dir) ]
   - speclib:
       type: channel
       description: |
         Generated spectral library from SPECLIBGEN.
         Structure: [ val(meta), path(library.speclib) ]
-  - mbg_results:
+  - diann_report:
       type: channel
       description: |
-        Mass-based glycoproteomics results from MBG.
-        Structure: [ val(meta), path(*_mbg*.tsv) ]
-  - opair_results:
+        Diann report.
+        Structure: [ val(meta), path(report.tsv) ]
+  - diann_pg_matrix:
       type: channel
       description: |
-        O-glycoproteomics results from OPair.
-        Structure: [ val(meta), path(*_opair_results.tsv) ]
-  - skyline_doc:
+        Diann pg matrix.
+        Structure: [ val(meta), path(report.pg_matrix.tsv) ]
+  - diann_results:
       type: channel
       description: |
-        Skyline document for visualization.
-        Structure: [ val(meta), path(fragpipe.sky) ]
+        Diann results.
+        Structure: [ val(meta), [ path(dia-quant-output/*) ] ]
   - taxonomy_results:
       type: channel
       description: |
         Metaproteomics taxonomy assignment results.
         Structure: [ val(meta), path(results_dir) ]
-  - versions:
-      type: file
+  - fpop_results:
+      type: channel
       description: |
-        File containing software versions.
-        Structure: [ path(versions.yml) ]
+        Fpop results.
+        Structure: [ val(meta), path(results_dir) ]
+  - fpop_psms:
+      type: channel
+      description: |
+        Fpop psms.
+        Structure: [ val(meta), path(psm.tsv) ]
+  - fpop_diann_report:
+      type: channel
+      description: |
+        Fpop diann report.
+        Structure: [ val(meta), path(report.tsv) ]
 authors:
   - "@dongzehe"
 maintainers:

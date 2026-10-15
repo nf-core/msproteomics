@@ -1,0 +1,99 @@
+// Golden differential test: PERCOLATOR in the second pass of Write sub mzML vs FragPipe 24.0 (steps "Percolator"
+// and "PercolatorOutputToPepXML" of PXD001468/Basic-Search_submzml_secondpass): --init-weights <first-pass weights>
+// --static --override (CmdPercolator.java:185-201).
+// Run: FRAGPIPE_CONTAINER=<licensed image> GOLDEN_ROOT=<golden root> nf-test test modules/local/percolator/tests/golden_secondpass.nf.test
+nextflow_process {
+
+    name "Golden PERCOLATOR (Write sub mzML second pass) vs FragPipe 24.0"
+    script "../main.nf"
+    process "PERCOLATOR"
+    config "./golden_submzml.config"
+
+    tag "golden"
+    tag "percolator"
+
+    test("PXD001468 Basic-Search_submzml_secondpass - Percolator starts from the first pass's weights") {
+
+        when {
+            params {
+                golden_set = "${System.getenv('GOLDEN_ROOT')}/PXD001468/Basic-Search_submzml_secondpass"
+            }
+            process {
+                """
+                assert System.getenv('GOLDEN_ROOT') : 'set GOLDEN_ROOT to the golden data root'
+                def golden = file(params.golden_set, checkIfExists: true)
+                def wf = [:]
+                golden.resolve('files/work/fragpipe.workflow').readLines().findAll { it.contains('=') && !it.startsWith('#') }.each {
+                    def kv = it.split('=', 2); wf[kv[0]] = kv[1]
+                }
+                assert wf['tab-run.write_sub_mzml'] == 'false'
+                assert wf['database.decoy-tag'] == 'rev_'
+                assert wf['percolator.min-prob'] == '0.5'
+                assert wf['percolator.keep-tsv-files'] == 'false'
+                assert wf['crystalc.run-crystalc'] == 'false'
+                assert wf['msfragger.write_calibrated_mzml'] == 'false'
+                assert wf['msbooster.run-msbooster'] == 'true'
+                def stem = 'b1906_293T_proteinID_01A_QE3_122212_sub'
+                def gfile = { String rel -> file("\${golden}/files/\${rel}", checkIfExists: true) }
+                input[0] = channel.of([
+                    [ id: 'b1906_01A_1', group: 'b1906_01A_1', data_type: 'DDA' ],
+                    gfile.call("work/b1906_01A_1/\${stem}.pin"),
+                    gfile.call("work/b1906_01A_1/\${stem}_edited.pin"),   // MSBooster ran
+                    gfile.call("work/b1906_01A_1/\${stem}.pepXML"),
+                    gfile.call("input/\${stem}.mzML"),
+                    [],
+                    false,
+                    wf['percolator.cmd-opts'],
+                    '0.5',
+                    false,
+                    false,
+                    false,
+                    false,     // tab-run.write_sub_mzml=false in the second-pass workflow
+                    gfile.call('input/b1906_293T_proteinID_01A_QE3_122212_percolator.weights')  // next to the _sub.mzML input
+                ])
+                input[1] = 'rev_'
+                """
+            }
+        }
+
+        then {
+            def golden   = new File(params.golden_set)
+            def manifest = new groovy.json.JsonSlurper().parse(new File(golden, 'manifest.json'))
+            def perc = manifest.steps.find { it.cmd_name == 'Percolator' }
+            def conv = manifest.steps.find { it.cmd_name == 'PercolatorOutputToPepXML' }
+            def outDir  = new File(process.out.results_dir[0][1].toString())
+            def taskDir = outDir.parentFile
+            def cmdLog  = new File(outDir, 'percolator.log').readLines()
+            def percCmd = new File(outputDir, 'percolator.cmd');  percCmd.text = cmdLog[0]
+            def convCmd = new File(outputDir, 'convert.cmd')
+            convCmd.text = cmdLog.find { it.startsWith('java') && it.contains('PercolatorOutputToPepXML') }
+            def report  = new File(outputDir, 'golden_report.json')
+            def cmd = [
+                'python3', "${baseDir}/tests/tools/golden_step_check.py",
+                '--golden', golden.path,
+                '--steps', "${perc.step_index}", "${conv.step_index}",
+                '--actual-cwd', "${taskDir.path}/b1906_01A_1",
+                '--actual-workdir', taskDir.path,
+                '--actual-outdir', outDir.path,
+                // FragPipe's weights are in its LC-MS dir ({LCMS_DIR}); the module stages them in <task>/weights
+                '--actual-lcms-dir', "${taskDir.path}/weights",
+                '--actual-input-dir', taskDir.path,
+                '--actual-argv', "${perc.step_index}=${percCmd.path}",
+                '--actual-argv', "${conv.step_index}=${convCmd.path}",
+                '--ignore-actual', 'percolator.log',
+                '--json', report.path
+            ]
+            def proc = cmd.execute()
+            def stdout = new StringBuffer(), stderr = new StringBuffer()
+            proc.waitForProcessOutput(stdout, stderr)
+            println stdout
+            println stderr
+            assertAll(
+                { assert process.success },
+                { assert perc.argv.contains('--init-weights') && perc.argv.contains('--static') && perc.argv.contains('--override') },
+                { assert proc.exitValue() == 0 : "golden comparison failed, see ${report.path}:\n${stdout}${stderr}" },
+                { assert snapshot(process.out.versions_percolator, process.out.versions_fragpipe).match() }
+            )
+        }
+    }
+}

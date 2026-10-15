@@ -1,0 +1,63 @@
+{
+    "fragpipe_matched_fragments - stub exports flagged groups, passes the others through": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "A",
+                        "group": "A",
+                        "export_matched_fragments": true
+                    },
+                    [
+                        "psm.tsv:md5,3c0b053dad33a62a833aa295d76a16aa"
+                    ]
+                ],
+                [
+                    {
+                        "id": "C",
+                        "group": "C",
+                        "export_matched_fragments": false
+                    },
+                    [
+                        "psm.tsv:md5,80bd4f8715662c56ff252be926e360cc"
+                    ]
+                ],
+                [
+                    {
+                        "id": "workdir-root",
+                        "group": "",
+                        "export_matched_fragments": true
+                    },
+                    [
+                        "psm.tsv:md5,59ddc581622cb854f859d5037eca0152"
+                    ]
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-05T19:02:48.077807123"
+    },
+    "fragpipe_matched_fragments_inputs - manifest, spectra without .d, DIA-Umpire spectra": {
+        "content": [
+            [
+                "fragpipe-files.fp-manifest:md5,b90ccbb9596dbc8699f579fdabccf5dd",
+                [
+                    "a.mzML:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "b_uncalibrated.mzML:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "u_Q1.mzML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                [
+                    "u_Q1.mzML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-05T18:58:43.300279392"
+    }
+}

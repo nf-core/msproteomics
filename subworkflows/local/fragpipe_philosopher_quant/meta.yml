@@ -1,0 +1,68 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "fragpipe_philosopher_quant"
+description: Philosopher quantification after Filter in FragPipe 24.0's order - FreeQuant, LabelQuant (TMT), final Report, then the matched-fragment export
+keywords:
+  - proteomics
+  - quantification
+  - philosopher
+  - freequant
+  - labelquant
+  - tmt
+components:
+  - freequant
+  - philosopherlabelquant
+  - philosopherreport
+  - writetextfile
+  - labelquantannotationtext
+  - fragpipe_matched_fragments
+input:
+  - ch_results_dir:
+      type: channel
+      description: |
+        Per-group PHILOSOPHERFILTER output (meta.group, meta.report_after_quant).
+        Structure: [ val(meta), path(results_dir) ]
+  - ch_mzml:
+      type: channel
+      description: |
+        Searched spectra (meta.group = FragPipe group).
+        Structure: [ val(meta), path(mzml) ]
+  - ch_lcms_files:
+      type: channel
+      description: |
+        Every samplesheet LC-MS file as given (FragPipe's file list).
+        Structure: [ val(meta), path(spectra) ]
+  - ch_annotation:
+      type: channel
+      description: |
+        Multi-plex TMT annotation, empty list when TMT-Integrator does not run.
+        Structure: path(annotation_file)
+  - ch_tool_configs:
+      type: channel
+      description: |
+        Value channel with the parsed PARSEFRAGPIPEWORKFLOW tool configs.
+        Structure: val(tool_configs_map)
+  - ch_emf_inputs:
+      type: channel
+      description: |
+        Inputs of FRAGPIPE_MATCHED_FRAGMENTS.
+        Structure: [ path(manifest), [spectra], [umpire_spectra] ]
+  - aggregate_meta:
+      type: map
+      description: |
+        Meta map for aggregate outputs.
+        Structure: val(meta)
+output:
+  - final_results_dir:
+      type: channel
+      description: |
+        Per-group tables after the final report and the matched-fragment export.
+        Structure: [ val(meta), path(results_dir) ]
+  - experiment_annotation:
+      type: channel
+      description: |
+        Experiment annotation for the isobaric quantification.
+        Structure: [ val(meta), path(experiment_annotation.tsv) ]
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

@@ -1,0 +1,67 @@
+name: "pairscans"
+description: Pair parent and child scans of one LC-MS file for O-Pair (FragPipe PairScans)
+keywords:
+  - proteomics
+  - glycoproteomics
+  - o-pair
+tools:
+  - fragpipe:
+      description: FragPipe's PairScans utility (org.nesvilab.fragpipe.util.PairScans)
+      homepage: "https://fragpipe.nesvilab.org/"
+      tool_dev_url: "https://github.com/Nesvilab/FragPipe"
+      licence: ["GPL-3.0"]
+
+input:
+  - - meta:
+        type: map
+        description: Spectra metadata map
+    - spectra:
+        type: file
+        description: LC-MS file (mzML, mzXML or Thermo .raw)
+        pattern: "*.{mzML,mzXML,raw}"
+    - pairscans_args:
+        type: list
+        description: "[activation1, activation2, reverse_scan_order, single_scan_type]"
+
+output:
+  pairs:
+    - - meta:
+          type: map
+          description: Spectra metadata map
+      - "spectra/${spectra.baseName}.pairs":
+          type: file
+          description: Scan pairs, next to the spectra file
+  log:
+    - - meta:
+          type: map
+          description: Spectra metadata map
+      - "${spectra.baseName}.pairscans.log":
+          type: file
+          description: PairScans command and output
+  versions_fragpipe:
+    - - ${task.process}:
+          type: string
+          description: Process name
+      - fragpipe:
+          type: string
+          description: Tool name
+      - cat .fragpipe_version:
+          type: eval
+          description: Version
+
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: Process name
+      - fragpipe:
+          type: string
+          description: Tool name
+      - cat .fragpipe_version:
+          type: eval
+          description: Version of FragPipe
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

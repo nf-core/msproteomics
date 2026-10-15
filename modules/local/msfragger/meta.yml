@@ -16,97 +16,140 @@ tools:
       documentation: "https://github.com/Nesvilab/MSFragger/wiki"
       tool_dev_url: "https://github.com/Nesvilab/MSFragger"
       doi: "10.1038/nmeth.4256"
-      licence: ["Commercial"]
+      licence: ["Proprietary (free for academic research)"]
       note: "License pre-installed in container"
 
 input:
-  - - meta:
+  - - "meta":
         type: map
-        description: Groovy Map containing sample information
-    - mzml_files:
+        description: "Groovy Map containing sample information"
+    - "mzml_files":
         type: file
-        description: Mass spectrometry data file(s) in mzML format (supports single or multiple)
-        pattern: "*.{mzML}"
-  - - fasta:
+        description: "Mass spectrometry data file(s) (mzML, raw or Bruker .d)"
+        pattern: "*.{mzML,raw,d}"
+    - "params_name":
+        type: string
+        description: "FragPipe's name of the file's MSFragger params set (fragger.params, fragger_dda.params, fragger_dia.params, fragger_gpfdia.params, fragger_dda_plus.params; CmdMsfragger.java:444-447, 541-552)"
+    - "params_text":
+        type: string
+        description: "Text of that params set"
+    - "fasta":
         type: file
-        description: Protein sequence database
+        description: "Protein sequence database"
         pattern: "*.{fasta,fas,fa}"
-  - - params_file:
-        type: file
-        description: |
-          MSFragger params file (native fragger.params format). Pass [] for CLI mode.
-          In params-file mode, runtime params (database_name, num_threads) are injected.
-          In CLI mode, ext.args provides all parameters.
-        pattern: "*.params"
-  - - pepindex:
-        type: file
-        description: |
-          Prebuilt peptide index files for MSFragger. Pass [] when not using.
-          When provided, files are staged alongside the FASTA so MSFragger auto-detects
-          and reuses them instead of rebuilding the index. Created by MSFRAGGER_INDEX.
-        pattern: "*.pepindex"
-
 output:
   pepxml:
-    - - meta:
+    - - "meta":
           type: map
-          description: Groovy Map containing sample information
+          description: "Groovy Map containing sample information"
       - "${prefix}/*.pepXML":
           type: file
-          description: Peptide identifications in pepXML format
+          description: "Peptide identifications in pepXML format"
           pattern: "*.pepXML"
   pin:
-    - - meta:
+    - - "meta":
           type: map
-          description: Groovy Map containing sample information
+          description: "Groovy Map containing sample information"
       - "${prefix}/*.pin":
           type: file
-          description: Percolator input file
+          description: "Percolator input file"
           pattern: "*.pin"
   tsv:
-    - - meta:
+    - - "meta":
           type: map
-          description: Groovy Map containing sample information
+          description: "Groovy Map containing sample information"
       - "${prefix}/*.tsv":
           type: file
-          description: TSV output from MSFragger (e.g., mass calibration results)
+          description: "TSV output from MSFragger (e.g. mass calibration results)"
           pattern: "*.tsv"
-  calibrated_mzml:
+  lcms_files:
+    - - "meta":
+          type: map
+          description: "Groovy Map containing sample information"
+      - "{*_uncalibrated.mzML,*_calibrated.mzML,*_uncalibrated.mzBIN,*.mzBIN_calibrated}":
+          type: file
+          description: "Files MSFragger writes next to the LC-MS file (<base>_uncalibrated.mzML, <base>_calibrated.mzML, <base>_uncalibrated.mzBIN, <base>.mzBIN_calibrated); FragPipe's downstream tools read them from the LC-MS directory"
+          pattern: "{*_uncalibrated.mzML,*_calibrated.mzML,*_uncalibrated.mzBIN,*.mzBIN_calibrated}"
+  mzbin_all:
     - - meta:
           type: map
           description: Groovy Map containing sample information
-      - "*_calibrated.mzML":
+      - "*.mzBIN_all":
           type: file
-          description: Calibrated mzML file (when write_calibrated_mzml=true)
-          pattern: "*_calibrated.mzML"
-  uncalibrated_mzml:
-    - - meta:
+          description: |
+            <base>.mzBIN_all MSFragger writes next to the LC-MS file with write_mzbin_all = 1
+            (Write sub mzML, FragpipeRun.java:1481); read by WRITESUBMZML (WriteSubMzml.java:73).
+          pattern: "*.mzBIN_all"
+  pepindex:
+    - - "meta":
           type: map
-          description: Groovy Map containing sample information
-      - "*_uncalibrated.mzML":
+          description: "Groovy Map containing sample information"
+      - "*.pepindex":
           type: file
-          description: Uncalibrated mzML file (produced when processing .d or .raw files)
-          pattern: "*_uncalibrated.mzML"
+          description: "Peptide index MSFragger builds next to the FASTA, one <fasta>.<N>.pepindex per distinct digestion parameter set of the call (first search and main search with calibrate_mass 1/2)"
+          pattern: "*.pepindex"
   results_dir:
-    - - meta:
+    - - "meta":
           type: map
-          description: Groovy Map containing sample information
+          description: "Groovy Map containing sample information"
       - "${prefix}":
           type: directory
-          description: Directory containing all MSFragger output files and logs
+          description: "Directory with the search outputs, the params file and the MSFragger log"
+          pattern: "${prefix}"
   log:
-    - - meta:
+    - - "meta":
           type: map
-          description: Groovy Map containing sample information
+          description: "Groovy Map containing sample information"
       - "${prefix}/*.log":
           type: file
-          description: MSFragger log file
+          description: "MSFragger log file"
           pattern: "*.log"
-  versions:
-    - versions.yml:
+  license_agreement:
+    - "I_AGREE_FRAGPIPE_LICENSE_AGREEMENT":
         type: file
-        description: File containing software versions
-        pattern: "versions.yml"
+        description: "Marker file recording the FragPipe license agreement"
+        pattern: "I_AGREE_FRAGPIPE_LICENSE_AGREEMENT"
+  versions_msfragger:
+    - - "${task.process}":
+          type: string
+          description: The name of the process
+      - "msfragger":
+          type: string
+          description: The name of the tool
+      - "cat .msfragger_version":
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_fragpipe:
+    - - "${task.process}":
+          type: string
+          description: The name of the process
+      - "fragpipe":
+          type: string
+          description: The name of the tool
+      - "cat .fragpipe_version":
+          type: eval
+          description: The expression to obtain the version of the tool
+
+topics:
+  versions:
+    - - "${task.process}":
+          type: string
+          description: The name of the process
+      - "msfragger":
+          type: string
+          description: The name of the tool
+      - "cat .msfragger_version":
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - "${task.process}":
+          type: string
+          description: The name of the process
+      - "fragpipe":
+          type: string
+          description: The name of the tool
+      - "cat .fragpipe_version":
+          type: eval
+          description: The expression to obtain the version of the tool
 
 authors:
   - "@dongzehe"

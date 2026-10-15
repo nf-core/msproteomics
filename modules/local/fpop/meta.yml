@@ -24,19 +24,21 @@ input:
   - - meta:
         type: map
         description: Groovy Map containing sample information
-    - input_file:
+    - modpep_tsv:
         type: file
-        description: Peptide quantification file (combined_modified_peptide.tsv for LFQ or TMT abundance file)
-        pattern: "*.tsv"
-    - secondary_file:
-        type: file
-        description: Optional secondary TMT file for TMT mode (use NO_FILE placeholder if not applicable)
-        pattern: "*.tsv"
+        description: IonQuant combined_modified_peptide.tsv (label-free mode); [] in TMT mode
+        pattern: "combined_modified_peptide.tsv"
+    - tmt_report:
+        type: directory
+        description: TMT-Integrator report directory, staged as tmt-report (TMT mode); [] otherwise
+    - tmt_report_unmod:
+        type: directory
+        description: Second TMT-Integrator run for unmodified peptides, staged as tmt-report-unmod (TMT mode); [] otherwise
     - config_cli:
-        type: string
+        type: list
         description: |
-          FPOP parameters as CLI string with space-separated values:
-          region_size control_label fpop_label subtract_control is_tmt
+          FragPipe_FPOP_Analysis.py arguments from parse_fragpipe_workflow.py (CmdFpopQuant.java:90-99):
+          input table, region size, control label, FPOP label, subtract control, TMT flag[, unmodified peptide table]
 
 output:
   results_dir:
@@ -45,29 +47,65 @@ output:
           description: Groovy Map containing sample information
       - "${prefix}":
           type: directory
-          description: Directory containing FPOP analysis results and log
+          description: Directory containing the FPOP tables and fpop.log
           pattern: "${prefix}"
-  results:
+  peptides:
     - - meta:
           type: map
           description: Groovy Map containing sample information
-      - "${prefix}/*_fpop*.tsv":
+      - "${prefix}/FPOP_peptides.tsv":
           type: file
-          description: FPOP analysis results in TSV format
-          pattern: "*_fpop*.tsv"
-  results_csv:
+          description: Peptide-level FPOP oxidation table
+          pattern: "FPOP_peptides.tsv"
+  sites:
     - - meta:
           type: map
           description: Groovy Map containing sample information
-      - "${prefix}/*_fpop*.csv":
+      - "${prefix}/FPOP_sites.tsv":
           type: file
-          description: FPOP analysis results in CSV format
-          pattern: "*_fpop*.csv"
+          description: Site-level FPOP oxidation table
+          pattern: "FPOP_sites.tsv"
+  versions_fpop:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - fpop:
+          type: string
+          description: The name of the tool
+      - "cat .fpop_version":
+          type: eval
+          description: The FragPipe version that ships the FPOP script
+  versions_fragpipe:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - fragpipe:
+          type: string
+          description: The name of the tool
+      - "cat .fragpipe_version":
+          type: eval
+          description: The FragPipe version of the tools directory
+
+topics:
   versions:
-    - versions.yml:
-        type: file
-        description: File containing software versions
-        pattern: "versions.yml"
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - fpop:
+          type: string
+          description: The name of the tool
+      - "cat .fpop_version":
+          type: eval
+          description: The FragPipe version that ships the FPOP script
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - fragpipe:
+          type: string
+          description: The name of the tool
+      - "cat .fragpipe_version":
+          type: eval
+          description: The FragPipe version of the tools directory
 
 authors:
   - "@dongzehe"

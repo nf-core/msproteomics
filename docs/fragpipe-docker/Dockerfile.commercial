@@ -11,15 +11,22 @@
 
 FROM fcyucn/fragpipe:24.0
 
-LABEL maintainer="nf-fragpipe"
+LABEL org.opencontainers.image.description="FragPipe 24.0 image for nf-core/msproteomics"
 LABEL description="FragPipe 24.0 for Nextflow (commercial license, FragPipePlus)"
 
 ENV FP_BASE=/fragpipe_bin/fragpipe-24.0/fragpipe-24.0
 
-# Overlay FragPipePlus tools and libs over the base distribution
+# FragPipePlus lib/ and tools/ REPLACE the base distribution's. Overlaying them (cp -r into the
+# existing dirs) left the public jars FragPipePlus ships under other names (lib/ and tools/
+# batmass-io-1.36.5.jar, tools/MSBooster-1.4.14.jar, tools/Skyline/); FragPipe starts with the
+# classpath lib/* in unspecified order, so FileMove's commons-io jar then came from either
+# batmass-io. The base's lib/ and tools/ hold nothing else that FragPipePlus lacks.
+# chmod restores the base image's mode (777) on the replaced trees.
 COPY fragpipe/fragpipe-*/ /tmp/fp-plus/
-RUN cp -r /tmp/fp-plus/tools/* ${FP_BASE}/tools/ && \
-    cp -r /tmp/fp-plus/lib/* ${FP_BASE}/lib/ && \
+RUN rm -rf ${FP_BASE}/lib ${FP_BASE}/tools && \
+    cp -r /tmp/fp-plus/lib ${FP_BASE}/lib && \
+    cp -r /tmp/fp-plus/tools ${FP_BASE}/tools && \
+    chmod -R 777 ${FP_BASE}/lib ${FP_BASE}/tools && \
     rm -rf /tmp/fp-plus
 
 # Install commercial license to all locations where tools look for it

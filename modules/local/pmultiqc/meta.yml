@@ -4,6 +4,7 @@ keywords:
   - MultiQC
   - QC
   - Proteomics
+  - quality control
 tools:
   - pmultiqc:
       description: |
@@ -11,30 +12,62 @@ tools:
       homepage: https://github.com/bigbio/pmultiqc/
       documentation: https://github.com/bigbio/pmultiqc/
 input:
-  - results:
-      type: file
-      description: Staged result files for MultiQC analysis
-      pattern: "results/*"
-  - quantms_log:
-      type: file
-      description: Log file from quantms pipeline
-      pattern: "*.log"
+  - - meta:
+        type: map
+        description: Experiment metadata (id)
+    - results/*:
+        type: file
+        description: Result files staged into results/ (mzTab, experimental design, mzML statistics, DIA-NN report)
+        pattern: "results/*"
+        ontologies: []
+    - multiqc_config:
+        type: file
+        description: MultiQC configuration file
+        pattern: "*.yml"
+        ontologies:
+          - edam: http://edamontology.org/format_3750 # YAML
 output:
-  - ch_pmultiqc_report:
-      type: file
-      description: MultiQC report file
-      pattern: "*.html"
-  - ch_pmultiqc_db:
-      type: file
-      description: Sqlite3 database file with protein, PSM, and quantification information (optional)
-      pattern: "*.db"
-  - versions:
-      type: file
-      description: File containing software versions
-      pattern: "versions.yml"
-  - data:
-      type: directory
-      description: MultiQC data directory
-      pattern: "*_data"
+  report:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "*.html":
+          type: file
+          description: pMultiQC report file
+          pattern: "*.html"
+          ontologies: []
+  db:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "*.db":
+          type: file
+          description: Sqlite3 database file with protein, PSM, and quantification information (optional)
+          pattern: "*.db"
+          ontologies: []
+  data:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "*_data":
+          type: directory
+          description: MultiQC data directory
+          pattern: "*_data"
+          ontologies: []
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies: []
+
+topics:
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies: []
+
 authors:
   - "@Chengxin Dai"

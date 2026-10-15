@@ -9,6 +9,7 @@ nextflow_workflow {
     tag "subworkflows_local"
     tag "fragpipe_headless_wf"
 
+    // FragPipe headless reads .raw itself; the manifest lists the .raw file.
     test("fragpipe_headless_wf - stub with RAW input") {
         tag "stub"
         options "-stub"
@@ -23,12 +24,13 @@ nextflow_workflow {
                 def workflow_file = file("\${workDir}/test.workflow")
                 workflow_file.text = "mock"
 
-                input[0] = channel.of([ [ id: 'test', mzml_id: 'test' ], raw_file ])
-                input[1] = channel.value(fasta_file)
-                input[2] = channel.value(workflow_file)
-                input[3] = channel.value("test.mzML\\texperiment1\\t1\\tDDA")  // THERMORAWFILEPARSER names the mzML after meta.id
-                input[4] = channel.value("")  // No TMT annotation (LFQ mode)
-                input[5] = channel.value("")  // No file-experiment map (LFQ mode)
+                input[0] = channel.of([ [ id: 'test', mzml_id: 'test', data_type: 'DDA' ], raw_file ])
+                input[1] = channel.empty()                                  // no "Add decoys" update
+                input[2] = channel.of([ [ id: 'database' ], fasta_file ])  // searched as given
+                input[3] = channel.value(workflow_file)
+                def manifest_rows = [['sample.raw', 'experiment1', 1, 'DDA', 'experiment1_1']]
+                input[4] = channel.value(manifest_rows)
+                input[5] = channel.value([])  // no TMT annotation (LFQ mode)
                 """
             }
         }
@@ -36,8 +38,52 @@ nextflow_workflow {
         then {
             assertAll(
                 { assert workflow.success },
+                { assert !workflow.trace.tasks().any { t -> t.name.contains('THERMORAWFILEPARSER') } },
                 { assert snapshot(
                     workflow.out.all_results,
+                    workflow.out.combined_protein,
+                    workflow.out.combined_peptide,
+                    workflow.out.combined_ion
+                ).match() }
+            )
+        }
+    }
+
+    test("fragpipe_headless_wf - stub workflow decoy tag reaches the decoy check") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            workflow {
+                """
+                // the decoy tag comes from the .workflow
+                def mzml_file = file("\${workDir}/sample.mzML")
+                mzml_file.text = "mock"
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">sp|P00001|TEST\\nMKTEST"
+                def workflow_file = file("\${workDir}/decoy.workflow")
+                workflow_file.text = "percolator.run-percolator=true\\ndatabase.decoy-tag=DECOY_\\n"
+
+                input[0] = channel.of([ [ id: 'test', mzml_id: 'test', data_type: 'DDA' ], mzml_file ])
+                input[1] = channel.empty()                                  // no "Add decoys" update
+                input[2] = channel.of([ [ id: 'database' ], fasta_file ])  // searched as given
+                input[3] = channel.value(workflow_file)
+                def manifest_rows = [['sample.mzML', 'experiment1', 1, 'DDA', 'experiment1_1']]
+                input[4] = channel.value(manifest_rows)
+                input[5] = channel.value([])  // no TMT annotation (LFQ mode)
+                """
+            }
+        }
+
+        then {
+            def scripts = []
+            new File(workDir.toString()).eachFileRecurse { f -> if (f.name == '.command.sh') { scripts << f.text } }
+            assertAll(
+                { assert workflow.success },
+                // the database is searched as given: no "Add decoys" update
+                { assert !workflow.trace.tasks().any { t -> t.name.contains('PHILOSOPHERDATABASE') } },
+                { assert scripts.any { sh -> sh.contains("decoy tag 'DECOY_'") } },
+                { assert snapshot(
                     workflow.out.combined_protein,
                     workflow.out.combined_peptide,
                     workflow.out.combined_ion
@@ -51,6 +97,10 @@ nextflow_workflow {
         tag "fragpipe_headless_wf"
 
         when {
+            params {
+                // target-only FASTA: FragPipe's "Add decoys" database update, as conf/test.config
+                add_philosopher_decoy = true
+            }
             workflow {
                 """
                 def workflow_file = file("\${projectDir}/assets/LFQ-MBR.workflow")
@@ -59,30 +109,35 @@ nextflow_workflow {
                 def mzml2 = file("\${params.pipelines_testdata_base_path}/spectra/tmt_erwinia_subset_2.mzML", checkIfExists: true)
                 def fasta = file("\${params.pipelines_testdata_base_path}/databases/erwinia_carotovora.fasta", checkIfExists: true)
 
-                // manifest_content: filename<TAB>experiment<TAB>bioreplicate<TAB>data_type
-                def manifest = [
-                    "tmt_erwinia_subset.mzML\\texperiment1\\t1\\tDDA",
-                    "tmt_erwinia_subset_2.mzML\\texperiment1\\t2\\tDDA"
-                ].join("\\n")
+                // manifest rows: filename, experiment, bioreplicate, data_type, FragPipe group
+                def manifest_rows = [['tmt_erwinia_subset.mzML', 'experiment1', 1, 'DDA', 'experiment1_1'], ['tmt_erwinia_subset_2.mzML', 'experiment1', 2, 'DDA', 'experiment1_2']]
 
                 input[0] = channel.of(
-                    [[ id: 'sample1' ], mzml1],
-                    [[ id: 'sample2' ], mzml2]
+                    [[ id: 'sample1', data_type: 'DDA' ], mzml1],
+                    [[ id: 'sample2', data_type: 'DDA' ], mzml2]
                 )
-                input[1] = channel.value(fasta)
-                input[2] = channel.value(workflow_file)
-                input[3] = channel.value(manifest)
-                input[4] = channel.value("")  // No TMT annotation (LFQ mode)
-                input[5] = channel.value("")  // No file-experiment map (LFQ mode)
+                input[1] = channel.of([ [ id: 'database' ], fasta ])  // target-only FASTA: "Add decoys" first
+                input[2] = channel.empty()
+                input[3] = channel.value(workflow_file)
+                input[4] = channel.value(manifest_rows)
+                input[5] = channel.value([])  // no TMT annotation (LFQ mode)
                 """
             }
         }
 
         then {
+            // The container user has no passwd entry: without -Duser.home every JVM (FragPipe and the
+            // tools it spawns in results/) wrote a "?" home dir that FRAGPIPEHEADLESS published.
+            def question_dirs = []
+            [new File("${outputDir}"), new File("${launchDir}/work")].each { root -> root.eachFileRecurse { f -> if (f.name == '?') question_dirs << f.path } }
+            def headless_scripts = []
+            new File("${launchDir}/work").eachFileRecurse { f -> if (f.name == '.command.sh' && f.text.contains('FragPipeMain')) headless_scripts << f.text }
             assertAll(
                 { assert workflow.success },
                 { assert workflow.out.all_results.size() > 0 },
-                { assert workflow.out.combined_protein.size() > 0 }
+                { assert workflow.out.combined_protein.size() > 0 },
+                { assert headless_scripts.size() == 1 && headless_scripts[0].contains('JAVA_TOOL_OPTIONS="-Duser.home=$PWD" java -Duser.home=$PWD') : headless_scripts },
+                { assert question_dirs == [] : question_dirs }
             )
         }
     }

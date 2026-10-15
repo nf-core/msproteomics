@@ -19,16 +19,31 @@ input:
       description: |
         Percolator input (PIN) files from MSFragger or MSBooster.
         Structure: [ val(meta), path(pin) ]
+  - ch_pin_rescored:
+      type: channel
+      description: |
+        MSBooster <stem>_edited.pin, or the MSFragger PIN.
+        Structure: [ val(meta), path(pin) ]
   - ch_pepxml:
       type: channel
       description: |
         Search result pepXML files from MSFragger.
         Structure: [ val(meta), path(pepxml) ]
-  - ch_mzml:
+  - ch_spectra:
       type: channel
       description: |
-        Spectra files in mzML format.
-        Structure: [ val(meta), path(mzml) ]
+        The searched LC-MS file.
+        Structure: [ val(meta), path(spectra) ]
+  - ch_calibrated_mzml:
+      type: channel
+      description: |
+        When MSFragger writes it.
+        Structure: [ val(meta), path(<stem>_calibrated.mzML) ]
+  - ch_uncalibrated_mzml:
+      type: channel
+      description: |
+        .raw/.d searches.
+        Structure: [ val(meta), path(<stem>_uncalibrated.mzML) ]
   - ch_fasta:
       type: channel
       description: |
@@ -39,21 +54,17 @@ input:
       description: |
         Parsed JSON tool configuration map controlling which validation tools to run.
         Structure: val(tool_configs_map)
-  - ch_peptideprophet_config:
-      type: channel
-      description: |
-        PeptideProphet configuration file. Pass [] when not used.
-        Structure: path(config_file)
-  - data_type:
-      type: value
-      description: |
-        Data acquisition type, either 'DDA' or 'DIA'. Passed to Percolator for mode selection.
 output:
   - pepxml:
       type: channel
       description: |
         Validated pepXML files. Uses PTMProphet output when available, otherwise Percolator/PeptideProphet output, or passthrough if neither is enabled.
         Structure: [ val(meta), path(pepxml) ]
+  - pepxml_group:
+      type: channel
+      description: |
+        Everything in a group dir for the filter.
+        Structure: [ val(meta), path(pepxml(s)) ]
   - target_psms:
       type: channel
       description: |
@@ -75,10 +86,10 @@ output:
         Percolator results directory.
         Structure: [ val(meta), path(results_dir) ]
   - versions:
-      type: file
+      type: channel
       description: |
-        File containing software versions.
-        Structure: [ path(versions.yml) ]
+        Software versions (topic tuples).
+        Structure: [ val(process), val(tool), val(version) ]
 authors:
   - "@dongzehe"
 maintainers:

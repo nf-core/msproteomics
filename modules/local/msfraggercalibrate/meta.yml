@@ -1,0 +1,126 @@
+name: "msfraggercalibrate"
+description: Mass calibration and parameter optimization for split-database search using MSFragger
+keywords:
+  - proteomics
+  - mass spectrometry
+  - calibration
+  - msfragger
+  - split database
+tools:
+  - msfragger:
+      description: |
+        MSFragger calibration mode (--split1) performs mass calibration of one file
+        against the full (sorted) FASTA database, then optimizes search parameters
+        (fragment_mass_tolerance, etc.) for downstream split-database search.
+        Replicates calibrate() from FragPipe's msfragger_pep_split.py.
+      homepage: "https://msfragger.nesvilab.org/"
+      documentation: "https://github.com/Nesvilab/MSFragger/wiki"
+      tool_dev_url: "https://github.com/Nesvilab/MSFragger"
+      doi: "10.1038/nmeth.4256"
+      licence: ["Proprietary (free for academic research)"]
+      note: "License pre-installed in container"
+
+input:
+  - - meta:
+        type: map
+        description: Sample metadata map
+    - spectra:
+        type: file
+        description: One mass spectrometry data file (calibration is per file)
+        pattern: "*.{mzML,mzXML,raw,d,mgf}"
+    - params_text:
+        type: string
+        description: Text of the file's MSFragger params (fragger.params, fragger_dia.params, fragger_gpfdia.params or fragger_dda_plus.params) with calibrate_mass 1 or 2
+  - fasta:
+      type: file
+      description: The protein-sorted database (SORTFASTA)
+      pattern: "sorted_*"
+
+output:
+  calibration:
+    - - meta:
+          type: map
+          description: Sample metadata map
+      - "msfragger_calibrate.log":
+          type: file
+          description: MSFragger console output (argv line with the license masked, then the tool output)
+          pattern: "msfragger_calibrate.log"
+      - "*.mzBIN_calibrated":
+          type: file
+          description: The calibrated spectra MSFragger wrote (none when it wrote none)
+          pattern: "*.mzBIN_calibrated"
+  uncalibrated_mzml:
+    - - meta:
+          type: map
+          description: Sample metadata map
+      - "*_uncalibrated.mzML":
+          type: file
+          description: Uncalibrated mzML MSFragger writes for .raw / .d input (optional)
+          pattern: "*_uncalibrated.mzML"
+  uncalibrated_mzbin:
+    - - meta:
+          type: map
+          description: Sample metadata map
+      - "*_uncalibrated.mzBIN":
+          type: file
+          description: Uncalibrated spectra cache MSFragger writes next to the LC-MS file during mass calibration (optional)
+          pattern: "*_uncalibrated.mzBIN"
+  log:
+    - - meta:
+          type: map
+          description: Sample metadata map
+      - "msfragger_calibrate.log":
+          type: file
+          description: MSFragger console output
+          pattern: "msfragger_calibrate.log"
+  license_agreement:
+    - "I_AGREE_FRAGPIPE_LICENSE_AGREEMENT":
+        type: file
+        description: License agreement acknowledgment file
+        pattern: "I_AGREE_FRAGPIPE_LICENSE_AGREEMENT"
+  versions_msfragger:
+    - - ${task.process}:
+          type: string
+          description: Process name
+      - msfragger:
+          type: string
+          description: Tool name
+      - cat .msfragger_version:
+          type: eval
+          description: Version of MSFragger
+  versions_fragpipe:
+    - - ${task.process}:
+          type: string
+          description: Process name
+      - fragpipe:
+          type: string
+          description: Tool name
+      - cat .fragpipe_version:
+          type: eval
+          description: Version of FragPipe
+
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: Process name
+      - msfragger:
+          type: string
+          description: Tool name
+      - cat .msfragger_version:
+          type: eval
+          description: Version of MSFragger
+    - - ${task.process}:
+          type: string
+          description: Process name
+      - fragpipe:
+          type: string
+          description: Tool name
+      - cat .fragpipe_version:
+          type: eval
+          description: Version of FragPipe
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

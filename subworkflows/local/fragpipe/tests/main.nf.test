@@ -1,8 +1,8 @@
 nextflow_workflow {
 
-    name "Test Workflow FRAGPIPE_WF"
+    name "Test Workflow FRAGPIPE"
     script "../main.nf"
-    workflow "FRAGPIPE_WF"
+    workflow "FRAGPIPE"
 
     tag "subworkflows"
     tag "subworkflows_local"
@@ -34,6 +34,8 @@ msbooster.run-msbooster = true
 ionquant.mbr = 1
 ionquant.maxlfq = 1
 ionquant.run-ionquant = true
+quantitation.run-label-free-quant = true
+msfragger.table.var-mods = 15.9949,M,true,3
 phi-report.filter = --sequential --prot 0.01 --picked
 phi-report.run-report = true
 percolator.run-percolator = true
@@ -42,12 +44,13 @@ database.decoy-tag = rev_
 '''.trim()
 
                 // Create input channels
-                input[0] = channel.of([[ id: 'test_sample' ], mzml_file])
+                input[0] = channel.of([[ id: 'test_sample', group: 'test_sample', data_type: 'DDA' ], mzml_file])
                 input[1] = channel.of([[ id: 'test_db' ], fasta_file])
                 input[2] = channel.of([[ id: 'fragpipe_config' ], workflow_file])
                 input[3] = Channel.empty()  // ch_decoy_db (not used)
-                input[4] = []               // ch_annotation (not used)
+                input[4] = channel.value([])  // ch_annotation (not used)
                 input[5] = []               // ch_manifest (not used)
+                input[6] = channel.value([[], []])  // ch_taxon_files: FragPipe's tools/metaproteomics dumps
 
                 """
             }
@@ -69,9 +72,140 @@ database.decoy-tag = rev_
                     workflow.out.combined_protein,
                     workflow.out.combined_peptide,
                     workflow.out.combined_ion,
-                    workflow.out.ionquant_dir,
+                    // file names only: filelist_ionquant.txt holds the absolute --specdir (CmdIonquant)
+                    workflow.out.ionquant_dir.collect { item -> [item[0], new File(item[1].toString()).list().sort()] },
                     workflow.out.tmt_abundance
                 ).match() }
+            )
+        }
+    }
+
+    test("fragpipe_wf - stub - export matched fragments with Report off is a no-op like FragPipe") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                // Create a test mzML file
+                def mzml_file = file("\${workDir}/test_sample.mzML")
+                mzml_file.text = '<?xml version="1.0" encoding="UTF-8"?><mzML></mzML>'
+
+                // Create a test FASTA file
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = '>sp|P00000|TEST_HUMAN Test protein\\nMKWVTFISLLLFSSAYSRGVFRRDTHKSEIAHR'
+
+                // Create a test workflow file
+                def workflow_file = file("\${workDir}/LFQ-MBR.workflow")
+                workflow_file.text = '''
+msfragger.calibrate_mass = 2
+msfragger.precursor_mass_lower = -20
+msfragger.precursor_mass_upper = 20
+msfragger.run-msfragger = true
+msbooster.run-msbooster = true
+ionquant.mbr = 1
+ionquant.maxlfq = 1
+ionquant.run-ionquant = false
+quantitation.run-label-free-quant = false
+msfragger.table.var-mods = 15.9949,M,true,3
+phi-report.filter = --sequential --prot 0.01 --picked
+phi-report.run-report = false
+tab-run.export_matched_fragments = true
+percolator.run-percolator = true
+protein-prophet.run-protein-prophet = true
+database.decoy-tag = rev_
+'''.trim()
+
+                // Create input channels
+                input[0] = channel.of([[ id: 'test_sample', group: 'test_sample', data_type: 'DDA' ], mzml_file])
+                input[1] = channel.of([[ id: 'test_db' ], fasta_file])
+                input[2] = channel.of([[ id: 'fragpipe_config' ], workflow_file])
+                input[3] = Channel.empty()  // ch_decoy_db (not used)
+                input[4] = channel.value([])  // ch_annotation (not used)
+                input[5] = []               // ch_manifest (not used)
+                input[6] = channel.value([[], []])  // ch_taxon_files: FragPipe's tools/metaproteomics dumps
+
+                """
+            }
+        }
+
+        then {
+            // FragPipe's dry run still lists ExportMatchedFragments with Report off (FragpipeRun.java:2411-2416, graph edge
+            // :2490), but without Filter and Report there is no psm.tsv: FragmentsExportMainClass prints "Error Parsing File"
+            // and exits 0 with no output (checked with --dry-run and the command on an edited golden workflow)
+            def tasks = workflow.trace.tasks().collect { task -> task.name.replaceAll(/ \(.*\)$/, '').tokenize(':')[-1] }
+            assertAll (
+                { assert workflow.success },
+                { assert !tasks.contains('PHILOSOPHERREPORT') : tasks },
+                { assert !tasks.contains('EXPORTMATCHEDFRAGMENTS') : tasks },
+                { assert snapshot(tasks.unique().sort()).match() }
+            )
+        }
+    }
+
+    test("fragpipe_wf - stub FPOP workflow runs FPOP Quant, coADAPTr and Metaproteomics on the final tables") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                outdir = "$outputDir"
+                // symlinks show which task each published file comes from
+                publish_dir_mode = 'symlink'
+            }
+            workflow {
+                """
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = '>sp|P00000|TEST_HUMAN Test protein\\nMKWVTFISLLLFSSAYSRGVFRRDTHKSEIAHR'
+                def mzml_a = file("\${workDir}/fpop_a.mzML")
+                mzml_a.text = '<?xml version="1.0" encoding="UTF-8"?><mzML></mzML>'
+                def mzml_b = file("\${workDir}/fpop_b.mzML")
+                mzml_b.text = '<?xml version="1.0" encoding="UTF-8"?><mzML></mzML>'
+
+                // FragPipe 24.0 FPOP.workflow with FPOP Quant and Metaproteomics switched on
+                input[0] = channel.of(
+                    [[ id: 'fpop_a', group: 'CTRL_1', data_type: 'DDA' ], mzml_a],
+                    [[ id: 'fpop_b', group: 'OX_1', data_type: 'DDA' ], mzml_b]
+                )
+                input[1] = channel.of([[ id: 'test_db' ], fasta_file])
+                input[2] = channel.of([[ id: 'fragpipe_config' ], file("${baseDir}/tests/fixtures/fragpipe_workflows/FPOP-quant-meta.workflow", checkIfExists: true)])
+                input[3] = Channel.empty()  // ch_decoy_db (not used)
+                input[4] = channel.value([])        // ch_annotation (not used)
+                input[5] = []               // ch_manifest (not used)
+                input[6] = channel.value([[], []])  // ch_taxon_files: FragPipe's tools/metaproteomics dumps
+                """
+            }
+        }
+
+        then {
+            def meta_inputs = new File(workflow.out.taxonomy_results[0][1].toString(), 'metaproteomics.log').readLines().drop(1)
+            // Published psm.tsv files: FragPipe edits them in place, so only coADAPTr's copies are published
+            def out = java.nio.file.Paths.get(outputDir.toString())
+            def coadaptr_task = java.nio.file.Paths.get(workflow.out.fpop_psms[0][1][0].toString()).parent.parent.parent.parent
+            def published_psms = []
+            java.nio.file.Files.walk(out).withCloseable { stream ->
+                published_psms = stream.collect(java.util.stream.Collectors.toList())
+                    .findAll { f -> f.fileName.toString() == 'psm.tsv' && f.toString().contains('/ionquant/') }
+                    .collect { f -> [out.relativize(f).toString(), java.nio.file.Files.readSymbolicLink(f).startsWith(coadaptr_task)] }
+                    .sort()
+            }
+            assertAll (
+                { assert workflow.success },
+                // FPOP Quant reads IonQuant's combined_modified_peptide.tsv with the workflow's labels
+                { assert new File(workflow.out.fpop_results[0][1].toString(), 'fpop.log').text.trim() == 'FragPipe_FPOP_Analysis.py combined_modified_peptide.tsv 2 CTRL OX false false' },
+                // coADAPTr edits the IonQuant psm.tsv of every group
+                { assert workflow.out.fpop_psms[0][1].collect { f -> new File(f.toString()).parentFile.name }.sort() == ['CTRL_1', 'OX_1'] },
+                // the IonQuant results directory is published from FPOPCOADAPTR only, at ionquant/
+                { assert published_psms == [['ionquant/fragpipe/CTRL_1/psm.tsv', true], ['ionquant/fragpipe/OX_1/psm.tsv', true]] },
+                { assert java.nio.file.Files.exists(out.resolve('ionquant/fragpipe/combined_modified_peptide.tsv')) },
+                { assert java.nio.file.Files.exists(out.resolve('fpop_coadaptr/fpop_coadaptr.log')) },
+                // Metaproteomics sees the MSFragger .pin and Percolator PSM tables of every run
+                { assert meta_inputs.findAll { f -> f.endsWith('.pin') }.size() == 2 },
+                { assert meta_inputs.findAll { f -> f.endsWith('_percolator_target_psms.tsv') }.size() == 2 },
+                // FragPipe deletes the decoy TSVs after Percolator unless keep-tsv-files is on, metaproteomics or not
+                // (CmdPercolator.java:232-239), so FP-Meta finds none
+                { assert meta_inputs.findAll { f -> f.endsWith('_percolator_decoy_psms.tsv') }.size() == 0 },
+                { assert snapshot(workflow.out.fpop_results, workflow.out.fpop_psms, workflow.out.taxonomy_results).match() }
             )
         }
     }
@@ -95,9 +229,12 @@ database.decoy-tag = rev_
                 def workflow_file = file("\${workDir}/TMT16.workflow")
                 workflow_file.text = '''
 msfragger.calibrate_mass = 2
+msfragger.precursor_mass_lower = -20
+msfragger.precursor_mass_upper = 20
 msfragger.run-msfragger = true
 msbooster.run-msbooster = true
 tmtintegrator.run-tmtintegrator = true
+msfragger.table.var-mods = 15.9949,M,true,3
 phi-report.filter = --sequential --prot 0.01 --picked
 phi-report.run-report = true
 percolator.run-percolator = true
@@ -106,12 +243,16 @@ database.decoy-tag = rev_
 '''.trim()
 
                 // Create input channels
-                input[0] = channel.of([[ id: 'test_sample' ], mzml_file])
+                // TMT annotation (TMT-Integrator runs): one plex = the FragPipe group test_sample
+                def annotation_file = file("\${workDir}/tmt_annotation.tsv")
+                annotation_file.text = "plex\\tchannel\\tsample\\tsample_name\\tcondition\\treplicate\\ntest_sample\\t126\\tBridge\\tBridge\\tref\\t1\\ntest_sample\\t127N\\tS1\\tS1\\tc\\t1\\n"
+                input[0] = channel.of([[ id: 'test_sample', group: 'test_sample', data_type: 'DDA' ], mzml_file])
                 input[1] = channel.of([[ id: 'test_db' ], fasta_file])
                 input[2] = channel.of([[ id: 'fragpipe_config' ], workflow_file])
                 input[3] = Channel.empty()  // ch_decoy_db (not used)
-                input[4] = []               // ch_annotation (not used)
+                input[4] = channel.value(annotation_file)  // ch_annotation
                 input[5] = []               // ch_manifest (not used)
+                input[6] = channel.value([[], []])  // ch_taxon_files: FragPipe's tools/metaproteomics dumps
 
                 """
             }
@@ -133,7 +274,8 @@ database.decoy-tag = rev_
                     workflow.out.combined_protein,
                     workflow.out.combined_peptide,
                     workflow.out.combined_ion,
-                    workflow.out.ionquant_dir,
+                    // file names only: filelist_ionquant.txt holds the absolute --specdir (CmdIonquant)
+                    workflow.out.ionquant_dir.collect { item -> [item[0], new File(item[1].toString()).list().sort()] },
                     workflow.out.tmt_abundance
                 ).match() }
             )
@@ -159,9 +301,13 @@ database.decoy-tag = rev_
                 def workflow_file = file("\${workDir}/LFQ-MBR.workflow")
                 workflow_file.text = '''
 msfragger.calibrate_mass = 2
+msfragger.precursor_mass_lower = -20
+msfragger.precursor_mass_upper = 20
 msfragger.run-msfragger = true
 msbooster.run-msbooster = true
 ionquant.run-ionquant = true
+quantitation.run-label-free-quant = true
+msfragger.table.var-mods = 15.9949,M,true,3
 phi-report.filter = --sequential --prot 0.01 --picked
 phi-report.run-report = true
 percolator.run-percolator = true
@@ -170,12 +316,13 @@ database.decoy-tag = rev_
 '''.trim()
 
                 // Create input channels
-                input[0] = channel.of([[ id: 'test_sample' ], mzml_file])
+                input[0] = channel.of([[ id: 'test_sample', group: 'test_sample', data_type: 'DDA' ], mzml_file])
                 input[1] = Channel.empty()  // ch_database (not used - using prebuilt)
                 input[2] = channel.of([[ id: 'fragpipe_config' ], workflow_file])
                 input[3] = channel.of([[ id: 'philosopher_db' ], decoy_fasta])  // ch_decoy_db
-                input[4] = []               // ch_annotation (not used)
+                input[4] = channel.value([])  // ch_annotation (not used)
                 input[5] = []               // ch_manifest (not used)
+                input[6] = channel.value([[], []])  // ch_taxon_files: FragPipe's tools/metaproteomics dumps
 
                 """
             }
@@ -197,9 +344,100 @@ database.decoy-tag = rev_
                     workflow.out.combined_protein,
                     workflow.out.combined_peptide,
                     workflow.out.combined_ion,
-                    workflow.out.ionquant_dir,
+                    // file names only: filelist_ionquant.txt holds the absolute --specdir (CmdIonquant)
+                    workflow.out.ionquant_dir.collect { item -> [item[0], new File(item[1].toString()).list().sort()] },
                     workflow.out.tmt_abundance
                 ).match() }
+            )
+        }
+    }
+
+    test("fragpipe_wf - stub test with the bundled DIA_SpecLib_Quant workflow (SpecLibGen + DIA-NN)") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                // FragPipe 24.0's DIA_SpecLib_Quant.workflow: MSFragger (DIA params) -> MSBooster -> Percolator
+                // -> ProteinProphet -> Philosopher -> SpecLibGen (pepXML conversion) -> DIA-NN (FragpipeRun.java:2240-2339)
+                def workflow_file = file("\${baseDir}/tests/fixtures/fragpipe_workflows/DIA_SpecLib_Quant.workflow", checkIfExists: true)
+                def dia1 = file("\${workDir}/dia_run1.mzML")
+                dia1.text = '<?xml version="1.0" encoding="UTF-8"?><mzML></mzML>'
+                def dia2 = file("\${workDir}/dia_run2.mzML")
+                dia2.text = '<?xml version="1.0" encoding="UTF-8"?><mzML></mzML>'
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = '>sp|P00000|TEST_HUMAN Test protein\\nMKWVTFISLLLFSSAYSRGVFRRDTHKSEIAHR'
+                def manifest = file("\${workDir}/fragpipe-files.fp-manifest")
+                manifest.text = "\${dia1}\\t\\t\\tDIA\\n\${dia2}\\t\\t\\tDIA"
+                // SpecLibGen and DIA-NN run, so every file is in FragPipe's single group ""
+                def m = { id -> [ id: id, group: '', experiment: null, bioreplicate: null, data_type: 'DIA' ] }
+                input[0] = channel.of([m.call('dia_run1'), dia1], [m.call('dia_run2'), dia2])
+                input[1] = channel.of([[ id: 'test_db' ], fasta_file])
+                input[2] = channel.of([[ id: 'fragpipe_config' ], workflow_file])
+                input[3] = Channel.empty()          // ch_decoy_db (not used)
+                input[4] = channel.value([])        // ch_annotation (not used)
+                input[5] = channel.value(manifest)  // ch_manifest
+                input[6] = channel.value([[], []])  // ch_taxon_files: FragPipe's tools/metaproteomics dumps
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert workflow.success },
+                { assert workflow.out.speclib.size() == 1 },
+                { assert workflow.out.diann_report.size() == 1 },
+                { assert snapshot(
+                    workflow.out.psms,
+                    workflow.out.speclib,
+                    workflow.out.diann_report,
+                    workflow.out.diann_pg_matrix,
+                    workflow.out.diann_results.collect { item -> [item[0], item[1].collect { f -> new File(f.toString()).name }.sort()] }
+                ).match() }
+            )
+        }
+    }
+
+    // Tracker item 11: FPOP coADAPTr in DIA-NN mode edits DIA-NN's report.tsv (CmdFPOPcoadaptr.java:429-433,
+    // FPOP_DiannReport_Editor) after DIA-NN (FragpipeRun.java:2487); FRAGPIPE_SPECLIB's report reaches FRAGPIPE_EXPORT
+    test("fragpipe_wf - stub DIA_SpecLib_Quant with FPOP coADAPTr edits DIA-NN's report.tsv") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                def workflow_file = file("\${workDir}/DIA_SpecLib_Quant_coadaptr.workflow")
+                workflow_file.text = file("\${baseDir}/tests/fixtures/fragpipe_workflows/DIA_SpecLib_Quant.workflow", checkIfExists: true).text
+                    .readLines().findAll { line -> !line.startsWith('fpop.coadaptr.fpop.run-fpop-coadaptr=') }
+                    .join('\\n') + '\\nfpop.coadaptr.fpop.run-fpop-coadaptr=true\\n'
+                def dia1 = file("\${workDir}/dia_run1.mzML")
+                dia1.text = '<?xml version="1.0" encoding="UTF-8"?><mzML></mzML>'
+                def dia2 = file("\${workDir}/dia_run2.mzML")
+                dia2.text = '<?xml version="1.0" encoding="UTF-8"?><mzML></mzML>'
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = '>sp|P00000|TEST_HUMAN Test protein\\nMKWVTFISLLLFSSAYSRGVFRRDTHKSEIAHR'
+                def manifest = file("\${workDir}/fragpipe-files.fp-manifest")
+                manifest.text = "\${dia1}\\t\\t\\tDIA\\n\${dia2}\\t\\t\\tDIA"
+                def m = { id -> [ id: id, group: '', experiment: null, bioreplicate: null, data_type: 'DIA' ] }
+                input[0] = channel.of([m.call('dia_run1'), dia1], [m.call('dia_run2'), dia2])
+                input[1] = channel.of([[ id: 'test_db' ], fasta_file])
+                input[2] = channel.of([[ id: 'fragpipe_config' ], workflow_file])
+                input[3] = Channel.empty()          // ch_decoy_db (not used)
+                input[4] = channel.value([])        // ch_annotation (not used)
+                input[5] = channel.value(manifest)  // ch_manifest
+                input[6] = channel.value([[], []])  // ch_taxon_files: FragPipe's tools/metaproteomics dumps
+                """
+            }
+        }
+
+        then {
+            def tasks = workflow.trace.tasks().collect { task -> task.name.replaceAll(/ \(.*\)$/, '').tokenize(':')[-1] }
+            assertAll (
+                { assert workflow.success },
+                { assert tasks.count('DIANNFRAGPIPE') == 1 },
+                { assert tasks.count('FPOPCOADAPTR') == 1 : tasks }
             )
         }
     }
@@ -208,19 +446,24 @@ database.decoy-tag = rev_
         tag "integration"
 
         when {
+            params {
+                // the test FASTA has no decoys: FragPipe's "Add decoys" database update, as conf/test.config
+                add_philosopher_decoy = true
+            }
             workflow {
                 """
-                def workflow_file = file("\${projectDir}/modules/local/fragpipe/resources/workflows/LFQ-MBR.workflow")
+                def workflow_file = file("\${projectDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow")
 
                 input[0] = channel.of(
-                    [[ id: 'sample1' ], file("\${params.pipelines_testdata_base_path}/spectra/tmt_erwinia_subset.mzML", checkIfExists: true)],
-                    [[ id: 'sample2' ], file("\${params.pipelines_testdata_base_path}/spectra/tmt_erwinia_subset_2.mzML", checkIfExists: true)]
+                    [[ id: 'sample1', group: 'sample1', data_type: 'DDA' ], file("\${params.pipelines_testdata_base_path}/spectra/tmt_erwinia_subset.mzML", checkIfExists: true)],
+                    [[ id: 'sample2', group: 'sample2', data_type: 'DDA' ], file("\${params.pipelines_testdata_base_path}/spectra/tmt_erwinia_subset_2.mzML", checkIfExists: true)]
                 )
                 input[1] = channel.of([[ id: 'erwinia_db' ], file("\${params.pipelines_testdata_base_path}/databases/erwinia_carotovora.fasta", checkIfExists: true)])
                 input[2] = channel.of([[ id: 'fragpipe_config' ], workflow_file])
                 input[3] = Channel.empty()  // ch_decoy_db (not used)
-                input[4] = []               // ch_annotation (not used)
+                input[4] = channel.value([])  // ch_annotation (not used)
                 input[5] = []               // ch_manifest (not used)
+                input[6] = channel.value([[], []])  // ch_taxon_files: FragPipe's tools/metaproteomics dumps
 
                 """
             }
@@ -247,9 +490,13 @@ database.decoy-tag = rev_
         tag "integration"
 
         when {
+            params {
+                // the test FASTA has no decoys: FragPipe's "Add decoys" database update, as conf/test.config
+                add_philosopher_decoy = true
+            }
             workflow {
                 """
-                def workflow_file = file("\${projectDir}/modules/local/fragpipe/resources/workflows/LFQ-MBR.workflow")
+                def workflow_file = file("\${projectDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow")
 
                 // Download once, copy with different name to avoid filename collision at aggregate steps
                 def mzml_src = file("\${params.pipelines_testdata_base_path}/spectra/dda_silac_subset.mzML", checkIfExists: true)
@@ -257,14 +504,15 @@ database.decoy-tag = rev_
                 mzml_src.copyTo(mzml_copy)
 
                 input[0] = channel.of(
-                    [[ id: 'silac_sample1' ], mzml_src],
-                    [[ id: 'silac_sample2' ], mzml_copy]
+                    [[ id: 'silac_sample1', group: 'silac_sample1', data_type: 'DDA' ], mzml_src],
+                    [[ id: 'silac_sample2', group: 'silac_sample2', data_type: 'DDA' ], mzml_copy]
                 )
                 input[1] = channel.of([[ id: 'human_db' ], file("\${params.pipelines_testdata_base_path}/databases/human_sp_subset.fasta", checkIfExists: true)])
                 input[2] = channel.of([[ id: 'fragpipe_config' ], workflow_file])
                 input[3] = Channel.empty()  // ch_decoy_db (not used)
-                input[4] = []               // ch_annotation (not used)
+                input[4] = channel.value([])  // ch_annotation (not used)
                 input[5] = []               // ch_manifest (not used)
+                input[6] = channel.value([[], []])  // ch_taxon_files: FragPipe's tools/metaproteomics dumps
 
                 """
             }
@@ -283,6 +531,190 @@ database.decoy-tag = rev_
                 { assert workflow.out.psms.every { path(it[1]).size() > 0 } },
                 { assert workflow.out.proteins.every { path(it[1]).size() > 0 } },
                 { assert workflow.out.psms.size() > 0 }
+            )
+        }
+    }
+
+    test("fragpipe_wf - stub - glyco chain: PTM-Shepherd -> MBG -> IonQuant with AppendFile") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                def mzml_file = file("\${workDir}/test_sample.mzML")
+                mzml_file.text = '<?xml version="1.0" encoding="UTF-8"?><mzML></mzML>'
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = '>sp|P00000|TEST_HUMAN Test protein\\nMKWVTFISLLLFSSAYSRGVFRRDTHKSEIAHR'
+                // bundled glyco-N-LFQ with PTM-S profiling and MBG switched on
+                def workflow_file = file("\${workDir}/glyco.workflow")
+                workflow_file.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/glyco-N-LFQ.workflow").text
+                    .replace('ptmshepherd.run-shepherd=false', 'ptmshepherd.run-shepherd=true')
+                    .replace('mbg.run-mbg=false', 'mbg.run-mbg=true')
+                    .replace('saintexpress.run-saint-express=true', 'saintexpress.run-saint-express=false')
+
+                input[0] = channel.of([[ id: 'test_sample', group: 'cancer', experiment: 'cancer', bioreplicate: null, data_type: 'DDA' ], mzml_file])
+                input[1] = channel.of([[ id: 'test_db' ], fasta_file])
+                input[2] = channel.of([[ id: 'fragpipe_config' ], workflow_file])
+                input[3] = Channel.empty()
+                input[4] = channel.value([])   // ch_annotation (not used)
+                def manifest = file("\${workDir}/fragpipe-files.fp-manifest")
+                manifest.text = "\${mzml_file}\\tcancer\\t\\tDDA"
+                input[5] = channel.value(manifest)  // ch_manifest
+                input[6] = channel.value([[], []])  // ch_taxon_files: FragPipe's tools/metaproteomics dumps
+                """
+            }
+        }
+
+        then {
+            def tasks = workflow.trace.tasks().collect { t -> t.name.tokenize(' ')[0].tokenize(':').last() }
+            def iq_dir = new File(workflow.out.ionquant_dir[0][1].toString()).parentFile
+            // the group directory IonQuant staged (stageInMode copy: `cp -fRL <source> cancer` in .command.run)
+            def iq_input = new File(iq_dir, '.command.run').readLines().find { line -> line.trim() ==~ /cp -fRL \S+ cancer/ }?.trim()?.tokenize(' ')?.getAt(2)
+            def mbg_dir = workflow.out.glyco_psm_dirs[0][1].toString()
+            assertAll (
+                { assert workflow.success },
+                { assert tasks.containsAll(["PTMSHEPHERD", "MBG", "IONQUANT"]) : tasks },
+                // IonQuant quantifies the psm.tsv MBG wrote (FragpipeRun.java:2477)
+                { assert iq_input == mbg_dir : "IonQuant read ${iq_input}, MBG wrote ${mbg_dir}" },
+                // AppendFile: glyco masses join the modlist (FragpipeRun.java:1822-1830)
+                { assert new File(iq_dir, 'fragpipe/ionquant.log').text.contains('--modlist modmasses_ionquant.txt') : iq_dir },
+                { assert snapshot(tasks.unique().sort()).match() }
+            )
+        }
+    }
+
+    // FragPipe runs FreeQuant and the final PhilosopherReport before the glyco chain: PTM-Shepherd has an
+    // IN-edge from PhilosopherReport (FragpipeRun.java:2467-2474), so it reads the Report's tables, not
+    // the placeholders Filter leaves when Report follows FreeQuant.
+    test("fragpipe_wf - stub - glyco chain on a FreeQuant group reads the final Philosopher report") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                def mzml_file = file("\${workDir}/test_sample.mzML")
+                mzml_file.text = '<?xml version="1.0" encoding="UTF-8"?><mzML></mzML>'
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = '>sp|P00000|TEST_HUMAN Test protein\\nMKWVTFISLLLFSSAYSRGVFRRDTHKSEIAHR'
+                // bundled glyco-N-LFQ with PTM-S on and FreeQuant in place of IonQuant
+                def workflow_file = file("\${workDir}/glyco.workflow")
+                workflow_file.text = file("${baseDir}/tests/fixtures/fragpipe_workflows/glyco-N-LFQ.workflow").text
+                    .replace('ptmshepherd.run-shepherd=false', 'ptmshepherd.run-shepherd=true')
+                    .replace('freequant.run-freequant=false', 'freequant.run-freequant=true')
+                    .replace('ionquant.run-ionquant=true', 'ionquant.run-ionquant=false')
+                    .replace('saintexpress.run-saint-express=true', 'saintexpress.run-saint-express=false')
+
+                input[0] = channel.of([[ id: 'test_sample', group: 'cancer', experiment: 'cancer', bioreplicate: null, data_type: 'DDA' ], mzml_file])
+                input[1] = channel.of([[ id: 'test_db' ], fasta_file])
+                input[2] = channel.of([[ id: 'fragpipe_config' ], workflow_file])
+                input[3] = Channel.empty()
+                input[4] = channel.value([])   // ch_annotation (not used)
+                def manifest = file("\${workDir}/fragpipe-files.fp-manifest")
+                manifest.text = "\${mzml_file}\\tcancer\\t\\tDDA"
+                input[5] = channel.value(manifest)  // ch_manifest
+                input[6] = channel.value([[], []])  // ch_taxon_files: FragPipe's tools/metaproteomics dumps
+                """
+            }
+        }
+
+        then {
+            def tasks = workflow.trace.tasks().collect { t -> t.name.tokenize(' ')[0].tokenize(':').last() }
+            def ptms_dir = new File(workflow.out.ptm_results[0][1].toString()).parentFile
+            // the group directory PTM-Shepherd staged (stageInMode copy: `cp -fRL <source> input/cancer` in .command.run)
+            def tokens = new File(ptms_dir, '.command.run').readLines().find { line -> line.contains('cp -fRL ') && line.trim().endsWith(' input/cancer') }.trim().tokenize(' ')
+            def source = new File(tokens[tokens.indexOf('-fRL') + 1])
+            def task_dir = source
+            while (task_dir != null && !new File(task_dir, '.command.run').exists()) { task_dir = task_dir.parentFile }
+            def producer = new File(task_dir, '.command.run').readLines().find { line -> line.startsWith('### name:') }
+            assertAll (
+                { assert workflow.success },
+                { assert tasks.containsAll(["FREEQUANT", "PHILOSOPHERREPORT", "PTMSHEPHERD"]) : tasks },
+                { assert !tasks.contains("IONQUANT") : tasks },
+                { assert producer.contains(':PHILOSOPHERREPORT (') : "PTM-Shepherd read ${source}, written by ${producer}" },
+                { assert snapshot(tasks.unique().sort()).match() }
+            )
+        }
+    }
+
+    // FragPipe 24.0 glyco-O-Pair.workflow writes calibrated mzML (write_calibrated_mzml, calibrate_mass 2): the glyco
+    // chain gets one searched LC-MS file per run, not MSFragger's side files next to it
+    test("fragpipe_wf - stub glyco O-Pair workflow: PairScans and O-Pair see one LC-MS file per run") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = '>sp|P00000|TEST_HUMAN Test protein\\nMKWVTFISLLLFSSAYSRGVFRRDTHKSEIAHR'
+                def mzml_a = file("\${workDir}/glyco_a.mzML")
+                mzml_a.text = '<?xml version="1.0" encoding="UTF-8"?><mzML></mzML>'
+                def mzml_b = file("\${workDir}/glyco_b.mzML")
+                mzml_b.text = '<?xml version="1.0" encoding="UTF-8"?><mzML></mzML>'
+                input[0] = channel.of(
+                    [[ id: 'glyco_a', group: 'A', data_type: 'DDA' ], mzml_a],
+                    [[ id: 'glyco_b', group: 'B', data_type: 'DDA' ], mzml_b]
+                )
+                input[1] = channel.of([[ id: 'test_db' ], fasta_file])
+                input[2] = channel.of([[ id: 'fragpipe_config' ], file("${baseDir}/tests/fixtures/fragpipe_workflows/glyco-O-Pair.workflow", checkIfExists: true)])
+                input[3] = Channel.empty()  // ch_decoy_db (not used)
+                input[4] = channel.value([])  // ch_annotation (not used)
+                input[5] = []               // ch_manifest (not used)
+                input[6] = channel.value([[], []])  // ch_taxon_files: FragPipe's tools/metaproteomics dumps
+                """
+            }
+        }
+
+        then {
+            def tasks = workflow.trace.tasks()*.name.collect { n -> n.replaceAll(/^.*:/, '').replaceAll(/ \(.*/, '') }
+            assertAll (
+                { assert workflow.success },
+                { assert tasks.count { n -> n == 'PAIRSCANS' } == 2 },
+                { assert tasks.count { n -> n == 'OPAIR' } == 2 },
+                { assert snapshot(tasks.countBy { n -> n }.sort(), workflow.out.pin, workflow.out.validated_pepxml).match() }
+            )
+        }
+    }
+
+    // FragPipe 24.0 glyco-N-LFQ.workflow: output_format tsv_pepXML writes no PIN, PeptideProphet validates and
+    // MSBooster/Percolator do not run, so their joins see no PIN
+    test("fragpipe_wf - stub glyco-N-LFQ workflow: tsv_pepXML search without PIN, PeptideProphet per file") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            workflow {
+                """
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = '>sp|P00000|TEST_HUMAN Test protein\\nMKWVTFISLLLFSSAYSRGVFRRDTHKSEIAHR'
+                def mzml_a = file("\${workDir}/glyco_a.mzML")
+                mzml_a.text = '<?xml version="1.0" encoding="UTF-8"?><mzML></mzML>'
+                def mzml_b = file("\${workDir}/glyco_b.mzML")
+                mzml_b.text = '<?xml version="1.0" encoding="UTF-8"?><mzML></mzML>'
+                input[0] = channel.of(
+                    [[ id: 'glyco_a', group: 'A', data_type: 'DDA' ], mzml_a],
+                    [[ id: 'glyco_b', group: 'B', data_type: 'DDA' ], mzml_b]
+                )
+                input[1] = channel.of([[ id: 'test_db' ], fasta_file])
+                input[2] = channel.of([[ id: 'fragpipe_config' ], file("${baseDir}/tests/fixtures/fragpipe_workflows/glyco-N-LFQ.workflow", checkIfExists: true)])
+                input[3] = Channel.empty()  // ch_decoy_db (not used)
+                input[4] = channel.value([])  // ch_annotation (not used)
+                input[5] = []               // ch_manifest (not used)
+                input[6] = channel.value([[], []])  // ch_taxon_files: FragPipe's tools/metaproteomics dumps
+                """
+            }
+        }
+
+        then {
+            def tasks = workflow.trace.tasks()*.name.collect { n -> n.replaceAll(/^.*:/, '').replaceAll(/ \(.*/, '') }
+            assertAll (
+                { assert workflow.success },
+                { assert workflow.out.pin.size() == 0 },
+                { assert tasks.count { n -> n == 'PHILOSOPHERPEPTIDEPROPHET' } >= 1 },
+                { assert !tasks.contains('PERCOLATOR') },
+                { assert snapshot(tasks.countBy { n -> n }.sort(), workflow.out.pin, workflow.out.validated_pepxml).match() }
             )
         }
     }

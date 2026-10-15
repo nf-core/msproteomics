@@ -7,6 +7,7 @@ Scores protein-protein interactions from AP-MS data using SAINTexpress.
 SAINTexpress is a statistical tool for evaluating the significance of prey proteins identified in affinity purification-mass spectrometry (AP-MS) experiments.
 It supports both spectral count (`spc`) and intensity (`int`) scoring modes.
 This module discovers the SAINTexpress binary from the FragPipe tools directory and runs it on interaction, bait, and prey definition files.
+It is an optional post-run step: FragPipe runs SAINTexpress only from its Downstream tab (`TabDownstream.java:114-145,220`), not as part of its run, so the pipeline publishes it to `downstream/saintexpress/`.
 
 ## Inputs
 
@@ -38,7 +39,7 @@ This module discovers the SAINTexpress binary from the FragPipe tools directory 
 
 ## Container
 
-`docker.io/fcyucn/fragpipe:24.0`
+The licensed FragPipe image given with `--fragpipe_container`.
 
 ## Usage
 

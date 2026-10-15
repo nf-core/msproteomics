@@ -1,0 +1,104 @@
+nextflow_process {
+
+    name "Test Process REPRINTTOSAINTINPUT"
+    script "../main.nf"
+    process "REPRINTTOSAINTINPUT"
+
+    tag "modules"
+    tag "modules_local"
+    tag "reprinttosaintinput"
+
+    test("reprint_to_saint_input - stub") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                file("\${workDir}/reprint.spc.tsv").text = 'mock'
+                input[0] = channel.of([[ id: 'saintexpress-spc' ], file("\${workDir}/reprint.spc.tsv"), 'spc'])
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                // versions come from the host python3 in stub runs; the integration tests snapshot them
+                { assert snapshot(process.out.saint_input, process.out.skipped).match() }
+            )
+        }
+    }
+
+    // CmdSaintExpress.java:72-79: a missing reprint table logs FragPipe's error and skips the mode
+    test("reprint_to_saint_input - stub missing REPRINT table skips the mode") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                input[0] = channel.of([[ id: 'saintexpress-int' ], [], 'int'])
+                """
+            }
+        }
+
+        then {
+            def skipped = new File(process.out.skipped.get(0).get(1).toString())
+            assertAll (
+                { assert process.success },
+                { assert process.out.saint_input.size() == 0 },
+                { assert skipped.text ==~ /Input file \/.+\/reprint\.int\.tsv is not accessible\.\n/ : skipped.text },
+                // the message names the task's absolute input path, so the snapshot holds the file name, not its md5
+                { assert snapshot(process.out.skipped.collect { meta, f -> [meta, new File(f.toString()).name] }, process.out.versions_python).match() }
+            )
+        }
+    }
+
+    // CmdSaintExpress.reprintTsvToSaintInput (CmdSaintExpress.java:98-167): control columns get type C
+    test("reprint_to_saint_input - int table to inter, bait and prey.dat") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                def tsv = file("\${workDir}/reprint.int.tsv")
+                tsv.text = 'PROTID\\tGENEID\\tB1_INT\\tC1_INT\\nna\\tna\\tBAIT\\tCONTROL_A\\nP1\\tG1\\t1000.0\\t0.0\\nP2\\tG2\\t900.0\\t50.0\\n'
+                input[0] = channel.of([[ id: 'saintexpress-int' ], tsv, 'int'])
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                // The python3 on PATH is the host's or the container's, so only the version format is pinned
+                { assert process.out.versions_python.every { entry -> entry[2] ==~ /^3\.\d+\.\d+$/ } : process.out.versions_python },
+                { assert snapshot(process.out.saint_input, process.out.skipped, process.out.versions_python.collect { entry -> entry.take(2) }).match() }
+            )
+        }
+    }
+
+    test("reprint_to_saint_input - missing table writes FragPipe's message") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                input[0] = channel.of([[ id: 'saintexpress-spc' ], [], 'spc'])
+                """
+            }
+        }
+
+        then {
+            def skipped = new File(process.out.skipped.get(0).get(1).toString())
+            assertAll (
+                { assert process.success },
+                { assert process.out.saint_input.size() == 0 },
+                { assert skipped.text ==~ /Input file \/.+\/reprint\.spc\.tsv is not accessible\.\n/ : skipped.text },
+                // the message names the task's absolute input path, so the snapshot holds the file name, not its md5
+                { assert snapshot(process.out.skipped.collect { meta, f -> [meta, new File(f.toString()).name] }, process.out.versions_python).match() }
+            )
+        }
+    }
+}

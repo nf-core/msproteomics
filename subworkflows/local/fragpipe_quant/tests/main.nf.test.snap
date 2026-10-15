@@ -1,10 +1,63 @@
 {
-    "fragpipe_quant - stub with ionquant": {
+    "fragpipe_quant - stub FPOP TMT runs TMT-Integrator a second time into tmt-report-unmod": {
         "content": [
             [
                 [
                     {
-                        "id": "combined"
+                        "id": "fragpipe"
+                    },
+                    [
+                        "abundance_gene_None.tsv",
+                        "abundance_protein_None.tsv",
+                        "ratio_gene_None.tsv",
+                        "ratio_protein_None.tsv"
+                    ]
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-06T20:40:39.913791426",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "fragpipe_quant - stub label-free and TMT IonQuant passes run in FragPipe order": {
+        "content": [
+            [
+                [
+                    "plex\tchannel\tsample\tsample_name\tcondition\treplicate",
+                    "\t126\t_126\t_126\t\t126",
+                    "p2\t126\tp2_126\tp2_126\tp2\t126"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "fragpipe"
+                    },
+                    [
+                        "abundance_gene_None.tsv",
+                        "abundance_protein_None.tsv"
+                    ]
+                ]
+            ],
+            [
+                "<task>/output/psm.tsv",
+                "<task>/output/p2/psm.tsv"
+            ]
+        ],
+        "timestamp": "2026-10-06T20:02:42.147944195",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "fragpipe_quant - stub label-free ionquant writes the experiment annotation": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "fragpipe"
                     },
                     "combined_protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
@@ -12,242 +65,64 @@
             [
                 [
                     {
-                        "id": "combined"
+                        "id": "fragpipe"
                     },
-                    "combined_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    "experiment_annotation.tsv"
                 ]
             ],
             [
                 [
                     {
-                        "id": "combined"
-                    },
-                    "combined_ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "combined"
-                    },
-                    "combined_modified_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                
-            ],
-            [
-                
-            ],
-            [
-                [
-                    {
-                        "id": "combined"
+                        "id": "fragpipe"
                     },
                     [
-                        "combined_ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "combined_ionquant.log:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "combined_modified_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "combined_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "combined_protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        [
-                            "psm.tsv:md5,083b3053d8f5380e8d1645ac54346e51"
-                        ],
-                        [
-                            "psm.tsv:md5,083b3053d8f5380e8d1645ac54346e51"
-                        ]
+                        "combined_ion.tsv",
+                        "combined_modified_peptide.tsv",
+                        "combined_peptide.tsv",
+                        "combined_protein.tsv",
+                        "filelist_ionquant.txt",
+                        "g1",
+                        "g2",
+                        "ion.tsv",
+                        "ionquant.log",
+                        "modmasses_ionquant.txt",
+                        "reprint.int.tsv",
+                        "reprint.spc.tsv"
                     ]
                 ]
             ],
             [
                 
-            ],
-            [
-                
-            ],
-            [
-                
-            ],
-            [
-                
-            ],
-            [
-                
-            ],
-            [
-                
-            ],
-            [
-                
             ]
         ],
-        "timestamp": "2026-03-25T03:55:35.333764025",
+        "timestamp": "2026-10-06T20:02:33.755578741",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
         }
     },
-    "fragpipe_quant - stub with tmtintegrator": {
+    "fragpipe_quant - stub TMT IonQuant passes without a blank group": {
         "content": [
             [
-                
-            ],
-            [
-                
-            ],
-            [
-                
-            ],
-            [
-                
-            ],
-            [
                 [
                     {
-                        "id": "tmt_combined"
+                        "id": "fragpipe"
                     },
                     [
-                        "abundance_gene_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "abundance_protein_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        "abundance_gene_None.tsv",
+                        "abundance_protein_None.tsv"
                     ]
                 ]
             ],
             [
-                [
-                    {
-                        "id": "tmt_combined"
-                    },
-                    [
-                        "ratio_gene_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "ratio_protein_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                    ]
-                ]
-            ],
-            [
-                
-            ],
-            [
-                [
-                    {
-                        "id": "tmt_combined"
-                    },
-                    [
-                        "abundance_gene_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "abundance_protein_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "ratio_gene_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "ratio_protein_None.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "tmt-integrator-conf.yml:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "tmt-integrator.log:md5,d41d8cd98f00b204e9800998ecf8427e"
-                    ]
-                ]
-            ],
-            [
-                
-            ],
-            [
-                
-            ],
-            [
-                
-            ],
-            [
-                
-            ],
-            [
-                
-            ],
-            [
-                
+                "<task>/output/p1/psm.tsv",
+                "<task>/output/p2/psm.tsv"
             ]
         ],
-        "timestamp": "2026-03-25T03:55:44.122584521",
+        "timestamp": "2026-10-08T14:31:19.043076178",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
-        }
-    },
-    "fragpipe_quant - stub with freequant": {
-        "content": [
-            [
-                
-            ],
-            [
-                
-            ],
-            [
-                
-            ],
-            [
-                
-            ],
-            [
-                
-            ],
-            [
-                
-            ],
-            [
-                
-            ],
-            [
-                
-            ],
-            [
-                [
-                    {
-                        "id": "sample_fq"
-                    },
-                    "ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                
-            ],
-            [
-                [
-                    {
-                        "id": "sample_fq"
-                    },
-                    [
-                        "freequant.log:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "philosopher_report.log:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "psm.tsv:md5,083b3053d8f5380e8d1645ac54346e51"
-                    ]
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "sample_fq"
-                    },
-                    "psm.tsv:md5,083b3053d8f5380e8d1645ac54346e51"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "sample_fq"
-                    },
-                    "peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "sample_fq"
-                    },
-                    "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ]
-        ],
-        "timestamp": "2026-03-25T03:55:51.78613366",
-        "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
         }
     }
 }

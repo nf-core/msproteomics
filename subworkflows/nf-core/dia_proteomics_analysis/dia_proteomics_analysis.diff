@@ -1,21 +1,8 @@
 Changes in component 'nf-core/dia_proteomics_analysis'
-Changes in 'dia_proteomics_analysis/main.nf':
---- subworkflows/nf-core/dia_proteomics_analysis/main.nf
-+++ subworkflows/nf-core/dia_proteomics_analysis/main.nf
-@@ -450,6 +450,8 @@
-     versions                = ch_versions
-     diann_report            = DIANN_FINALQUANTIFICATION.out.main_report
-     diann_report_parquet    = DIANN_FINALQUANTIFICATION.out.report_parquet
-+    pg_matrix               = DIANN_FINALQUANTIFICATION.out.pg_matrix
-+    diann_log               = DIANN_FINALQUANTIFICATION.out.log
-     mzml_statistics         = QUANTMSUTILS_MZMLSTATISTICS.out.ms_statistics
-     msstats_in              = QUANTMSUTILS_DIANN2MZTAB.out.out_msstats
-     out_triqler             = QUANTMSUTILS_DIANN2MZTAB.out.out_triqler
-
 Changes in 'dia_proteomics_analysis/meta.yml':
 --- subworkflows/nf-core/dia_proteomics_analysis/meta.yml
 +++ subworkflows/nf-core/dia_proteomics_analysis/meta.yml
-@@ -147,6 +147,26 @@
+@@ -140,6 +140,26 @@
              type: file
              description: Main DIA-NN report in Parquet format
              pattern: "*.parquet"
@@ -43,8 +30,95 @@ Changes in 'dia_proteomics_analysis/meta.yml':
        description: Statistics extracted from mzML files
        structure:
 
+Changes in 'dia_proteomics_analysis/main.nf':
+--- subworkflows/nf-core/dia_proteomics_analysis/main.nf
++++ subworkflows/nf-core/dia_proteomics_analysis/main.nf
+@@ -164,12 +164,14 @@
+     //   - Multiple channel views are created with different metadata granularities for downstream processes
+     //   - Each view groups data at the appropriate level (per-sample, per-experiment, per-enzyme, etc.)
+     //
++    // Each optional file is paired with every input as one list element: [file] when given, or the
++    // sentinel [[]] (an empty list element) when the channel is empty
+     input = ch_expdesign
+         .combine(ch_searchdb)
+         .combine(ch_input)
+-        .combine(ch_speclib_in.ifEmpty(null))
+-        .combine(ch_empirical_library_in.ifEmpty(null))
+-        .combine(ch_empirical_log_in.ifEmpty(null))
++        .combine(ch_speclib_in.map { speclib -> [speclib] }.ifEmpty([[]]))
++        .combine(ch_empirical_library_in.map { empirical_library -> [empirical_library] }.ifEmpty([[]]))
++        .combine(ch_empirical_log_in.map { empirical_log -> [empirical_log] }.ifEmpty([[]]))
+         .multiMap{
+             meta_exp,
+             expdesign,
+@@ -221,8 +223,8 @@
+             empirical: [meta_exp_searchdb, empirical_lib, empirical_log]
+         }
+ 
+-    ch_speclib = input.speclib.filter{ tuple -> tuple[1] != null }.unique()
+-    ch_empirical = input.empirical.filter{ tuple -> tuple[1] != null }.unique()
++    ch_speclib = input.speclib.filter{ tuple -> tuple[1] !instanceof List }.unique()
++    ch_empirical = input.empirical.filter{ tuple -> tuple[1] !instanceof List }.unique()
+ 
+     //
+     // Compute initial mass accuracy settings (before any DIA-NN analysis)
+@@ -248,14 +250,14 @@
+     //
+     // Only run config generation and speclib generation if no speclib is provided
+     // Conditional execution pattern:
+-    //   - combine with ifEmpty(null) pairs each input with either existing speclib or null
+-    //   - filter keeps only tuples containing null (i.e., no pre-generated speclib exists)
++    //   - combine with the speclib count pairs each input with the number of existing speclibs
++    //   - filter keeps only tuples with a count of 0 (i.e., no pre-generated speclib exists)
+     //   - downstream processes only execute when needed
+ 
+     ch_config_input = input.enzyme_mods.unique() // [meta_enzyme_mods, enzyme, fixed_mods, variable_mods]
+-        .combine(ch_speclib.ifEmpty(null))
+-        .filter{tuple -> tuple.any { elem -> elem == null }}
+-        .map{ meta, enzyme, fixed_mods, variable_mods, _speclib ->
++        .combine(ch_speclib.count())
++        .filter{ _meta, _enzyme, _fixed_mods, _variable_mods, n_speclib -> n_speclib == 0 }
++        .map{ meta, enzyme, fixed_mods, variable_mods, _n_speclib ->
+             [meta, enzyme, fixed_mods, variable_mods]
+         }
+ 
+@@ -288,18 +290,14 @@
+     // MODULE: Preliminary analysis
+     //
+ 
+-    // We only need to do preliminary analysis and empirical library assembly if no empirical library is provided
+-    // Conditional execution pattern:
+-    //   - join with remainder: true preserves inputs even if no empirical library exists
+-    //   - filter keeps only tuples containing null (i.e., no pre-generated empirical library)
+-    //   - downstream processes only execute when needed
++    // We only need to do preliminary analysis and empirical library assembly if no empirical library is provided.
++    // The provided library applies to every input, so count it: inputs pass only when none was given.
++    // (A join keyed on meta_input_fasta never matches the experiment-keyed ch_empirical.)
+ 
+     preliminary_branches = ch_fasta_input_with_speclib
+-        .join(ch_empirical, remainder: true)
+-        .filter { tuple ->
+-            tuple.any { elem -> elem == null } // ch_empirical was an empty channel
+-        }
+-        .map { meta_input_fasta, ms_file, speclib, _empirical ->
++        .combine(ch_empirical_library_in.count())
++        .filter { _meta_input_fasta, _ms_file, _speclib, n_empirical -> n_empirical == 0 }
++        .map { meta_input_fasta, ms_file, speclib, _n_empirical ->
+             [meta_input_fasta, ms_file, speclib]
+         }
+         .branch {
+@@ -450,6 +448,8 @@
+     emit:
+     diann_report            = DIANN_FINALQUANTIFICATION.out.main_report
+     diann_report_parquet    = DIANN_FINALQUANTIFICATION.out.report_parquet
++    pg_matrix               = DIANN_FINALQUANTIFICATION.out.pg_matrix
++    diann_log               = DIANN_FINALQUANTIFICATION.out.log
+     mzml_statistics         = QUANTMSUTILS_MZMLSTATISTICS.out.ms_statistics
+     msstats_in              = QUANTMSUTILS_DIANN2MZTAB.out.out_msstats
+     out_triqler             = QUANTMSUTILS_DIANN2MZTAB.out.out_triqler
+
 'subworkflows/nf-core/dia_proteomics_analysis/nextflow.config' is unchanged
 'subworkflows/nf-core/dia_proteomics_analysis/tests/nextflow.config' is unchanged
-'subworkflows/nf-core/dia_proteomics_analysis/tests/main.nf.test.snap' is unchanged
 'subworkflows/nf-core/dia_proteomics_analysis/tests/main.nf.test' is unchanged
+'subworkflows/nf-core/dia_proteomics_analysis/tests/main.nf.test.snap' is unchanged
 ************************************************************

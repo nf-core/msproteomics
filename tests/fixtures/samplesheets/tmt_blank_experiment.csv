@@ -1,0 +1,11 @@
+sample,spectra,condition,label,fraction,experiment,data_type
+Bridge,${FIXTURES}/spectra/plex1.mzML,reference,TMT126,1,,DDA
+S1,${FIXTURES}/spectra/plex1.mzML,control,TMT127N,1,,DDA
+S2,${FIXTURES}/spectra/plex1.mzML,treated,TMT127C,1,,DDA
+S3,${FIXTURES}/spectra/plex1.mzML,control,TMT128N,1,,DDA
+S4,${FIXTURES}/spectra/plex1.mzML,treated,TMT128C,1,,DDA
+S5,${FIXTURES}/spectra/plex1.mzML,control,TMT129N,1,,DDA
+S6,${FIXTURES}/spectra/plex1.mzML,treated,TMT129C,1,,DDA
+S7,${FIXTURES}/spectra/plex1.mzML,control,TMT130N,1,,DDA
+S8,${FIXTURES}/spectra/plex1.mzML,treated,TMT130C,1,,DDA
+S9,${FIXTURES}/spectra/plex1.mzML,control,TMT131N,1,,DDA

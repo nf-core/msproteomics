@@ -17,110 +17,182 @@ tools:
       documentation: "https://github.com/Nesvilab/IonQuant/wiki"
       tool_dev_url: "https://github.com/Nesvilab/IonQuant"
       doi: "10.1074/mcp.TIR120.002048"
-      licence: ["Commercial"]
+      licence: ["Proprietary (free for academic research)"]
       note: "License pre-installed in container"
 
 input:
-  - - meta:
+  - - "meta":
         type: map
-        description: Groovy Map containing sample information
-    - psm_dirs:
+        description: "Groovy Map containing sample information"
+    - "psm_dirs":
         type: directory
-        description: |
-          PHILOSOPHER_FILTER output directories, each named by sample
-          and containing psm.tsv
-    - spec_files:
+        description: "PHILOSOPHERFILTER output directories, one per FragPipe group, each containing psm.tsv"
+    - "spec_files":
         type: file
-        description: Spectral files (mzML or RAW) staged in spectra/ subdirectory
+        description: "LC-MS files (mzML or RAW) staged in the task dir; FragPipe's --specdir is their own directory (CmdIonquant.java:330-338)"
         pattern: "*.{mzML,raw}"
-  - - annotation_file:
-        type: file
-        description: |
-          TMT annotation file. Either 2-column (channel sample) for single-plex
-          or 6-column TSV (plex/channel/sample/sample_name/condition/replicate)
-          for multi-plex. Pass empty list [] if not applicable.
-        pattern: "*.{txt,tsv}"
-  - - config_cli:
-        type: string
-        description: |
-          IonQuant parameters as CLI string
-          (e.g., "--mbr 1 --maxlfq 1 --perform-isoquant 0 --perform-ms1quant 1")
-  - - modmasses:
-        type: string
-        description: |
-          Comma-separated modification masses for --modlist
-          (empty string = skip). Used for MBR modification mass tracking.
-
+  - "annotation_lines":
+      type: list
+      description: "Multi-plex TMT annotation lines (plex, channel, sample, sample_name, condition, replicate), one plex per FragPipe group (blank group = empty plex); [] when none"
+  - "config_cli":
+      type: string
+      description: 'IonQuant options from the workflow parser, in CmdIonquant order (e.g. "--mbr 1 --maxlfq 1 --perform-isoquant 0 --perform-ms1quant 1")'
+  - "modmasses":
+      type: list
+      description: "Lines of modmasses_ionquant.txt (list, may be empty) written for --modlist, or false for no --modlist (O-Pair runs)"
+  - "root_group_dir":
+      type: string
+      description: 'Name of the psm_dirs entry holding FragPipe''s blank group "" ("" when there is none); --multidir is passed only when a named group exists (CmdIonquant.java:221-222)'
+  - "experiment_annotation":
+      type: list
+      description: "Lines of experiment_annotation.tsv that FragPipe writes for this pass ([] = none)"
+  - "glyco_masses":
+      type: file
+      description: "PTM-Shepherd glyco_masses_list.txt appended to modmasses_ionquant.txt by AppendFile ([] when AppendFile does not run)"
+      pattern: "*.txt"
 output:
   results_dir:
-    - - meta:
+    - - "meta":
           type: map
-          description: Groovy Map containing sample information
+          description: "Groovy Map containing sample information"
       - "${prefix}":
           type: directory
-          description: Directory containing all IonQuant output files
+          description: "Directory containing all IonQuant output files and ionquant.log"
           pattern: "${prefix}"
-  ions:
-    - - meta:
+  root_group:
+    - - "meta":
           type: map
-          description: Groovy Map containing sample information
+          description: "Groovy Map containing sample information"
+      - "ionquant_root":
+          type: directory
+          description: "Holds the blank group's updated files in a directory named like its staged input (only when the run has a blank group)"
+          pattern: "ionquant_root"
+  ions:
+    - - "meta":
+          type: map
+          description: "Groovy Map containing sample information"
       - "${prefix}/ion.tsv":
           type: file
-          description: Ion-level quantification
+          description: "Ion-level quantification"
           pattern: "ion.tsv"
   combined_ions:
-    - - meta:
+    - - "meta":
           type: map
-          description: Groovy Map containing sample information
+          description: "Groovy Map containing sample information"
       - "${prefix}/combined_ion.tsv":
           type: file
-          description: Combined ion-level quantification across samples
+          description: "Combined ion-level quantification across samples"
           pattern: "combined_ion.tsv"
   combined_protein:
-    - - meta:
+    - - "meta":
           type: map
-          description: Groovy Map containing sample information
+          description: "Groovy Map containing sample information"
       - "${prefix}/combined_protein.tsv":
           type: file
-          description: Combined protein-level quantification across samples
+          description: "Combined protein-level quantification across samples"
           pattern: "combined_protein.tsv"
   combined_peptide:
-    - - meta:
+    - - "meta":
           type: map
-          description: Groovy Map containing sample information
+          description: "Groovy Map containing sample information"
       - "${prefix}/combined_peptide.tsv":
           type: file
-          description: Combined peptide-level quantification across samples
+          description: "Combined peptide-level quantification across samples"
           pattern: "combined_peptide.tsv"
   combined_modified_peptide:
-    - - meta:
+    - - "meta":
           type: map
-          description: Groovy Map containing sample information
+          description: "Groovy Map containing sample information"
       - "${prefix}/combined_modified_peptide.tsv":
           type: file
-          description: Combined modified-peptide-level quantification across samples
+          description: "Combined modified-peptide-level quantification across samples"
           pattern: "combined_modified_peptide.tsv"
   combined_site:
-    - - meta:
+    - - "meta":
           type: map
-          description: Groovy Map containing sample information
+          description: "Groovy Map containing sample information"
       - "${prefix}/combined_site_*.tsv":
           type: file
-          description: Combined site-level quantification across samples
+          description: "Combined site-level quantification across samples"
           pattern: "combined_site_*.tsv"
   all_tsv:
-    - - meta:
+    - - "meta":
           type: map
-          description: Groovy Map containing sample information
+          description: "Groovy Map containing sample information"
       - "${prefix}/*.tsv":
           type: file
-          description: All TSV output files
+          description: "All TSV output files"
           pattern: "*.tsv"
-  versions:
-    - versions.yml:
+  experiment_annotation:
+    - - "meta":
+          type: map
+          description: "Groovy Map containing sample information"
+      - "experiment_annotation.tsv":
+          type: file
+          description: "experiment_annotation.tsv written for this pass"
+          pattern: "experiment_annotation.tsv"
+  reprint_spc:
+    - - "meta":
+          type: map
+          description: "Groovy Map containing sample information"
+      - "${prefix}/reprint.spc.tsv":
+          type: file
+          description: "REPRINT spectral-count table (read by SAINTexpress, CmdSaintExpress.java:59)"
+          pattern: "reprint.spc.tsv"
+  reprint_int:
+    - - "meta":
+          type: map
+          description: "Groovy Map containing sample information"
+      - "${prefix}/reprint.int.tsv":
+          type: file
+          description: "REPRINT intensity table (read by SAINTexpress, CmdSaintExpress.java:59)"
+          pattern: "reprint.int.tsv"
+  license_agreement:
+    - "I_AGREE_FRAGPIPE_LICENSE_AGREEMENT":
         type: file
-        description: File containing software versions
-        pattern: "versions.yml"
+        description: "Marker file recording the FragPipe license agreement"
+        pattern: "I_AGREE_FRAGPIPE_LICENSE_AGREEMENT"
+  versions_ionquant:
+    - - "${task.process}":
+          type: string
+          description: The name of the process
+      - "ionquant":
+          type: string
+          description: The name of the tool
+      - "cat .ionquant_version":
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_fragpipe:
+    - - "${task.process}":
+          type: string
+          description: The name of the process
+      - "fragpipe":
+          type: string
+          description: The name of the tool
+      - "cat .fragpipe_version":
+          type: eval
+          description: The expression to obtain the version of the tool
+
+topics:
+  versions:
+    - - "${task.process}":
+          type: string
+          description: The name of the process
+      - "ionquant":
+          type: string
+          description: The name of the tool
+      - "cat .ionquant_version":
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - "${task.process}":
+          type: string
+          description: The name of the process
+      - "fragpipe":
+          type: string
+          description: The name of the tool
+      - "cat .fragpipe_version":
+          type: eval
+          description: The expression to obtain the version of the tool
 
 authors:
   - "@dongzehe"

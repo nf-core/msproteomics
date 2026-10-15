@@ -30,12 +30,11 @@ The module always uses `MAXTHREADS=1` (matching FragPipe convention, since Nextf
 | Parameter              | Default        | Description                                                                       |
 | ---------------------- | -------------- | --------------------------------------------------------------------------------- |
 | ext.args               | ''             | Inserted into PTMProphet command after `config_cli` and before input/output files |
-| ext.decoy_tag          | 'rev\_'        | Decoy prefix for decoy protein identification                                     |
 | ext.fragpipe_tools_dir | (default path) | Override FragPipe tools directory                                                 |
 
 ## Container
 
-`docker.io/fcyucn/fragpipe:24.0`
+The licensed FragPipe image given with `--fragpipe_container`.
 
 ## Usage
 

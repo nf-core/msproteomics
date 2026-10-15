@@ -37,7 +37,7 @@ Used within the FRAGPIPE_EXPORT subworkflow for structural proteomics experiment
 
 ## Container
 
-`docker.io/fcyucn/fragpipe:24.0`
+The licensed FragPipe image given with `--fragpipe_container`.
 
 ## Usage
 

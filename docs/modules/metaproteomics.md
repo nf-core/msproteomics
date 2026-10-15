@@ -10,14 +10,15 @@ Used within the FRAGPIPE_EXPORT subworkflow for metaproteomics experiments requi
 
 ## Inputs
 
-| Channel         | Type        | Description                                                                                    |
-| --------------- | ----------- | ---------------------------------------------------------------------------------------------- |
-| meta            | val(map)    | Sample metadata map                                                                            |
-| project_dir     | path        | Directory containing FragPipe results for taxonomy analysis                                    |
-| config_cli      | val(string) | Metaproteomics parameters as CLI string (e.g., `--decoyTag rev_ --qvalue 0.01 --iterations 2`) |
-| fasta           | path        | Protein sequence database in FASTA format (shared resource)                                    |
-| taxon_name_file | path        | NCBI taxonomy `names.dmp` file (shared resource)                                               |
-| taxon_node_file | path        | NCBI taxonomy `nodes.dmp` file (shared resource)                                               |
+| Channel         | Type        | Description                                                                                                            |
+| --------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------- |
+| meta            | val(map)    | Sample metadata map                                                                                                    |
+| project_dir     | path        | Directory containing FragPipe results for taxonomy analysis                                                            |
+| config_cli      | val(string) | Metaproteomics parameters as CLI string (e.g., `--qvalue 0.01 --iterations 2`; `--decoyTag` is added from `decoy_tag`) |
+| fasta           | path        | Protein sequence database in FASTA format (shared resource)                                                            |
+| taxon_name_file | path        | NCBI taxonomy `names.dmp` file (shared resource)                                                                       |
+| taxon_node_file | path        | NCBI taxonomy `nodes.dmp` file (shared resource)                                                                       |
+| decoy_tag       | val(string) | Decoy protein prefix from the workflow `database.decoy-tag` (via `getDecoyTag()`)                                      |
 
 ## Outputs
 
@@ -40,7 +41,7 @@ Used within the FRAGPIPE_EXPORT subworkflow for metaproteomics experiments requi
 
 ## Container
 
-`docker.io/fcyucn/fragpipe:24.0`
+The licensed FragPipe image given with `--fragpipe_container`.
 
 ## Usage
 

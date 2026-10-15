@@ -5,7 +5,7 @@ nextflow_process {
     process "DIATRACER"
 
     tag "modules"
-    tag "modules_nfcore"
+    tag "modules_local"
     tag "diatracer"
 
     test("diatracer - stub") {
@@ -23,7 +23,6 @@ nextflow_process {
                 def config_cli = "--writeInter 0 --deltaApexIM 0.05 --deltaApexRT 3"
 
                 input[0] = channel.of([[ id: 'test_diatracer' ], d_file, config_cli])
-                input[1] = []  // diatracer_dir (use auto-discovery)
                 """
             }
         }

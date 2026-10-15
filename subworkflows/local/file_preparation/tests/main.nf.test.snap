@@ -4,35 +4,60 @@
             [
                 [
                     {
-                        "id": "sample1",
-                        "mzml_id": "sample1"
+                        "id": "sample1"
                     },
                     "sample1.mzML:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
             ]
         ],
-        "timestamp": "2026-03-31T18:31:36.927530133",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
-        }
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-06T00:23:24.94333971"
+    },
+    "file_preparation - stub peak picking keeps .d and .dia, decompresses .mzML.gz": {
+        "content": [
+            [
+                [
+                    "s1",
+                    "s1.mzML"
+                ],
+                [
+                    "s2",
+                    "s2.mzML"
+                ],
+                [
+                    "s3",
+                    "s3.d"
+                ],
+                [
+                    "s4",
+                    "s4.dia"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-05T14:25:24.712287495"
     },
     "file_preparation - stub with mzML input": {
         "content": [
             [
                 [
                     {
-                        "id": "sample1",
-                        "mzml_id": "sample1"
+                        "id": "sample1"
                     },
                     "sample.mzML:md5,17404a596cbd0d1e6c7d23fcd845ab82"
                 ]
             ]
         ],
-        "timestamp": "2026-03-25T03:53:01.182283577",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
-        }
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-05T14:23:48.186447395"
     }
 }

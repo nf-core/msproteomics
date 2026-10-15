@@ -1,158 +1,174 @@
 {
-    "fragpipe_validate - stub with peptideprophet": {
-        "content": [
-            [
-                
-            ],
-            [
-                
-            ],
-            [
-                
-            ],
-            [
-                
-            ],
-            [
-                
-            ]
-        ],
-        "timestamp": "2026-03-25T03:57:00.114143073",
-        "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
-        }
-    },
-    "fragpipe_validate - stub with percolator and ptmprophet": {
+    "fragpipe_validate - stub percolator with MSBooster PIN and PTMProphet per rank": {
         "content": [
             [
                 [
                     {
-                        "id": "test_validate_ptm"
-                    },
-                    "interact-test.mod.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "test_validate_ptm"
-                    },
-                    "test_percolator_target_psms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "test_validate_ptm"
-                    },
-                    "test_percolator_decoy_psms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "test_validate_ptm"
-                    },
-                    "interact-test.mod.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "test_validate_ptm"
+                        "id": "s1",
+                        "group": "A",
+                        "experiment": "A",
+                        "bioreplicate": null,
+                        "data_type": "DDA+",
+                        "spectra_name": "s1.mzML"
                     },
                     [
-                        "interact-test.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "percolator.log:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "test_percolator_decoy_psms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "test_percolator_target_psms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        "interact-s1_rank1.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "interact-s1_rank2.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "s1",
+                        "group": "A",
+                        "experiment": "A",
+                        "bioreplicate": null,
+                        "data_type": "DDA+",
+                        "spectra_name": "s1.mzML"
+                    },
+                    [
+                        "interact-s1_rank1.mod.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "interact-s1_rank2.mod.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                [
+                    {
+                        "id": "s1",
+                        "group": "A",
+                        "experiment": "A",
+                        "bioreplicate": null,
+                        "data_type": "DDA+",
+                        "spectra_name": "s1.mzML"
+                    },
+                    [
+                        "interact-s1_rank1.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "interact-s1_rank2.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "s1",
+                        "group": "A",
+                        "experiment": "A",
+                        "bioreplicate": null,
+                        "data_type": "DDA+",
+                        "spectra_name": "s1.mzML"
+                    },
+                    [
+                        "interact-s1_rank1.mod.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "interact-s1_rank2.mod.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
                     ]
                 ]
             ]
         ],
-        "timestamp": "2026-03-25T03:57:07.384837471",
+        "timestamp": "2026-10-08T03:49:15.78679936",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
         }
     },
-    "fragpipe_validate - stub passthrough": {
+    "fragpipe_validate - stub per-file PeptideProphet writes the uncalibrated mzML path for .d": {
         "content": [
             [
                 [
                     {
-                        "id": "test_passthrough"
-                    },
-                    "test.pepXML:md5,dd1aab2497ba8d2a8be1e78e0bc016de"
-                ]
-            ],
-            [
-                
-            ],
-            [
-                
-            ],
-            [
-                
-            ],
-            [
-                
-            ]
-        ],
-        "timestamp": "2026-03-25T03:57:13.522131209",
-        "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
-        }
-    },
-    "fragpipe_validate - stub with percolator": {
-        "content": [
-            [
-                [
-                    {
-                        "id": "test_validate"
-                    },
-                    "interact-test.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "test_validate"
-                    },
-                    "test_percolator_target_psms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "test_validate"
-                    },
-                    "test_percolator_decoy_psms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                
-            ],
-            [
-                [
-                    {
-                        "id": "test_validate"
+                        "id": "s1",
+                        "group": "",
+                        "experiment": null,
+                        "bioreplicate": null,
+                        "data_type": "DDA",
+                        "spectra_name": "s1.d"
                     },
                     [
-                        "interact-test.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "percolator.log:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "test_percolator_decoy_psms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "test_percolator_target_psms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        "interact-s1.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
                     ]
                 ]
             ]
         ],
-        "timestamp": "2026-03-25T03:56:53.833096317",
+        "timestamp": "2026-10-06T05:27:11.605565624",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "fragpipe_validate - stub combined PeptideProphet per group in FragPipe order": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "G1",
+                        "group": "G1",
+                        "experiment": "G1",
+                        "bioreplicate": null,
+                        "data_type": "DDA",
+                        "spectra_name": "a.mzML",
+                        "lcms_ids": [
+                            "a",
+                            "b"
+                        ]
+                    },
+                    "interact.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                [
+                    {
+                        "id": "G2",
+                        "group": "G2",
+                        "experiment": "G2",
+                        "bioreplicate": null,
+                        "data_type": "DDA",
+                        "spectra_name": "c.mzML",
+                        "lcms_ids": [
+                            "c"
+                        ]
+                    },
+                    "interact.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-06T05:27:06.899837495",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "fragpipe_validate - stub per-file PeptideProphet when MSFragger writes no PIN": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "a",
+                        "group": "A",
+                        "experiment": "A",
+                        "bioreplicate": null,
+                        "data_type": "DDA",
+                        "spectra_name": "a.mzML"
+                    },
+                    [
+                        "interact-a.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                [
+                    {
+                        "id": "b",
+                        "group": "B",
+                        "experiment": "B",
+                        "bioreplicate": null,
+                        "data_type": "DDA",
+                        "spectra_name": "b.mzML"
+                    },
+                    [
+                        "interact-b.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-11T17:26:27.056992198",
         "meta": {
             "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
+            "nextflow": "25.10.4"
         }
     }
 }

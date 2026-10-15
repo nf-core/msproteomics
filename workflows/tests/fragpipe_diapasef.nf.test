@@ -1,0 +1,53 @@
+// diaPASEF: a DIA-typed .d samplesheet runs DIATRACER before MSFragger, and MSFragger searches
+// diaTracer's _diatracer.mzML (typed DDA) instead of the .d (CmdDiaTracer.java:131-145).
+
+nextflow_workflow {
+
+    name "Test Workflow MSPROTEOMICS_FRAGPIPE - diaPASEF"
+    script "../fragpipe.nf"
+    workflow "MSPROTEOMICS_FRAGPIPE"
+
+    tag "workflows"
+    tag "msproteomics_fragpipe"
+
+    test("diaPASEF - DIA .d files go through DIATRACER, MSFragger searches the diaTracer mzML") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ['run_1', 'run_2'].each { run ->
+                    def d = new File("${outputDir}/${run}.d")
+                    d.mkdirs()
+                    new File(d, 'analysis.tdf').text = 'mock'
+                }
+                ss.text = "sample,spectra,experiment,data_type\n" +
+                    "run_1,${outputDir}/run_1.d,exp,DIA\n" +
+                    "run_2,${outputDir}/run_2.d,exp,DIA\n"
+                input             = ss.toString()
+                database          = "${fixtures}/test.fasta"
+                fragpipe_workflow = "${fixtures}/fragpipe_workflows/DIA_SpecLib_Quant_diaPASEF.workflow"
+                fragpipe_mode     = 'pipeline'
+                outdir            = "$outputDir"
+            }
+        }
+
+        then {
+            def tasks = workflow.trace.tasks()
+            def diatracer = tasks.findAll { t -> t.name.contains('DIATRACER') }
+            def msfragger = tasks.findAll { t -> t.name.contains(':MSFRAGGER ') || t.name.contains(':MSFRAGGER(') }
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.trace.succeeded().collect { task -> task.name }.sort()).match() },
+                { assert diatracer.size() == 2 : diatracer*.name },
+                { assert msfragger.size() == 2 : msfragger*.name },
+                // MSFragger's staged inputs are the _diatracer.mzML files, never the raw .d
+                // (the _diatracer.mzML only exists once its DIATRACER task is done, so it ran first)
+                { assert msfragger.every { t -> t.name.contains('diatracer') } : msfragger*.name }
+            )
+        }
+    }
+}

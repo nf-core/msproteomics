@@ -4,11 +4,82 @@ nextflow_pipeline {
     script "../main.nf"
     tag "pipeline"
 
+    // Real run of -profile test (FragPipe DDA LFQ, conf/test.config). The FragPipe tools need the
+    // licensed image at runtime (process.container / --fragpipe_container); it is never set here.
     test("-profile test") {
 
         when {
             params {
+                // as conf/test.config: its FASTA gets FragPipe's "Add decoys" database update
+                add_philosopher_decoy        = true
+                add_philosopher_contaminants = true
                 outdir = "$outputDir"
+            }
+        }
+
+        then {
+            // stable_name: all files and folders in ${params.outdir}/ with a stable name
+            // (pipeline_info names carry the run timestamp)
+            // IonQuant splits .meta/db.bin into a run-dependent number of db.bin__<n> shards
+            def stable_name = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/**', 'ionquant/**/.meta/db.bin__*'])
+            def combined_protein = []
+            new File("${params.outdir}").eachFileRecurse { f -> if (f.name == 'combined_protein.tsv') combined_protein << f }
+            assertAll(
+                { assert workflow.success },
+                { assert combined_protein.size() == 1 && combined_protein[0].readLines().size() > 1 : "expected one non-empty combined_protein.tsv, got ${combined_protein}" },
+                { assert snapshot(
+                    workflow.trace.succeeded().size(),
+                    stable_name
+                ).match() }
+            )
+        }
+    }
+
+    // Full entry point (PIPELINE_INITIALISATION -> NFCORE_MSPROTEOMICS -> PIPELINE_COMPLETION)
+    // on local fixtures in DIA-NN mode.
+    test("--mode diann | stub") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/../samplesheet.csv")
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                mode     = 'diann'
+                input    = ss.toString()
+                database = "${fixtures}/test.fasta"
+                outdir   = "$outputDir"
+            }
+        }
+
+        then {
+            def stable_name = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}'])
+            def versions = new File("$outputDir/pipeline_info/nf_core_msproteomics_software_mqc_versions.yml").text
+            assertAll(
+                { assert workflow.success },
+                { assert ['DIANN_FINALQUANTIFICATION:', 'QUANTMSUTILS_DIANN2MZTAB:', 'IQ:', 'MSSTATS:', 'Workflow:'].every { key -> versions.contains(key) } : versions },
+                { assert new File("$outputDir/multiqc/multiqc_report.html").exists() },
+                { assert snapshot(workflow.trace.succeeded().size(), stable_name).match() }
+            )
+        }
+    }
+
+    // Real DIA-NN run on the nf-core test dataset (needs a container engine and network).
+    // Same inputs as conf/tests/test_dia.config.
+    test("test_dia dataset") {
+        tag "integration"
+        tag "dia_integration"
+
+        when {
+            params {
+                mode     = 'diann'
+                input    = "${projectDir}/tests/fixtures/samplesheets/test_dia.csv"
+                // params.pipelines_testdata_base_path + '/databases/human_sp_subset.fasta' (nf-test params cannot read
+                // pipeline params; tests/lib/test_data_base_path.nf.test checks this URL follows the base path)
+                database = 'https://raw.githubusercontent.com/an-altosian/test-datasets/refs/heads/msproteomics/databases/human_sp_subset.fasta'
+                organism = 'homo_sapiens'
+                outdir   = "$outputDir"
             }
         }
 
@@ -17,8 +88,47 @@ nextflow_pipeline {
             def stable_name = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}'])
             // stable_path: All files in ${params.outdir}/ with stable content
             def stable_path = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore')
+            def report = new File("$outputDir/diann/diann_quantification/diann_report.tsv")
+            // DIA-NN output is byte-identical run to run on one CPU class and differs across classes (same threads and
+            // containers), so the DIA-NN tables and the tables built from them (tests/.nftignore) are snapshotted per
+            // CPU class. DIA-NN's predictor dispatches on the ISA the VM exposes, and Azure EPYC 9V74 VMs come with and
+            // without AVX-512 (a 9V74 without avx512f gives the EPYC 7763 tables).
+            // Key suffix: /proc/cpuinfo "model name", trimmed, with every run of characters outside [A-Za-z0-9.-]
+            // replaced by "_", then "__avx512" if the flags hold avx512f, else "__noavx512". A new class fails under
+            // --ci with a missing snapshot.
+            def cpuinfo = new File('/proc/cpuinfo').readLines()
+            def cpu_model = cpuinfo.find { line -> line.startsWith('model name') }.split(':', 2)[1].trim()
+            def cpu_flags = cpuinfo.find { line -> line.startsWith('flags') }.split(':', 2)[1].trim().split(/\s+/) as List
+            def cpu_key = cpu_model.replaceAll(/[^A-Za-z0-9.-]+/, '_') + (cpu_flags.contains('avx512f') ? '__avx512' : '__noavx512')
+            println "DIA snapshot CPU class: ${cpu_key}"
+            // CPU classes whose DIA-NN tables, precursor and protein-group sets were measured byte-identical share
+            // the snapshot of the first class recorded (CI run of the measurement); any other class has its own key
+            def cpu_group = [
+                'INTEL_R_XEON_R_PLATINUM_8573C__avx512'    : 'Intel_R_Xeon_R_6975P-C__avx512',          // run 37986659948
+                'Intel_R_Xeon_R_6973P-C__avx512'           : 'Intel_R_Xeon_R_6975P-C__avx512',          // run 38056297113
+                'AMD_EPYC_9V45_96-Core_Processor__avx512'  : 'AMD_EPYC_9V74_80-Core_Processor__avx512', // run 38018531181
+                'AMD_EPYC_9V74_80-Core_Processor__noavx512': 'AMD_EPYC_7763_64-Core_Processor__noavx512', // run 38509366906
+            ]
+            def snapshot_key = cpu_group[cpu_key] ?: cpu_key
+            def diann_tables = getAllFilesFromDir(params.outdir, include: ['diann/*/*.tsv', 'iq/*.tsv', 'quantmsutils/mztab/experimental_design_*'])
+            def report_lines = report.readLines()
+            def report_header = report_lines[0].split('\t') as List
+            def report_column = { name -> report_lines.drop(1).collect { line -> line.split('\t')[report_header.indexOf(name)] } }
+            def precursor_set = report_column('Precursor.Id').unique().sort()
+            def protein_group_set = report_column('Protein.Group').unique().sort()
             assertAll(
-                { assert workflow.success},
+                { assert workflow.success },
+                { assert report.exists() && report.readLines().size() > 1 : "DIA-NN report missing or empty" },
+                // no mzTab: --enable_diann_mztab is off by default, and on this subset DIA-NN's protein-group
+                // matrix is empty, which quantms-utils diann2mztab cannot convert
+                { assert new File("$outputDir/quantmsutils/mztab/experimental_design_msstats_in.csv").exists() },
+                // floors at ~70% of the Xeon 6975P-C counts (113 precursors, 79 protein groups); across CPU models
+                // DIA-NN's identifications differ by up to 18%. The per-CPU snapshots are the exact guard.
+                { assert precursor_set.size() >= 80 : "DIA-NN report precursors: ${precursor_set.size()}" },
+                { assert protein_group_set.size() >= 55 : "DIA-NN report protein groups: ${protein_group_set.size()}" },
+                { assert snapshot(precursor_set).match("dia_precursor_set__${snapshot_key}") },
+                { assert snapshot(protein_group_set).match("dia_protein_group_set__${snapshot_key}") },
+                { assert snapshot(diann_tables).match("dia_diann_tables__${snapshot_key}") },
                 { assert snapshot(
                     // pipeline versions.yml file for multiqc from which Nextflow version is removed because we test pipelines on multiple Nextflow versions
                     removeNextflowVersion("$outputDir/pipeline_info/nf_core_msproteomics_software_mqc_versions.yml"),

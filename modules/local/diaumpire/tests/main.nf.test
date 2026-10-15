@@ -5,7 +5,7 @@ nextflow_process {
     process "DIAUMPIRE"
 
     tag "modules"
-    tag "modules_nfcore"
+    tag "modules_local"
     tag "diaumpire"
 
     test("diaumpire - stub") {
@@ -17,10 +17,9 @@ nextflow_process {
                 """
                 def mzml_file = file("\${workDir}/test.mzML")
                 mzml_file.text = "mock"
-                def config_file = file("\${workDir}/diaumpire_se.params")
-                config_file.text = "Thread = 4\\nRPmax = 25\\nRFmax = 300\\nCorrThreshold = 0.2\\nDeltaApex = 0.6\\nRTOverlap = 0.3\\nAdjustFragIntensity = true\\nBoostComplementaryIon = true\\nMS1PPM = 25\\nMS2PPM = 25"
+                def umpire_params = "Thread = THREADS\\nRPmax = 25\\nRFmax = 300\\nCorrThreshold = 0.2\\nDeltaApex = 0.6\\nRTOverlap = 0.3\\nAdjustFragIntensity = true\\nBoostComplementaryIon = true\\nMS1PPM = 25\\nMS2PPM = 25"
 
-                input[0] = channel.of([[ id: 'test_diaumpire' ], mzml_file, config_file])
+                input[0] = channel.of([[ id: 'test_diaumpire' ], mzml_file, umpire_params])
                 """
             }
         }
@@ -34,6 +33,7 @@ nextflow_process {
                     process.out.q2_spectra,
                     process.out.q3_spectra,
                     process.out.mgf_spectra,
+                    process.out.se_log,
                     process.out.versions_diaumpire,
                     process.out.versions_fragpipe
                 ).match() }
@@ -49,27 +49,13 @@ nextflow_process {
                 """
                 // mzML is a large binary file — keep remote
                 def mzml_file = file("\${params.pipelines_testdata_base_path}/spectra/dia_cptac_subset.mzML", checkIfExists: true)
-                // Create DIA-Umpire params inline
-                def config_file = file("\${workDir}/diaumpire_se.params")
-                config_file.text = "Thread = 4\\n" +
-                    "RPmax = 25\\n" +
-                    "RFmax = 300\\n" +
-                    "CorrThreshold = 0.2\\n" +
-                    "DeltaApex = 0.6\\n" +
-                    "RTOverlap = 0.3\\n" +
-                    "AdjustFragIntensity = true\\n" +
-                    "BoostComplementaryIon = true\\n" +
-                    "MS1PPM = 25\\n" +
-                    "MS2PPM = 25\\n" +
-                    "SN = 1.5\\n" +
-                    "MS2SN = 1.5\\n" +
-                    "MinMSIntensity = 10\\n" +
-                    "MinMSMSIntensity = 5\\n" +
-                    "MaxCurveRTRange = 1.5\\n" +
-                    "Resolution = 17500\\n" +
-                    "EstimateBG = false"
+                // diaumpire_se.params as PARSEFRAGPIPEWORKFLOW emits it: FragPipe 24.0's template with
+                // the thread count left as the THREADS placeholder that DIAUMPIRE fills with task.cpus
+                // (parse_fragpipe_workflow.py generate_diaumpire_config, default panel values)
+                def template = file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)
+                def umpire_params = template.text.readLines().collect { line -> line ==~ /^Thread *=.*/ ? 'Thread = THREADS' : line }.join('\\n')
 
-                input[0] = channel.of([[ id: 'diaumpire_test' ], mzml_file, config_file])
+                input[0] = channel.of([[ id: 'diaumpire_test' ], mzml_file, umpire_params])
                 """
             }
         }

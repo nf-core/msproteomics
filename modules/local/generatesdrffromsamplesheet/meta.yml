@@ -1,0 +1,70 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/yaml-schema.json
+name: "generatesdrffromsamplesheet"
+description: Generates SDRF-proteomics TSV from a simple CSV samplesheet and experiment-level parameters
+keywords:
+  - sdrf
+  - samplesheet
+  - proteomics
+  - metadata
+tools:
+  - python:
+      description: Python programming language
+      homepage: https://www.python.org
+      licence: ["PSF-2.0"]
+input:
+  - samplesheet:
+      type: file
+      description: CSV samplesheet with columns sample, spectra, condition (and optional label, fraction, replicate)
+      pattern: "*.csv"
+  - params_json:
+      type: string
+      description: JSON string containing experiment-level parameters (organism, enzyme, modifications, etc.); an empty organism is guessed from the database
+  - database:
+      type: file
+      description: Searched protein FASTA; its most frequent UniProt OS= is the organism when params_json gives none (FragPipe SDRFtable rule)
+      pattern: "*.{fasta,fas,fa}"
+output:
+  sdrf:
+    - "*.sdrf.tsv":
+        type: file
+        description: Generated SDRF-proteomics file
+        pattern: "*.sdrf.tsv"
+  versions_python:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - python:
+          type: string
+          description: The name of the tool
+      - python3 --version 2>&1 | cut -d' ' -f2:
+          type: eval
+          description: The expression to obtain the version of the tool
+
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - python:
+          type: string
+          description: The name of the tool
+      - python3 --version 2>&1 | cut -d' ' -f2:
+          type: eval
+          description: The expression to obtain the version of the tool
+
+authors:
+  - "@nf-core"
+containers:
+  conda:
+    linux/amd64:
+      lock_file: modules/local/generatesdrffromsamplesheet/.conda-lock/linux_amd64-bd-27a817c2c0890658_1.txt
+  docker:
+    linux/amd64:
+      name: community.wave.seqera.io/library/python:3.12.13--27a817c2c0890658
+      build_id: bd-27a817c2c0890658_1
+      scan_id: sc-e07391e6e5fbddf7_1
+  singularity:
+    linux/amd64:
+      name: oras://community.wave.seqera.io/library/python:3.12.13--7eb61448497e5133
+      build_id: bd-7eb61448497e5133_1
+      https: https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/37/370b76e81fbff1ab2427ad3a246bca8a4aa578a68216a5e800dceaedf7bcfa40/data

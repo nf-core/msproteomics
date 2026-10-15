@@ -1,0 +1,132 @@
+{
+    "write_sub_mzml - stub blank group": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "run",
+                            "group": "",
+                            "data_type": "DDA"
+                        },
+                        "run_sub.mzML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "run",
+                            "group": "",
+                            "data_type": "DDA"
+                        },
+                        "write_sub_mzml.log:md5,c3a7d01e148e7b7474889393af98067b"
+                    ]
+                ],
+                "2": [
+                    [
+                        "WRITESUBMZML",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "log": [
+                    [
+                        {
+                            "id": "run",
+                            "group": "",
+                            "data_type": "DDA"
+                        },
+                        "write_sub_mzml.log:md5,c3a7d01e148e7b7474889393af98067b"
+                    ]
+                ],
+                "sub_mzml": [
+                    [
+                        {
+                            "id": "run",
+                            "group": "",
+                            "data_type": "DDA"
+                        },
+                        "run_sub.mzML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions_fragpipe": [
+                    [
+                        "WRITESUBMZML",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-10-11T07:45:43.698458543",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "write_sub_mzml - stub named group": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "A01",
+                            "group": "A",
+                            "data_type": "DDA"
+                        },
+                        "A01_sub.mzML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "A01",
+                            "group": "A",
+                            "data_type": "DDA"
+                        },
+                        "write_sub_mzml.log:md5,d8fc08ec3723a949d2207a4a720cb99c"
+                    ]
+                ],
+                "2": [
+                    [
+                        "WRITESUBMZML",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "log": [
+                    [
+                        {
+                            "id": "A01",
+                            "group": "A",
+                            "data_type": "DDA"
+                        },
+                        "write_sub_mzml.log:md5,d8fc08ec3723a949d2207a4a720cb99c"
+                    ]
+                ],
+                "sub_mzml": [
+                    [
+                        {
+                            "id": "A01",
+                            "group": "A",
+                            "data_type": "DDA"
+                        },
+                        "A01_sub.mzML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions_fragpipe": [
+                    [
+                        "WRITESUBMZML",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-10-11T07:45:38.164449464",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

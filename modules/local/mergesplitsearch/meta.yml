@@ -1,0 +1,123 @@
+name: "mergesplitsearch"
+description: Merge MSFragger split-database search results per sample
+keywords:
+  - proteomics
+  - mass spectrometry
+  - msfragger
+  - split database
+  - merge
+  - pepxml
+  - pin
+tools:
+  - merge_split_search:
+      description: |
+        Merges MSFragger split-database search results for a single sample.
+        For each spectrum, collects search hits from all database chunks, sorts
+        by (expectscore, 1/hyperscore, abs(massdiff)), keeps topN, and re-ranks.
+        Also merges PIN files with hyperscore-based sorting and protein list
+        reconciliation. Ported from FragPipe's msfragger_pep_split.py.
+      homepage: "https://github.com/Nesvilab/FragPipe"
+      documentation: "https://fragpipe.nesvilab.org/"
+      licence: ["Apache-2.0"]
+
+input:
+  - - "meta":
+        type: map
+        description: "Groovy Map containing sample information"
+    - "chunk_dirs":
+        type: directory
+        description: "MSFRAGGER --partial result directories of the sample, in chunk order (pepXML, PIN and score histogram per chunk), staged as chunk_1..chunk_N"
+    - "params_text":
+        type: string
+        description: "Text of the file's search params (output_report_topN, output_max_expect, output_file_extension; msfragger_pep_split.py:76-80)"
+  - "fasta":
+      type: file
+      description: "The full FASTA; its path in the task is written into the merged pepXML header (msfragger_pep_split.py:92-94, 302-303)"
+      pattern: "*.{fasta,fas,fa}"
+output:
+  pepxml:
+    - - "meta":
+          type: map
+          description: "Groovy Map containing sample information"
+      - "${prefix}/*.pepXML":
+          type: file
+          description: "Merged pepXML file"
+          pattern: "*.pepXML"
+  pin:
+    - - "meta":
+          type: map
+          description: "Groovy Map containing sample information"
+      - "${prefix}/*.pin":
+          type: file
+          description: "Merged PIN file"
+          pattern: "*.pin"
+  license_agreement:
+    - "I_AGREE_FRAGPIPE_LICENSE_AGREEMENT":
+        type: file
+        description: "Marker file recording the FragPipe license agreement"
+        pattern: "I_AGREE_FRAGPIPE_LICENSE_AGREEMENT"
+  versions_python:
+    - - "${task.process}":
+          type: string
+          description: The name of the process
+      - "python":
+          type: string
+          description: The name of the tool
+      - 'python3 --version 2>&1 | sed "s/Python //"':
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_msfragger:
+    - - "${task.process}":
+          type: string
+          description: The name of the process
+      - "msfragger":
+          type: string
+          description: The name of the tool
+      - "cat .msfragger_version":
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_fragpipe:
+    - - "${task.process}":
+          type: string
+          description: The name of the process
+      - "fragpipe":
+          type: string
+          description: The name of the tool
+      - "cat .fragpipe_version":
+          type: eval
+          description: The expression to obtain the version of the tool
+
+topics:
+  versions:
+    - - "${task.process}":
+          type: string
+          description: The name of the process
+      - "python":
+          type: string
+          description: The name of the tool
+      - 'python3 --version 2>&1 | sed "s/Python //"':
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - "${task.process}":
+          type: string
+          description: The name of the process
+      - "msfragger":
+          type: string
+          description: The name of the tool
+      - "cat .msfragger_version":
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - "${task.process}":
+          type: string
+          description: The name of the process
+      - "fragpipe":
+          type: string
+          description: The name of the tool
+      - "cat .fragpipe_version":
+          type: eval
+          description: The expression to obtain the version of the tool
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

@@ -22,6 +22,8 @@ nextflow_workflow {
                 ch_fasta = channel.of([ [ id:'database' ], fasta ])
 
                 input[0] = ch_fasta
+                input[1] = channel.empty()      // no prebuilt database
+                input[2] = channel.value(groovy.json.JsonOutput.toJson([database: [run: true, args: '--prefix rev_', decoy_tag: 'rev_'], percolator: [run: true, args: '']]))
                 """
             }
         }
@@ -38,6 +40,11 @@ nextflow_workflow {
         tag "integration"
 
         when {
+            // The Erwinia FASTA has no decoys: FragPipe's "Add decoys" update
+            params {
+                add_philosopher_decoy        = true
+                add_philosopher_contaminants = true
+            }
             workflow {
                 """
                 def fasta = file("\${params.pipelines_testdata_base_path}/databases/erwinia_carotovora.fasta", checkIfExists: true)
@@ -45,6 +52,8 @@ nextflow_workflow {
                 ch_fasta = channel.of([ [ id:'erwinia_db' ], fasta ])
 
                 input[0] = ch_fasta
+                input[1] = channel.empty()      // no prebuilt database
+                input[2] = channel.value(groovy.json.JsonOutput.toJson([database: [run: true, args: '--prefix rev_', decoy_tag: 'rev_'], percolator: [run: true, args: '']]))
                 """
             }
         }
@@ -52,6 +61,120 @@ nextflow_workflow {
         then {
             assertAll(
                 { assert workflow.success },
+                { assert snapshot(workflow.out.fasta, workflow.out.fasta_path).match() }
+            )
+        }
+    }
+
+    test("fragpipe_database - stub workflow decoy tag reaches the decoy check") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            // FragPipe's "Add decoys" update (conf/modules.config builds its argv from these)
+            params {
+                add_philosopher_decoy        = true
+                add_philosopher_contaminants = true
+            }
+            workflow {
+                """
+                def fasta = file("\${workDir}/test.fasta")
+                fasta.text = ">PROT1\\nMKFLVLPEPTIDEK"
+
+                input[0] = channel.of([ [ id:'database' ], fasta ])
+                input[1] = channel.empty()
+                input[2] = channel.value(groovy.json.JsonOutput.toJson([database: [run: true, args: '--prefix DECOY_', decoy_tag: 'DECOY_'], percolator: [run: true, args: '']]))
+                """
+            }
+        }
+
+        then {
+            def scripts = []
+            new File(workDir.toString()).eachFileRecurse { f -> if (f.name == '.command.sh') { scripts << f.text } }
+            assertAll(
+                { assert workflow.success },
+                // FragPipe's "Add decoys" argv carries no decoy prefix (CmdDatabaseUpdate.java:44-53)
+                { assert scripts.any { sh -> sh.contains("philosopher database --custom test.fasta --contam --contamprefix") } },
+                { assert scripts.any { sh -> sh.contains("decoy tag 'DECOY_'") } },
+                { assert snapshot(workflow.out.fasta, workflow.out.fasta_path).match() }
+            )
+        }
+    }
+
+    test("fragpipe_database - prebuilt rev_ database with DECOY_ workflow fails like FragPipe") {
+        tag "integration"
+
+        when {
+            workflow {
+                """
+                // Prebuilt database carries rev_ decoys; the workflow tag DECOY_ matches none,
+                // so FragpipeRun.checkDbConfig stops the run: "No decoys found in the FASTA file."
+                def prebuilt = file("\${workDir}/prebuilt.fasta")
+                prebuilt.text = ">sp|P1|A\\nMK\\n>rev_sp|P1|A\\nKM\\n"
+
+                input[0] = channel.empty()
+                input[1] = channel.of([ [ id:'prebuilt' ], prebuilt ])
+                input[2] = channel.value(groovy.json.JsonOutput.toJson([database: [run: true, args: '--prefix DECOY_', decoy_tag: 'DECOY_'], percolator: [run: true, args: '']]))
+                """
+            }
+        }
+
+        then {
+            def scripts = []
+            new File(workDir.toString()).eachFileRecurse { f -> if (f.name == '.command.sh') { scripts << f.text } }
+            assertAll(
+                { assert workflow.failed },
+                { assert scripts.any { sh -> sh.contains("--decoy-tag 'DECOY_'") } },
+                { assert (workflow.stdout + workflow.stderr).join('\\n').contains('No decoys found in the FASTA file.') }
+            )
+        }
+    }
+
+    test("fragpipe_database - prebuilt database passes the decoy check") {
+        tag "integration"
+
+        when {
+            workflow {
+                """
+                def prebuilt = file("\${workDir}/prebuilt.fasta")
+                prebuilt.text = ">sp|P1|A\\nMK\\n>DECOY_sp|P1|A\\nKM\\n"
+
+                input[0] = channel.empty()
+                input[1] = channel.of([ [ id:'prebuilt' ], prebuilt ])
+                input[2] = channel.value(groovy.json.JsonOutput.toJson([database: [run: true, args: '--prefix DECOY_', decoy_tag: 'DECOY_'], filter: [run: true, args: '']]))
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out.fasta, workflow.out.fasta_path).match() }
+            )
+        }
+    }
+
+    test("fragpipe_database - no FDR tool enabled skips the decoy check") {
+        tag "integration"
+
+        when {
+            workflow {
+                """
+                // FragPipe only calls checkDbConfig for PeptideProphet, Percolator or the filter
+                def prebuilt = file("\${workDir}/prebuilt.fasta")
+                prebuilt.text = ">sp|P1|A\\nMK\\n"
+
+                input[0] = channel.empty()
+                input[1] = channel.of([ [ id:'prebuilt' ], prebuilt ])
+                input[2] = channel.value(groovy.json.JsonOutput.toJson([database: [run: true, args: '--prefix rev_', decoy_tag: 'rev_'], percolator: [run: false, args: '']]))
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert workflow.trace.tasks().size() == 0 },
                 { assert snapshot(workflow.out.fasta, workflow.out.fasta_path).match() }
             )
         }

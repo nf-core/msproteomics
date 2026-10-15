@@ -1,94 +1,61 @@
 {
-    "fragpipe_ptm - stub multi-sample": {
+    "fragpipe_ptm - stub - PTM-Shepherd runs: rewritten group dirs replace the inputs": {
         "content": [
             [
-                [
-                    {
-                        "id": "ptm_multi"
-                    },
-                    [
-                        "global.modsummary.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "global.profile.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "ptmshepherd.log:md5,d41d8cd98f00b204e9800998ecf8427e"
-                    ]
-                ]
+                {
+                    "id": "control",
+                    "group": "control"
+                },
+                {
+                    "id": "workdir-root",
+                    "group": ""
+                }
             ],
             [
                 [
                     {
-                        "id": "ptm_multi"
+                        "id": "fragpipe"
                     },
-                    "global.profile.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    "shepherd.config:md5,da0a840f16efe8ab5ac4974969f0d5e3"
                 ]
-            ],
-            [
-                [
-                    {
-                        "id": "ptm_multi"
-                    },
-                    "global.modsummary.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                
-            ],
-            [
-                
-            ],
-            [
-                
             ]
         ],
-        "timestamp": "2026-03-25T03:55:27.704871721",
+        "timestamp": "2026-10-05T14:45:55.452553515",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
         }
     },
-    "fragpipe_ptm - stub with ptmshepherd": {
+    "fragpipe_ptm - stub - custom annotation file is staged for PTM-Shepherd": {
         "content": [
             [
                 [
                     {
-                        "id": "ptm_analysis"
+                        "id": "fragpipe"
                     },
-                    [
-                        "global.modsummary.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "global.profile.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "ptmshepherd.log:md5,d41d8cd98f00b204e9800998ecf8427e"
-                    ]
+                    "shepherd.config:md5,39f4dd105b0231cf6f7f81ecbd877b71"
                 ]
-            ],
-            [
-                [
-                    {
-                        "id": "ptm_analysis"
-                    },
-                    "global.profile.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "ptm_analysis"
-                    },
-                    "global.modsummary.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                
-            ],
-            [
-                
-            ],
-            [
-                
             ]
         ],
-        "timestamp": "2026-03-25T03:55:21.279222226",
+        "timestamp": "2026-10-11T15:06:17.687513446",
         "meta": {
             "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
+            "nextflow": "25.10.4"
+        }
+    },
+    "fragpipe_ptm - stub - PTM-Shepherd off: group dirs pass through unchanged": {
+        "content": [
+            [
+                {
+                    "id": "control",
+                    "group": "control"
+                }
+            ]
+        ],
+        "timestamp": "2026-10-05T14:46:13.161105511",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
         }
     }
 }

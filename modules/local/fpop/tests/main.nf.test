@@ -1,68 +1,135 @@
+// FPOP Quant (FragPipe 24.0 CmdFpopQuant.java:56-99, FragPipe_FPOP_Analysis.py).
+// The argument list in fpop.log must be FragPipe's: input, region size, control label,
+// FPOP label, subtract control, TMT flag[, unmodified peptide table], empty labels kept.
 nextflow_process {
     name "Test Process FPOP"
     script "../main.nf"
     process "FPOP"
+    config "./nextflow.config"
+
     tag "modules"
+    tag "modules_local"
     tag "fpop"
 
-    test("fpop - stub") {
+    test("fpop - stub label-free keeps empty labels as arguments") {
         options "-stub"
         tag "stub"
 
         when {
             process {
                 """
-                def input_file = file("\${workDir}/combined_modified_peptide.tsv")
-                input_file.text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
-                def secondary_file = file("\${workDir}/NO_FILE")
-                secondary_file.text = ""
-                def config_cli = "REGION_SIZE='50'; CONTROL_LABEL='control'; FPOP_LABEL='fpop'; SUBTRACT_CONTROL='true'; IS_TMT='false'"
-                input[0] = channel.of([[ id: 'test_fpop' ], input_file, secondary_file, config_cli])
+                def config_cli = ['combined_modified_peptide.tsv', '1', '', '', 'false', 'false']
+                input[0] = channel.of([
+                    [ id: 'fragpipe' ],
+                    file("${baseDir}/tests/fixtures/fpop/combined_modified_peptide.tsv", checkIfExists: true),
+                    [],
+                    [],
+                    config_cli
+                ])
                 """
             }
         }
 
         then {
-            assertAll (
+            def log_line = new File(process.out.results_dir[0][1].toString(), 'fpop.log').text.trim()
+            assertAll(
                 { assert process.success },
-                { assert snapshot(
-                    process.out.results_dir,
-                    process.out.results,
-                    process.out.results_csv,
-                    process.out.versions_fpop,
-                    process.out.versions_fragpipe
-                ).match() }
+                { assert log_line == "FragPipe_FPOP_Analysis.py combined_modified_peptide.tsv 1 '' '' false false" },
+                { assert snapshot(process.out).match() }
             )
         }
     }
 
-    test("fpop - stub with TMT mode") {
+    test("fpop - stub TMT reads the tmt-report tables of the normalisation") {
         options "-stub"
         tag "stub"
 
         when {
             process {
                 """
-                def input_file = file("\${workDir}/abundance_multi-site_None.tsv")
-                input_file.text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
-                def secondary_file = file("\${workDir}/abundance_gene_None.tsv")
-                secondary_file.text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
-                def config_cli = "REGION_SIZE='50'; CONTROL_LABEL='control'; FPOP_LABEL='fpop'; SUBTRACT_CONTROL='true'; IS_TMT='true'"
-                input[0] = channel.of([[ id: 'test_fpop_tmt' ], input_file, secondary_file, config_cli])
+                def tmt = file("\${workDir}/fixture-tmt-report")
+                tmt.mkdirs()
+                file("\${tmt}/abundance_multi-site_MD.tsv").text = "Index\\n"
+                def unmod = file("\${workDir}/fixture-tmt-report-unmod")
+                unmod.mkdirs()
+                file("\${unmod}/abundance_peptide_MD.tsv").text = "Index\\n"
+                def config_cli = ['tmt-report/abundance_multi-site_MD.tsv', '3', 'CTRL', 'OX 1', 'true', 'true', 'tmt-report-unmod/abundance_peptide_MD.tsv']
+                input[0] = channel.of([ [ id: 'fragpipe' ], [], tmt, unmod, config_cli ])
                 """
             }
         }
 
         then {
-            assertAll (
+            def log_line = new File(process.out.results_dir[0][1].toString(), 'fpop.log').text.trim()
+            assertAll(
                 { assert process.success },
-                { assert snapshot(
-                    process.out.results_dir,
-                    process.out.results,
-                    process.out.results_csv,
-                    process.out.versions_fpop,
-                    process.out.versions_fragpipe
-                ).match() }
+                { assert log_line == "FragPipe_FPOP_Analysis.py tmt-report/abundance_multi-site_MD.tsv 3 CTRL OX\\ 1 true true tmt-report-unmod/abundance_peptide_MD.tsv" },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+
+    test("fpop - integration label-free on an IonQuant combined_modified_peptide.tsv") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                def config_cli = ['combined_modified_peptide.tsv', '1', '', '', 'false', 'false']
+                input[0] = channel.of([
+                    [ id: 'fragpipe' ],
+                    file("${baseDir}/tests/fixtures/fpop/combined_modified_peptide.tsv", checkIfExists: true),
+                    [],
+                    [],
+                    config_cli
+                ])
+                """
+            }
+        }
+
+        then {
+            def peptides = new File(process.out.peptides[0][1].toString()).readLines()
+            def sites = new File(process.out.sites[0][1].toString()).readLines()
+            assertAll(
+                { assert process.success },
+                { assert peptides.size() > 1 },
+                { assert sites.size() > 1 },
+                // FragPipe_FPOP_Analysis.py joins peptide groups from a Python set, so the row
+                // order inside the peptide-list column of FPOP_peptides.tsv changes with the
+                // hash seed; snapshot its row count and the (stable) site table.
+                { assert snapshot(peptides.size(), peptides[0], process.out.sites).match() }
+            )
+        }
+    }
+
+    test("fpop - integration TMT on TMT-Integrator multi-site and unmodified peptide tables") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                // Small synthetic TMT-Integrator tables (tmt-report/abundance_multi-site_MD.tsv,
+                // tmt-report-unmod/abundance_peptide_MD.tsv) in TMT-Integrator's column layout
+                def config_cli = ['tmt-report/abundance_multi-site_MD.tsv', '1', 'CTRL', 'OX', 'false', 'true', 'tmt-report-unmod/abundance_peptide_MD.tsv']
+                input[0] = channel.of([
+                    [ id: 'fragpipe' ],
+                    [],
+                    file("${baseDir}/tests/fixtures/fpop/tmt/tmt-report", checkIfExists: true),
+                    file("${baseDir}/tests/fixtures/fpop/tmt/tmt-report-unmod", checkIfExists: true),
+                    config_cli
+                ])
+                """
+            }
+        }
+
+        then {
+            def sites = new File(process.out.sites[0][1].toString()).readLines()
+            assertAll(
+                { assert process.success },
+                // outputs land two levels above the multi-site table, i.e. in the task dir
+                { assert sites[0].startsWith('Group Name\tGene\tProteinID') },
+                { assert sites.drop(1).collect { line -> line.split('\t')[0] } == ['P62937_10', 'P62937_5'] },
+                { assert snapshot(process.out.sites).match() }
             )
         }
     }

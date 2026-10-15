@@ -1,49 +1,28 @@
 {
+    "msbooster - stub, spectral library staged and named by the three prediction keys": {
+        "content": [
+            [
+                "spectraPredFile = <task dir>/spectral_library/user_library.tsv",
+                "RTPredFile = <task dir>/spectral_library/user_library.tsv",
+                "IMPredFile = <task dir>/spectral_library/user_library.tsv"
+            ]
+        ],
+        "timestamp": "2026-10-11T21:06:41.183635106",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
     "msbooster - from pre-computed pin": {
         "content": [
             [
-                "tmt_erwinia_subset.pin"
+                "tmt_erwinia_subset_edited.pin"
             ],
             [
                 [
                     "MSBOOSTER",
                     "msbooster",
-                    "1.4.14"
-                ]
-            ]
-        ],
-        "timestamp": "2026-03-24T21:22:55.800891584",
-        "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
-        }
-    },
-    "msbooster - stub": {
-        "content": [
-            [
-                [
-                    {
-                        "id": "test"
-                    },
-                    [
-                        "test.pin:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "test_msbooster.log:md5,d41d8cd98f00b204e9800998ecf8427e"
-                    ]
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "test"
-                    },
-                    "test.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                [
-                    "MSBOOSTER",
-                    "msbooster",
-                    "24.0"
+                    "1.4.17"
                 ]
             ],
             [
@@ -54,25 +33,53 @@
                 ]
             ]
         ],
-        "timestamp": "2026-03-31T19:40:43.749682879",
-        "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
-        }
-    },
-    "msbooster - from MSFRAGGER": {
-        "content": [
-            [
-                
-            ],
-            [
-                
-            ]
-        ],
-        "timestamp": "2026-02-15T21:37:33.081875127",
+        "timestamp": "2026-10-09T01:36:50.533817026",
         "meta": {
             "nf-test": "0.9.3",
-            "nextflow": "25.10.2"
+            "nextflow": "25.10.4"
+        }
+    },
+    "msbooster - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    [
+                        "msbooster_params.txt:md5,efe7b7c98aa903b9dbb69658beee539b",
+                        "test_edited.pin:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test_msbooster.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "test_edited.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    "MSBOOSTER",
+                    "msbooster",
+                    "1.4.17"
+                ]
+            ],
+            [
+                [
+                    "MSBOOSTER",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-08T06:26:43.275997109",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
         }
     }
 }

@@ -1,0 +1,1 @@
+{ "key": "noobject", "build_commands": { "diann": "diann --fasta test.fasta" } }

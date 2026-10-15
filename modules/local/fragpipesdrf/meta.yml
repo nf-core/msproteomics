@@ -1,0 +1,103 @@
+name: "fragpipesdrf"
+description: Write the FragPipe SDRF template (sdrf.tsv) with search-parameter columns, as FragPipe 24.0 does when workflow.misc.save-sdrf=true
+keywords:
+  - proteomics
+  - sdrf
+  - fragpipe
+  - msfragger
+  - metadata
+tools:
+  - fragpipe_sdrf:
+      description: |
+        Python port of the FragPipe 24.0 SDRF writer (FragpipeRun, TabWorkflow.sdrfSave, SDRFtable,
+        TabMsfragger getSDRFenzymes/getSDRFmods/getPrecTolString/getProdTolString/getInstrumentMap,
+        batmass-io UnimodOboReader). Output is byte-identical to FragPipe's sdrf.tsv.
+      homepage: "https://fragpipe.nesvilab.org/"
+      documentation: "https://github.com/bigbio/proteomics-sample-metadata"
+      tool_dev_url: "https://github.com/Nesvilab/FragPipe"
+      licence: ["GPL-3.0-or-later"]
+
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing run information, e.g. [ id:'run' ]
+    - workflow_file:
+        type: file
+        description: FragPipe's saved UI state fragpipe.workflow of the run (FRAGPIPESAVEWORKFLOW; msfragger.* keys and workflow.misc.sdrf-type are read)
+        pattern: "*.workflow"
+    - manifest:
+        type: file
+        description: FragPipe manifest (path, experiment, bioreplicate, data type per line); defines row order and data-file names
+        pattern: "*.fp-manifest"
+    - searched_names:
+        type: file
+        description: TSV mapping each manifest file name to the name of the file MSFragger searched
+        pattern: "*.tsv"
+    - fasta:
+        type: file
+        description: Protein database searched; UniProt OS= headers give characteristics[organism]
+        pattern: "*.{fasta,fas,fa}"
+    - unimod:
+        type: file
+        description: unimod.obo from the FragPipe tools/ folder, used for modification names
+        pattern: "*.obo"
+    - logs:
+        type: file
+        description: |
+          MSFragger log(s); concatenated in the given order (supply a deterministic order). The first
+          'New fragment_mass_tolerance' line and the per-file 'Instrument =' lines are used.
+        pattern: "*"
+    - tmt_label:
+        type: string
+        description: TMT-Integrator QuantLabel name (e.g. 'TMT-16') when TMT-Integrator runs, otherwise empty string
+
+output:
+  sdrf:
+    - - meta:
+          type: map
+          description: Groovy Map containing run information
+      - "sdrf.tsv":
+          type: file
+          description: SDRF template with technical columns (no trailing newline, empty cells as 'not available')
+          pattern: "sdrf.tsv"
+  versions_python:
+    - - "${task.process}":
+          type: string
+          description: The name of the process
+      - "python":
+          type: string
+          description: The name of the tool
+      - "python3 --version | sed 's/Python //'":
+          type: eval
+          description: The expression to obtain the version of the tool
+
+topics:
+  versions:
+    - - "${task.process}":
+          type: string
+          description: The name of the process
+      - "python":
+          type: string
+          description: The name of the tool
+      - "python3 --version | sed 's/Python //'":
+          type: eval
+          description: The expression to obtain the version of the tool
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"
+containers:
+  conda:
+    linux/amd64:
+      lock_file: modules/local/fragpipesdrf/.conda-lock/linux_amd64-bd-27a817c2c0890658_1.txt
+  docker:
+    linux/amd64:
+      name: community.wave.seqera.io/library/python:3.12.13--27a817c2c0890658
+      build_id: bd-27a817c2c0890658_1
+      scan_id: sc-e07391e6e5fbddf7_1
+  singularity:
+    linux/amd64:
+      name: oras://community.wave.seqera.io/library/python:3.12.13--7eb61448497e5133
+      build_id: bd-7eb61448497e5133_1
+      https: https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/37/370b76e81fbff1ab2427ad3a246bca8a4aa578a68216a5e800dceaedf7bcfa40/data

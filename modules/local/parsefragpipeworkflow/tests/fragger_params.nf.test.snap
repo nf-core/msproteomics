@@ -1,0 +1,235 @@
+{
+    "parse_fragpipe_workflow - fragger params byte-identical to FragPipe for bundled workflows": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "DIA_SpecLib_Quant"
+                    },
+                    "fragger_dda.params:md5,45a2410b22ea6341cbf797d90844d18b"
+                ],
+                [
+                    {
+                        "id": "Labile_ADP-ribosylation"
+                    },
+                    "fragger_dda.params:md5,24eb452faf51b5726c3295affba8cdbd"
+                ],
+                [
+                    {
+                        "id": "Mass-Offset-CommonPTMs"
+                    },
+                    "fragger_dda.params:md5,03fb4effea3b2b389d0cc7deb01e0331"
+                ],
+                [
+                    {
+                        "id": "XRNAX-MassOffset"
+                    },
+                    "fragger_dda.params:md5,4e44b56a38074d56e9b82e0af984f807"
+                ],
+                [
+                    {
+                        "id": "crafted_cap1024"
+                    },
+                    "fragger_dda.params:md5,72270a163082ad227a777b9638a61e98"
+                ],
+                [
+                    {
+                        "id": "crafted_cap512"
+                    },
+                    "fragger_dda.params:md5,ae4f9a3148b8dc47d7dea18243fdcf72"
+                ],
+                [
+                    {
+                        "id": "glyco-N-DIA"
+                    },
+                    "fragger_dda.params:md5,d6f6215e49d333b69aece219cd6c65b4"
+                ],
+                [
+                    {
+                        "id": "glyco-N-HCD"
+                    },
+                    "fragger_dda.params:md5,f9f5881fee78972e9d36bb6b4c3811f7"
+                ],
+                [
+                    {
+                        "id": "orig_glyco-N-HCD"
+                    },
+                    "fragger_dda.params:md5,19c16d3f12781cbf48dfa38cb332fd10"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "DIA_SpecLib_Quant"
+                    },
+                    "fragger_dia.params:md5,23ae7ce286e04c48559c4fc3d78e4f7d"
+                ],
+                [
+                    {
+                        "id": "Labile_ADP-ribosylation"
+                    },
+                    "fragger_dia.params:md5,712798b44bdc9e454ed15922f29315df"
+                ],
+                [
+                    {
+                        "id": "Mass-Offset-CommonPTMs"
+                    },
+                    "fragger_dia.params:md5,083a41294e6e8a1f023ff72f148350f3"
+                ],
+                [
+                    {
+                        "id": "XRNAX-MassOffset"
+                    },
+                    "fragger_dia.params:md5,74c9d9306a7ffeed0011280b7f19614c"
+                ],
+                [
+                    {
+                        "id": "crafted_cap1024"
+                    },
+                    "fragger_dia.params:md5,fb0dc3efb5f7cd39b7572b92657f4da3"
+                ],
+                [
+                    {
+                        "id": "crafted_cap512"
+                    },
+                    "fragger_dia.params:md5,2264f47c7f2f1357d36c914786c8ff4b"
+                ],
+                [
+                    {
+                        "id": "glyco-N-DIA"
+                    },
+                    "fragger_dia.params:md5,eebf7179d2c4952f8dd88eb3d36d931d"
+                ],
+                [
+                    {
+                        "id": "glyco-N-HCD"
+                    },
+                    "fragger_dia.params:md5,7aa858204bc094edcde5453568d8ce7d"
+                ],
+                [
+                    {
+                        "id": "orig_glyco-N-HCD"
+                    },
+                    "fragger_dia.params:md5,a92158d3d0ac307d3f8606dcbc8be594"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "DIA_SpecLib_Quant"
+                    },
+                    "fragger_gpfdia.params:md5,c164ba83b41f4f6d781ce26a0686f239"
+                ],
+                [
+                    {
+                        "id": "Labile_ADP-ribosylation"
+                    },
+                    "fragger_gpfdia.params:md5,1394d1d09bcc4c70ee413e1839370b57"
+                ],
+                [
+                    {
+                        "id": "Mass-Offset-CommonPTMs"
+                    },
+                    "fragger_gpfdia.params:md5,3140baee9e8215c2aa093d54040531b6"
+                ],
+                [
+                    {
+                        "id": "XRNAX-MassOffset"
+                    },
+                    "fragger_gpfdia.params:md5,0c19534b8e1881f1ea385e88a1e843af"
+                ],
+                [
+                    {
+                        "id": "crafted_cap1024"
+                    },
+                    "fragger_gpfdia.params:md5,1e0f987aea8cb764465f7592b06fa985"
+                ],
+                [
+                    {
+                        "id": "crafted_cap512"
+                    },
+                    "fragger_gpfdia.params:md5,8959812154ce3884a442b730449fb56f"
+                ],
+                [
+                    {
+                        "id": "glyco-N-DIA"
+                    },
+                    "fragger_gpfdia.params:md5,ea7afb1c36444eca0caa26cd5a6571d6"
+                ],
+                [
+                    {
+                        "id": "glyco-N-HCD"
+                    },
+                    "fragger_gpfdia.params:md5,43054b145a193d37597dfa02f1ad4113"
+                ],
+                [
+                    {
+                        "id": "orig_glyco-N-HCD"
+                    },
+                    "fragger_gpfdia.params:md5,6d80c5d427ad56f55c911bdba981a64b"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "DIA_SpecLib_Quant"
+                    },
+                    "fragger_dda_plus.params:md5,bf1ce84b9d1c029a42005d0524e68b38"
+                ],
+                [
+                    {
+                        "id": "Labile_ADP-ribosylation"
+                    },
+                    "fragger_dda_plus.params:md5,422fbad75bee463535e7104c0d9dac55"
+                ],
+                [
+                    {
+                        "id": "Mass-Offset-CommonPTMs"
+                    },
+                    "fragger_dda_plus.params:md5,78bd26e63e0b234e0fbfa90cb913ae3d"
+                ],
+                [
+                    {
+                        "id": "XRNAX-MassOffset"
+                    },
+                    "fragger_dda_plus.params:md5,92acafb3b642276915f1dd4181780484"
+                ],
+                [
+                    {
+                        "id": "crafted_cap1024"
+                    },
+                    "fragger_dda_plus.params:md5,fce99e41cd8910bfd40a74c7ee9d8bad"
+                ],
+                [
+                    {
+                        "id": "crafted_cap512"
+                    },
+                    "fragger_dda_plus.params:md5,20ba4b3e1e8f26a6e239631b5f06f479"
+                ],
+                [
+                    {
+                        "id": "glyco-N-DIA"
+                    },
+                    "fragger_dda_plus.params:md5,20ef76f7867c7008acf5440a41e7fd0f"
+                ],
+                [
+                    {
+                        "id": "glyco-N-HCD"
+                    },
+                    "fragger_dda_plus.params:md5,691daa5cfb1dcfe16f655fd6d2a74af1"
+                ],
+                [
+                    {
+                        "id": "orig_glyco-N-HCD"
+                    },
+                    "fragger_dda_plus.params:md5,d4de7a79580a1849429750f7f6ad727e"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-08T20:11:47.130540544"
+    }
+}

@@ -1,0 +1,63 @@
+{
+    "pairscans - stub - <basename>.pairs per LC-MS file and FragPipe's argv": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "run_A",
+                            "group": "g1"
+                        },
+                        "run_A.pairs:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "run_A",
+                            "group": "g1"
+                        },
+                        "run_A.pairscans.log:md5,edc332db20cdfef1f11c865279074f99"
+                    ]
+                ],
+                "2": [
+                    [
+                        "PAIRSCANS",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "log": [
+                    [
+                        {
+                            "id": "run_A",
+                            "group": "g1"
+                        },
+                        "run_A.pairscans.log:md5,edc332db20cdfef1f11c865279074f99"
+                    ]
+                ],
+                "pairs": [
+                    [
+                        {
+                            "id": "run_A",
+                            "group": "g1"
+                        },
+                        "run_A.pairs:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions_fragpipe": [
+                    [
+                        "PAIRSCANS",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-10-12T13:46:16.463661375",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

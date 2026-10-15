@@ -1,24 +1,23 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
 name: "fragpipe_convert"
-description: Converts raw mass spectrometry files to mzML format and optionally preprocesses DIA data with DIA-Umpire or diaTracer
+description: Optionally preprocesses DIA data with DIA-Umpire or diaTracer; LC-MS files are searched as given (no conversion), as in FragPipe
 keywords:
   - proteomics
   - file-conversion
   - mzml
   - dia
-  - thermorawfileparser
   - diaumpire
   - diatracer
 components:
-  - thermorawfileparser
   - diaumpire
   - diatracer
 input:
   - ch_file:
       type: channel
       description: |
-        Sample files in RAW, mzML, or Bruker .d format.
-        Structure: [ val(meta), path(raw/mzml/d_file) ]
+        LC-MS files in a format MSFragger reads (.raw, .mzML, .mzXML, .mgf, .mzBIN, Bruker .d);
+        any other file fails the run.
+        Structure: [ val(meta), path(lcms_file) ]
   - ch_tool_configs:
       type: channel
       description: |
@@ -28,18 +27,18 @@ output:
   - mzml:
       type: channel
       description: |
-        Converted spectra files (mzML or passthrough .d files for DDA workflows).
+        LC-MS files to search: the input files, with DIA files replaced by their DIA-Umpire or diaTracer pseudo-spectra.
         Structure: [ val(meta), path(spectra) ]
-  - pseudo_spectra:
+  - umpire_mzml:
       type: channel
       description: |
-        DIA-Umpire pseudo-spectra output (Q1, Q2, Q3 mzML files). Only produced when DIA-Umpire is enabled.
-        Structure: [ val(meta), path(q*_mzml) ]
+        DIA-Umpire pseudo-spectra (FragPipe writes them to its work dir).
+        Structure: [ val(meta), path(mzml) ]
   - versions:
-      type: file
+      type: channel
       description: |
-        File containing software versions.
-        Structure: [ path(versions.yml) ]
+        Software versions (topic tuples).
+        Structure: [ val(process), val(tool), val(version) ]
 authors:
   - "@dongzehe"
 maintainers:

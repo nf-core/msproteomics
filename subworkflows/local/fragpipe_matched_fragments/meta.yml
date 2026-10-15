@@ -1,0 +1,47 @@
+name: "fragpipe_matched_fragments"
+description: |
+  FragPipe "Export matched fragments" right after the final Philosopher report, before every tool that reads psm.tsv.
+  main.nf also holds FRAGPIPE_MATCHED_FRAGMENTS_INPUTS, which builds the ch_emf_inputs value channel of this
+  subworkflow once per run (the export's fragpipe-files.fp-manifest, the spectra it reads and the DIA-Umpire
+  pseudo-spectra). It runs no module, so it is not a subworkflow of its own (nf-core subworkflows contain at
+  least two modules); callers include it from this file next to FRAGPIPE_MATCHED_FRAGMENTS.
+  FRAGPIPE_MATCHED_FRAGMENTS_INPUTS take: ch_file [ val(meta), path(spectra) ] (every LC-MS file of the run),
+  ch_spectra [ val(meta), path(spectra) ] (searched spectra and MSFragger's _uncalibrated/_calibrated mzML),
+  ch_umpire_spectra [ val(meta), path(mzml) ] (DIA-Umpire pseudo-spectra);
+  emit: inputs [ path(manifest), [spectra], [umpire_spectra] ] (value channel).
+keywords:
+  - proteomics
+  - fragpipe
+  - fragment ions
+components:
+  - exportmatchedfragments
+  - matchedfragmentsexportpsms
+input:
+  - ch_results_dir:
+      type: directory
+      description: |
+        Per-group Philosopher report output; groups with meta.export_matched_fragments are exported.
+        Structure: [ val(meta), path(results_dir) ]
+  - ch_emf_inputs:
+      type: list
+      description: |
+        Value channel from FRAGPIPE_MATCHED_FRAGMENTS_INPUTS.
+        Structure: [ path(manifest), [spectra], [umpire_spectra] ]
+  - ch_tool_configs:
+      type: channel
+      description: |
+        DIA-Umpire (umpire-se.params) and SpecLibGen (fragpipe.workflow) run flags.
+        Structure: val(tool_configs)
+  - aggregate_meta:
+      type: map
+      description: Meta map of the aggregate export task
+output:
+  - results_dir:
+      type: directory
+      description: |
+        Per-group results, psm.tsv with matched fragments when exported.
+        Structure: [ val(meta), path(results_dir) ]
+authors:
+  - "@an-altosian"
+maintainers:
+  - "@an-altosian"

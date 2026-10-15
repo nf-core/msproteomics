@@ -5,7 +5,7 @@ nextflow_process {
     process "TDF2MZML"
 
     tag "modules"
-    tag "modules_nfcore"
+    tag "modules_local"
     tag "tdf2mzml"
 
     test("tdf2mzml - stub") {
@@ -15,11 +15,11 @@ nextflow_process {
         when {
             process {
                 """
-                def raw_file = file("\${workDir}/sample.d.tar.gz")
-                raw_file.text = "mock"
+                def raw_file = file("\${workDir}/sample.d")
+                raw_file.mkdirs()
 
                 input[0] = channel.of([
-                    [ id: 'test', mzml_id: 'test_sample' ],
+                    [ id: 'test' ],
                     raw_file
                 ])
                 """
@@ -31,7 +31,6 @@ nextflow_process {
                 { assert process.success },
                 { assert snapshot(
                     process.out.mzmls_converted,
-                    process.out.dotd_files,
                     process.out.log
                 ).match() }
             )

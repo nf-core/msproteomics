@@ -5,7 +5,7 @@ This guide covers the three main analysis modes: DIA, DDA LFQ, and TMT Label Che
 
 ## Prerequisites
 
-- **Nextflow** >= 25.04.0
+- **Nextflow** >= 25.10.4
 - **Docker** or **Singularity**
 - **Java** 17+
 
@@ -56,8 +56,8 @@ nextflow run nf-core/msproteomics \
     -profile docker
 ```
 
-Without `--database`, the UniProt reference proteome for `--organism` (default `Homo sapiens`) is downloaded at runtime; see [Database Preparation](database_guide.md) for the eight supported organisms.
-For any other organism, supply a FASTA database explicitly with `--database /path/to/database.fasta`; otherwise the pipeline stops with an error.
+Supply the protein FASTA with `--database /path/to/database.fasta`.
+In FragPipe mode it must already contain decoys (as FragPipe requires), or add `--add_philosopher_decoy` / `--add_philosopher_contaminants`.
 
 ## Step 4: Run a DDA LFQ Analysis
 
@@ -66,7 +66,7 @@ nextflow run nf-core/msproteomics \
     --mode fragpipe \
     --input samplesheet.csv \
     --database /path/to/database.fasta \
-    --fragpipe_container your-registry/fragpipe:24.0 \
+    --fragpipe_container docker.io/<your-org>/fragpipe:24.0 \
     --fragpipe_workflow LFQ-MBR.workflow \
     --outdir results \
     -profile docker
@@ -84,7 +84,7 @@ nextflow run nf-core/msproteomics \
     --tmt_type TMT16 \
     --input samplesheet.csv \
     --database /path/to/database.fasta \
-    --fragpipe_container your-registry/fragpipe:24.0 \
+    --fragpipe_container docker.io/<your-org>/fragpipe:24.0 \
     --outdir results \
     -profile docker
 ```

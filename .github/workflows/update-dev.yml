@@ -2,25 +2,25 @@
 #
 # This workflow automatically:
 # 1. Bumps the version based on PR release type (Major/Minor/Patch)
-# 2. Updates the 'dev' branch to be in sync with 'master'
-# Only runs when a PR from 'dev' to 'master' is merged.
+# 2. Updates the 'dev' branch to be in sync with 'main'
+# Only runs when a PR from 'dev' to 'main' is merged.
 #
 name: Update Dev Branch and Bump Version
 
 on:
   pull_request:
     types: [closed]
-    branches: [master]
+    branches: [main]
 
 jobs:
   update-dev:
     runs-on: ubuntu-latest
     # Only run if:
     # 1. PR was merged (not just closed)
-    # 2. PR is from dev branch to master
+    # 2. PR is from dev branch to main
     if: |
       github.event.pull_request.merged == true &&
-      github.event.pull_request.base.ref == 'master' &&
+      github.event.pull_request.base.ref == 'main' &&
       github.event.pull_request.head.ref == 'dev'
 
     permissions:
@@ -61,10 +61,10 @@ jobs:
             echo "No release type specified, defaulting to Patch"
           fi
 
-      - name: Checkout master branch
+      - name: Checkout main branch
         run: |
-          git checkout master
-          git pull origin master
+          git checkout main
+          git pull origin main
 
       - name: Get current version
         id: current-version
@@ -121,11 +121,11 @@ jobs:
           echo "Updated version in $CONFIG_FILE:"
           grep "version" "$CONFIG_FILE"
 
-      - name: Commit version bump to master
+      - name: Commit version bump to main
         run: |
           git add nextflow.config
           git commit -m "chore: bump version to ${{ steps.new-version.outputs.new_version }} [skip ci]"
-          git push origin master
+          git push origin main
 
       - name: Checkout dev branch
         run: |
@@ -135,21 +135,21 @@ jobs:
       - name: Check if dev needs updating
         id: check-update
         run: |
-          # Check if there are any commits in master that are not in dev
-          if [ -z "$(git log dev..origin/master --oneline)" ]; then
+          # Check if there are any commits in main that are not in dev
+          if [ -z "$(git log dev..origin/main --oneline)" ]; then
             echo "up_to_date=true" >> $GITHUB_OUTPUT
-            echo "Dev branch is already up to date with master"
+            echo "Dev branch is already up to date with main"
           else
             echo "up_to_date=false" >> $GITHUB_OUTPUT
             echo "Dev branch needs to be updated"
-            echo "Commits in master not in dev:"
-            git log dev..origin/master --oneline
+            echo "Commits in main not in dev:"
+            git log dev..origin/main --oneline
           fi
 
-      - name: Merge master into dev
+      - name: Merge main into dev
         if: steps.check-update.outputs.up_to_date == 'false'
         run: |
-          git merge origin/master --no-edit -m "chore: merge master into dev [skip ci]"
+          git merge origin/main --no-edit -m "chore: merge main into dev [skip ci]"
 
       - name: Push updated dev branch
         if: steps.check-update.outputs.up_to_date == 'false'

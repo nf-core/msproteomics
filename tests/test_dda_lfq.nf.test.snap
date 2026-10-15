@@ -1,0 +1,88 @@
+{
+    "-profile test_dda_lfq - starts with the bundled LFQ-MBR workflow and reaches IonQuant": {
+        "content": [
+            {
+                "CHECKCENTROID": [
+                    "fragpipe"
+                ],
+                "CHECKDBCONFIG": [
+                    "python"
+                ],
+                "FRAGPIPESAVEWORKFLOW": [
+                    "fragpipe"
+                ],
+                "FRAGPIPESDRF": [
+                    "python"
+                ],
+                "GENERATESDRFFROMSAMPLESHEET": [
+                    "python"
+                ],
+                "IONQUANT": [
+                    "fragpipe",
+                    "ionquant"
+                ],
+                "MSBOOSTER": [
+                    "fragpipe",
+                    "msbooster"
+                ],
+                "MSFRAGGER": [
+                    "fragpipe",
+                    "msfragger"
+                ],
+                "PARSEFRAGPIPEWORKFLOW": [
+                    "python"
+                ],
+                "PERCOLATOR": [
+                    "fragpipe",
+                    "percolator"
+                ],
+                "PHILOSOPHERDATABASE": [
+                    "fragpipe",
+                    "philosopher"
+                ],
+                "PHILOSOPHERFILTER": [
+                    "fragpipe",
+                    "philosopher"
+                ],
+                "PHILOSOPHERFILTER_LATER": [
+                    "fragpipe",
+                    "philosopher"
+                ],
+                "PHILOSOPHERPROTEINPROPHET": [
+                    "fragpipe",
+                    "philosopher"
+                ],
+                "WRITE_FRAGGER_PARAMS": [
+                    "coreutils"
+                ],
+                "WRITE_FRAGPIPE_MANIFEST": [
+                    "coreutils"
+                ]
+            },
+            [
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPESAVEWORKFLOW",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPESDRF",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:CHECKCENTROID",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_DATABASE:CHECKDBCONFIG",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_DATABASE:PHILOSOPHERDATABASE",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_INFERENCE:PHILOSOPHERFILTER",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_INFERENCE:PHILOSOPHERFILTER_LATER",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_INFERENCE:PHILOSOPHERPROTEINPROPHET",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_QUANT:IONQUANT",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSBOOSTER",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSFRAGGER",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:WRITE_FRAGGER_PARAMS",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_VALIDATE:PERCOLATOR",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:PARSEFRAGPIPEWORKFLOW",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:GENERATESDRFFROMSAMPLESHEET",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:WRITE_FRAGPIPE_MANIFEST",
+                "NFCORE_MSPROTEOMICS:MULTIQC"
+            ]
+        ],
+        "timestamp": "2026-10-14T14:46:01.339334959",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

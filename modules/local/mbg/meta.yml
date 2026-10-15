@@ -20,57 +20,87 @@ tools:
       licence: ["Academic"]
 
 input:
-  - - meta:
+  - - "meta":
         type: map
-        description: Groovy Map containing sample information
-    - psm_file:
+        description: "Groovy Map containing sample information"
+    - "psm_dir":
+        type: directory
+        description: "Group directory with the PTM-Shepherd glyco psm.tsv (copied: MBG replaces psm.tsv)"
+    - "spectra":
         type: file
-        description: PSM file from PHILOSOPHER_FILTER
-        pattern: "psm.tsv"
-    - manifest_file:
-        type: file
-        description: FragPipe manifest file listing input files
-        pattern: "*.fp-manifest"
-    - config_cli:
-        type: string
-        description: MBG parameters as CLI string (e.g., --maxq 0.01 --mztol 10)
-  - - residue_db:
-        type: file
-        description: Glycan residues database file
-  - - glycan_mod_db:
-        type: file
-        description: Glycan modifications database file
-
+        description: "Every LC-MS file of the run (MBG reads them through the manifest)"
+    - "manifest_rows":
+        type: list
+        description: "[file name, experiment, bioreplicate, data type] per LC-MS file, in fragpipe-files.fp-manifest order (TabWorkflow.manifestSave)"
+    - "argv":
+        type: list
+        description: "MBG argv from PARSEFRAGPIPEWORKFLOW (@TOKENS@ filled by the module, @NOPASEF@ by the workflow)"
 output:
-  results_dir:
-    - - meta:
+  psm_dir:
+    - - "meta":
           type: map
-          description: Groovy Map containing sample information
-      - "${prefix}":
+          description: "Groovy Map containing sample information"
+      - "${meta.id}":
           type: directory
-          description: Directory containing MBG results and log
-          pattern: "${prefix}"
-  results:
-    - - meta:
+          description: "Group directory with the updated psm.tsv written by MBG"
+          pattern: "${meta.id}"
+  manifest:
+    - - "meta":
           type: map
-          description: Groovy Map containing sample information
-      - "${prefix}/*_mbg*.tsv":
+          description: "Groovy Map containing sample information"
+      - "fragpipe-files.fp-manifest":
           type: file
-          description: MBG matching results
-          pattern: "*_mbg*.tsv"
-  glycan_results:
-    - - meta:
+          description: "fragpipe-files.fp-manifest given to MBG"
+          pattern: "fragpipe-files.fp-manifest"
+  log:
+    - - "meta":
           type: map
-          description: Groovy Map containing sample information
-      - "${prefix}/*_glycan*.tsv":
+          description: "Groovy Map containing sample information"
+      - "mbg.log":
           type: file
-          description: Glycan-level results
-          pattern: "*_glycan*.tsv"
+          description: "MBG command line and output"
+          pattern: "mbg.log"
+  versions_mbg:
+    - - "${task.process}":
+          type: string
+          description: The name of the process
+      - "mbg":
+          type: string
+          description: The name of the tool
+      - "cat .mbg_version":
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_fragpipe:
+    - - "${task.process}":
+          type: string
+          description: The name of the process
+      - "fragpipe":
+          type: string
+          description: The name of the tool
+      - "cat .fragpipe_version":
+          type: eval
+          description: The expression to obtain the version of the tool
+
+topics:
   versions:
-    - versions.yml:
-        type: file
-        description: File containing software versions
-        pattern: "versions.yml"
+    - - "${task.process}":
+          type: string
+          description: The name of the process
+      - "mbg":
+          type: string
+          description: The name of the tool
+      - "cat .mbg_version":
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - "${task.process}":
+          type: string
+          description: The name of the process
+      - "fragpipe":
+          type: string
+          description: The name of the tool
+      - "cat .fragpipe_version":
+          type: eval
+          description: The expression to obtain the version of the tool
 
 authors:
   - "@dongzehe"

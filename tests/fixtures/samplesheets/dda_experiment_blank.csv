@@ -1,0 +1,5 @@
+sample,spectra,condition,experiment,bioreplicate,data_type
+ctrl_1,${FIXTURES}/spectra/ctrl_1.mzML,control,,,DDA
+ctrl_2,${FIXTURES}/spectra/ctrl_2.mzML,control,,,DDA
+trt_1,${FIXTURES}/spectra/trt_1.mzML,treated,,,DDA
+trt_2,${FIXTURES}/spectra/trt_2.mzML,treated,,,DDA

@@ -12,68 +12,81 @@
 */
 
 include { PTMSHEPHERD } from '../../../modules/local/ptmshepherd/main'
-include { shouldRunTool; getToolArgs } from '../utils_nfcore_msproteomics_pipeline'
+include { shouldRunTool; getToolArgs; getToolEntry } from '../utils_nfcore_msproteomics_pipeline/fragpipe_utils'
 
 workflow FRAGPIPE_PTM {
     take:
-    ch_results_dir   // channel: [ val(meta), path(results_dir) ] - per-sample from PHILOSOPHER_FILTER
-    ch_protxml       // channel: [ val(meta), path(protxml) ] - from PROTEINPROPHET
-    ch_mzml          // channel: [ val(meta), path(mzml) ] - mzML files
-    ch_tool_configs  // channel: val(tool_configs_map) - parsed JSON config
+    ch_results_dir   // channel: [ val(meta), path(group_dir) ] - one per FragPipe group (meta.group), psm.tsv inside
+    ch_mzml          // channel: [ val(meta), path(mzml) ] - LC-MS files
+    ch_tool_configs  // channel: val(tool_configs_json) - parsed workflow config
     aggregate_meta   // val(meta) for aggregate outputs
-    ch_fasta         // channel: path(fasta) - protein database FASTA
+    ch_fasta         // channel: path(fasta) - the searched database
 
     main:
 
     //
-    // PTMSHEPHERD (aggregate PTM analysis)
-    // Analyzes mass shifts, PTM localization, and modification profiles
+    // PTMSHEPHERD (one run over all groups, CmdPtmshepherd.java). It rewrites each group's psm.tsv
+    // (glycan assignment), and FragPipe runs MBG, IonQuant and SpecLibGen after it on that file
+    // (FragpipeRun.java:2474-2483), so the rewritten group directories replace the input ones.
     //
-    ch_all_results = ch_results_dir
-        .map { meta, dir -> dir }
-        .collect(sort: true)
-        .map { items -> [items] }  // Wrap to prevent combine from flattening
-
-    ch_protxml_path = ch_protxml
-        .map { meta, protxml -> protxml }
+    ch_groups = ch_results_dir
+        .collect(flat: false)
+        .map { items -> [items.sort { item -> item[0].group }] }  // wrapped: one list of [meta, dir]
 
     ch_all_mzml = ch_mzml
-        .map { meta, mzml -> mzml }
+        .map { _meta, mzml -> mzml }
         .collect(sort: true)
-        .map { items -> [items] }  // Wrap to prevent combine from flattening
+        .map { items -> [items] }
+
+    // custom annotation file of ptmshepherd.annotation_file, '' for the keywords (PtmshepherdPanel.java:225-232);
+    // a declared file that does not exist stops the run; wrapped in a list so combine adds [] as one element
+    ch_annotation_file = ch_tool_configs.map { configs ->
+        def annotation = getToolEntry(configs, 'ptmshepherd').annotation_file
+        [annotation ? file(annotation, checkIfExists: true) : []]
+    }
 
     ch_ptmshepherd_pre = ch_tool_configs
         .filter { configs -> shouldRunTool(configs, 'ptmshepherd') }
-        .combine(ch_all_results)
-        .combine(ch_protxml_path)
+        .combine(ch_annotation_file)
+        .combine(ch_groups)
         .combine(ch_all_mzml)
-        .map { configs, results_wrapped, protxml, mzml_wrapped ->
-            def args = getToolArgs(configs, 'ptmshepherd')
-            [aggregate_meta, results_wrapped, protxml, mzml_wrapped, args ?: '# PTMShepherd default config']
+        .map { configs, annotation_file, groups, mzml ->
+            // dataset name: the group, "dataset01" for the blank group (PtmshepherdParams.java:86)
+            def datasets = groups.collect { item -> [item[1].name, item[0].group == '' ? 'dataset01' : item[0].group] }
+            [aggregate_meta, groups.collect { item -> item[1] }, datasets, mzml, getToolArgs(configs, 'ptmshepherd'), annotation_file]
         }
 
-    // Create config file via collectFile (avoids writing files in workflow scope)
-    ch_ptmshepherd_config = ch_ptmshepherd_pre
-        .map { meta, _results, _protxml, _mzml, config_content ->
-            ["shepherd_${meta.id}.config", config_content]
+    // property block of shepherd.config (parser text); the module adds the database and dataset lines
+    PTMSHEPHERD(
+        ch_ptmshepherd_pre
+            .map { meta, dirs, datasets, mzml, config_content, annotation_file -> [meta, dirs, datasets, mzml, config_content + '\n', annotation_file] },
+        ch_fasta
+    )
+
+    // Rewritten group directories back to their group metas (directory name = meta.id)
+    ch_ptms_psm_dirs = PTMSHEPHERD.out.psm_dirs
+        .combine(ch_groups)
+        .flatMap { _meta, dirs, groups ->
+            def by_id = groups.collectEntries { item -> [item[0].id, item[0]] }
+            [dirs].flatten().collect { dir ->
+                if (!by_id.containsKey(dir.name)) {
+                    error("PTMSHEPHERD returned group directory ${dir.name}, which is not one of ${by_id.keySet()}")
+                }
+                [by_id[dir.name], dir]
+            }
         }
-        .collectFile()
-        .map { config_file -> config_file }
 
-    ch_for_ptmshepherd = ch_ptmshepherd_pre
-        .map { meta, results, protxml, mzml, _config_content -> [meta, results, protxml, mzml] }
-        .combine(ch_ptmshepherd_config)
-        .map { meta, results, protxml, mzml, config_file -> [meta, results, protxml, mzml, config_file] }
-
-    PTMSHEPHERD(ch_for_ptmshepherd, ch_fasta)
+    // PTM-Shepherd off: the groups go on unchanged
+    ch_unchanged = ch_results_dir
+        .combine(ch_tool_configs)
+        .filter { _meta, _dir, configs -> !shouldRunTool(configs, 'ptmshepherd') }
+        .map { meta, dir, _configs -> [meta, dir] }
 
     emit:
-    results_dir      = PTMSHEPHERD.out.results_dir             // channel: [ val(meta), path(results_dir) ]
-    global_profile   = PTMSHEPHERD.out.global_profile          // channel: [ val(meta), path(global.profile.tsv) ]
-    global_modsummary = PTMSHEPHERD.out.global_modsummary      // channel: [ val(meta), path(global.modsummary.tsv) ]
-    diagmine         = PTMSHEPHERD.out.diagmine                // channel: [ val(meta), path(*diagmine.tsv) ]
-    localization     = PTMSHEPHERD.out.localization            // channel: [ val(meta), path(*localization.tsv) ]
-    glycoprofile     = PTMSHEPHERD.out.glycoprofile            // channel: [ val(meta), path(*glycoprofile.tsv) ]
-    versions         = PTMSHEPHERD.out.versions_ptmshepherd
+    psm_dirs     = ch_ptms_psm_dirs.mix(ch_unchanged)          // channel: [ val(meta), path(group_dir) ] - per group
+    results_dir  = PTMSHEPHERD.out.results_dir                // channel: [ val(meta), path(ptm-shepherd-output) ]
+    glyco_masses = PTMSHEPHERD.out.glyco_masses               // channel: [ val(meta), path(glyco_masses_list.txt) ]
+    config       = PTMSHEPHERD.out.config                     // channel: [ val(meta), path(shepherd.config) ]
+    versions     = PTMSHEPHERD.out.versions_ptmshepherd
         .mix(PTMSHEPHERD.out.versions_fragpipe)
 }

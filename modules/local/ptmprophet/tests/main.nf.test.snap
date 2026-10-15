@@ -1,44 +1,79 @@
 {
     "ptmprophet - stub": {
         "content": [
-            [
-                [
-                    {
-                        "id": "test_sample"
-                    },
+            {
+                "0": [
                     [
-                        "ptmprophet.log:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "test.mod.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        {
+                            "id": "s1"
+                        },
+                        [
+                            "interact-s1_rank2.mod.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "ptmprophet.log:md5,1f2464382345f4c86323fe08490a2073"
+                        ]
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "s1"
+                        },
+                        "interact-s1_rank2.mod.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    [
+                        "PTMPROPHET",
+                        "ptmprophet",
+                        "6.3.2"
+                    ]
+                ],
+                "3": [
+                    [
+                        "PTMPROPHET",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "mod_pepxml": [
+                    [
+                        {
+                            "id": "s1"
+                        },
+                        "interact-s1_rank2.mod.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "results_dir": [
+                    [
+                        {
+                            "id": "s1"
+                        },
+                        [
+                            "interact-s1_rank2.mod.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "ptmprophet.log:md5,1f2464382345f4c86323fe08490a2073"
+                        ]
+                    ]
+                ],
+                "versions_fragpipe": [
+                    [
+                        "PTMPROPHET",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "versions_ptmprophet": [
+                    [
+                        "PTMPROPHET",
+                        "ptmprophet",
+                        "6.3.2"
                     ]
                 ]
-            ],
-            [
-                [
-                    {
-                        "id": "test_sample"
-                    },
-                    "test.mod.pep.xml:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                [
-                    "PTMPROPHET",
-                    "ptmprophet",
-                    "24.0"
-                ]
-            ],
-            [
-                [
-                    "PTMPROPHET",
-                    "fragpipe",
-                    "24.0"
-                ]
-            ]
+            }
         ],
-        "timestamp": "2026-03-31T19:44:23.175720536",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
-        }
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-06T05:24:57.806380624"
     }
 }

@@ -1,0 +1,25 @@
+{
+    "PXD001468 Basic-Search_submzml_secondpass - --no-ptm-score-in-pin, PIN and PSMs identical to FragPipe": {
+        "content": [
+            [
+                [
+                    "MSFRAGGER",
+                    "msfragger",
+                    "4.4.1"
+                ]
+            ],
+            [
+                [
+                    "MSFRAGGER",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-11T01:33:51.966586446",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

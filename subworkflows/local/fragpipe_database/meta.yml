@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
 name: "fragpipe_database"
-description: Prepares protein database with decoy sequences and contaminants using Philosopher
+description: Checks the protein database decoys like FragPipe headless; adds decoys and contaminants only on request (--add_philosopher_decoy / --add_philosopher_contaminants)
 keywords:
   - proteomics
   - database
@@ -9,18 +9,32 @@ keywords:
   - contaminants
   - philosopher
 components:
-  - philosopher/database
+  - philosopherdatabase
+  - checkdbconfig
 input:
   - ch_fasta:
       type: channel
       description: |
-        Protein database FASTA file.
+        FASTA to update with FragPipe's "Add decoys" (philosopher database --custom);
+        empty unless --add_philosopher_decoy / --add_philosopher_contaminants.
         Structure: [ val(meta), path(fasta) ]
+  - ch_prebuilt_db:
+      type: channel
+      description: |
+        FASTA searched as given, as FragPipe headless searches database.db-path
+        (empty when ch_fasta is used).
+        Structure: [ val(meta), path(fasta) ]
+  - ch_tool_configs:
+      type: channel
+      description: |
+        Value channel with the PARSEFRAGPIPEWORKFLOW tool_configs.json text;
+        source of the workflow decoy tag (database.decoy_tag).
+        Structure: val(tool_configs_json)
 output:
   - fasta:
       type: channel
       description: |
-        Prepared FASTA with decoys and contaminants appended.
+        The database that passed FragPipe's decoy check.
         Structure: [ val(meta), path(prepared_fasta) ]
   - fasta_path:
       type: channel
@@ -28,10 +42,10 @@ output:
         Value channel of the prepared FASTA path for broadcasting to multiple downstream processes.
         Structure: path(fasta)
   - versions:
-      type: file
+      type: channel
       description: |
-        File containing software versions.
-        Structure: [ path(versions.yml) ]
+        Empty. Every module reports its version on the 'versions' topic.
+        Structure: []
 authors:
   - "@dongzehe"
 maintainers:

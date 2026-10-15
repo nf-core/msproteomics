@@ -1,0 +1,178 @@
+name: "diannfragpipe"
+description: |
+  FragPipe's DIA-Quant step: the DIA-NN binary bundled with FragPipe 24.0 (1.8.2 Beta 8) with the
+  argv of CmdDiann.java, followed by FragPipe's post-steps (.quant clean-up, report-tsv.speclib,
+  Propagation, DiannToMsstats, FragReporter); experiment_annotation.tsv is written by WRITE_DIANN_EXPERIMENT_ANNOTATION.
+  DIA-NN 1.8.2 Beta 8 aborts on a run path of 256 characters or more; in such long work dirs the runs are
+  read through a short link /tmp/diann.XXXXXX/s, and the outputs (report.tsv File.Name, matrix and
+  abundance run columns, report.log.txt, filelist_diann.txt) record that link path instead of the task
+  directory. The later steps key on the run name or Modified.Sequence, not on the directory.
+keywords:
+  - proteomics
+  - DIA
+  - DIA-NN
+  - quantification
+  - FragPipe
+tools:
+  - diann:
+      description: DIA-NN, data-independent acquisition by neural networks (FragPipe's bundled tools/diann/1.8.2_beta_8/linux/diann-1.8.1.8)
+      homepage: "https://github.com/vdemichev/DiaNN"
+      documentation: "https://github.com/vdemichev/DiaNN/blob/master/README.md"
+      tool_dev_url: "https://github.com/vdemichev/DiaNN"
+      licence: ["DIA-NN FragPipe version license"]
+  - fragpipe:
+      description: FragPipe classes Propagation, DiannToMsstats, PlexDiaHelper, FileMoveWithExtension and FragReporter-1.1.2.jar
+      homepage: "https://fragpipe.nesvilab.org/"
+      tool_dev_url: "https://github.com/Nesvilab/FragPipe"
+      licence: ["GPL-3.0"]
+
+input:
+  - - meta:
+        type: map
+        description: Groovy Map of the FragPipe group (e.g. [ id:'fragpipe' ])
+    - library:
+        type: file
+        description: SpecLibGen's library.tsv, or the workflow's diann.library file
+        pattern: "*.{tsv,speclib,parquet}"
+    - spectra:
+        type: file
+        description: DIA and DIA-Quant LC-MS files (CmdDiann.java:209-238)
+        pattern: "*.{mzML,d,dia,raw}"
+    - psm:
+        type: file
+        description: The group's psm.tsv (Propagation, DiannToMsstats)
+        pattern: "psm.tsv"
+    - peptide:
+        type: file
+        description: The group's peptide.tsv, staged next to psm.tsv (FragReporter reads it; without it FragReporter falls back to PSM data only)
+        pattern: "peptide.tsv"
+    - protein:
+        type: file
+        description: The group's protein.tsv, staged next to psm.tsv (FragReporter reads it; without it FragReporter falls back to PSM data only)
+        pattern: "protein.tsv"
+    - manifest:
+        type: file
+        description: fragpipe-files.fp-manifest (path, experiment, bioreplicate, data type per LC-MS file)
+        pattern: "*.fp-manifest"
+    - diann_config:
+        type: string
+        description: |
+          JSON of the parsed diann entry: args (--qvalue..--matrices), args_post (--smart-profiling..extra
+          options), qvalue, run_specific_protein_qvalue, redo_protein_inference, generate_msstats, library,
+          run_plex, light, medium, heavy, mod_tag, min_site_prob, report_levels
+  - fasta:
+      type: file
+      description: Protein database (--relaxed-prot-inf --fasta)
+      pattern: "*.{fasta,fas,fa}"
+
+output:
+  results_files:
+    - - meta:
+          type: map
+          description: Groovy Map of the FragPipe group
+      - dia-quant-output/*:
+          type: file
+          description: Every file of dia-quant-output (published one by one)
+          pattern: "*"
+  report:
+    - - meta:
+          type: map
+          description: Groovy Map of the FragPipe group
+      - dia-quant-output/report.tsv:
+          type: file
+          description: DIA-NN main report (protein/gene information propagated)
+          pattern: "report.tsv"
+  pr_matrix:
+    - - meta:
+          type: map
+          description: Groovy Map of the FragPipe group
+      - dia-quant-output/report.pr_matrix.tsv:
+          type: file
+          description: Precursor matrix
+          pattern: "report.pr_matrix.tsv"
+  pg_matrix:
+    - - meta:
+          type: map
+          description: Groovy Map of the FragPipe group
+      - dia-quant-output/report.pg_matrix.tsv:
+          type: file
+          description: Protein group matrix
+          pattern: "report.pg_matrix.tsv"
+  speclib:
+    - - meta:
+          type: map
+          description: Groovy Map of the FragPipe group
+      - dia-quant-output/report-tsv.speclib:
+          type: file
+          description: DIA-NN's binary library, renamed for Skyline (CmdDiann.java:436-438)
+          pattern: "report-tsv.speclib"
+  msstats:
+    - - meta:
+          type: map
+          description: Groovy Map of the FragPipe group
+      - dia-quant-output/msstats.csv:
+          type: file
+          description: DiannToMsstats output (generate-msstats on, no plexDIA)
+          pattern: "msstats.csv"
+  filelist:
+    - - meta:
+          type: map
+          description: Groovy Map of the FragPipe group
+      - filelist_diann.txt:
+          type: file
+          description: DIA-NN inputs as --f lines, largest file first
+          pattern: "filelist_diann.txt"
+  argv:
+    - - meta:
+          type: map
+          description: Groovy Map of the FragPipe group
+      - diann_argv.txt:
+          type: file
+          description: The DIA-NN command, one argument per line
+          pattern: "diann_argv.txt"
+  versions_diann:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - diann:
+          type: string
+          description: The name of the tool
+      - "cat .diann_version":
+          type: eval
+          description: The DIA-NN version from its banner
+  versions_fragpipe:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - fragpipe:
+          type: string
+          description: The name of the tool
+      - "cat .fragpipe_version":
+          type: eval
+          description: The FragPipe version of the tools directory
+
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - diann:
+          type: string
+          description: The name of the tool
+      - "cat .diann_version":
+          type: eval
+          description: The DIA-NN version from its banner
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - fragpipe:
+          type: string
+          description: The name of the tool
+      - "cat .fragpipe_version":
+          type: eval
+          description: The FragPipe version of the tools directory
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

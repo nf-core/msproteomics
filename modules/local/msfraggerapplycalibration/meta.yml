@@ -1,0 +1,86 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "msfraggerapplycalibration"
+description: Apply MSFragger's calibration output to the search params and spectra of a split-database search
+keywords:
+  - msfragger
+  - calibration
+  - split database
+tools:
+  - "python":
+      description: "Python interpreter running parse_calibration_output.py (port of msfragger_pep_split.py calibrate(), lines 524-611)"
+      homepage: "https://www.python.org"
+      licence: ["PSF-2.0"]
+input:
+  - - "meta":
+        type: map
+        description: "Groovy Map containing sample information"
+    - "spectra":
+        type: file
+        description: "Spectra file MSFRAGGERCALIBRATE calibrated"
+        pattern: "*.{mzML,mzBIN,raw,d}"
+    - "calibrate_log":
+        type: file
+        description: "MSFRAGGERCALIBRATE console output"
+        pattern: "*"
+    - "calibrated_mzbin":
+        type: file
+        description: "The <stem>.mzBIN_calibrated MSFRAGGERCALIBRATE wrote ([] when none)"
+        pattern: "*.mzBIN_calibrated"
+    - "params_file":
+        type: file
+        description: "The file's MSFragger search params"
+        pattern: "*.params"
+output:
+  calibrated:
+    - - "meta":
+          type: map
+          description: "Groovy Map containing sample information"
+      - "calibrated_spectra/*":
+          type: file
+          description: "The calibrated spectra file (.mzBIN_calibrated, or the input copied when MSFragger wrote none)"
+          pattern: "calibrated_spectra/*"
+      - "calibrated/${params_file.name}":
+          type: file
+          description: "The search params after calibration (optimized values applied for calibrate_mass = 2, check_spectral_files = 0)"
+          pattern: "calibrated/*"
+  versions_python:
+    - - "${task.process}":
+          type: string
+          description: The name of the process
+      - "python":
+          type: string
+          description: The name of the tool
+      - 'python3 --version 2>&1 | sed "s/Python //"':
+          type: eval
+          description: The expression to obtain the version of the tool
+
+topics:
+  versions:
+    - - "${task.process}":
+          type: string
+          description: The name of the process
+      - "python":
+          type: string
+          description: The name of the tool
+      - 'python3 --version 2>&1 | sed "s/Python //"':
+          type: eval
+          description: The expression to obtain the version of the tool
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"
+containers:
+  conda:
+    linux/amd64:
+      lock_file: modules/local/msfraggerapplycalibration/.conda-lock/linux_amd64-bd-27a817c2c0890658_1.txt
+  docker:
+    linux/amd64:
+      name: community.wave.seqera.io/library/python:3.12.13--27a817c2c0890658
+      build_id: bd-27a817c2c0890658_1
+      scan_id: sc-e07391e6e5fbddf7_1
+  singularity:
+    linux/amd64:
+      name: oras://community.wave.seqera.io/library/python:3.12.13--7eb61448497e5133
+      build_id: bd-7eb61448497e5133_1
+      https: https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/37/370b76e81fbff1ab2427ad3a246bca8a4aa578a68216a5e800dceaedf7bcfa40/data

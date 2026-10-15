@@ -1,79 +1,164 @@
 {
-    "opair - integration with test data": {
+    "opair - stub - group copy and filelist_opair.txt": {
         "content": [
-            [
-                [
-                    {
-                        "id": "opair_test"
-                    },
+            {
+                "0": [
                     [
-                        "filelist_opair.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "opair.log:md5,c2ab34e034e473bcdc488482dc8c92ae"
+                        {
+                            "id": "g1",
+                            "group": "g1"
+                        },
+                        [
+                            "filelist_opair.txt:md5,8a9d957dea12697a9bc01be334d54d86",
+                            "psm.tsv:md5,9d8a287d77631fb4f51d7c3a0c45c339"
+                        ]
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "g1",
+                            "group": "g1"
+                        },
+                        "opair.log:md5,a086c7518e1ce0ac3295a224865992a6"
+                    ]
+                ],
+                "2": [
+                    [
+                        "OPAIR",
+                        "opair",
+                        "1.1.10"
+                    ]
+                ],
+                "3": [
+                    [
+                        "OPAIR",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "log": [
+                    [
+                        {
+                            "id": "g1",
+                            "group": "g1"
+                        },
+                        "opair.log:md5,a086c7518e1ce0ac3295a224865992a6"
+                    ]
+                ],
+                "psm_dir": [
+                    [
+                        {
+                            "id": "g1",
+                            "group": "g1"
+                        },
+                        [
+                            "filelist_opair.txt:md5,8a9d957dea12697a9bc01be334d54d86",
+                            "psm.tsv:md5,9d8a287d77631fb4f51d7c3a0c45c339"
+                        ]
+                    ]
+                ],
+                "versions_fragpipe": [
+                    [
+                        "OPAIR",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "versions_opair": [
+                    [
+                        "OPAIR",
+                        "opair",
+                        "1.1.10"
                     ]
                 ]
-            ],
-            [
-                
-            ],
-            [
-                
-            ]
+            }
         ],
-        "timestamp": "2026-03-25T17:06:09.80767299",
+        "timestamp": "2026-10-14T14:17:13.627065643",
         "meta": {
             "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
+            "nextflow": "25.10.4"
         }
     },
-    "opair - stub": {
+    "opair - stub - user oxonium file is staged and named by the -f token": {
         "content": [
-            [
-                [
-                    {
-                        "id": "test_opair"
-                    },
+            {
+                "0": [
                     [
-                        "opair.log:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "sample_opair_glycoforms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "sample_opair_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        {
+                            "id": "g1",
+                            "group": "g1"
+                        },
+                        [
+                            "filelist_opair.txt:md5,ea68e980e175a203c29f8f0ec5bbe483",
+                            "psm.tsv:md5,9d8a287d77631fb4f51d7c3a0c45c339"
+                        ]
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "g1",
+                            "group": "g1"
+                        },
+                        "opair.log:md5,cbc354dc0e047f03e2f6d9f3ef31cb3b"
+                    ]
+                ],
+                "2": [
+                    [
+                        "OPAIR",
+                        "opair",
+                        "1.1.10"
+                    ]
+                ],
+                "3": [
+                    [
+                        "OPAIR",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "log": [
+                    [
+                        {
+                            "id": "g1",
+                            "group": "g1"
+                        },
+                        "opair.log:md5,cbc354dc0e047f03e2f6d9f3ef31cb3b"
+                    ]
+                ],
+                "psm_dir": [
+                    [
+                        {
+                            "id": "g1",
+                            "group": "g1"
+                        },
+                        [
+                            "filelist_opair.txt:md5,ea68e980e175a203c29f8f0ec5bbe483",
+                            "psm.tsv:md5,9d8a287d77631fb4f51d7c3a0c45c339"
+                        ]
+                    ]
+                ],
+                "versions_fragpipe": [
+                    [
+                        "OPAIR",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "versions_opair": [
+                    [
+                        "OPAIR",
+                        "opair",
+                        "1.1.10"
                     ]
                 ]
-            ],
-            [
-                [
-                    {
-                        "id": "test_opair"
-                    },
-                    "sample_opair_results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                [
-                    {
-                        "id": "test_opair"
-                    },
-                    "sample_opair_glycoforms.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ]
-            ],
-            [
-                [
-                    "OPAIR",
-                    "opair",
-                    "24.0"
-                ]
-            ],
-            [
-                [
-                    "OPAIR",
-                    "fragpipe",
-                    "24.0"
-                ]
-            ]
+            }
         ],
-        "timestamp": "2026-03-31T19:41:44.75432356",
+        "timestamp": "2026-10-14T14:17:20.290258127",
         "meta": {
             "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
+            "nextflow": "25.10.4"
         }
     }
 }

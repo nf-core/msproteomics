@@ -8,137 +8,92 @@ nextflow_workflow {
     tag "subworkflows"
     tag "subworkflows_local"
     tag "fragpipe_inference"
+    tag "proteinprophet"
+    tag "philosopher/filter"
+    tag "philosopher/abacus"
+    tag "iprophet"
 
-    test("fragpipe_inference - stub with proteinprophet and filter") {
+    test("fragpipe_inference - stub two groups: ProteinProphet, chained filters, iProphet and Abacus") {
         options "-stub"
         tag "stub"
 
         when {
             workflow {
                 """
-                def pepxml_file1 = file("\${workDir}/sample1.pep.xml")
-                pepxml_file1.text = "<?xml version='1.0'?><msms_pipeline_analysis></msms_pipeline_analysis>"
-                def pepxml_file2 = file("\${workDir}/sample2.pep.xml")
-                pepxml_file2.text = "<?xml version='1.0'?><msms_pipeline_analysis></msms_pipeline_analysis>"
-                def fasta_file = file("\${workDir}/test.fasta")
-                fasta_file.text = ">PROT1\\nPEPTIDEK"
-
-                // Tool configs: both enabled
+                ['interact-b.pep.xml', 'interact-a.pep.xml', 'interact-a.mod.pep.xml', 'interact-c.pep.xml', 'db.fasta'].each { n -> file("\${workDir}/\${n}").text = 'mock' }
+                def m = { id, group -> [ id: id, group: group, experiment: group, bioreplicate: null, data_type: 'DDA', spectra_name: "\${id}.mzML" ] }
                 def tool_configs = [
-                    proteinprophet:     [run: true, args: '--maxppmdiff 2000000'],
-                    filter: [run: true, args: '--sequential --razor --prot 0.01'],
-                    report: [run: true, args: '--msstats']
+                    database:       [run: true, decoy_tag: 'rev_'],
+                    proteinprophet: [run: true, args: '--maxppmdiff 2000000'],
+                    filter:         [run: true, args: '--sequential --picked --prot 0.01', dont_use_protxml: false, report_args: '', report_args_single_group: '--msstats'],
+                    abacus:         [run: true, args: '--picked --razor --reprint --tag rev_ --protein --peptide'],
+                    iprophet:       [run: true, args: '--decoy rev_ --nonsp --output combined'],
+                    ionquant:       [run: false], freequant: [run: false], labelquant: [run: false], saintexpress: [run: false]
                 ]
-
-                input[0] = channel.of(
-                    [[ id: 'sample1', group: 'sample1' ], pepxml_file1],
-                    [[ id: 'sample2', group: 'sample2' ], pepxml_file2]
-                )
-                input[1] = fasta_file
-                input[2] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
-                input[3] = [ id: 'combined' ]
+                input[0] = channel.of([m.call('b', 'G1'), file("\${workDir}/interact-b.pep.xml")], [m.call('c', 'G2'), file("\${workDir}/interact-c.pep.xml")], [m.call('a', 'G1'), file("\${workDir}/interact-a.pep.xml")])
+                input[1] = channel.of([m.call('b', 'G1'), file("\${workDir}/interact-b.pep.xml")], [m.call('c', 'G2'), file("\${workDir}/interact-c.pep.xml")], [m.call('a', 'G1'), file("\${workDir}/interact-a.pep.xml")], [m.call('a', 'G1'), file("\${workDir}/interact-a.mod.pep.xml")])
+                input[2] = file("\${workDir}/db.fasta")
+                input[3] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[4] = [ id: 'fragpipe' ]
                 """
             }
         }
 
         then {
+            def protDir = new File(workflow.out.protxml[0][1].toString()).parentFile
+            def logOf = { group -> new File(workflow.out.results_dir.find { item -> item[0].group == group }[1].toString(), 'philosopher_filter.log').readLines() }
+            def abacusLog = new File(new File(workflow.out.reprint_spc[0][1].toString()).parentFile, 'abacus.log').readLines()
             assertAll(
                 { assert workflow.success },
-                { assert snapshot(
-                    workflow.out.protxml,
-                    workflow.out.results_dir,
-                    workflow.out.psms,
-                    workflow.out.peptides,
-                    workflow.out.proteins,
-                    workflow.out.ions,
-                    workflow.out.pepxml
-                ).match() }
+                // CmdProteinProphet.java:150-166: plain interact files (no .mod), InputLcmsFile order
+                { assert new File(protDir, 'filelist_proteinprophet.txt').readLines() == ['{CWD}/G1/interact-a.pep.xml', '{CWD}/G1/interact-b.pep.xml', '{CWD}/G2/interact-c.pep.xml'] },
+                // FragpipeRun.java:1688-1700: DbAnnotate in the first group; later groups use --dbbin/--probin
+                { assert logOf('G1')[1].contains(' database --annotate ') },
+                { assert logOf('G2')[1].contains('--pepxml {WORKDIR}/G2 --dbbin {WORKDIR}/G1 --protxml {WORKDIR}/combined.prot.xml --probin {WORKDIR}/G1 --razor') },
+                // CmdPhilosopherReport.java:54-59: no --msstats with more than one group
+                { assert logOf('G2')[2].endsWith(' report') },
+                // CmdPhilosopherAbacus.java:130-133: group dirs in name order
+                { assert abacusLog[0].endsWith(' abacus --picked --razor --reprint --tag rev_ --protein --peptide G1 G2') : abacusLog[0] },
+                { assert workflow.out.combined_pepxml.size() == 1 },
+                { assert snapshot(workflow.out.protxml, workflow.out.psms, workflow.out.reprint_spc, workflow.out.combined_pepxml).match() }
             )
         }
     }
 
-    test("fragpipe_inference - stub single sample") {
+    test("fragpipe_inference - stub single group without ProteinProphet") {
         options "-stub"
         tag "stub"
 
         when {
             workflow {
                 """
-                def pepxml_file = file("\${workDir}/single.pep.xml")
-                pepxml_file.text = "<?xml version='1.0'?><msms_pipeline_analysis></msms_pipeline_analysis>"
-                def fasta_file = file("\${workDir}/test.fasta")
-                fasta_file.text = ">PROT1\\nPEPTIDEK"
-
-                // Tool configs
+                ['interact-a.pep.xml', 'db.fasta'].each { n -> file("\${workDir}/\${n}").text = 'mock' }
                 def tool_configs = [
-                    proteinprophet:     [run: true, args: '--maxppmdiff 2000000'],
-                    filter: [run: true, args: '--sequential --picked --prot 0.01'],
-                    report: [run: true, args: '']
+                    database:       [run: true, decoy_tag: 'rev_'],
+                    proteinprophet: [run: false],
+                    filter:         [run: true, args: '--picked', dont_use_protxml: true, report_args: '', report_args_single_group: '--msstats'],
+                    abacus:         [run: false, args: '--razor --reprint --tag rev_'],
+                    iprophet:       [run: false],
+                    ionquant:       [run: false], freequant: [run: false], labelquant: [run: false], saintexpress: [run: false]
                 ]
-
-                input[0] = channel.of([[ id: 'single', group: 'single' ], pepxml_file])
-                input[1] = fasta_file
-                input[2] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
-                input[3] = [ id: 'fragpipe' ]
+                input[0] = channel.of([[ id: 'a', group: '', experiment: null, bioreplicate: null, data_type: 'DDA', spectra_name: 'a.mzML' ], file("\${workDir}/interact-a.pep.xml")])
+                input[1] = channel.of([[ id: 'a', group: '', experiment: null, bioreplicate: null, data_type: 'DDA', spectra_name: 'a.mzML' ], file("\${workDir}/interact-a.pep.xml")])
+                input[2] = file("\${workDir}/db.fasta")
+                input[3] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
+                input[4] = [ id: 'fragpipe' ]
                 """
             }
         }
 
         then {
+            def log_lines = new File(workflow.out.results_dir[0][1].toString(), 'philosopher_filter.log').readLines()
             assertAll(
                 { assert workflow.success },
-                { assert snapshot(
-                    workflow.out.protxml,
-                    workflow.out.results_dir,
-                    workflow.out.psms,
-                    workflow.out.peptides,
-                    workflow.out.proteins,
-                    workflow.out.ions,
-                    workflow.out.pepxml
-                ).match() }
-            )
-        }
-    }
-
-    test("fragpipe_inference - stub proteinprophet only") {
-        options "-stub"
-        tag "stub"
-
-        when {
-            workflow {
-                """
-                def pepxml_file = file("\${workDir}/test.pep.xml")
-                pepxml_file.text = "<?xml version='1.0'?><msms_pipeline_analysis></msms_pipeline_analysis>"
-                def fasta_file = file("\${workDir}/test.fasta")
-                fasta_file.text = ">PROT1\\nPEPTIDEK"
-
-                // Tool configs: only proteinprophet
-                def tool_configs = [
-                    proteinprophet:     [run: true, args: '--maxppmdiff 2000000'],
-                    filter: [run: false, args: ''],
-                    report: [run: false, args: '']
-                ]
-
-                input[0] = channel.of([[ id: 'test_pp_only', group: 'test_pp_only' ], pepxml_file])
-                input[1] = fasta_file
-                input[2] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
-                input[3] = [ id: 'aggregate' ]
-                """
-            }
-        }
-
-        then {
-            assertAll(
-                { assert workflow.success },
-                { assert snapshot(
-                    workflow.out.protxml,
-                    workflow.out.results_dir,
-                    workflow.out.psms,
-                    workflow.out.peptides,
-                    workflow.out.proteins,
-                    workflow.out.ions,
-                    workflow.out.pepxml
-                ).match() }
+                { assert workflow.out.protxml.size() == 0 },
+                // FragpipeRun.java:1716-1719: filter still runs, without --protxml; single group gets --msstats
+                { assert log_lines[2].endsWith(' filter --picked --tag rev_ --pepxml {WORKDIR}') : log_lines[2] },
+                { assert log_lines[3].endsWith(' report --msstats') },
+                { assert snapshot(workflow.out.psms).match() }
             )
         }
     }

@@ -8,100 +8,113 @@ nextflow_workflow {
     tag "subworkflows"
     tag "subworkflows_local"
     tag "fragpipe_ptm"
+    tag "ptmshepherd"
 
-    test("fragpipe_ptm - stub with ptmshepherd") {
+    test("fragpipe_ptm - stub - PTM-Shepherd runs: rewritten group dirs replace the inputs") {
         options "-stub"
         tag "stub"
 
         when {
             workflow {
                 """
-                // Create sample directories with psm.tsv
-                def sample1_dir = file("\${workDir}/sample1")
-                sample1_dir.mkdirs()
-                file("\${sample1_dir}/psm.tsv").text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
+                def root = file("\${workDir}/workdir-root")
+                root.mkdirs()
+                file("\${root}/psm.tsv").text = "Spectrum\\nA.1.1.2\\n"
+                def ctrl = file("\${workDir}/control")
+                ctrl.mkdirs()
+                file("\${ctrl}/psm.tsv").text = "Spectrum\\nB.1.1.2\\n"
+                def mzml_a = file("\${workDir}/A.mzML")
+                mzml_a.text = "mock"
+                def mzml_b = file("\${workDir}/B.mzML")
+                mzml_b.text = "mock"
+                def fasta = file("\${workDir}/db.fasta")
+                fasta.text = ">sp|P1|A\\nPEPTIDEK\\n"
+                def configs = [ptmshepherd: [run: true, args: 'run_glyco_mode = true\\nthreads = @THREADS@']]
 
-                def protxml_file = file("\${workDir}/combined.prot.xml")
-                protxml_file.text = "<?xml version='1.0'?><protein_summary></protein_summary>"
-
-                def mzml_file = file("\${workDir}/sample1.mzML")
-                mzml_file.text = "<?xml version='1.0'?><mzML></mzML>"
-
-                // Tool configs: ptmshepherd enabled
-                def tool_configs = [
-                    ptmshepherd: [run: true, args: 'histo_bindwidth = 0.001']
-                ]
-
-                def fasta_file = file("\${workDir}/test.fasta")
-                fasta_file.text = ">sp|P00000|TEST_HUMAN Test protein\\nMKWVTFISLLLFSSAYSRGVFRRDTHKSEIAHR"
-
-                input[0] = channel.of([[ id: 'sample1' ], sample1_dir])
-                input[1] = channel.of([[ id: 'combined' ], protxml_file])
-                input[2] = channel.of([[ id: 'sample1' ], mzml_file])
-                input[3] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
-                input[4] = [ id: 'ptm_analysis' ]
-                input[5] = channel.value(fasta_file)
+                input[0] = channel.of([[ id: 'workdir-root', group: '' ], root], [[ id: 'control', group: 'control' ], ctrl])
+                input[1] = channel.of([[ id: 'A', group: '' ], mzml_a], [[ id: 'B', group: 'control' ], mzml_b])
+                input[2] = channel.value(groovy.json.JsonOutput.toJson(configs))
+                input[3] = [ id: 'fragpipe' ]
+                input[4] = channel.value(fasta)
                 """
             }
         }
 
         then {
+            def config = path(workflow.out.config[0][1]).readLines()
+            def dirs = workflow.out.psm_dirs.collect { m, d -> [m.id, new File(d.toString()).name, new File(d.toString()).parentFile.name] }.sort { item -> item[0] }
             assertAll(
                 { assert workflow.success },
-                { assert snapshot(
-                    workflow.out.results_dir,
-                    workflow.out.global_profile,
-                    workflow.out.global_modsummary,
-                    workflow.out.diagmine,
-                    workflow.out.localization,
-                    workflow.out.glycoprofile
-                ).match() }
+                // blank group first ('' sorts first) and named "dataset01" (PtmshepherdParams.java:86)
+                { assert config[1].startsWith('dataset = dataset01 ') },
+                { assert config[2].startsWith('dataset = control ') },
+                // the emitted group dirs are PTMSHEPHERD's copies, mapped back to their metas
+                { assert dirs == [['control', 'control', 'groups'], ['workdir-root', 'workdir-root', 'groups']] : dirs },
+                { assert workflow.out.glyco_masses.size() == 1 },
+                { assert snapshot(workflow.out.psm_dirs.collect { m, d -> m }.sort { m -> m.id }, workflow.out.config).match() }
             )
         }
     }
 
-    test("fragpipe_ptm - stub multi-sample") {
+    test("fragpipe_ptm - stub - custom annotation file is staged for PTM-Shepherd") {
         options "-stub"
         tag "stub"
 
         when {
             workflow {
                 """
-                // Create multiple sample directories
-                def sample1_dir = file("\${workDir}/s1")
-                sample1_dir.mkdirs()
-                file("\${sample1_dir}/psm.tsv").text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
-                def sample2_dir = file("\${workDir}/s2")
-                sample2_dir.mkdirs()
-                file("\${sample2_dir}/psm.tsv").text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
+                def root = file("\${workDir}/workdir-root")
+                root.mkdirs()
+                file("\${root}/psm.tsv").text = "Spectrum\\nA.1.1.2\\n"
+                def mzml_a = file("\${workDir}/A.mzML")
+                mzml_a.text = "mock"
+                def fasta = file("\${workDir}/db.fasta")
+                fasta.text = ">sp|P1|A\\nPEPTIDEK\\n"
+                def annotation = file("\${workDir}/my_annotations.tsv")
+                annotation.text = "mass\\tname\\n79.966\\tPhospho\\n"
+                // tool_configs as the parser writes them for annotation-custom=true, annotation_file=<path>
+                def configs = [ptmshepherd: [run: true, args: 'annotation_file = @ANNOTATION_FILE@\\nthreads = @THREADS@', annotation_file: annotation.toString()]]
 
-                def protxml_file = file("\${workDir}/combined.prot.xml")
-                protxml_file.text = "<?xml version='1.0'?><protein_summary></protein_summary>"
+                input[0] = channel.of([[ id: 'workdir-root', group: '' ], root])
+                input[1] = channel.of([[ id: 'A', group: '' ], mzml_a])
+                input[2] = channel.value(groovy.json.JsonOutput.toJson(configs))
+                input[3] = [ id: 'fragpipe' ]
+                input[4] = channel.value(fasta)
+                """
+            }
+        }
 
-                def mzml_file1 = file("\${workDir}/s1.mzML")
-                mzml_file1.text = "<?xml version='1.0'?><mzML></mzML>"
-                def mzml_file2 = file("\${workDir}/s2.mzML")
-                mzml_file2.text = "<?xml version='1.0'?><mzML></mzML>"
+        then {
+            def config = path(workflow.out.config[0][1]).readLines()
+            assertAll(
+                { assert workflow.success },
+                { assert config.contains('annotation_file = annotation/my_annotations.tsv') : config },
+                { assert snapshot(workflow.out.config).match() }
+            )
+        }
+    }
 
-                def tool_configs = [
-                    ptmshepherd: [run: true, args: '# config']
-                ]
+    test("fragpipe_ptm - stub - PTM-Shepherd off: group dirs pass through unchanged") {
+        options "-stub"
+        tag "stub"
 
-                def fasta_file = file("\${workDir}/test.fasta")
-                fasta_file.text = ">sp|P00000|TEST_HUMAN Test protein\\nMKWVTFISLLLFSSAYSRGVFRRDTHKSEIAHR"
+        when {
+            workflow {
+                """
+                def ctrl = file("\${workDir}/control")
+                ctrl.mkdirs()
+                file("\${ctrl}/psm.tsv").text = "Spectrum\\nB.1.1.2\\n"
+                def mzml_b = file("\${workDir}/B.mzML")
+                mzml_b.text = "mock"
+                def fasta = file("\${workDir}/db.fasta")
+                fasta.text = ">sp|P1|A\\nPEPTIDEK\\n"
+                def configs = [ptmshepherd: [run: false, args: '']]
 
-                input[0] = channel.of(
-                    [[ id: 's1' ], sample1_dir],
-                    [[ id: 's2' ], sample2_dir]
-                )
-                input[1] = channel.of([[ id: 'combined' ], protxml_file])
-                input[2] = channel.of(
-                    [[ id: 's1' ], mzml_file1],
-                    [[ id: 's2' ], mzml_file2]
-                )
-                input[3] = channel.value(groovy.json.JsonOutput.toJson(tool_configs))
-                input[4] = [ id: 'ptm_multi' ]
-                input[5] = channel.value(fasta_file)
+                input[0] = channel.of([[ id: 'control', group: 'control' ], ctrl])
+                input[1] = channel.of([[ id: 'B', group: 'control' ], mzml_b])
+                input[2] = channel.value(groovy.json.JsonOutput.toJson(configs))
+                input[3] = [ id: 'fragpipe' ]
+                input[4] = channel.value(fasta)
                 """
             }
         }
@@ -109,14 +122,10 @@ nextflow_workflow {
         then {
             assertAll(
                 { assert workflow.success },
-                { assert snapshot(
-                    workflow.out.results_dir,
-                    workflow.out.global_profile,
-                    workflow.out.global_modsummary,
-                    workflow.out.diagmine,
-                    workflow.out.localization,
-                    workflow.out.glycoprofile
-                ).match() }
+                { assert workflow.out.psm_dirs.size() == 1 },
+                { assert file(workflow.out.psm_dirs[0][1]).name == 'control' },
+                { assert workflow.out.results_dir.size() == 0 },
+                { assert snapshot(workflow.out.psm_dirs.collect { m, d -> m }).match() }
             )
         }
     }

@@ -1,6 +1,9 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
-name: "pipeline_initialisation"
-description: Pipeline-specific utility subworkflow for nf-core/msproteomics
+name: "utils_nfcore_msproteomics_pipeline"
+description: |
+  Pipeline-specific utility subworkflows for nf-core/msproteomics. PIPELINE_INITIALISATION validates the
+  parameters (the inputs and outputs listed below). PIPELINE_COMPLETION sends the completion email and summary
+  and takes email, email_on_fail, plaintext_email, outdir, monochrome_logs and multiqc_report; it emits nothing.
 keywords:
   - utility
   - pipeline
@@ -14,13 +17,45 @@ components:
   - completionemail
   - completionsummary
   - imnotification
+  - getworkflowversion
 authors:
   - "@nf-core"
 input:
-  - ch_versions:
-      type: channel
-      description: Channel of software versions
+  - version:
+      type: value
+      description: |
+        Boolean: Display version and exit.
+  - validate_params:
+      type: value
+      description: |
+        Boolean: Boolean whether to validate parameters against the schema at runtime.
+  - monochrome_logs:
+      type: value
+      description: |
+        Boolean: Do not use coloured log outputs.
+  - nextflow_cli_args:
+      type: value
+      description: |
+        Array: List of positional nextflow CLI args.
+  - outdir:
+      type: value
+      description: |
+        String: The output directory where the results will be saved.
+  - help:
+      type: value
+      description: |
+        Boolean: Display help message and exit.
+  - help_full:
+      type: value
+      description: |
+        Boolean: Show the full help message.
+  - show_hidden:
+      type: value
+      description: |
+        Boolean: Show hidden parameters in the help message.
 output:
   - versions:
       type: channel
-      description: Collected software versions
+      description: |
+        Software versions (topic tuples).
+        Structure: [ val(process), val(tool), val(version) ]

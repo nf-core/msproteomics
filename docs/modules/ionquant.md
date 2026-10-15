@@ -10,15 +10,15 @@ Used within the FRAGPIPE_QUANT subworkflow and the TMT Label Check workflow for 
 
 ## Inputs
 
-| Channel         | Type        | Description                                                                   |
-| --------------- | ----------- | ----------------------------------------------------------------------------- |
-| meta            | val(map)    | Sample metadata map                                                           |
-| psm_dirs        | path        | PHILOSOPHER_FILTER output directories (named by sample, containing `psm.tsv`) |
-| spec_files      | path        | Spectral files (`*.mzML` or `*.raw`) staged in `spectra/` subdirectory        |
-| annotation_file | path        | TMT annotation file (2-column or 6-column TSV; pass `[]` if not applicable)   |
-| config_cli      | val(string) | IonQuant parameters as CLI string (e.g., `--mbr 1 --maxlfq 1`)                |
-| modmasses       | val(string) | Comma-separated modification masses for `--modlist` (empty = skip)            |
-| ionquant_dir    | path        | Unzipped IonQuant tool directory (optional, pass `[]` when not using)         |
+| Channel         | Type        | Description                                                                  |
+| --------------- | ----------- | ---------------------------------------------------------------------------- |
+| meta            | val(map)    | Sample metadata map                                                          |
+| psm_dirs        | path        | PHILOSOPHERFILTER output directories (named by sample, containing `psm.tsv`) |
+| spec_files      | path        | Spectral files (`*.mzML` or `*.raw`) staged in `spectra/` subdirectory       |
+| annotation_file | path        | TMT annotation file (2-column or 6-column TSV; pass `[]` if not applicable)  |
+| config_cli      | val(string) | IonQuant parameters as CLI string (e.g., `--mbr 1 --maxlfq 1`)               |
+| modmasses       | val(string) | Comma-separated modification masses for `--modlist` (empty = skip)           |
+| ionquant_dir    | path        | Unzipped IonQuant tool directory (optional, pass `[]` when not using)        |
 
 ## Outputs
 
@@ -52,7 +52,7 @@ Inherited from pipeline configuration (requires FragPipe container).
 ## Usage
 
 Used in the `FRAGPIPE_QUANT` subworkflow (`subworkflows/local/fragpipe_quant/main.nf`) as `IONQUANT`, `IONQUANT_MS1`, and `IONQUANT_ISOBARIC` for different quantification modes.
-Also referenced in the TMT Label Check workflow (`subworkflows/local/tmt_labelcheck/main.nf`).
+Its `combined_modified_peptide.tsv` also feeds the TMT label check analysis (`workflows/tmt_labelcheck.nf`).
 Includes a guard that skips execution when both `--perform-isoquant 0` and `--perform-ms1quant 0` are set.
 
 ## References

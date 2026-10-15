@@ -1,0 +1,75 @@
+nextflow_process {
+
+    name "Test Process PHILOSOPHERLABELQUANT"
+    script "../main.nf"
+    process "PHILOSOPHERLABELQUANT"
+
+    tag "modules"
+    tag "modules_local"
+    tag "philosopherlabelquant"
+
+    test("philosopher_labelquant - stub") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                // the group's FREEQUANT dir (workspace in .meta/), named like the output
+                def results_dir = file("\${workDir}/g1")
+                results_dir.mkdirs()
+                file("\${results_dir}/.meta").mkdirs()
+                file("\${results_dir}/.meta/psm.bin").text = "mock"
+                file("\${results_dir}/psm.tsv").text = "mock"
+
+                def mzml_dir = file("\${workDir}/mzml_dir")
+                mzml_dir.mkdirs()
+                file("\${mzml_dir}/sample1.mzML").text = "mock"
+
+                // the group's channel/sample file (labelquantAnnotationText of the multi-plex annotation)
+                def annotation = file("\${workDir}/g1_annotation.txt")
+                annotation.text = "126 Bridge\\n127C S1\\n"
+
+                def config_cli = "--tol 20 --level 2 --minprob 0.700 --purity 0.500 --removelow 0.050 --plex 2"
+
+                input[0] = channel.of([[ id: 'g1', group: 'g1' ], results_dir, [file("\${mzml_dir}/sample1.mzML")], annotation, config_cli, 'tmt'])
+                """
+            }
+        }
+
+        then {
+            def dir = new File(process.out.results_dir[0][1].toString())
+            def log = new File(dir.parentFile, 'labelquant.log').text
+            assertAll (
+                { assert process.success },
+                // the group's channel/sample file in the LC-MS dir (CmdLabelquant.java:86-91) and in the group dir
+                { assert new File(dir, 'g1_annotation.txt').readLines() == ['126 Bridge', '127C S1'] },
+                { assert new File(dir.parentFile, 'lcms_files/g1_annotation.txt').exists() },
+                { assert log.contains('--plex 2 --annot lcms_files/g1_annotation.txt --brand tmt --dir lcms_files') : log },
+                { assert snapshot(
+                    process.out.results_dir,
+                    process.out.versions_philosopher,
+                    process.out.versions_fragpipe
+                ).match() }
+            )
+        }
+    }
+
+    // ---------------------------------------------------------------------------
+    // Integration test notes
+    // ---------------------------------------------------------------------------
+    // Integration tests for PHILOSOPHERLABELQUANT require the FragPipe container
+    // (the FragPipe image given by FRAGPIPE_CONTAINER) which includes the Philosopher binary.
+    // Philosopher is not available in any public container.
+    //
+    // Required mock data for proper integration testing:
+    //   - results_dir: directory with .meta/ workspace binaries from
+    //     PHILOSOPHERFILTER (skip_report=true) containing filtered PSMs
+    //   - mzml_dir: directory with mzML files containing TMT reporter ion spectra
+    //   - annotation: <group>_annotation.txt mapping channels to sample names
+    //     (e.g., "126C Bridge\n127N Sample1")
+    //
+    // Full integration is validated via the TMT workflow with
+    // intensity_extraction_tool=1 (labelquant mode).
+    // ---------------------------------------------------------------------------
+}

@@ -1,0 +1,19 @@
+Changes in component 'nf-core/thermorawfileparser'
+'modules/nf-core/thermorawfileparser/environment.yml' is unchanged
+'modules/nf-core/thermorawfileparser/meta.yml' is unchanged
+Changes in 'thermorawfileparser/main.nf':
+--- modules/nf-core/thermorawfileparser/main.nf
++++ modules/nf-core/thermorawfileparser/main.nf
+@@ -12,7 +12,7 @@
+ 
+     output:
+     tuple val(meta), path("*.{mzML,mzML.gz,mgf,mgf.gz,parquet,parquet.gz}"), emit: spectra
+-    tuple val("${task.process}"), val('thermorawfileparser'), eval("ThermoRawFileParser.sh --version"), emit: versions_thermorawfileparser, topic: versions
++    tuple val("${task.process}"), val('thermorawfileparser'), eval(workflow.stubRun ? "echo 1.4.5" : "ThermoRawFileParser.sh --version"), emit: versions_thermorawfileparser, topic: versions
+ 
+     when:
+     task.ext.when == null || task.ext.when
+
+'modules/nf-core/thermorawfileparser/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/thermorawfileparser/tests/main.nf.test' is unchanged
+************************************************************

@@ -1,24 +1,33 @@
+/*
+ * MBG: match-between-glycans glycoform inference for one FragPipe group (CmdMBGMatch.java)
+ *
+ * Input:
+ *   - meta: group metadata map (meta.id = group directory name)
+ *   - psm_dir: the group directory with the PTM-Shepherd glyco psm.tsv (copied: MBG replaces psm.tsv)
+ *   - spectra: every LC-MS file of the run (MBG reads them through the manifest)
+ *   - manifest_rows: [file name, experiment, bioreplicate, data type] per LC-MS file, in
+ *     fragpipe-files.fp-manifest order (TabWorkflow.manifestSave)
+ *   - argv: MBG argv from PARSEFRAGPIPEWORKFLOW (@TOKENS@ filled here, @NOPASEF@ by the workflow)
+ *
+ * Output:
+ *   - psm_dir: the group directory with MBG's updated psm.tsv
+ *   - manifest: fragpipe-files.fp-manifest given to MBG
+ *   - log: mbg.log
+ */
+include { fragpipeTools; fragpipeManifestText; writeTextFile; fillArgvTokens; shellArgs; fragpipeJarLines } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
+include { javaXmxGb } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
+
 process MBG {
     tag "${meta.id}"
     label 'process_high'
 
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'docker://fcyucn/fragpipe:24.0' :
-        'docker.io/fcyucn/fragpipe:24.0' }"
-
     input:
-    // MBG (Mass-Based Glycoproteomics) matching
-    // psm_file: psm.tsv from PHILOSOPHER_FILTER
-    // manifest_file: FragPipe manifest file
-    // config_cli: MBG parameters as CLI string (coupled with sample inputs)
-    tuple val(meta), path(psm_file), path(manifest_file), val(config_cli)
-    path(residue_db)     // glycan residues database file (shared resource)
-    path(glycan_mod_db)  // glycan modifications database file (shared resource)
+    tuple val(meta), path(psm_dir, stageAs: 'input/*'), path(spectra, stageAs: 'spectra/*'), val(manifest_rows), val(argv)
 
     output:
-    tuple val(meta), path("${prefix}")                          , emit: results_dir
-    tuple val(meta), path("${prefix}/*_mbg*.tsv")               , emit: results, optional: true
-    tuple val(meta), path("${prefix}/*_glycan*.tsv")            , emit: glycan_results, optional: true
+    tuple val(meta), path("${meta.id}", type: 'dir')     , emit: psm_dir
+    tuple val(meta), path("fragpipe-files.fp-manifest")  , emit: manifest
+    tuple val(meta), path("mbg.log")                     , emit: log
     tuple val("${task.process}"), val('mbg'), eval("cat .mbg_version"), emit: versions_mbg, topic: versions
     tuple val("${task.process}"), val('fragpipe'), eval("cat .fragpipe_version"), emit: versions_fragpipe, topic: versions
 
@@ -26,81 +35,66 @@ process MBG {
     task.ext.when == null || task.ext.when
 
     script:
+    // Exit if running this module with -profile conda / -profile mamba (copied from modules/nf-core/diann/main.nf)
+    if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
+        error "MBG module does not support Conda: it runs in the FragPipe image given with --fragpipe_container. Please use Docker / Singularity / Podman instead."
+    }
     def args = task.ext.args ?: ''
-    prefix = task.ext.prefix ?: "${meta.id}"
-    def ram = task.memory ? Math.max(1, task.memory.toGiga() - 2) : 30
-    def tools_dir = task.ext.fragpipe_tools_dir ?: '/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools'
-
-    // MBG CLI parameters (from CmdMBGMatch.java):
-    // --match: run matching mode
-    // --psm: path to psm.tsv file
-    // --manifest: path to manifest file
-    // --toaddresiduals: glycan residues to add
-    // --residuedb: path to glycan residues database
-    // --glycanmoddb: path to glycan modifications database
-    // --maxq: maximum q-value
-    // --minpsms: minimum PSMs
-    // --minglycans: minimum glycans
-    // --fdr: FDR threshold
-    // --mztol: m/z tolerance (ppm)
-    // --rttol: retention time tolerance (min)
-    // --imtol: ion mobility tolerance
-    // --nopasef: disable PASEF (true/false)
-    // --numthreads: number of threads
-    // --runtmt: run TMT mode (true/false)
-    // --expanddb: expand database (true/false)
-    // --maxskips: max skips
-    // --allowchimeric: allow chimeric spectra (true/false)
-
+    def tools = fragpipeTools(task)
+    def ram = javaXmxGb(task, 2)
+    // staged as input/<name>: compare the last path element
+    if (psm_dir.toString().tokenize("/").last() != meta.id) {
+        error("MBG: group directory ${psm_dir} does not match meta.id ${meta.id}")
+    }
+    // fragpipe-files.fp-manifest with absolute LC-MS paths (TabWorkflow.java:1241-1250)
+    def manifest = writeTextFile('fragpipe-files.fp-manifest', fragpipeManifestText(manifest_rows, '{TASK_DIR}/spectra'))
+    def mbg_args = shellArgs(fillArgvTokens(argv, [
+        '@TOOLS_DIR@': tools.argv_tools_dir,
+        '@THREADS@'  : task.cpus,
+        '@PSM@'      : "{TASK_DIR}/${meta.id}/psm.tsv",
+        '@MANIFEST@' : '{TASK_DIR}/fragpipe-files.fp-manifest',
+    ]))
+    // FragPipe stops when no residues are set ("no glycan residues or mods specified for MBG", CmdMBGMatch.java:145-158)
+    def residues_at = argv.indexOf('--toaddresiduals')
+    if (residues_at < 0 || residues_at + 1 >= argv.size()) {
+        error("MBG ${meta.id}: no glycan residues or mods specified for MBG (no --toaddresiduals value in ${argv})")
+    }
+    def residues = argv[residues_at + 1]
+    // java [bruker] [thermo] -cp <MBG>:<batmass-io>:<IonQuant> com.mbg.MBG ... (CmdMBGMatch.java:127-136), with
+    // the Thermo / Bruker libraries next to the MSFragger jar (FragpipeRun.java:1348-1356).
+    // FragPipe passes no -Xmx, so MBG gets the JVM default (1/4 of the host RAM); inside a task's
+    // memory limit that default is too small for IonQuant's index (OutOfMemoryError on 2 Q Exactive
+    // runs at 64 GB), so the heap is the task memory - a resource setting, not an algorithm one.
     """
-
     export HOME=\$(pwd)
-    mkdir -p ${prefix}
+    echo "${tools.mbg_version}" > .mbg_version
+    echo "${tools.fragpipe_version}" > .fragpipe_version
 
-    TOOLS_DIR="${tools_dir}"
+    # MBG replaces psm.tsv: run it on a copy of the group directory
+    cp -rL "input/${meta.id}" "${meta.id}"
 
-    MBG_JAR=\$(find "\$TOOLS_DIR" -name 'MBG*.jar' -type f 2>/dev/null | head -1 || true)
-    BATMASS_JAR=\$(find "\$TOOLS_DIR" -name 'batmass-io*.jar' -type f 2>/dev/null | head -1 || true)
-    # IonQuant is optional for MBG
-    IONQUANT_DEP_JAR=\$(find "\$TOOLS_DIR" -name 'IonQuant*.jar' -type f 2>/dev/null | head -1 || true)
-    BRUKER_DIR="${tools_dir}/../ext/bruker"
-    THERMO_DIR="${tools_dir}/../ext/thermo"
-    _ver=\$(java -jar "\$MBG_JAR" --version 2>&1 | grep -oP 'Inference \\K[\\d.]+' | head -1 || true)
+    ${manifest}
 
-    echo "\$_ver" > .mbg_version
-    _fp_ver=\$(echo "\$TOOLS_DIR" | grep -oP 'fragpipe-\\K[0-9]+\\.[0-9]+[0-9.]*' | head -1 || true)
+    # Every residue/mod to add must parse as a glycan (CmdMBGMatch.verifyResidues)
+    java -Duser.home="\$PWD" -cp "${tools.fragpipe_lib}/*" "\$(command -v MbgVerifyResidues.java)" \\
+        "${tools.glycan_residues}" "${tools.glycan_mods}" '${residues}'
 
-    echo "\$_fp_ver" > .fragpipe_version
-    CP="\$MBG_JAR:\$BATMASS_JAR"
-    [ -n "\$IONQUANT_DEP_JAR" ] && CP="\$CP:\$IONQUANT_DEP_JAR"
-    NATIVE_FLAGS=""
-    [ -d "\$BRUKER_DIR" ] && NATIVE_FLAGS="\$NATIVE_FLAGS -Dlibs.bruker.dir=\$BRUKER_DIR"
-    [ -d "\$THERMO_DIR" ] && NATIVE_FLAGS="\$NATIVE_FLAGS -Dlibs.thermo.dir=\$THERMO_DIR"
-
-    # Run MBG matching
-    export JAVA_OPTS="-Xmx${ram}G"
-    CMD="java \$JAVA_OPTS \$NATIVE_FLAGS -cp \\"\$CP\\" com.mbg.MBG --match --psm ${psm_file} --manifest ${manifest_file} --residuedb ${residue_db} --glycanmoddb ${glycan_mod_db} --numthreads ${task.cpus} ${config_cli} ${args}"
-    printf '%s\\n' "\$CMD" > ${prefix}/mbg.log
-    eval "\$CMD" 2>&1 | tee -a ${prefix}/mbg.log
-
-    # Move output files to results directory
-    shopt -s nullglob
-    for f in *_mbg*.tsv *_glycan*.tsv; do mv "\$f" ${prefix}/; done
-    shopt -u nullglob
-
+    ${fragpipeJarLines(tools, ['ionquant', 'msfragger', 'batmass_io'])}
+    CMD=( java -Duser.home=\$PWD -Xmx${ram}G ${shellArgs(["-Dlibs.bruker.dir=${tools.bruker_dir}", "-Dlibs.thermo.dir=${tools.thermo_dir}", '-cp', "${tools.mbg_jar}:${tools.batmass_io_jar}:${tools.ionquant_jar}"])} com.mbg.MBG ${mbg_args} ${args} )
+    printf '%q ' "\${CMD[@]}" > mbg.log
+    printf '\\n' >> mbg.log
+    # FragPipe runs MBG from its work dir
+    "\${CMD[@]}" 2>&1 | tee -a mbg.log
     """
 
     stub:
-    prefix = task.ext.prefix ?: "${meta.id}"
+    def tools = fragpipeTools(task)
     """
-    mkdir -p ${prefix}
-    touch ${prefix}/sample_mbg_results.tsv
-    touch ${prefix}/sample_glycan_results.tsv
-    touch ${prefix}/mbg.log
-    TOOLS_DIR="${task.ext.fragpipe_tools_dir ?: '/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools'}"
-    _fp_ver=\$(echo "\$TOOLS_DIR" | grep -oP 'fragpipe-\\K[0-9]+\\.[0-9]+[0-9.]*' | head -1 || true)
-    echo "\$_fp_ver" > .mbg_version
-    echo "\$_fp_ver" > .fragpipe_version
-
+    cp -rL "input/${meta.id}" "${meta.id}"
+    ${writeTextFile('fragpipe-files.fp-manifest', fragpipeManifestText(manifest_rows, 'spectra'))}
+    # the argv the real run would pass, before run-time tokens are filled
+    ${writeTextFile('mbg.log', argv.join('\n') + '\n')}
+    echo "${tools.mbg_version}" > .mbg_version
+    echo "${tools.fragpipe_version}" > .fragpipe_version
     """
 }

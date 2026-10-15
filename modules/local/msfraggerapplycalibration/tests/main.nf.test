@@ -1,0 +1,62 @@
+nextflow_process {
+
+    name "Test Process MSFRAGGERAPPLYCALIBRATION"
+    script "../main.nf"
+    process "MSFRAGGERAPPLYCALIBRATION"
+
+    tag "modules"
+    tag "modules_local"
+    tag "msfraggerapplycalibration"
+
+    // msfragger_pep_split.py:524-611: optimized values for calibrate_mass = 2, check_spectral_files = 0,
+    // the .mzBIN_calibrated replaces the input file
+    test("msfragger_apply_calibration - optimized values and the calibrated spectra") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                def spectra = file("\${workDir}/s1.mzML"); spectra.text = "mzML"
+                def mzbin = file("\${workDir}/s1.mzBIN_calibrated"); mzbin.text = "mzBIN"
+                def log = file("\${workDir}/msfragger_calibrate.log")
+                log.text = "New fragment_mass_tolerance = 12.000000 PPM\\nNew use_topN_peaks = 150\\nNew minimum_ratio = 0.010000\\nNew intensity_transform = 1\\nNew remove_precursor_peaks = 1\\n"
+                def fragger_params = file("\${workDir}/fragger.params")
+                fragger_params.text = "calibrate_mass = 2\\t\\t\\t# c\\nfragment_mass_tolerance = 20\\nfragment_mass_units = 1\\nuse_topN_peaks = 300\\nminimum_ratio = 0.00\\nintensity_transform = 0\\nremove_precursor_peak = 0\\ncheck_spectral_files = 1\\t\\t\\t# d\\n"
+                input[0] = [[ id: 's1' ], spectra, log, mzbin, fragger_params]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert path(process.out.calibrated[0][2]).readLines().contains('check_spectral_files = 0\t\t\t# d') },
+                { assert file(process.out.calibrated[0][1]).name == 's1.mzBIN_calibrated' },
+                { assert snapshot(process.out.calibrated).match() }
+            )
+        }
+    }
+
+    test("msfragger_apply_calibration - stub") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            process {
+                """
+                def spectra = file("\${workDir}/s1.mzML"); spectra.text = "mzML"
+                def log = file("\${workDir}/msfragger_calibrate.log"); log.text = ""
+                def fragger_params = file("\${workDir}/fragger.params"); fragger_params.text = "calibrate_mass = 2\\n"
+                input[0] = [[ id: 's1' ], spectra, log, [], fragger_params]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.calibrated).match() }
+            )
+        }
+    }
+}

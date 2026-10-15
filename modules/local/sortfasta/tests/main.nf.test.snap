@@ -1,0 +1,32 @@
+{
+    "sort_fasta - stub": {
+        "content": [
+            [
+                "sorted_db.fasta"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-07T10:06:36.647404549"
+    },
+    "sort_fasta - proteins sorted as msfragger_pep_split.py": {
+        "content": [
+            [
+                "sorted_db.fasta:md5,8ae6f96c5ee123f52a714ee9f88be405"
+            ],
+            [
+                [
+                    "SORTFASTA",
+                    "python"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-08T18:04:28.700686119"
+    }
+}

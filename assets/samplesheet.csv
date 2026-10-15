@@ -1,5 +1,5 @@
-sample,spectra,condition,label,fraction
-Sample_A1,/data/raw/A1.raw,control,,
-Sample_A2,/data/raw/A2.raw,control,,
-Sample_B1,/data/raw/B1.raw,treated,,
-Sample_B2,/data/raw/B2.raw,treated,,
+sample,spectra,condition,label,fraction,experiment,bioreplicate
+Sample_A1,/data/raw/A1.raw,control,,,control,1
+Sample_A2,/data/raw/A2.raw,control,,,control,2
+Sample_B1,/data/raw/B1.raw,treated,,,treated,1
+Sample_B2,/data/raw/B2.raw,treated,,,treated,2

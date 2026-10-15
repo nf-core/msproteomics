@@ -1,45 +1,118 @@
-name: decompress_dotd
-description: Decompress .tar/.gz files that contain a .d file/directory
+name: decompress
+description: Decompress .tar, .tar.gz, .gz and .zip archives of mass spectrometry files, including Bruker .d directories
 keywords:
   - raw
   - bruker
   - .d
+  - decompress
+  - archive
 tools:
   - tar:
       description: |
         Generates and extracts archives.
       homepage: https://www.gnu.org/software/tar/
+      licence: ["GPL-3.0-or-later"]
   - gunzip:
       description: |
         Decompresses using zlib.
       homepage: https://www.gnu.org/software/gzip/
+      licence: ["GPL-3.0-or-later"]
+  - unzip:
+      description: |
+        Extracts zip archives.
+      homepage: https://infozip.sourceforge.net/UnZip.html
+      licence: ["Info-ZIP"]
 input:
-  - meta:
-      type: map
-      description: |
-        Groovy Map containing sample information
-  - rawfile:
-      type: file
-      description: |
-        Bruker Raw file archived using tar
-      pattern: "*.{d.tar,.tar,.gz,.d.tar.gz}"
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. [ id:'MD5', enzyme:trypsin ]
+    - compressed_file:
+        type: file
+        description: |
+          Archived mass spectrometry file, e.g. a Bruker .d directory archived with tar,
+          or a gzip-compressed mzML file
+        pattern: "*.{tar.gz,tar,gz,zip}"
+        ontologies: []
 output:
-  - meta:
-      type: map
-      description: |
-        Groovy Map containing sample information
-        e.g. [ id:'MD5', enzyme:trypsin ]
-  - dotd:
-      type: path
-      description: Raw Bruker .d file
-      pattern: "*.d"
-  - log:
-      type: file
-      description: log file
-      pattern: "*.log"
-  - versions:
-      type: file
-      description: File containing software versions
-      pattern: "versions.yml"
+  decompressed_files:
+    - - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. [ id:'MD5', enzyme:trypsin ]
+      - ${target_name}:
+          type: file
+          description: Decompressed file or directory (X.d.tar.gz gives X.d, X.mzML.gz gives X.mzML, X.raw.zip gives X.raw)
+          pattern: "*.{d,mzML,raw,...}"
+          ontologies: []
+  versions_gunzip:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - gunzip:
+          type: string
+          description: The tool name
+      - "gunzip --version 2>&1 | head -1 | grep -oE \"[0-9]+\\.[0-9]+(\\.[0-9]+)?\" | head -1":
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_tar:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - tar:
+          type: string
+          description: The tool name
+      - "tar --version 2>&1 | head -1 | grep -oE \"[0-9]+\\.[0-9]+(\\.[0-9]+)?\" | head -1":
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_unzip:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - unzip:
+          type: string
+          description: The tool name
+      - "unzip -v 2>&1 | head -1 | grep -oE \"[0-9]+\\.[0-9]+\" | head -1":
+          type: eval
+          description: The expression to obtain the version of the tool
+  log:
+    - "*.log":
+        type: file
+        description: Decompression log file
+        pattern: "*.log"
+        ontologies: []
+
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - gunzip:
+          type: string
+          description: The tool name
+      - "gunzip --version 2>&1 | head -1 | grep -oE \"[0-9]+\\.[0-9]+(\\.[0-9]+)?\" | head -1":
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - tar:
+          type: string
+          description: The tool name
+      - "tar --version 2>&1 | head -1 | grep -oE \"[0-9]+\\.[0-9]+(\\.[0-9]+)?\" | head -1":
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - ${task.process}:
+          type: string
+          description: The process the versions were collected from
+      - unzip:
+          type: string
+          description: The tool name
+      - "unzip -v 2>&1 | head -1 | grep -oE \"[0-9]+\\.[0-9]+\" | head -1":
+          type: eval
+          description: The expression to obtain the version of the tool
+
 authors:
   - "@jspaezp"

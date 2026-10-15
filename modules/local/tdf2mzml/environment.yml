@@ -1,6 +1,0 @@
-name: tdf2mzml
-channels:
-  - conda-forge
-  - bioconda
-dependencies:
-  - bioconda::tdf2mzml

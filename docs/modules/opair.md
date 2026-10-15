@@ -13,7 +13,7 @@ O-Pair is part of the FragPipe glycoproteomics suite and runs as a .NET applicat
 | Channel    | Type        | Description                                                             |
 | ---------- | ----------- | ----------------------------------------------------------------------- |
 | meta       | val(map)    | Sample metadata map                                                     |
-| psm_file   | path        | PSM file from PHILOSOPHER_FILTER (`psm.tsv`)                            |
+| psm_file   | path        | PSM file from PHILOSOPHERFILTER (`psm.tsv`)                             |
 | mzml_files | path        | Mass spectrometry data files (`*.mzML`, staged in `spectra/` directory) |
 | config_cli | val(string) | O-Pair parameters as CLI string (e.g., `-b 20 -c 20 -n 3`)              |
 | glycan_db  | path        | Glycan database file for O-glycan matching                              |
@@ -37,7 +37,7 @@ O-Pair is part of the FragPipe glycoproteomics suite and runs as a .NET applicat
 
 ## Container
 
-`docker.io/fcyucn/fragpipe:24.0`
+The licensed FragPipe image given with `--fragpipe_container`.
 
 ## Usage
 

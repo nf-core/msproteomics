@@ -10,12 +10,15 @@ keywords:
   - rescoring
 components:
   - msfragger
-  - msfragger/calibrate
+  - msfraggercalibrate
   - msfragger/index
-  - split/fasta
-  - merge/split/search
+  - splitfasta
+  - mergesplitsearch
   - msbooster
   - crystalc
+  - msboosterthreads
+  - msfraggerapplycalibration
+  - sortfasta
 input:
   - ch_mzml:
       type: channel
@@ -37,11 +40,21 @@ input:
       description: |
         MSFragger parameters file (fragger.params). Pass [] for CLI mode.
         Structure: path(fragger.params)
+  - ch_msbooster_fragger_params:
+      type: channel
+      description: |
+        Value channel, the one params file MSBooster reads (CmdMSBooster.java:134-149).
+        Structure: path(fragger*.params)
   - ch_msbooster_params:
       type: channel
       description: |
         MSBooster parameters file (msbooster.config). Pass [] for CLI mode.
         Structure: path(msbooster.config)
+  - ch_num_slices:
+      type: channel
+      description: |
+        Value channel, msfragger.misc.slice-db of the workflow.
+        Structure: val(int)
 output:
   - pepxml:
       type: channel
@@ -68,16 +81,41 @@ output:
       description: |
         Per-sample MSFragger results directory.
         Structure: [ val(meta), path(results_dir) ]
+  - msfragger_logs:
+      type: channel
+      description: |
+        Per-sample logs, or the split-mode calibration log.
+        Structure: [ val(meta), path(log) ]
+  - msfragger_split_logs:
+      type: channel
+      description: |
+        Split-database mode only: the search log of every (file, chunk) MSFragger task (meta.id <file>_chunk_<i>).
+        Structure: [ val(meta), path(log) ]
+  - lcms:
+      type: channel
+      description: |
+        FragPipe's LC-MS directory after the search.
+        Structure: [ val(meta), [ path(lcms), path(msfragger side files)... ] ]
+  - mzbin_all:
+      type: channel
+      description: |
+        MSFragger's <stem>.mzBIN_all (write_mzbin_all = 1, Write sub mzML), read by WRITESUBMZML.
+        Structure: [ val(meta), path(<stem>.mzBIN_all) ]
+  - validation_lcms:
+      type: channel
+      description: |
+        Spectra file named by Percolator / PeptideProphet.
+        Structure: [ val(meta), path(spectra) ]
   - uncalibrated_mzml:
       type: channel
       description: |
         Uncalibrated mzML files produced by MSFragger for .d or .raw inputs. Used by MSBooster for Bruker data.
         Structure: [ val(meta), path(*_uncalibrated.mzML) ]
-  - versions:
-      type: file
+  - calibrated_mzml:
+      type: channel
       description: |
-        File containing software versions.
-        Structure: [ path(versions.yml) ]
+        Write_calibrated_mzml with calibration.
+        Structure: [ val(meta), path(*_calibrated.mzML) ]
 authors:
   - "@dongzehe"
 maintainers:

@@ -1,75 +1,966 @@
+// Unit tests for the pipeline helper functions ported from lib/WorkflowUtils.groovy
+// (lib/ Groovy classes are not resolved by `nextflow lint`, so the helpers live here).
+
 nextflow_function {
 
-    name "Test Functions"
+    name "Test Functions utils_nfcore_msproteomics_pipeline"
     script "../main.nf"
-    function "getProteinDatabase"
+
     tag "subworkflows"
     tag "subworkflows_local"
     tag "utils_nfcore_msproteomics_pipeline"
     tag "stub"
 
-    test("getProteinDatabase - organism without --database resolves to the UniProt reference proteome") {
-
+    test("convertOrganismToStandardName - aliases map to binomial names") {
+        function "convertOrganismToStandardName"
         when {
-            // -profile test sets params.database; clear it so the reference proteome is used
-            params {
-                database = null
-            }
             function {
                 """
-                input[0] = 'Homo sapiens'
+                input[0] = ' Mouse '
                 """
             }
         }
-
         then {
+            def store = "${projectDir}/tests/fixtures/iproteomes"
             assertAll(
                 { assert function.success },
-                { assert function.result == 'https://rest.uniprot.org/uniprotkb/stream?format=fasta&includeIsoform=true&query=(reviewed:true)+AND+(proteome:UP000005640)' }
+                { assert function.result == 'Mus musculus' },
+                { assert snapshot(function.result).match() }
             )
         }
     }
 
-    test("getProteinDatabase - unknown organism without --database fails with a clear message") {
-
+    test("convertOrganismToStandardName - unknown organism is returned unchanged") {
+        function "convertOrganismToStandardName"
         when {
-            // -profile test sets params.database; clear it so the reference proteome is used
-            params {
-                database = null
-            }
             function {
                 """
-                input[0] = 'Xenopus laevis'
+                input[0] = 'Erwinia carotovora'
                 """
             }
         }
+        then {
+            def store = "${projectDir}/tests/fixtures/iproteomes"
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'Erwinia carotovora' },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
 
+    test("resolveProteome - no --proteome gives no entry") {
+        function "resolveProteome"
+        when {
+            function {
+                """
+                def store = "\${projectDir}/tests/fixtures/iproteomes"
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                def base = [proteome: 'mouse', iproteomes_base: store, iproteomes: [mouse: entry]]
+                def resolved = [key: 'mouse', organism: 'Mus musculus', fasta: "\${store}/test.fasta", fragpipe_fasta: "\${store}/test_decoys_contam.fasta", diann_speclib: "\${store}/test.predicted.speclib"]
+                def run = [enzyme: 'Trypsin/P', fixed_mods: null, variable_mods: 'Oxidation (M)', max_mods: 3, allowed_missed_cleavages: 1, min_peptide_length: 7, max_peptide_length: 30, min_precursor_charge: 1, max_precursor_charge: 4, met_excision: true, diann_min_pr_mz: 350, diann_max_pr_mz: 1050, diann_min_fr_mz: 200, diann_max_fr_mz: 1800, diann_library_mass_acc: 18, diann_library_ms1_acc: 5, additional_insilico_args: null, database: null, diann_speclib: null, proteome: 'mouse', iproteomes_base: store, add_philosopher_decoy: false, add_philosopher_contaminants: false]
+                input[0] = [proteome: null]
+                """
+            }
+        }
+        then {
+            def store = "${projectDir}/tests/fixtures/iproteomes"
+            assertAll(
+                { assert function.success },
+                { assert function.result == null }
+            )
+        }
+    }
+
+    test("resolveProteome - entry paths are joined with --iproteomes_base at run time") {
+        function "resolveProteome"
+        when {
+            function {
+                """
+                def store = "\${projectDir}/tests/fixtures/iproteomes"
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                def base = [proteome: 'mouse', iproteomes_base: store, iproteomes: [mouse: entry]]
+                def resolved = [key: 'mouse', organism: 'Mus musculus', fasta: "\${store}/test.fasta", fragpipe_fasta: "\${store}/test_decoys_contam.fasta", diann_speclib: "\${store}/test.predicted.speclib"]
+                def run = [enzyme: 'Trypsin/P', fixed_mods: null, variable_mods: 'Oxidation (M)', max_mods: 3, allowed_missed_cleavages: 1, min_peptide_length: 7, max_peptide_length: 30, min_precursor_charge: 1, max_precursor_charge: 4, met_excision: true, diann_min_pr_mz: 350, diann_max_pr_mz: 1050, diann_min_fr_mz: 200, diann_max_fr_mz: 1800, diann_library_mass_acc: 18, diann_library_ms1_acc: 5, additional_insilico_args: null, database: null, diann_speclib: null, proteome: 'mouse', iproteomes_base: store, add_philosopher_decoy: false, add_philosopher_contaminants: false]
+                input[0] = base
+                """
+            }
+        }
+        then {
+            def store = "${projectDir}/tests/fixtures/iproteomes"
+            assertAll(
+                { assert function.success },
+                { assert function.result.subMap(['fasta', 'fragpipe_fasta', 'diann_speclib']) == [fasta: "${store}/test.fasta", fragpipe_fasta: "${store}/test_decoys_contam.fasta", diann_speclib: "${store}/test.predicted.speclib"] }
+            )
+        }
+    }
+
+    test("resolveProteome - a trailing slash of --iproteomes_base is dropped") {
+        function "resolveProteome"
+        when {
+            function {
+                """
+                def store = "\${projectDir}/tests/fixtures/iproteomes"
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                def base = [proteome: 'mouse', iproteomes_base: store, iproteomes: [mouse: entry]]
+                def resolved = [key: 'mouse', organism: 'Mus musculus', fasta: "\${store}/test.fasta", fragpipe_fasta: "\${store}/test_decoys_contam.fasta", diann_speclib: "\${store}/test.predicted.speclib"]
+                def run = [enzyme: 'Trypsin/P', fixed_mods: null, variable_mods: 'Oxidation (M)', max_mods: 3, allowed_missed_cleavages: 1, min_peptide_length: 7, max_peptide_length: 30, min_precursor_charge: 1, max_precursor_charge: 4, met_excision: true, diann_min_pr_mz: 350, diann_max_pr_mz: 1050, diann_min_fr_mz: 200, diann_max_fr_mz: 1800, diann_library_mass_acc: 18, diann_library_ms1_acc: 5, additional_insilico_args: null, database: null, diann_speclib: null, proteome: 'mouse', iproteomes_base: store, add_philosopher_decoy: false, add_philosopher_contaminants: false]
+                input[0] = base + [iproteomes_base: store + '/']
+                """
+            }
+        }
+        then {
+            def store = "${projectDir}/tests/fixtures/iproteomes"
+            assertAll(
+                { assert function.success },
+                { assert function.result.fasta == "${store}/test.fasta" }
+            )
+        }
+    }
+
+    test("resolveProteome - a declared empty path stays empty for the index check") {
+        function "resolveProteome"
+        when {
+            function {
+                """
+                def store = "\${projectDir}/tests/fixtures/iproteomes"
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                def base = [proteome: 'mouse', iproteomes_base: store, iproteomes: [mouse: entry]]
+                def resolved = [key: 'mouse', organism: 'Mus musculus', fasta: "\${store}/test.fasta", fragpipe_fasta: "\${store}/test_decoys_contam.fasta", diann_speclib: "\${store}/test.predicted.speclib"]
+                def run = [enzyme: 'Trypsin/P', fixed_mods: null, variable_mods: 'Oxidation (M)', max_mods: 3, allowed_missed_cleavages: 1, min_peptide_length: 7, max_peptide_length: 30, min_precursor_charge: 1, max_precursor_charge: 4, met_excision: true, diann_min_pr_mz: 350, diann_max_pr_mz: 1050, diann_min_fr_mz: 200, diann_max_fr_mz: 1800, diann_library_mass_acc: 18, diann_library_ms1_acc: 5, additional_insilico_args: null, database: null, diann_speclib: null, proteome: 'mouse', iproteomes_base: store, add_philosopher_decoy: false, add_philosopher_contaminants: false]
+                input[0] = base + [iproteomes: [mouse: entry + [diann_speclib: '']]]
+                """
+            }
+        }
+        then {
+            def store = "${projectDir}/tests/fixtures/iproteomes"
+            assertAll(
+                { assert function.success },
+                { assert function.result.diann_speclib == '' }
+            )
+        }
+    }
+
+    test("resolveProteome - unknown --proteome fails") {
+        function "resolveProteome"
+        when {
+            function {
+                """
+                def store = "\${projectDir}/tests/fixtures/iproteomes"
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                def base = [proteome: 'mouse', iproteomes_base: store, iproteomes: [mouse: entry]]
+                def resolved = [key: 'mouse', organism: 'Mus musculus', fasta: "\${store}/test.fasta", fragpipe_fasta: "\${store}/test_decoys_contam.fasta", diann_speclib: "\${store}/test.predicted.speclib"]
+                def run = [enzyme: 'Trypsin/P', fixed_mods: null, variable_mods: 'Oxidation (M)', max_mods: 3, allowed_missed_cleavages: 1, min_peptide_length: 7, max_peptide_length: 30, min_precursor_charge: 1, max_precursor_charge: 4, met_excision: true, diann_min_pr_mz: 350, diann_max_pr_mz: 1050, diann_min_fr_mz: 200, diann_max_fr_mz: 1800, diann_library_mass_acc: 18, diann_library_ms1_acc: 5, additional_insilico_args: null, database: null, diann_speclib: null, proteome: 'mouse', iproteomes_base: store, add_philosopher_decoy: false, add_philosopher_contaminants: false]
+                input[0] = base + [proteome: 'rat']
+                """
+            }
+        }
+        then {
+            def store = "${projectDir}/tests/fixtures/iproteomes"
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains("is not an iProteome") } }
+            )
+        }
+    }
+
+    test("resolveProteome - missing --iproteomes_base fails") {
+        function "resolveProteome"
+        when {
+            function {
+                """
+                def store = "\${projectDir}/tests/fixtures/iproteomes"
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                def base = [proteome: 'mouse', iproteomes_base: store, iproteomes: [mouse: entry]]
+                def resolved = [key: 'mouse', organism: 'Mus musculus', fasta: "\${store}/test.fasta", fragpipe_fasta: "\${store}/test_decoys_contam.fasta", diann_speclib: "\${store}/test.predicted.speclib"]
+                def run = [enzyme: 'Trypsin/P', fixed_mods: null, variable_mods: 'Oxidation (M)', max_mods: 3, allowed_missed_cleavages: 1, min_peptide_length: 7, max_peptide_length: 30, min_precursor_charge: 1, max_precursor_charge: 4, met_excision: true, diann_min_pr_mz: 350, diann_max_pr_mz: 1050, diann_min_fr_mz: 200, diann_max_fr_mz: 1800, diann_library_mass_acc: 18, diann_library_ms1_acc: 5, additional_insilico_args: null, database: null, diann_speclib: null, proteome: 'mouse', iproteomes_base: store, add_philosopher_decoy: false, add_philosopher_contaminants: false]
+                input[0] = base + [iproteomes_base: null]
+                """
+            }
+        }
+        then {
+            def store = "${projectDir}/tests/fixtures/iproteomes"
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains("needs --iproteomes_base") } }
+            )
+        }
+    }
+
+    test("resolveProteome - --iproteomes_ignore fails") {
+        function "resolveProteome"
+        when {
+            function {
+                """
+                def store = "\${projectDir}/tests/fixtures/iproteomes"
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                def base = [proteome: 'mouse', iproteomes_base: store, iproteomes: [mouse: entry]]
+                def resolved = [key: 'mouse', organism: 'Mus musculus', fasta: "\${store}/test.fasta", fragpipe_fasta: "\${store}/test_decoys_contam.fasta", diann_speclib: "\${store}/test.predicted.speclib"]
+                def run = [enzyme: 'Trypsin/P', fixed_mods: null, variable_mods: 'Oxidation (M)', max_mods: 3, allowed_missed_cleavages: 1, min_peptide_length: 7, max_peptide_length: 30, min_precursor_charge: 1, max_precursor_charge: 4, met_excision: true, diann_min_pr_mz: 350, diann_max_pr_mz: 1050, diann_min_fr_mz: 200, diann_max_fr_mz: 1800, diann_library_mass_acc: 18, diann_library_ms1_acc: 5, additional_insilico_args: null, database: null, diann_speclib: null, proteome: 'mouse', iproteomes_base: store, add_philosopher_decoy: false, add_philosopher_contaminants: false]
+                input[0] = base + [iproteomes_ignore: true]
+                """
+            }
+        }
+        then {
+            def store = "${projectDir}/tests/fixtures/iproteomes"
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains("remove --iproteomes_ignore") } }
+            )
+        }
+    }
+
+    test("resolveOrganism - --organism wins over the iProteome") {
+        function "resolveOrganism"
+        when {
+            function {
+                """
+                def store = "\${projectDir}/tests/fixtures/iproteomes"
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                def base = [proteome: 'mouse', iproteomes_base: store, iproteomes: [mouse: entry]]
+                def resolved = [key: 'mouse', organism: 'Mus musculus', fasta: "\${store}/test.fasta", fragpipe_fasta: "\${store}/test_decoys_contam.fasta", diann_speclib: "\${store}/test.predicted.speclib"]
+                def run = [enzyme: 'Trypsin/P', fixed_mods: null, variable_mods: 'Oxidation (M)', max_mods: 3, allowed_missed_cleavages: 1, min_peptide_length: 7, max_peptide_length: 30, min_precursor_charge: 1, max_precursor_charge: 4, met_excision: true, diann_min_pr_mz: 350, diann_max_pr_mz: 1050, diann_min_fr_mz: 200, diann_max_fr_mz: 1800, diann_library_mass_acc: 18, diann_library_ms1_acc: 5, additional_insilico_args: null, database: null, diann_speclib: null, proteome: 'mouse', iproteomes_base: store, add_philosopher_decoy: false, add_philosopher_contaminants: false]
+                input[0] = resolved
+                input[1] = [organism: 'human']
+                """
+            }
+        }
+        then {
+            def store = "${projectDir}/tests/fixtures/iproteomes"
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'Homo sapiens' }
+            )
+        }
+    }
+
+    test("resolveOrganism - the iProteome organism is used without --organism") {
+        function "resolveOrganism"
+        when {
+            function {
+                """
+                def store = "\${projectDir}/tests/fixtures/iproteomes"
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                def base = [proteome: 'mouse', iproteomes_base: store, iproteomes: [mouse: entry]]
+                def resolved = [key: 'mouse', organism: 'Mus musculus', fasta: "\${store}/test.fasta", fragpipe_fasta: "\${store}/test_decoys_contam.fasta", diann_speclib: "\${store}/test.predicted.speclib"]
+                def run = [enzyme: 'Trypsin/P', fixed_mods: null, variable_mods: 'Oxidation (M)', max_mods: 3, allowed_missed_cleavages: 1, min_peptide_length: 7, max_peptide_length: 30, min_precursor_charge: 1, max_precursor_charge: 4, met_excision: true, diann_min_pr_mz: 350, diann_max_pr_mz: 1050, diann_min_fr_mz: 200, diann_max_fr_mz: 1800, diann_library_mass_acc: 18, diann_library_ms1_acc: 5, additional_insilico_args: null, database: null, diann_speclib: null, proteome: 'mouse', iproteomes_base: store, add_philosopher_decoy: false, add_philosopher_contaminants: false]
+                input[0] = resolved
+                input[1] = [organism: null]
+                """
+            }
+        }
+        then {
+            def store = "${projectDir}/tests/fixtures/iproteomes"
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'Mus musculus' }
+            )
+        }
+    }
+
+    test("resolveOrganism - without --organism and iProteome it is left to the SDRF writer's FASTA guess") {
+        function "resolveOrganism"
+        when {
+            function {
+                """
+                def store = "\${projectDir}/tests/fixtures/iproteomes"
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                def base = [proteome: 'mouse', iproteomes_base: store, iproteomes: [mouse: entry]]
+                def resolved = [key: 'mouse', organism: 'Mus musculus', fasta: "\${store}/test.fasta", fragpipe_fasta: "\${store}/test_decoys_contam.fasta", diann_speclib: "\${store}/test.predicted.speclib"]
+                def run = [enzyme: 'Trypsin/P', fixed_mods: null, variable_mods: 'Oxidation (M)', max_mods: 3, allowed_missed_cleavages: 1, min_peptide_length: 7, max_peptide_length: 30, min_precursor_charge: 1, max_precursor_charge: 4, met_excision: true, diann_min_pr_mz: 350, diann_max_pr_mz: 1050, diann_min_fr_mz: 200, diann_max_fr_mz: 1800, diann_library_mass_acc: 18, diann_library_ms1_acc: 5, additional_insilico_args: null, database: null, diann_speclib: null, proteome: 'mouse', iproteomes_base: store, add_philosopher_decoy: false, add_philosopher_contaminants: false]
+                input[0] = null
+                input[1] = [organism: null]
+                """
+            }
+        }
+        then {
+            def store = "${projectDir}/tests/fixtures/iproteomes"
+            assertAll(
+                { assert function.success },
+                { assert function.result == '' }
+            )
+        }
+    }
+
+    test("resolveFragPipeDatabase - --database wins over the iProteome") {
+        function "resolveFragPipeDatabase"
+        when {
+            function {
+                """
+                def store = "\${projectDir}/tests/fixtures/iproteomes"
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                def base = [proteome: 'mouse', iproteomes_base: store, iproteomes: [mouse: entry]]
+                def resolved = [key: 'mouse', organism: 'Mus musculus', fasta: "\${store}/test.fasta", fragpipe_fasta: "\${store}/test_decoys_contam.fasta", diann_speclib: "\${store}/test.predicted.speclib"]
+                def run = [enzyme: 'Trypsin/P', fixed_mods: null, variable_mods: 'Oxidation (M)', max_mods: 3, allowed_missed_cleavages: 1, min_peptide_length: 7, max_peptide_length: 30, min_precursor_charge: 1, max_precursor_charge: 4, met_excision: true, diann_min_pr_mz: 350, diann_max_pr_mz: 1050, diann_min_fr_mz: 200, diann_max_fr_mz: 1800, diann_library_mass_acc: 18, diann_library_ms1_acc: 5, additional_insilico_args: null, database: null, diann_speclib: null, proteome: 'mouse', iproteomes_base: store, add_philosopher_decoy: false, add_philosopher_contaminants: false]
+                input[0] = resolved
+                input[1] = run + [database: 'db.fasta']
+                """
+            }
+        }
+        then {
+            def store = "${projectDir}/tests/fixtures/iproteomes"
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'db.fasta' }
+            )
+        }
+    }
+
+    test("resolveFragPipeDatabase - the hosted FragPipe database is searched as given") {
+        function "resolveFragPipeDatabase"
+        when {
+            function {
+                """
+                def store = "\${projectDir}/tests/fixtures/iproteomes"
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                def base = [proteome: 'mouse', iproteomes_base: store, iproteomes: [mouse: entry]]
+                def resolved = [key: 'mouse', organism: 'Mus musculus', fasta: "\${store}/test.fasta", fragpipe_fasta: "\${store}/test_decoys_contam.fasta", diann_speclib: "\${store}/test.predicted.speclib"]
+                def run = [enzyme: 'Trypsin/P', fixed_mods: null, variable_mods: 'Oxidation (M)', max_mods: 3, allowed_missed_cleavages: 1, min_peptide_length: 7, max_peptide_length: 30, min_precursor_charge: 1, max_precursor_charge: 4, met_excision: true, diann_min_pr_mz: 350, diann_max_pr_mz: 1050, diann_min_fr_mz: 200, diann_max_fr_mz: 1800, diann_library_mass_acc: 18, diann_library_ms1_acc: 5, additional_insilico_args: null, database: null, diann_speclib: null, proteome: 'mouse', iproteomes_base: store, add_philosopher_decoy: false, add_philosopher_contaminants: false]
+                input[0] = resolved
+                input[1] = run + [:]
+                """
+            }
+        }
+        then {
+            def store = "${projectDir}/tests/fixtures/iproteomes"
+            assertAll(
+                { assert function.success },
+                { assert function.result == "${store}/test_decoys_contam.fasta" }
+            )
+        }
+    }
+
+    test("resolveFragPipeDatabase - --add_philosopher_decoy updates the plain iProteome fasta") {
+        function "resolveFragPipeDatabase"
+        when {
+            function {
+                """
+                def store = "\${projectDir}/tests/fixtures/iproteomes"
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                def base = [proteome: 'mouse', iproteomes_base: store, iproteomes: [mouse: entry]]
+                def resolved = [key: 'mouse', organism: 'Mus musculus', fasta: "\${store}/test.fasta", fragpipe_fasta: "\${store}/test_decoys_contam.fasta", diann_speclib: "\${store}/test.predicted.speclib"]
+                def run = [enzyme: 'Trypsin/P', fixed_mods: null, variable_mods: 'Oxidation (M)', max_mods: 3, allowed_missed_cleavages: 1, min_peptide_length: 7, max_peptide_length: 30, min_precursor_charge: 1, max_precursor_charge: 4, met_excision: true, diann_min_pr_mz: 350, diann_max_pr_mz: 1050, diann_min_fr_mz: 200, diann_max_fr_mz: 1800, diann_library_mass_acc: 18, diann_library_ms1_acc: 5, additional_insilico_args: null, database: null, diann_speclib: null, proteome: 'mouse', iproteomes_base: store, add_philosopher_decoy: false, add_philosopher_contaminants: false]
+                input[0] = resolved
+                input[1] = run + [add_philosopher_decoy: true]
+                """
+            }
+        }
+        then {
+            def store = "${projectDir}/tests/fixtures/iproteomes"
+            assertAll(
+                { assert function.success },
+                { assert function.result == "${store}/test.fasta" }
+            )
+        }
+    }
+
+    test("resolveFragPipeDatabase - an entry without fragpipe_fasta gives its fasta") {
+        function "resolveFragPipeDatabase"
+        when {
+            function {
+                """
+                def store = "\${projectDir}/tests/fixtures/iproteomes"
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                def base = [proteome: 'mouse', iproteomes_base: store, iproteomes: [mouse: entry]]
+                def resolved = [key: 'mouse', organism: 'Mus musculus', fasta: "\${store}/test.fasta", fragpipe_fasta: "\${store}/test_decoys_contam.fasta", diann_speclib: "\${store}/test.predicted.speclib"]
+                def run = [enzyme: 'Trypsin/P', fixed_mods: null, variable_mods: 'Oxidation (M)', max_mods: 3, allowed_missed_cleavages: 1, min_peptide_length: 7, max_peptide_length: 30, min_precursor_charge: 1, max_precursor_charge: 4, met_excision: true, diann_min_pr_mz: 350, diann_max_pr_mz: 1050, diann_min_fr_mz: 200, diann_max_fr_mz: 1800, diann_library_mass_acc: 18, diann_library_ms1_acc: 5, additional_insilico_args: null, database: null, diann_speclib: null, proteome: 'mouse', iproteomes_base: store, add_philosopher_decoy: false, add_philosopher_contaminants: false]
+                input[0] = resolved.findAll { k, v -> k != 'fragpipe_fasta' }
+                input[1] = run
+                """
+            }
+        }
+        then {
+            def store = "${projectDir}/tests/fixtures/iproteomes"
+            assertAll(
+                { assert function.success },
+                { assert function.result == "${store}/test.fasta" }
+            )
+        }
+    }
+
+    test("resolveFragPipeDatabase - a declared empty fragpipe_fasta fails") {
+        function "resolveFragPipeDatabase"
+        when {
+            function {
+                """
+                def store = "\${projectDir}/tests/fixtures/iproteomes"
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                def base = [proteome: 'mouse', iproteomes_base: store, iproteomes: [mouse: entry]]
+                def resolved = [key: 'mouse', organism: 'Mus musculus', fasta: "\${store}/test.fasta", fragpipe_fasta: "\${store}/test_decoys_contam.fasta", diann_speclib: "\${store}/test.predicted.speclib"]
+                def run = [enzyme: 'Trypsin/P', fixed_mods: null, variable_mods: 'Oxidation (M)', max_mods: 3, allowed_missed_cleavages: 1, min_peptide_length: 7, max_peptide_length: 30, min_precursor_charge: 1, max_precursor_charge: 4, met_excision: true, diann_min_pr_mz: 350, diann_max_pr_mz: 1050, diann_min_fr_mz: 200, diann_max_fr_mz: 1800, diann_library_mass_acc: 18, diann_library_ms1_acc: 5, additional_insilico_args: null, database: null, diann_speclib: null, proteome: 'mouse', iproteomes_base: store, add_philosopher_decoy: false, add_philosopher_contaminants: false]
+                input[0] = resolved + [fragpipe_fasta: '']
+                input[1] = run
+                """
+            }
+        }
+        then {
+            def store = "${projectDir}/tests/fixtures/iproteomes"
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains("declares 'fragpipe_fasta' but its path is empty") } }
+            )
+        }
+    }
+
+    test("resolveFragPipeDatabase - a declared missing fragpipe_fasta fails") {
+        function "resolveFragPipeDatabase"
+        when {
+            function {
+                """
+                def store = "\${projectDir}/tests/fixtures/iproteomes"
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                def base = [proteome: 'mouse', iproteomes_base: store, iproteomes: [mouse: entry]]
+                def resolved = [key: 'mouse', organism: 'Mus musculus', fasta: "\${store}/test.fasta", fragpipe_fasta: "\${store}/test_decoys_contam.fasta", diann_speclib: "\${store}/test.predicted.speclib"]
+                def run = [enzyme: 'Trypsin/P', fixed_mods: null, variable_mods: 'Oxidation (M)', max_mods: 3, allowed_missed_cleavages: 1, min_peptide_length: 7, max_peptide_length: 30, min_precursor_charge: 1, max_precursor_charge: 4, met_excision: true, diann_min_pr_mz: 350, diann_max_pr_mz: 1050, diann_min_fr_mz: 200, diann_max_fr_mz: 1800, diann_library_mass_acc: 18, diann_library_ms1_acc: 5, additional_insilico_args: null, database: null, diann_speclib: null, proteome: 'mouse', iproteomes_base: store, add_philosopher_decoy: false, add_philosopher_contaminants: false]
+                input[0] = resolved + [fragpipe_fasta: "\${store}/absent.fasta"]
+                input[1] = run
+                """
+            }
+        }
+        then {
+            def store = "${projectDir}/tests/fixtures/iproteomes"
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains("is missing or unreadable") } }
+            )
+        }
+    }
+
+    test("resolveFragPipeDatabase - neither --database nor --proteome fails") {
+        function "resolveFragPipeDatabase"
+        when {
+            function {
+                """
+                def store = "\${projectDir}/tests/fixtures/iproteomes"
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                def base = [proteome: 'mouse', iproteomes_base: store, iproteomes: [mouse: entry]]
+                def resolved = [key: 'mouse', organism: 'Mus musculus', fasta: "\${store}/test.fasta", fragpipe_fasta: "\${store}/test_decoys_contam.fasta", diann_speclib: "\${store}/test.predicted.speclib"]
+                def run = [enzyme: 'Trypsin/P', fixed_mods: null, variable_mods: 'Oxidation (M)', max_mods: 3, allowed_missed_cleavages: 1, min_peptide_length: 7, max_peptide_length: 30, min_precursor_charge: 1, max_precursor_charge: 4, met_excision: true, diann_min_pr_mz: 350, diann_max_pr_mz: 1050, diann_min_fr_mz: 200, diann_max_fr_mz: 1800, diann_library_mass_acc: 18, diann_library_ms1_acc: 5, additional_insilico_args: null, database: null, diann_speclib: null, proteome: 'mouse', iproteomes_base: store, add_philosopher_decoy: false, add_philosopher_contaminants: false]
+                input[0] = null
+                input[1] = [database: null]
+                """
+            }
+        }
+        then {
+            def store = "${projectDir}/tests/fixtures/iproteomes"
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains("Needs a protein FASTA") } }
+            )
+        }
+    }
+
+    test("resolveDiannSpeclib - --diann_speclib wins over the iProteome") {
+        function "resolveDiannSpeclib"
+        when {
+            function {
+                """
+                def store = "\${projectDir}/tests/fixtures/iproteomes"
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                def base = [proteome: 'mouse', iproteomes_base: store, iproteomes: [mouse: entry]]
+                def resolved = [key: 'mouse', organism: 'Mus musculus', fasta: "\${store}/test.fasta", fragpipe_fasta: "\${store}/test_decoys_contam.fasta", diann_speclib: "\${store}/test.predicted.speclib"]
+                def run = [enzyme: 'Trypsin/P', fixed_mods: null, variable_mods: 'Oxidation (M)', max_mods: 3, allowed_missed_cleavages: 1, min_peptide_length: 7, max_peptide_length: 30, min_precursor_charge: 1, max_precursor_charge: 4, met_excision: true, diann_min_pr_mz: 350, diann_max_pr_mz: 1050, diann_min_fr_mz: 200, diann_max_fr_mz: 1800, diann_library_mass_acc: 18, diann_library_ms1_acc: 5, additional_insilico_args: null, database: null, diann_speclib: null, proteome: 'mouse', iproteomes_base: store, add_philosopher_decoy: false, add_philosopher_contaminants: false]
+                input[0] = resolved
+                input[1] = run + [diann_speclib: 'mine.speclib']
+                """
+            }
+        }
+        then {
+            def store = "${projectDir}/tests/fixtures/iproteomes"
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'mine.speclib' }
+            )
+        }
+    }
+
+    test("resolveDiannSpeclib - --database means the pipeline builds the library") {
+        function "resolveDiannSpeclib"
+        when {
+            function {
+                """
+                def store = "\${projectDir}/tests/fixtures/iproteomes"
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                def base = [proteome: 'mouse', iproteomes_base: store, iproteomes: [mouse: entry]]
+                def resolved = [key: 'mouse', organism: 'Mus musculus', fasta: "\${store}/test.fasta", fragpipe_fasta: "\${store}/test_decoys_contam.fasta", diann_speclib: "\${store}/test.predicted.speclib"]
+                def run = [enzyme: 'Trypsin/P', fixed_mods: null, variable_mods: 'Oxidation (M)', max_mods: 3, allowed_missed_cleavages: 1, min_peptide_length: 7, max_peptide_length: 30, min_precursor_charge: 1, max_precursor_charge: 4, met_excision: true, diann_min_pr_mz: 350, diann_max_pr_mz: 1050, diann_min_fr_mz: 200, diann_max_fr_mz: 1800, diann_library_mass_acc: 18, diann_library_ms1_acc: 5, additional_insilico_args: null, database: null, diann_speclib: null, proteome: 'mouse', iproteomes_base: store, add_philosopher_decoy: false, add_philosopher_contaminants: false]
+                input[0] = resolved
+                input[1] = run + [database: 'db.fasta']
+                """
+            }
+        }
+        then {
+            def store = "${projectDir}/tests/fixtures/iproteomes"
+            assertAll(
+                { assert function.success },
+                { assert function.result == null }
+            )
+        }
+    }
+
+    test("resolveDiannSpeclib - the hosted library is used when the settings equal meta.json") {
+        function "resolveDiannSpeclib"
+        when {
+            function {
+                """
+                def store = "\${projectDir}/tests/fixtures/iproteomes"
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                def base = [proteome: 'mouse', iproteomes_base: store, iproteomes: [mouse: entry]]
+                def resolved = [key: 'mouse', organism: 'Mus musculus', fasta: "\${store}/test.fasta", fragpipe_fasta: "\${store}/test_decoys_contam.fasta", diann_speclib: "\${store}/test.predicted.speclib"]
+                def run = [enzyme: 'Trypsin/P', fixed_mods: null, variable_mods: 'Oxidation (M)', max_mods: 3, allowed_missed_cleavages: 1, min_peptide_length: 7, max_peptide_length: 30, min_precursor_charge: 1, max_precursor_charge: 4, met_excision: true, diann_min_pr_mz: 350, diann_max_pr_mz: 1050, diann_min_fr_mz: 200, diann_max_fr_mz: 1800, diann_library_mass_acc: 18, diann_library_ms1_acc: 5, additional_insilico_args: null, database: null, diann_speclib: null, proteome: 'mouse', iproteomes_base: store, add_philosopher_decoy: false, add_philosopher_contaminants: false]
+                input[0] = resolved
+                input[1] = run + [:]
+                """
+            }
+        }
+        then {
+            def store = "${projectDir}/tests/fixtures/iproteomes"
+            assertAll(
+                { assert function.success },
+                { assert function.result == "${store}/test.predicted.speclib" }
+            )
+        }
+    }
+
+    test("resolveDiannSpeclib - numbers compare as numbers (18.0 equals 18)") {
+        function "resolveDiannSpeclib"
+        when {
+            function {
+                """
+                def store = "\${projectDir}/tests/fixtures/iproteomes"
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                def base = [proteome: 'mouse', iproteomes_base: store, iproteomes: [mouse: entry]]
+                def resolved = [key: 'mouse', organism: 'Mus musculus', fasta: "\${store}/test.fasta", fragpipe_fasta: "\${store}/test_decoys_contam.fasta", diann_speclib: "\${store}/test.predicted.speclib"]
+                def run = [enzyme: 'Trypsin/P', fixed_mods: null, variable_mods: 'Oxidation (M)', max_mods: 3, allowed_missed_cleavages: 1, min_peptide_length: 7, max_peptide_length: 30, min_precursor_charge: 1, max_precursor_charge: 4, met_excision: true, diann_min_pr_mz: 350, diann_max_pr_mz: 1050, diann_min_fr_mz: 200, diann_max_fr_mz: 1800, diann_library_mass_acc: 18, diann_library_ms1_acc: 5, additional_insilico_args: null, database: null, diann_speclib: null, proteome: 'mouse', iproteomes_base: store, add_philosopher_decoy: false, add_philosopher_contaminants: false]
+                input[0] = resolved
+                input[1] = run + [diann_library_mass_acc: 18.0, diann_min_pr_mz: '350.00']
+                """
+            }
+        }
+        then {
+            def store = "${projectDir}/tests/fixtures/iproteomes"
+            assertAll(
+                { assert function.success },
+                { assert function.result == "${store}/test.predicted.speclib" }
+            )
+        }
+    }
+
+    test("resolveDiannSpeclib - modification lists compare as sets") {
+        function "resolveDiannSpeclib"
+        when {
+            function {
+                """
+                def store = "\${projectDir}/tests/fixtures/iproteomes"
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                def base = [proteome: 'mouse', iproteomes_base: store, iproteomes: [mouse: entry]]
+                def resolved = [key: 'mouse', organism: 'Mus musculus', fasta: "\${store}/test.fasta", fragpipe_fasta: "\${store}/test_decoys_contam.fasta", diann_speclib: "\${store}/test.predicted.speclib"]
+                def run = [enzyme: 'Trypsin/P', fixed_mods: null, variable_mods: 'Oxidation (M)', max_mods: 3, allowed_missed_cleavages: 1, min_peptide_length: 7, max_peptide_length: 30, min_precursor_charge: 1, max_precursor_charge: 4, met_excision: true, diann_min_pr_mz: 350, diann_max_pr_mz: 1050, diann_min_fr_mz: 200, diann_max_fr_mz: 1800, diann_library_mass_acc: 18, diann_library_ms1_acc: 5, additional_insilico_args: null, database: null, diann_speclib: null, proteome: 'mouse', iproteomes_base: store, add_philosopher_decoy: false, add_philosopher_contaminants: false]
+                input[0] = resolved + [key: 'twomods']
+                input[1] = run + [fixed_mods: 'Carbamidomethyl (C),Oxidation (M)', variable_mods: 'Oxidation (M),Phospho (STY)']
+                """
+            }
+        }
+        then {
+            def store = "${projectDir}/tests/fixtures/iproteomes"
+            assertAll(
+                { assert function.success },
+                { assert function.result == "${store}/test.predicted.speclib" }
+            )
+        }
+    }
+
+    test("resolveDiannSpeclib - settings differing from meta.json fail") {
+        function "resolveDiannSpeclib"
+        when {
+            function {
+                """
+                def store = "\${projectDir}/tests/fixtures/iproteomes"
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                def base = [proteome: 'mouse', iproteomes_base: store, iproteomes: [mouse: entry]]
+                def resolved = [key: 'mouse', organism: 'Mus musculus', fasta: "\${store}/test.fasta", fragpipe_fasta: "\${store}/test_decoys_contam.fasta", diann_speclib: "\${store}/test.predicted.speclib"]
+                def run = [enzyme: 'Trypsin/P', fixed_mods: null, variable_mods: 'Oxidation (M)', max_mods: 3, allowed_missed_cleavages: 1, min_peptide_length: 7, max_peptide_length: 30, min_precursor_charge: 1, max_precursor_charge: 4, met_excision: true, diann_min_pr_mz: 350, diann_max_pr_mz: 1050, diann_min_fr_mz: 200, diann_max_fr_mz: 1800, diann_library_mass_acc: 18, diann_library_ms1_acc: 5, additional_insilico_args: null, database: null, diann_speclib: null, proteome: 'mouse', iproteomes_base: store, add_philosopher_decoy: false, add_philosopher_contaminants: false]
+                input[0] = resolved
+                input[1] = run + [enzyme: 'Trypsin', allowed_missed_cleavages: 2]
+                """
+            }
+        }
+        then {
+            def store = "${projectDir}/tests/fixtures/iproteomes"
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains("enzyme library='K*,R*' run='!*P,K*,R*'") } }
+            )
+        }
+    }
+
+    test("resolveDiannSpeclib - a variable modification missing from the library fails") {
+        function "resolveDiannSpeclib"
+        when {
+            function {
+                """
+                def store = "\${projectDir}/tests/fixtures/iproteomes"
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                def base = [proteome: 'mouse', iproteomes_base: store, iproteomes: [mouse: entry]]
+                def resolved = [key: 'mouse', organism: 'Mus musculus', fasta: "\${store}/test.fasta", fragpipe_fasta: "\${store}/test_decoys_contam.fasta", diann_speclib: "\${store}/test.predicted.speclib"]
+                def run = [enzyme: 'Trypsin/P', fixed_mods: null, variable_mods: 'Oxidation (M)', max_mods: 3, allowed_missed_cleavages: 1, min_peptide_length: 7, max_peptide_length: 30, min_precursor_charge: 1, max_precursor_charge: 4, met_excision: true, diann_min_pr_mz: 350, diann_max_pr_mz: 1050, diann_min_fr_mz: 200, diann_max_fr_mz: 1800, diann_library_mass_acc: 18, diann_library_ms1_acc: 5, additional_insilico_args: null, database: null, diann_speclib: null, proteome: 'mouse', iproteomes_base: store, add_philosopher_decoy: false, add_philosopher_contaminants: false]
+                input[0] = resolved
+                input[1] = run + [variable_mods: 'Oxidation (M),Phospho (STY)']
+                """
+            }
+        }
+        then {
+            def store = "${projectDir}/tests/fixtures/iproteomes"
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains("variable_mods library='15.994915@M'") } }
+            )
+        }
+    }
+
+    test("resolveDiannSpeclib - extra in-silico arguments fail") {
+        function "resolveDiannSpeclib"
+        when {
+            function {
+                """
+                def store = "\${projectDir}/tests/fixtures/iproteomes"
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                def base = [proteome: 'mouse', iproteomes_base: store, iproteomes: [mouse: entry]]
+                def resolved = [key: 'mouse', organism: 'Mus musculus', fasta: "\${store}/test.fasta", fragpipe_fasta: "\${store}/test_decoys_contam.fasta", diann_speclib: "\${store}/test.predicted.speclib"]
+                def run = [enzyme: 'Trypsin/P', fixed_mods: null, variable_mods: 'Oxidation (M)', max_mods: 3, allowed_missed_cleavages: 1, min_peptide_length: 7, max_peptide_length: 30, min_precursor_charge: 1, max_precursor_charge: 4, met_excision: true, diann_min_pr_mz: 350, diann_max_pr_mz: 1050, diann_min_fr_mz: 200, diann_max_fr_mz: 1800, diann_library_mass_acc: 18, diann_library_ms1_acc: 5, additional_insilico_args: null, database: null, diann_speclib: null, proteome: 'mouse', iproteomes_base: store, add_philosopher_decoy: false, add_philosopher_contaminants: false]
+                input[0] = resolved
+                input[1] = run + [additional_insilico_args: '--no-prot-inf']
+                """
+            }
+        }
+        then {
+            def store = "${projectDir}/tests/fixtures/iproteomes"
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains("additional_insilico_args library=''") } }
+            )
+        }
+    }
+
+    test("resolveDiannSpeclib - an entry without diann_speclib means the pipeline builds the library") {
+        function "resolveDiannSpeclib"
+        when {
+            function {
+                """
+                def store = "\${projectDir}/tests/fixtures/iproteomes"
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                def base = [proteome: 'mouse', iproteomes_base: store, iproteomes: [mouse: entry]]
+                def resolved = [key: 'mouse', organism: 'Mus musculus', fasta: "\${store}/test.fasta", fragpipe_fasta: "\${store}/test_decoys_contam.fasta", diann_speclib: "\${store}/test.predicted.speclib"]
+                def run = [enzyme: 'Trypsin/P', fixed_mods: null, variable_mods: 'Oxidation (M)', max_mods: 3, allowed_missed_cleavages: 1, min_peptide_length: 7, max_peptide_length: 30, min_precursor_charge: 1, max_precursor_charge: 4, met_excision: true, diann_min_pr_mz: 350, diann_max_pr_mz: 1050, diann_min_fr_mz: 200, diann_max_fr_mz: 1800, diann_library_mass_acc: 18, diann_library_ms1_acc: 5, additional_insilico_args: null, database: null, diann_speclib: null, proteome: 'mouse', iproteomes_base: store, add_philosopher_decoy: false, add_philosopher_contaminants: false]
+                input[0] = resolved.findAll { k, v -> k != 'diann_speclib' }
+                input[1] = run
+                """
+            }
+        }
+        then {
+            def store = "${projectDir}/tests/fixtures/iproteomes"
+            assertAll(
+                { assert function.success },
+                { assert function.result == null }
+            )
+        }
+    }
+
+    test("resolveDiannSpeclib - a declared empty diann_speclib fails") {
+        function "resolveDiannSpeclib"
+        when {
+            function {
+                """
+                def store = "\${projectDir}/tests/fixtures/iproteomes"
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                def base = [proteome: 'mouse', iproteomes_base: store, iproteomes: [mouse: entry]]
+                def resolved = [key: 'mouse', organism: 'Mus musculus', fasta: "\${store}/test.fasta", fragpipe_fasta: "\${store}/test_decoys_contam.fasta", diann_speclib: "\${store}/test.predicted.speclib"]
+                def run = [enzyme: 'Trypsin/P', fixed_mods: null, variable_mods: 'Oxidation (M)', max_mods: 3, allowed_missed_cleavages: 1, min_peptide_length: 7, max_peptide_length: 30, min_precursor_charge: 1, max_precursor_charge: 4, met_excision: true, diann_min_pr_mz: 350, diann_max_pr_mz: 1050, diann_min_fr_mz: 200, diann_max_fr_mz: 1800, diann_library_mass_acc: 18, diann_library_ms1_acc: 5, additional_insilico_args: null, database: null, diann_speclib: null, proteome: 'mouse', iproteomes_base: store, add_philosopher_decoy: false, add_philosopher_contaminants: false]
+                input[0] = resolved + [diann_speclib: '']
+                input[1] = run
+                """
+            }
+        }
+        then {
+            def store = "${projectDir}/tests/fixtures/iproteomes"
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains("declares 'diann_speclib' but its path is empty") } }
+            )
+        }
+    }
+
+    test("resolveDiannSpeclib - a declared missing diann_speclib fails") {
+        function "resolveDiannSpeclib"
+        when {
+            function {
+                """
+                def store = "\${projectDir}/tests/fixtures/iproteomes"
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                def base = [proteome: 'mouse', iproteomes_base: store, iproteomes: [mouse: entry]]
+                def resolved = [key: 'mouse', organism: 'Mus musculus', fasta: "\${store}/test.fasta", fragpipe_fasta: "\${store}/test_decoys_contam.fasta", diann_speclib: "\${store}/test.predicted.speclib"]
+                def run = [enzyme: 'Trypsin/P', fixed_mods: null, variable_mods: 'Oxidation (M)', max_mods: 3, allowed_missed_cleavages: 1, min_peptide_length: 7, max_peptide_length: 30, min_precursor_charge: 1, max_precursor_charge: 4, met_excision: true, diann_min_pr_mz: 350, diann_max_pr_mz: 1050, diann_min_fr_mz: 200, diann_max_fr_mz: 1800, diann_library_mass_acc: 18, diann_library_ms1_acc: 5, additional_insilico_args: null, database: null, diann_speclib: null, proteome: 'mouse', iproteomes_base: store, add_philosopher_decoy: false, add_philosopher_contaminants: false]
+                input[0] = resolved + [diann_speclib: "\${store}/absent.speclib"]
+                input[1] = run
+                """
+            }
+        }
+        then {
+            def store = "${projectDir}/tests/fixtures/iproteomes"
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains("is missing or unreadable") } }
+            )
+        }
+    }
+
+    test("resolveDiannSpeclib - a hosted library without meta.json fails") {
+        function "resolveDiannSpeclib"
+        when {
+            function {
+                """
+                def store = "\${projectDir}/tests/fixtures/iproteomes"
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                def base = [proteome: 'mouse', iproteomes_base: store, iproteomes: [mouse: entry]]
+                def resolved = [key: 'mouse', organism: 'Mus musculus', fasta: "\${store}/test.fasta", fragpipe_fasta: "\${store}/test_decoys_contam.fasta", diann_speclib: "\${store}/test.predicted.speclib"]
+                def run = [enzyme: 'Trypsin/P', fixed_mods: null, variable_mods: 'Oxidation (M)', max_mods: 3, allowed_missed_cleavages: 1, min_peptide_length: 7, max_peptide_length: 30, min_precursor_charge: 1, max_precursor_charge: 4, met_excision: true, diann_min_pr_mz: 350, diann_max_pr_mz: 1050, diann_min_fr_mz: 200, diann_max_fr_mz: 1800, diann_library_mass_acc: 18, diann_library_ms1_acc: 5, additional_insilico_args: null, database: null, diann_speclib: null, proteome: 'mouse', iproteomes_base: store, add_philosopher_decoy: false, add_philosopher_contaminants: false]
+                input[0] = resolved + [key: 'nometa']
+                input[1] = run
+                """
+            }
+        }
+        then {
+            def store = "${projectDir}/tests/fixtures/iproteomes"
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains("meta.json is missing") } }
+            )
+        }
+    }
+
+    test("resolveDiannSpeclib - a hosted library without diann_library_settings fails") {
+        function "resolveDiannSpeclib"
+        when {
+            function {
+                """
+                def store = "\${projectDir}/tests/fixtures/iproteomes"
+                def entry = [organism: 'Mus musculus', fasta: 'test.fasta', fragpipe_fasta: 'test_decoys_contam.fasta', diann_speclib: 'test.predicted.speclib']
+                def base = [proteome: 'mouse', iproteomes_base: store, iproteomes: [mouse: entry]]
+                def resolved = [key: 'mouse', organism: 'Mus musculus', fasta: "\${store}/test.fasta", fragpipe_fasta: "\${store}/test_decoys_contam.fasta", diann_speclib: "\${store}/test.predicted.speclib"]
+                def run = [enzyme: 'Trypsin/P', fixed_mods: null, variable_mods: 'Oxidation (M)', max_mods: 3, allowed_missed_cleavages: 1, min_peptide_length: 7, max_peptide_length: 30, min_precursor_charge: 1, max_precursor_charge: 4, met_excision: true, diann_min_pr_mz: 350, diann_max_pr_mz: 1050, diann_min_fr_mz: 200, diann_max_fr_mz: 1800, diann_library_mass_acc: 18, diann_library_ms1_acc: 5, additional_insilico_args: null, database: null, diann_speclib: null, proteome: 'mouse', iproteomes_base: store, add_philosopher_decoy: false, add_philosopher_contaminants: false]
+                input[0] = resolved + [key: 'noobject']
+                input[1] = run
+                """
+            }
+        }
+        then {
+            def store = "${projectDir}/tests/fixtures/iproteomes"
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains("has no diann_library_settings object") } }
+            )
+        }
+    }
+
+    test("DIA-NN enzyme and modification flags equal quantms-utils 0.0.23 dianncfg") {
+        function "diannLibrarySettings"
+        when {
+            function {
+                """
+                def run = [enzyme: 'Trypsin/P', fixed_mods: 'Carbamidomethyl (C)', variable_mods: 'Oxidation (M),Phospho (STY),Acetyl (Protein N-term)']
+                input[0] = run
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.enzyme == 'K*,R*' },
+                { assert function.result.fixed_mods == '57.021464@C' },
+                { assert function.result.variable_mods == '15.994915@M;42.010565@*n;79.966331@STY' }
+            )
+        }
+    }
+
+    test("DIA-NN cut rules equal quantms-utils 0.0.23 for Trypsin, Lys-C") {
+        function "diannLibrarySettings"
+        when {
+            function {
+                """
+                input[0] = [enzyme: 'Trypsin', fixed_mods: null, variable_mods: null]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.enzyme == '!*P,K*,R*' }
+            )
+        }
+    }
+
+    test("DIA-NN cut rule of Lys-C equals quantms-utils 0.0.23") {
+        function "diannLibrarySettings"
+        when {
+            function {
+                """
+                input[0] = [enzyme: 'Lys-C', fixed_mods: null, variable_mods: null]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.enzyme == '!*P,K*' }
+            )
+        }
+    }
+
+    test("generateSdrfBookkeeping - fragpipe mode gives DDA JSON") {
+        function "generateSdrfBookkeeping"
+        when {
+            function {
+                """
+                input[0] = [mode: 'fragpipe', precursor_mass_tolerance: 10, precursor_mass_tolerance_unit: 'ppm', fragment_mass_tolerance: 20, fragment_mass_tolerance_unit: 'ppm']
+                input[1] = 'Mus musculus'
+                """
+            }
+        }
+        then {
+            def store = "${projectDir}/tests/fixtures/iproteomes"
+            assertAll(
+                { assert function.success },
+                { assert new groovy.json.JsonSlurper().parseText(function.result).acquisition_method == 'DDA' },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    test("getTmtLabelcheckWorkflow - TMT16 selects the 304 workflow") {
+        function "getTmtLabelcheckWorkflow"
+        when {
+            function {
+                """
+                input[0] = 'tmt16'
+                input[1] = '/pipeline'
+                """
+            }
+        }
+        then {
+            def store = "${projectDir}/tests/fixtures/iproteomes"
+            assertAll(
+                { assert function.success },
+                { assert function.result == '/pipeline/assets/TMT-labelcheck-304.workflow' },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    test("getTmtLabelcheckWorkflow - unknown TMT type fails") {
+        function "getTmtLabelcheckWorkflow"
+        when {
+            function {
+                """
+                input[0] = 'TMT99'
+                input[1] = '/pipeline'
+                """
+            }
+        }
+        then {
+            def store = "${projectDir}/tests/fixtures/iproteomes"
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains("Unknown tmt_type 'TMT99'") } }
+            )
+        }
+    }
+
+    // Second-pass workflow: db-path is FragPipe's databases folder (FragpipeRun.java:671-672); FragPipe stops
+    // with "FASTA file path is empty or the file is corrupted" (TabDatabase.java:274-276, FragpipeRun.java:1046-1049)
+    test("checkWorkflowDatabase - FragPipe's databases folder stops like FragPipe") {
+        function "checkWorkflowDatabase"
+        when {
+            function {
+                """
+                def props = new Properties()
+                props.setProperty('database.db-path', '/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/databases')
+                input[0] = props
+                input[1] = ['/data/human.fasta']
+                """
+            }
+        }
         then {
             assertAll(
                 { assert function.failed },
-                { assert function.stdout.any { it.contains("No protein database for organism 'Xenopus laevis': pass --database <fasta>") } },
-                { assert function.stdout.any { it.contains('Available: Homo sapiens, Mus musculus') } }
+                { assert (function.stdout + function.stderr).any { l -> l.contains('FASTA file path is empty or the file is corrupted (database.db-path=/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/databases') } }
             )
         }
     }
 
-    test("getProteinDatabase - --database overrides the reference proteome") {
-
-        when {
-            params {
-                database = 'custom_database.fasta'
+    // desktop installs: C:\\...\\FragPipe-24.0\\databases, /opt/fragpipe/Databases/ - the last segment, any case
+    [['windows', 'C:\\\\Users\\\\me\\\\FragPipe-24.0\\\\databases'], ['unix', '/opt/fragpipe/Databases/']].each { kind, db ->
+        test("checkWorkflowDatabase - ${kind} databases folder stops") {
+            function "checkWorkflowDatabase"
+            when {
+                function {
+                    """
+                    def props = new Properties()
+                    props.setProperty('database.db-path', '${db}')
+                    input[0] = props
+                    input[1] = ['/data/human.fasta']
+                    """
+                }
             }
+            then {
+                assertAll(
+                    { assert function.failed },
+                    { assert (function.stdout + function.stderr).any { l -> l.contains('FASTA file path is empty or the file is corrupted') } }
+                )
+            }
+        }
+    }
+
+    // --database replaces the workflow's db-path: renamed copies warn and pass
+    test("checkWorkflowDatabase - another file name warns and passes") {
+        function "checkWorkflowDatabase"
+        when {
             function {
                 """
-                input[0] = 'Homo sapiens'
+                def props = new Properties()
+                props.setProperty('database.db-path', '/repro/db/2024-04-06-decoys-reviewed-contam.fas.fas')
+                input[0] = props
+                input[1] = ['s3://bucket/renamed_human_decoys_contam.fasta']
                 """
             }
         }
-
         then {
             assertAll(
                 { assert function.success },
-                { assert function.result == 'custom_database.fasta' }
+                // log.warn goes to the run log
+                { assert new File("${outputDir}/../meta/nextflow.log").text.contains("names another file than the FASTA the run searches (renamed_human_decoys_contam.fasta); --database replaces the workflow's db-path") }
+            )
+        }
+    }
+
+    test("checkWorkflowDatabase - the same file name or an empty db-path passes") {
+        function "checkWorkflowDatabase"
+        when {
+            function {
+                """
+                def same = new Properties()
+                same.setProperty('database.db-path', 'C:\\\\fp\\\\human.fasta')
+                def empty = new Properties()
+                empty.setProperty('database.db-path', '')
+                [same, empty].each { props -> checkWorkflowDatabase(props, ['s3://bucket/ref/human.fasta']) }
+                input[0] = new Properties()
+                input[1] = ['/data/human.fasta']
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert !new File("${outputDir}/../meta/nextflow.log").text.contains('names another file') }
             )
         }
     }

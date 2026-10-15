@@ -17,7 +17,7 @@ tools:
       homepage: "https://github.com/Nesvilab/MSFragger"
       documentation: "https://github.com/Nesvilab/MSFragger/wiki"
       tool_dev_url: "https://github.com/Nesvilab/MSFragger"
-      licence: ["Commercial"]
+      licence: ["Proprietary (free for academic research)"]
       note: "License pre-installed in container"
 
 input:
@@ -49,11 +49,52 @@ output:
           type: file
           description: Converted mzML file from DIA-Tracer
           pattern: "*_diatracer.mzML"
-  versions:
-    - versions.yml:
+  license_agreement:
+    - I_AGREE_FRAGPIPE_LICENSE_AGREEMENT:
         type: file
-        description: File containing software versions
-        pattern: "versions.yml"
+        description: Marker file recording the FragPipe license agreement the run was started under
+        pattern: "I_AGREE_FRAGPIPE_LICENSE_AGREEMENT"
+  versions_diatracer:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - diatracer:
+          type: string
+          description: The name of the tool
+      - "cat .diatracer_version":
+          type: eval
+          description: The diaTracer version recorded from the FragPipe tools directory
+  versions_fragpipe:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - fragpipe:
+          type: string
+          description: The name of the tool
+      - "cat .fragpipe_version":
+          type: eval
+          description: The FragPipe version of the tools directory
+
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - diatracer:
+          type: string
+          description: The name of the tool
+      - "cat .diatracer_version":
+          type: eval
+          description: The diaTracer version recorded from the FragPipe tools directory
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - fragpipe:
+          type: string
+          description: The name of the tool
+      - "cat .fragpipe_version":
+          type: eval
+          description: The FragPipe version of the tools directory
 
 authors:
   - "@dongzehe"

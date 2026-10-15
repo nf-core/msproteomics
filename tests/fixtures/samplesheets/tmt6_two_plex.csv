@@ -1,0 +1,13 @@
+sample,spectra,condition,label,experiment,bioreplicate,data_type
+plex1_126,${FIXTURES}/spectra/plex1.mzML,plex1,TMT126,plex1,,DDA
+plex1_127N,${FIXTURES}/spectra/plex1.mzML,plex1,TMT127N,plex1,,DDA
+plex1_128C,${FIXTURES}/spectra/plex1.mzML,plex1,TMT128C,plex1,,DDA
+plex1_129N,${FIXTURES}/spectra/plex1.mzML,plex1,TMT129N,plex1,,DDA
+plex1_130C,${FIXTURES}/spectra/plex1.mzML,plex1,TMT130C,plex1,,DDA
+plex1_131N,${FIXTURES}/spectra/plex1.mzML,plex1,TMT131N,plex1,,DDA
+plex2_126,${FIXTURES}/spectra/plex2.mzML,plex2,TMT126,plex2,,DDA
+plex2_127N,${FIXTURES}/spectra/plex2.mzML,plex2,TMT127N,plex2,,DDA
+plex2_128C,${FIXTURES}/spectra/plex2.mzML,plex2,TMT128C,plex2,,DDA
+plex2_129N,${FIXTURES}/spectra/plex2.mzML,plex2,TMT129N,plex2,,DDA
+plex2_130C,${FIXTURES}/spectra/plex2.mzML,plex2,TMT130C,plex2,,DDA
+plex2_131N,${FIXTURES}/spectra/plex2.mzML,plex2,TMT131N,plex2,,DDA

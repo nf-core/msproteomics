@@ -1,0 +1,17 @@
+{
+    "PXD001468 Basic-Search_submzml - second-pass workflow and manifest are FragPipe's": {
+        "content": [
+            [
+                [
+                    "FRAGPIPESECONDPASS",
+                    "python"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-11T07:50:27.050748851",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

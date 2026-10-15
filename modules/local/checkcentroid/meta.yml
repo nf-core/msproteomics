@@ -1,0 +1,62 @@
+name: "checkcentroid"
+description: FragPipe's centroid check of the first LC-MS file (CmdCheckCentroid); fails on profile-mode mzML/mzXML
+keywords:
+  - proteomics
+  - fragpipe
+  - centroid
+  - mzml
+tools:
+  - fragpipe:
+      description: |
+        FragPipe's org.nesvilab.fragpipe.util.CheckCentroid. It reads the scans of an mzML or
+        mzXML file and exits 1 when any scan is not centroided; other formats pass.
+      homepage: "https://fragpipe.nesvilab.org/"
+      documentation: "https://fragpipe.nesvilab.org/docs/tutorial_convert.html"
+      tool_dev_url: "https://github.com/Nesvilab/FragPipe"
+      licence: ["GPL-3.0"]
+
+input:
+  - - meta:
+        type: map
+        description: Metadata of the checked LC-MS file
+    - lcms:
+        type: file
+        description: The first LC-MS file of the run (FragPipe checks only one)
+        pattern: "*.{raw,mzML,mzXML,mgf,mzBIN,d}"
+
+output:
+  log:
+    - - meta:
+          type: map
+          description: Metadata of the checked LC-MS file
+      - "check_centroid.log":
+          type: file
+          description: The command line followed by the tool output
+          pattern: "check_centroid.log"
+  versions_fragpipe:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - fragpipe:
+          type: string
+          description: The name of the tool
+      - "cat .fragpipe_version":
+          type: eval
+          description: The FragPipe version of the tools directory
+
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - fragpipe:
+          type: string
+          description: The name of the tool
+      - "cat .fragpipe_version":
+          type: eval
+          description: The FragPipe version of the tools directory
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

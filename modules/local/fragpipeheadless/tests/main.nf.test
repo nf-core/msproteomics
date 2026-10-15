@@ -1,0 +1,132 @@
+nextflow_process {
+
+    name "Test Process FRAGPIPEHEADLESS"
+    script "../main.nf"
+    process "FRAGPIPEHEADLESS"
+
+    tag "modules"
+    tag "modules_local"
+    tag "fragpipeheadless"
+
+    test("fragpipe_headless - stub LFQ manifest keeps experiment and bioreplicate") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            process {
+                """
+                def raw_file = file("\${workDir}/sample.mzML")
+                raw_file.text = "mock"
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">sp|P00001|TEST\\nMKTEST"
+                def manifest_rows = [['sample.mzML', 'experiment1', 1, 'DDA', 'experiment1_1']]
+                def annotation_rows = []
+
+                input[0] = raw_file
+                input[1] = fasta_file
+                input[2] = 'mock'
+                input[3] = manifest_rows
+                input[4] = annotation_rows
+                """
+            }
+        }
+
+        then {
+            // Absolute work-dir prefixes are dropped; the rest is what FragPipe reads.
+            def manifest_lines = path(process.out.manifest[0]).readLines().collect { line -> line.replaceFirst(/^.*\/raw_files\//, 'raw_files/') }
+            assertAll (
+                { assert process.success },
+                { assert manifest_lines == ["raw_files/sample.mzML\texperiment1\t1\tDDA"] },
+                // versions.yml is exactly the two YAML lines (an unterminated here-document left END_VERSIONS in it)
+                { assert path(process.out.versions[0]).readLines() == ['"FRAGPIPEHEADLESS":', '    fragpipe: "24.0"'] },
+                { assert process.out.annotations == [] },
+                { assert snapshot(
+                    manifest_lines,
+                    process.out.all_results,
+                    process.out.combined_protein,
+                    process.out.combined_peptide,
+                    process.out.combined_ion
+                ).match() }
+            )
+        }
+    }
+
+    test("fragpipe_headless - stub TMT one directory and annotation per group, blank group at root") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            process {
+                """
+                def p1 = file("\${workDir}/p1.mzML")
+                p1.text = "mock"
+                def p2 = file("\${workDir}/p2.mzML")
+                p2.text = "mock"
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">sp|P00001|TEST\\nMKTEST"
+                def manifest_rows = [['p1.mzML', 'plex1', null, 'DDA', 'plex1'], ['p2.mzML', '', null, 'DDA', '']]
+                def annotation_rows = [['plex1', '126', 'S1'], ['plex1', '127N', 'NA'], ['', '126', '_126'], ['', '127N', '_127N']]
+
+                input[0] = [p1, p2]
+                input[1] = fasta_file
+                input[2] = 'mock'
+                input[3] = manifest_rows
+                input[4] = annotation_rows
+                """
+            }
+        }
+
+        then {
+            def manifest_lines = path(process.out.manifest[0]).readLines().collect { line -> line.replaceFirst(/^.*\/raw_files\//, 'raw_files/') }
+            def annotations = process.out.annotations[0].collectEntries { f -> [f.toString().replaceFirst(/^.*\/raw_files\//, 'raw_files/'), path(f).readLines()] }
+            assertAll (
+                { assert process.success },
+                { assert manifest_lines == ["raw_files/plex1/p1.mzML\tplex1\t\tDDA", "raw_files/p2.mzML\t\t\tDDA"] },
+                { assert annotations == ['raw_files/plex1/plex1_annotation.txt': ['126 S1', '127N NA'], 'raw_files/_annotation.txt': ['126 _126', '127N _127N']] },
+                { assert snapshot(manifest_lines, annotations).match() }
+            )
+        }
+    }
+
+    // FragPipe headless reads .raw itself; the staged symlink is replaced by the file, because
+    // batmass-io under Mono sizes a symlink as the link
+    test("fragpipe_headless - stub RAW is a real file in raw_files") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            process {
+                """
+                def raw_file = file("\${workDir}/run1.raw")
+                raw_file.text = "raw bytes"
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">sp|P00001|TEST\\nMKTEST"
+                def manifest_rows = [['run1.raw', 'exp1', null, 'DDA', 'exp1']]
+                def annotation_rows = []
+
+                input[0] = raw_file
+                input[1] = fasta_file
+                input[2] = 'mock'
+                input[3] = manifest_rows
+                input[4] = annotation_rows
+                """
+            }
+        }
+
+        then {
+            // the task's staged input: <workDir>/<2 hex>/<30 hex>/raw_files/run1.raw (LFQ: no group directories)
+            def staged = java.nio.file.Files.walk(java.nio.file.Paths.get(workDir.toString()))
+                .filter { p -> p.toString() ==~ /.*\/[0-9a-f]{2}\/[0-9a-f]{30}\/raw_files\/run1\.raw/ }
+                .findFirst().get()
+            def manifest_lines = path(process.out.manifest[0]).readLines().collect { line -> line.replaceFirst(/^.*\/raw_files\//, 'raw_files/') }
+            assertAll (
+                { assert process.success },
+                { assert java.nio.file.Files.isRegularFile(staged, java.nio.file.LinkOption.NOFOLLOW_LINKS) },
+                { assert staged.text == 'raw bytes' },
+                { assert manifest_lines == ["raw_files/run1.raw\texp1\t\tDDA"] },
+                // manifest.fp-manifest holds the task's absolute paths: its lines are compared above, not its md5
+                { assert snapshot(manifest_lines, process.out.all_results, process.out.versions).match() }
+            )
+        }
+    }
+}

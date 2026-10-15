@@ -1,0 +1,39 @@
+// FragPipe 24.0 golden comparison: PairScans on PXD017646 2019_09_16_StcEmix_35trig_EThcD25_rep2.raw
+// (HCD-pd-EThcD), bundled glyco-O-Pair.workflow (activation1=HCD, activation2=ETD, reverse=false,
+// single=false). FragPipe ran (log of the golden run):
+//   java -Xmx200G -Dlibs.bruker.dir=... -Dlibs.thermo.dir=... -cp <lib>/fragpipe-24.0.jar:<tools>/batmass-io-1.36.6.jar
+//     org.nesvilab.fragpipe.util.PairScans <raw> 48 HCD ETD false false
+// Env: GOLDEN_ROOT (PXD017646/glyco-O-Pair_perfile: the real .raw and FragPipe's .pairs), FRAGPIPE_CONTAINER (FragPipe image).
+
+nextflow_process {
+
+    name "Test Process PAIRSCANS against FragPipe 24.0"
+    script "../main.nf"
+    process "PAIRSCANS"
+    config "./golden.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "pairscans"
+    tag "integration"
+    tag "golden"
+
+    test("pairscans - PXD017646 HCD-pd-EThcD raw reproduces FragPipe's .pairs") {
+
+        when {
+            process {
+                """
+                input[0] = channel.of([ [ id: 'stce_rep2', group: 'stce' ], file((System.getenv('GOLDEN_ROOT') + '/PXD017646/glyco-O-Pair_perfile/files/input/2019_09_16_StcEmix_35trig_EThcD25_rep2.raw'), checkIfExists: true), ['HCD', 'ETD', 'false', 'false'] ])
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert new File(process.out.pairs[0][1].toString()).text == new File((System.getenv('GOLDEN_ROOT') + '/PXD017646/glyco-O-Pair_perfile/files/input/2019_09_16_StcEmix_35trig_EThcD25_rep2.pairs')).text },
+                { assert path(process.out.log[0][1]).text.contains('org.nesvilab.fragpipe.util.PairScans') }
+            )
+        }
+    }
+}

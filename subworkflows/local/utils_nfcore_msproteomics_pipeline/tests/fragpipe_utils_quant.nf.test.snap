@@ -1,0 +1,34 @@
+{
+    "lfqExperimentAnnotationLines - experiments as in the golden FragPipe run": {
+        "content": [
+            [
+                "file\tsample\tsample_name\tcondition\treplicate",
+                "/in/X_C02s011.mzML\tC02\tC02\tC02\t1",
+                "/in/X_D02s012.mzML\tD02\tD02\tD02\t1"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-05T14:52:35.104487155"
+    },
+    "isobaricExperimentAnnotationLines - condition and replicate from the sample name, NA skipped": {
+        "content": [
+            [
+                "plex\tchannel\tsample\tsample_name\tcondition\treplicate",
+                "\t126\t_126\t_126\t\t126",
+                "p2\t126\texp1_126\texp1_126\texp1\t126",
+                "p2\t127C\tBridge\tBridge\tBridge\t1",
+                "p2\t128N\ta_b_3\ta_b_3\tb\t3",
+                "p2\t128C\ta_b_c\ta_b_c\tc\t1",
+                "p2\t129N\tx_y\tx_y\ty\t1"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-10-05T14:53:15.178774032"
+    }
+}

@@ -1,0 +1,71 @@
+name: "fragpipesaveworkflow"
+description: Write FragPipe's saved UI state (fragpipe.workflow) for a run with FragPipe's own load and save code
+keywords:
+  - fragpipe
+  - workflow
+  - provenance
+tools:
+  - fragpipe:
+      description: FragPipe proteomics platform (its headless UI state writer)
+      homepage: https://fragpipe.nesvilab.org/
+      licence: ["GPL-3.0-or-later"]
+input:
+  - - meta:
+        type: map
+        description: Run metadata
+    - workflow_file:
+        type: file
+        description: FragPipe .workflow file of the run, staged under input/ so an input named fragpipe.workflow is not overwritten through its staged link
+        pattern: "*.workflow"
+    - manifest:
+        type: file
+        description: fragpipe-files.fp-manifest of the run, naming the staged spectra (spectra/<name>)
+        pattern: "*.fp-manifest"
+    - ui_state:
+        type: directory
+        description: Directory with the compiled FragpipeUiState class (assets/fragpipe_ui_state)
+    - database:
+        type: file
+        description: Run database, staged under database/ and written as database.db-path
+        pattern: "*.{fasta,fas,fa}"
+    - workdir:
+        type: string
+        description: Absolute path written as workdir
+    - spectra:
+        type: file
+        description: LC-MS files listed in the manifest, staged under spectra/ (must exist for FragPipe's manifest load)
+        pattern: "*"
+output:
+  workflow:
+    - - meta:
+          type: map
+          description: Run metadata
+      - fragpipe.workflow:
+          type: file
+          description: FragPipe's saved UI state
+          pattern: "fragpipe.workflow"
+  versions_fragpipe:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - fragpipe:
+          type: string
+          description: The name of the tool
+      - "grep -m1 '^# FragPipe' fragpipe.workflow | sed 's/.* version //'":
+          type: eval
+          description: The FragPipe version from the header of the saved workflow file
+
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - fragpipe:
+          type: string
+          description: The name of the tool
+      - "grep -m1 '^# FragPipe' fragpipe.workflow | sed 's/.* version //'":
+          type: eval
+          description: The FragPipe version from the header of the saved workflow file
+
+authors:
+  - "@dongzehe"

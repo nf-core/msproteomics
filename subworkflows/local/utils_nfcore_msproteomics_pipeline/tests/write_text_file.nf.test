@@ -1,0 +1,50 @@
+// Unit tests for write_text_file.nf (WRITETEXTFILE).
+
+nextflow_function {
+
+    name "Test Functions write_text_file"
+    script "../write_text_file.nf"
+
+    tag "subworkflows"
+    tag "write_text_file"
+    tag "stub"
+
+    // WRITETEXTFILE bodies: here-doc for a final newline, printf for none, ':' for an empty file
+    [['trailing newline', "'a\\tb\\n'"], ['no final newline', "'a\\tb'"], ['empty', "''"]].each { label, text ->
+        test("textFileCommand - ${label}") {
+            function "textFileCommand"
+            when {
+                function {
+                    """
+                    input[0] = 'x.txt'
+                    input[1] = ${text}
+                    """
+                }
+            }
+            then {
+                assertAll(
+                    { assert function.success },
+                    { assert snapshot(function.result).match() }
+                )
+            }
+        }
+    }
+
+    test("textFileCommand - quote in the file name") {
+        function "textFileCommand"
+        when {
+            function {
+                """
+                input[0] = "it's.txt"
+                input[1] = 'a\\n'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.startsWith("cat > 'it'\\''s.txt' <<'WRITE_TEXT_FILE_END'") }
+            )
+        }
+    }
+}

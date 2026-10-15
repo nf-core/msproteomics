@@ -5,7 +5,7 @@ nextflow_process {
     process "PTMPROPHET"
 
     tag "modules"
-    tag "modules_nfcore"
+    tag "modules_local"
     tag "ptmprophet"
 
     test("ptmprophet - stub") {
@@ -15,81 +15,45 @@ nextflow_process {
         when {
             process {
                 """
-                def pepxml_file = file("\${workDir}/test.pep.xml")
-                pepxml_file.text = "<?xml version='1.0'?><msms_pipeline_analysis></msms_pipeline_analysis>"
-                // PTMProphet CLI config (e.g., "MINPROB=0.5 STATIC KEEPOLD")
-                def config_cli = "MINPROB=0.5 STATIC KEEPOLD"
-
-                input[0] = channel.of([[ id: 'test_sample' ], pepxml_file, config_cli])
+                ['interact-s1_rank2.pep.xml', 's1.mzML'].each { n -> file("\${workDir}/\${n}").text = 'mock' }
+                input[0] = channel.of([[ id: 's1' ], file("\${workDir}/interact-s1_rank2.pep.xml"), [file("\${workDir}/s1.mzML")], ['s1.mzML'],
+                    'NOSTACK KEEPOLD STATIC FRAGPPMTOL=10 EM=1 NIONS=b M:15.9949 MAXTHREADS=8 MINPROB=0.5'])
                 """
             }
         }
 
         then {
+            def lines = new File(process.out.results_dir.get(0).get(1), 'ptmprophet.log').readLines()
+            def line = lines[1]
             assertAll (
                 { assert process.success },
-                { assert snapshot(process.out.results_dir, process.out.mod_pepxml, process.out.versions_ptmprophet, process.out.versions_fragpipe).match() }
+                // spectra staged with the pepXML; base_name pointed at them (RewritePepxml, CmdPeptideProphet.java:426-451)
+                { assert lines[0] == 'java -cp /fragpipe_bin/fragpipe-24.0/fragpipe-24.0/lib/* org.nesvilab.fragpipe.util.RewritePepxml {CWD}/interact-s1_rank2.pep.xml {CWD}/s1.mzML' : lines[0] },
+                // CmdPtmProphet.java:111-122: MAXTHREADS= dropped, MAXTHREADS=1 last, then input and .mod.pep.xml output
+                { assert line == '/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools/PTMProphet/PTMProphetParser-6.3.2 NOSTACK KEEPOLD STATIC FRAGPPMTOL=10 EM=1 NIONS=b M:15.9949 MINPROB=0.5 MAXTHREADS=1 interact-s1_rank2.pep.xml interact-s1_rank2.mod.pep.xml' : line },
+                { assert snapshot(process.out).match() }
             )
         }
     }
 
-    test("ptmprophet - integration with test data") {
-        tag "integration"
+    test("ptmprophet - stub rejects a non .pep.xml input") {
+        options "-stub"
+        tag "stub"
 
         when {
             process {
                 """
-                // Create minimal valid pepXML inline
-                def pepxml_file = file("\${workDir}/test_sample.pep.xml")
-                pepxml_file.text = '<?xml version="1.0" encoding="UTF-8"?>\\n' +
-                    '<msms_pipeline_analysis date="2024-01-15T10:00:00" xmlns="http://regis-web.systemsbiology.net/pepXML" summary_xml="test_sample.pep.xml">\\n' +
-                    '  <msms_run_summary base_name="test_sample" raw_data_type="raw" raw_data=".mzML" msManufacturer="Thermo Scientific" msModel="Orbitrap Exploris">\\n' +
-                    '    <sample_enzyme name="trypsin">\\n' +
-                    '      <specificity cut="KR" no_cut="P" sense="C"/>\\n' +
-                    '    </sample_enzyme>\\n' +
-                    '    <search_summary base_name="test_sample" search_engine="MSFragger" search_engine_version="4.1" precursor_mass_type="monoisotopic" fragment_mass_type="monoisotopic" search_id="1">\\n' +
-                    '      <search_database local_path="/path/to/database.fasta" size="5000000" type="AA"/>\\n' +
-                    '      <aminoacid_modification aminoacid="C" massdiff="57.02146" mass="160.0307" variable="N"/>\\n' +
-                    '      <aminoacid_modification aminoacid="M" massdiff="15.9949" mass="147.0354" variable="Y"/>\\n' +
-                    '    </search_summary>\\n' +
-                    '    <spectrum_query spectrum="test_sample.00001.00001.2" start_scan="1" end_scan="1" precursor_neutral_mass="1234.5678" assumed_charge="2" index="1" retention_time_sec="1800.5">\\n' +
-                    '      <search_result>\\n' +
-                    '        <search_hit hit_rank="1" peptide="PEPTIDEKTEST" peptide_prev_aa="R" peptide_next_aa="A" protein="sp|P12345|TEST_ECOLI" num_tot_proteins="1" num_matched_ions="12" tot_num_ions="22" calc_neutral_pep_mass="1234.5678" massdiff="0.0002" num_tol_term="2" num_missed_cleavages="0" is_rejected="0" protein_descr="Test protein OS=Erwinia carotovora">\\n' +
-                    '          <modification_info mod_nterm_mass="0" mod_cterm_mass="0">\\n' +
-                    '            <mod_aminoacid_mass position="8" mass="147.0354"/>\\n' +
-                    '          </modification_info>\\n' +
-                    '          <search_score name="hyperscore" value="25.5"/>\\n' +
-                    '          <search_score name="nextscore" value="12.3"/>\\n' +
-                    '          <search_score name="expect" value="0.0001"/>\\n' +
-                    '          <analysis_result analysis="peptideprophet">\\n' +
-                    '            <peptideprophet_result probability="0.999" all_ntt_prob="(0.0001,0.001,0.999)">\\n' +
-                    '              <search_score_summary>\\n' +
-                    '                <parameter name="fval" value="3.5678"/>\\n' +
-                    '                <parameter name="ntt" value="2"/>\\n' +
-                    '                <parameter name="nmc" value="0"/>\\n' +
-                    '                <parameter name="massd" value="0.0002"/>\\n' +
-                    '              </search_score_summary>\\n' +
-                    '            </peptideprophet_result>\\n' +
-                    '          </analysis_result>\\n' +
-                    '        </search_hit>\\n' +
-                    '      </search_result>\\n' +
-                    '    </spectrum_query>\\n' +
-                    '  </msms_run_summary>\\n' +
-                    '</msms_pipeline_analysis>'
-                def config_cli = "MINPROB=0.5 STATIC KEEPOLD"
-
-                input[0] = channel.of([[ id: 'ptmprophet_test' ], pepxml_file, config_cli])
+                file("\${workDir}/s1.pepXML").text = 'mock'
+                input[0] = channel.of([[ id: 's1' ], file("\${workDir}/s1.pepXML"), [], ['s1.mzML'], 'KEEPOLD'])
                 """
             }
         }
 
         then {
-            // PTMProphet requires PTMs to be present in pepXML
-            // Test verifies module can process valid pepXML input
             assertAll (
-                { assert process.out.versions_ptmprophet.size() >= 0 },
-                { assert process.out.versions_fragpipe.size() >= 0 }
+                { assert process.failed }
             )
         }
     }
+
 }

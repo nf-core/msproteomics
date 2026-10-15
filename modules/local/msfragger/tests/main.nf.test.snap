@@ -25,18 +25,14 @@
                     "sample_scores_histogram.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
             ],
-            [
-                
-            ],
-            [
-                
-            ],
+            [],
             [
                 [
                     {
                         "id": "test_sample"
                     },
                     [
+                        "fragger.params:md5,1782cf2903880519e383dd4ee3b250cf",
                         "msfragger.log:md5,d41d8cd98f00b204e9800998ecf8427e",
                         "sample.pepXML:md5,d41d8cd98f00b204e9800998ecf8427e",
                         "sample.pin:md5,d41d8cd98f00b204e9800998ecf8427e",
@@ -59,7 +55,7 @@
                 [
                     "MSFRAGGER",
                     "msfragger",
-                    "24.0"
+                    "4.4.1"
                 ]
             ],
             [
@@ -70,10 +66,57 @@
                 ]
             ]
         ],
-        "timestamp": "2026-03-31T19:40:49.798682785",
+        "timestamp": "2026-10-14T19:42:11.623429691",
         "meta": {
             "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
+            "nextflow": "25.10.4"
+        }
+    },
+    "msfragger - stub staged RAW symlink is replaced by the file": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "run1"
+                    },
+                    "run1.pepXML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "run1"
+                    },
+                    "run1.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "run1"
+                    },
+                    "run1_uncalibrated.mzML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    "MSFRAGGER",
+                    "msfragger",
+                    "4.4.1"
+                ]
+            ],
+            [
+                [
+                    "MSFRAGGER",
+                    "fragpipe",
+                    "24.0"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-14T20:27:33.187815314",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
         }
     },
     "msfragger - local TMT subset": {
@@ -87,12 +130,48 @@
                     "msfragger",
                     "4.4.1"
                 ]
+            ],
+            [
+                [
+                    "MSFRAGGER",
+                    "fragpipe",
+                    "24.0"
+                ]
             ]
         ],
-        "timestamp": "2026-03-28T02:00:57.560740625",
+        "timestamp": "2026-10-05T02:56:38.940864203",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "msfragger - stub DIA params write ranked pepXMLs": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test_dia"
+                    },
+                    [
+                        "sample_dia_rank1.pepXML:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_dia_rank2.pepXML:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "sample_dia_rank3.pepXML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test_dia"
+                    },
+                    "sample_dia.pin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-05T02:01:18.23141342",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
         }
     }
 }

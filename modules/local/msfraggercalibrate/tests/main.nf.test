@@ -1,0 +1,45 @@
+nextflow_process {
+
+    name "Test Process MSFRAGGERCALIBRATE"
+    script "../main.nf"
+    process "MSFRAGGERCALIBRATE"
+    config "./test.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "msfraggercalibrate"
+
+    test("msfragger_calibrate - stub calibration search of one file") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def fasta_file = file("\${workDir}/sorted_test.fasta")
+                def mzml_file = file("\${workDir}/sample1.mzML")
+
+                fasta_file.text = ">sp|P00001|TEST\\nMKTESTPEPTIDE"
+                mzml_file.text = "mock mzML 1"
+
+                input[0] = [[ id: 'sample1', data_type: 'DIA' ], mzml_file, "database_name = x\\nnum_threads = 0\\ncalibrate_mass = 2\\t\\t\\t# c\\ncheck_spectral_files = 1\\t\\t\\t# d\\n"]
+                input[1] = fasta_file
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert [process.out.calibration.get(0).get(2)].flatten().collect { f -> new File(f.toString()).name } == ['sample1.mzBIN_calibrated'] },
+                { assert snapshot(
+                    process.out.calibration,
+                    process.out.uncalibrated_mzbin,
+                    process.out.license_agreement,
+                    process.out.versions_msfragger,
+                    process.out.versions_fragpipe
+                ).match() }
+            )
+        }
+    }
+}

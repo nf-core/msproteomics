@@ -1,0 +1,41 @@
+{
+    "parse_fragpipe_workflow - FragPipe 24.0 run decisions for 7 bundled workflows": {
+        "content": [
+            [
+                [
+                    "Basic-Search",
+                    "tool_configs.json:md5,6f615c06291ba7da0cb2e8c21d17624c"
+                ],
+                [
+                    "DIA_SpecLib_Quant",
+                    "tool_configs.json:md5,279ab3bc3457d030cb3a50998b36ee15"
+                ],
+                [
+                    "LFQ-MBR",
+                    "tool_configs.json:md5,de75b700e2b666a77a17845c780eb716"
+                ],
+                [
+                    "Nonspecific-HLA",
+                    "tool_configs.json:md5,38f5b382b8fb555ffeb465cee244da71"
+                ],
+                [
+                    "Open",
+                    "tool_configs.json:md5,55567185a0afdbb0ad879e2ef476c068"
+                ],
+                [
+                    "TMT10",
+                    "tool_configs.json:md5,7aab37f202e6aa39dd7d2edcde427354"
+                ],
+                [
+                    "glyco-N-LFQ",
+                    "tool_configs.json:md5,27b1bb9628d3b62fe025a354898d458d"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-14T13:55:42.891655134",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

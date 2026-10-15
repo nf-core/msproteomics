@@ -1,87 +1,76 @@
+/*
+ * FREEQUANT: Philosopher FreeQuant label-free MS1 quantification of one FragPipe group (CmdFreequant)
+ *
+ * Input:
+ *   - meta: Group metadata map
+ *   - results_dir: the group's PHILOSOPHERFILTER directory with its .meta workspace
+ *   - lcms_files: LC-MS files of the group
+ *   - config_cli: FreeQuant options (--ptw, --tol)
+ *
+ * Output:
+ *   - results_dir: the group directory after FreeQuant
+ *   - versions_philosopher / versions_fragpipe: versions (topic: versions)
+ */
+include { fragpipeTools } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
+include { fragpipeToolVersions } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_b'
+
 process FREEQUANT {
     tag "${meta.id}"
     label 'process_medium'
 
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'docker://fcyucn/fragpipe:24.0' :
-        'docker.io/fcyucn/fragpipe:24.0' }"
-
     input:
     // FreeQuant performs label-free quantification using Philosopher
-    // results_dir: directory containing psm.tsv from PHILOSOPHER_FILTER
-    // mzml_dir: directory containing mass spec files
-    // config_cli: FreeQuant parameters as CLI string (coupled with sample inputs)
-    tuple val(meta), path(results_dir), path(mzml_dir), val(config_cli)
+    // results_dir: the group's PHILOSOPHERFILTER directory with its .meta/ workspace (filter ran
+    //              without report/clean); copied to ${prefix}/, FragPipe's group work dir
+    // lcms_files: LC-MS files of the FragPipe group, staged into lcms_files/ (the --dir FragPipe passes)
+    // config_cli: FreeQuant options (--ptw <rt-tol> --tol <mz-tol>, QuantPanelLabelfree.getFreequantOptsAsText)
+    tuple val(meta), path(results_dir, stageAs: 'input_group/*'), path(lcms_files, stageAs: 'lcms_files/*'), val(config_cli)
 
     output:
     tuple val(meta), path("${prefix}")                          , emit: results_dir
-    tuple val(meta), path("${prefix}/ion.tsv")                  , emit: ions, optional: true
-    tuple val("${task.process}"), val('philosopher'), eval("cat .philosopher_version"), emit: versions_philosopher, topic: versions
+    tuple val("${task.process}"), val('philosopher'), val(fragpipeToolVersions().philosopher), emit: versions_philosopher, topic: versions
     tuple val("${task.process}"), val('fragpipe'), eval("cat .fragpipe_version"), emit: versions_fragpipe, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
+    // Exit if running this module with -profile conda / -profile mamba (copied from modules/nf-core/diann/main.nf)
+    if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
+        error "FREEQUANT module does not support Conda: it runs in the FragPipe image given with --fragpipe_container. Please use Docker / Singularity / Podman instead."
+    }
     def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id}"
-    def ram = task.memory ? Math.max(1, task.memory.toGiga() - 2) : 30
-    def tools_dir = task.ext.fragpipe_tools_dir ?: '/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools'
-
-    // FreeQuant (Philosopher freequant) CLI parameters:
-    // --ptw: peak width in minutes
-    // --tol: mass tolerance in ppm
-    // --isolated: use isolated peaks only
-    // --dir: directory containing LCMS files
-    // --raw: use raw files (for Thermo .raw)
+    if (!task.memory) {
+        error("${task.process} needs task.memory (JVM / Go memory limit)")
+    }
+    def ram = Math.max(1, task.memory.toGiga() - 2)
+    def tools = fragpipeTools(task)
 
     """
-
     export HOME=\$(pwd)
     WORK_DIR=\$(pwd)
-    mkdir -p ${prefix}
 
-    TOOLS_DIR="${tools_dir}"
-
-    PHILOSOPHER_SRC=\$(find "\$TOOLS_DIR" -path '*/Philosopher/philosopher*' -type f 2>/dev/null | head -1 || true)
-    PHILOSOPHER="\$WORK_DIR/philosopher"
-    cp "\$PHILOSOPHER_SRC" "\$PHILOSOPHER"
-    chmod +x "\$PHILOSOPHER"
-    _ver=\$(\$PHILOSOPHER version 2>&1 | grep -oP 'version=v\\K[\\d.]+' | head -1 || true)
-
-    echo "\$_ver" > .philosopher_version
-    _fp_ver=\$(echo "\$TOOLS_DIR" | grep -oP 'fragpipe-\\K[0-9]+\\.[0-9]+[0-9.]*' | head -1 || true)
-
-    echo "\$_fp_ver" > .fragpipe_version
+    # The image's binary runs in place, as FragPipe runs it (golden FreeQuant argv)
+    PHILOSOPHER="${tools.philosopher}"
+    echo "${tools.fragpipe_version}" > .fragpipe_version
 
     export GOMAXPROCS=${task.cpus}
     export GOMEMLIMIT="${ram}GiB"
     export GOGC=200
 
-    # Detect .raw files and add --raw flag (CmdFreequant.java:116-120)
-    RAW_FLAG=""
-    if compgen -G "${mzml_dir}/*.raw" > /dev/null; then
-        RAW_FLAG="--raw"
-    fi
+    # The group work dir with the workspace Filter left (FragPipe runs FreeQuant there, no re-init)
+    mkdir -p ${prefix}
+    cp -rL ${results_dir}/. ${prefix}/
+    # Philosopher keeps the workspace's absolute paths in the .meta workspace binary; point them at this copy
+    philosopher_relocate_workspace.py ${prefix}
 
-    # Initialize Philosopher workspace
-    cd ${results_dir}
-    \$PHILOSOPHER workspace --init --nocheck 2>&1
-
-    # Run FreeQuant (philosopher freequant, see PhilosopherProps.java:31)
-    CMD="\$PHILOSOPHER freequant ${config_cli} \$RAW_FLAG --dir \${WORK_DIR}/${mzml_dir} ${args}"
-    printf '%s\\n' "\$CMD" > \${WORK_DIR}/${prefix}/freequant.log
-    eval "\$CMD" 2>&1 | tee -a \${WORK_DIR}/${prefix}/freequant.log
-
-    # Do NOT clean workspace - preserve .meta/ binaries for downstream PHILOSOPHER_REPORT.
-    # FreeQuant updates .meta/ with quantification data; report needs these to generate
-    # TSVs with correct intensities.
-
-    cd \${WORK_DIR}
-
-    # Copy results and .meta/ workspace to output directory
-    [ -f "${results_dir}/ion.tsv" ] && cp "${results_dir}/ion.tsv" ${prefix}/
-    cp -a ${results_dir}/.meta ${prefix}/
+    # philosopher freequant <opts> --dir <LC-MS dir> in the group dir (CmdFreequant.java:108-128).
+    # FragPipe's --raw is unreachable: FreeQuant takes only mzML (CmdFreequant.java:44, checked in
+    # FRAGPIPE_QUANT).
+    CMD=(\$PHILOSOPHER freequant ${config_cli} --dir "\${WORK_DIR}/lcms_files" ${args})
+    printf '%s\\n' "\${CMD[*]}" > \${WORK_DIR}/freequant.log
+    (cd ${prefix} && "\${CMD[@]}") 2>&1 | tee -a \${WORK_DIR}/freequant.log
 
     """
 
@@ -89,12 +78,8 @@ process FREEQUANT {
     prefix = task.ext.prefix ?: "${meta.id}"
     """
     mkdir -p ${prefix}
-    touch ${prefix}/ion.tsv
-    touch ${prefix}/freequant.log
-    TOOLS_DIR="${task.ext.fragpipe_tools_dir ?: '/fragpipe_bin/fragpipe-24.0/fragpipe-24.0/tools'}"
-    _fp_ver=\$(echo "\$TOOLS_DIR" | grep -oP 'fragpipe-\\K[0-9]+\\.[0-9]+[0-9.]*' | head -1 || true)
-    echo "\$_fp_ver" > .philosopher_version
-    echo "\$_fp_ver" > .fragpipe_version
-
+    cp -rL ${results_dir}/. ${prefix}/
+    printf '%s\\n' "philosopher freequant ${config_cli} --dir lcms_files" > freequant.log
+    echo "${fragpipeTools(task).fragpipe_version}" > .fragpipe_version
     """
 }

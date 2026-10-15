@@ -1,0 +1,52 @@
+// The FragPipe test profiles must start: MSPROTEOMICS_FRAGPIPE reads params.fragpipe_workflow
+// with file(..., checkIfExists: true), so a profile without it fails before any task runs.
+// The profile's remote samplesheet/database are swapped for local fixtures so the test needs
+// no network; fragpipe_workflow, mode and tmt_mode come from the profile under test.
+
+nextflow_pipeline {
+
+    name "Test profile test_dda_lfq"
+    script "../main.nf"
+    tag "pipeline"
+    tag "test_profiles"
+    profile "test_dda_lfq"
+
+    test("-profile test_dda_lfq - starts with the bundled LFQ-MBR workflow and reaches IonQuant") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                input    = ss.toString()
+                database = "${fixtures}/test.fasta"
+                // as the profile: its FASTA gets FragPipe's "Add decoys" database update
+                add_philosopher_decoy        = true
+                add_philosopher_contaminants = true
+                outdir   = "$outputDir"
+            }
+        }
+
+        then {
+            // .workflow file staged into PARSEFRAGPIPEWORKFLOW: the one the profile selected
+            def staged_workflows = []
+            // task dirs are work/<2 hex>/<hash>; a .workflow staged at a task dir root (FRAGPIPESAVEWORKFLOW stages its own under input/)
+            new File("${launchDir}/work").eachDirMatch(~/[0-9a-f]{2}/) { prefix -> prefix.eachDir { task -> if (new File(task, '.command.sh').text.contains('parse_fragpipe_workflow')) task.eachFileMatch(~/.*\.workflow/) { f -> staged_workflows << f.name } } }
+            staged_workflows = staged_workflows.unique()
+            def succeeded = workflow.trace.succeeded().collect { task -> task.name.replaceAll(/ \(.*\)$/, '') }.unique().sort()
+            assertAll(
+                { assert workflow.success },
+                { assert staged_workflows == ['LFQ-MBR.workflow'] : staged_workflows },
+                { assert succeeded.any { name -> name.endsWith(':IONQUANT') } : succeeded },
+                { assert snapshot(
+                    // tools of each process in the pipeline versions.yml (stub versions come from host tools, so only the names)
+                    new org.yaml.snakeyaml.Yaml().load(new File("$outputDir/pipeline_info/nf_core_msproteomics_software_mqc_versions.yml").text)
+                        .findAll { proc, _tools -> proc != 'Workflow' }.collectEntries { proc, tools -> [proc, tools.keySet().sort()] },
+                    succeeded).match() }
+            )
+        }
+    }
+}

@@ -5,8 +5,59 @@ nextflow_process {
     process "DECOMPRESS"
 
     tag "modules"
-    tag "modules_nfcore"
+    tag "modules_local"
     tag "decompress"
+
+    // Real decompression with the host's gzip/tar (no container needed for these tools).
+    test("decompress - X.mzML.gz gives X.mzML") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                def mzml = new File("\${workDir}/sample1.mzML")
+                mzml.text = "<mzML/>\\n"
+                ['gzip', '-f', mzml.toString()].execute().waitFor()
+
+                input[0] = channel.of([ [ id: 'sample1' ], file("\${workDir}/sample1.mzML.gz") ])
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert process.out.decompressed_files.collect { item -> file(item[1]).name } == ['sample1.mzML'] },
+                { assert snapshot(process.out.decompressed_files).match() }
+            )
+        }
+    }
+
+    test("decompress - X.d.tar.gz gives X.d") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                def dotd = new File("\${workDir}/run_A.d")
+                dotd.mkdirs()
+                new File(dotd, 'analysis.tdf').text = "tdf\\n"
+                ['tar', '-czf', "\${workDir}/run_A.d.tar.gz", '-C', workDir.toString(), 'run_A.d'].execute().waitFor()
+
+                input[0] = channel.of([ [ id: 'run_A' ], file("\${workDir}/run_A.d.tar.gz") ])
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.success },
+                { assert process.out.decompressed_files.collect { item -> file(item[1]).name } == ['run_A.d'] },
+                { assert new File(process.out.decompressed_files[0][1].toString(), 'analysis.tdf').exists() },
+                { assert snapshot(process.out.decompressed_files, process.out.versions_tar).match() }
+            )
+        }
+    }
 
     test("decompress - stub") {
         tag "stub"
@@ -18,10 +69,7 @@ nextflow_process {
                 def compressed_file = file("\${workDir}/sample.d.tar.gz")
                 compressed_file.text = "mock"
 
-                input[0] = channel.of([
-                    [ id: 'test', mzml_id: 'test_sample' ],
-                    compressed_file
-                ])
+                input[0] = channel.of([ [ id: 'test' ], compressed_file ])
                 """
             }
         }
@@ -29,6 +77,9 @@ nextflow_process {
         then {
             assertAll (
                 { assert process.success },
+                { assert process.out.decompressed_files.collect { item -> file(item[1]).name } == ['sample.d'] },
+                // the .d directory holds a file: object storage has no object for an empty directory
+                { assert new File(process.out.decompressed_files[0][1].toString()).list().size() > 0 },
                 { assert snapshot(process.out.decompressed_files, process.out.log).match() }
             )
         }

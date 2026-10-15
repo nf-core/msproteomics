@@ -1,0 +1,1635 @@
+// Unit tests for the FragPipe grouping / samplesheet helpers in fragpipe_utils.nf.
+// Expected values follow FragPipe 24.0 InputLcmsFile.java:48-51 (experiment sanitising)
+// and :131-145 (getGroup()).
+
+nextflow_function {
+
+    name "Test Functions fragpipe_utils"
+    script "../fragpipe_utils.nf"
+
+    tag "subworkflows"
+    tag "fragpipe_utils"
+    tag "stub"
+
+    // InputLcmsFile.guessDataType (InputLcmsFile.java:86-101) reads FragPipe's whole absolute path, not only the file name
+    test("guessFragpipeDataType - a file under a DIA directory is DIA") {
+        function "guessFragpipeDataType"
+        when {
+            function {
+                """
+                input[0] = file('/data/DIA_runs/a.mzML')
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'DIA' }
+            )
+        }
+    }
+
+    // InputLcmsFile.guessDataType (InputLcmsFile.java:86-101) reads FragPipe's whole absolute path, not only the file name
+    test("guessFragpipeDataType - dda anywhere in the path wins over DIA") {
+        function "guessFragpipeDataType"
+        when {
+            function {
+                """
+                input[0] = file('/data/DIA_runs/dda_a.mzML')
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'DDA' }
+            )
+        }
+    }
+
+    // InputLcmsFile.guessDataType (InputLcmsFile.java:86-101) reads FragPipe's whole absolute path, not only the file name
+    test("guessFragpipeDataType - WWA in the path is DDA+") {
+        function "guessFragpipeDataType"
+        when {
+            function {
+                """
+                input[0] = file('/data/WWA/a.mzML')
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'DDA+' }
+            )
+        }
+    }
+
+    // InputLcmsFile.guessDataType (InputLcmsFile.java:86-101) reads FragPipe's whole absolute path, not only the file name
+    test("guessFragpipeDataType - no tag is DDA") {
+        function "guessFragpipeDataType"
+        when {
+            function {
+                """
+                input[0] = file('/data/runs/a.mzML')
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'DDA' }
+            )
+        }
+    }
+
+    // parseSamplesheet applies it once, to the samplesheet's original path; the type then travels in meta.data_type
+    test("fragpipeDataType - a blank type is FragPipe's guess on the original path, a DIA directory gives DIA") {
+        function "fragpipeDataType"
+        when {
+            function {
+                """
+                input[0] = null
+                input[1] = file('/data/DIA_runs/a.mzML')
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'DIA' }
+            )
+        }
+    }
+
+    test("fragpipeGroup - experiment and bioreplicate give experiment_bioreplicate") {
+        function "fragpipeGroup"
+        when {
+            function {
+                """
+                input[0] = 'control'
+                input[1] = 2
+                input[2] = false
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'control_2' },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    test("fragpipeGroup - blank experiment with bioreplicate gives exp_bioreplicate") {
+        function "fragpipeGroup"
+        when {
+            function {
+                """
+                input[0] = null
+                input[1] = 3
+                input[2] = false
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'exp_3' },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    test("fragpipeGroup - experiment is trimmed and sanitised, no bioreplicate gives experiment") {
+        function "fragpipeGroup"
+        when {
+            function {
+                """
+                input[0] = ' Ctrl-A.1 '
+                input[1] = null
+                input[2] = false
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'Ctrl_A_1' },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    test("fragpipeGroup - blank experiment and bioreplicate gives the single group") {
+        function "fragpipeGroup"
+        when {
+            function {
+                """
+                input[0] = null
+                input[1] = null
+                input[2] = false
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == '' },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    test("fragpipeGroup - speclib or DIA-NN run gives the single group") {
+        function "fragpipeGroup"
+        when {
+            function {
+                """
+                input[0] = 'control'
+                input[1] = 1
+                input[2] = true
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == '' },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    // InputLcmsFile.getGroup() returns "" when SpeclibPanel or DiannPanel isRun()
+    // (FP/api/InputLcmsFile.java:131-136); the panels' checkboxes are the workflow keys
+    // speclibgen.run-speclibgen (SpeclibPanel.java:136-137) and diann.run-dia-nn.
+    test("speclibOrDiannRuns - true for a SpecLibGen/DIA-NN workflow") {
+        function "speclibOrDiannRuns"
+        when {
+            function {
+                """
+                def props = new java.util.Properties()
+                new File("${baseDir}/tests/fixtures/fragpipe_workflows/DIA_SpecLib_Quant.workflow").withReader { reader -> props.load(reader) }
+                input[0] = props
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == true }
+            )
+        }
+    }
+
+    test("speclibOrDiannRuns - false for LFQ-MBR") {
+        function "speclibOrDiannRuns"
+        when {
+            function {
+                """
+                def props = new java.util.Properties()
+                new File("${baseDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow").withReader { reader -> props.load(reader) }
+                input[0] = props
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == false }
+            )
+        }
+    }
+
+    test("speclibOrDiannRuns - DIA-NN alone gives the single group") {
+        function "speclibOrDiannRuns"
+        when {
+            function {
+                """
+                def props = new java.util.Properties()
+                props.setProperty('speclibgen.run-speclibgen', 'false')
+                props.setProperty('diann.run-dia-nn', 'true')
+                input[0] = props
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == true }
+            )
+        }
+    }
+
+    test("generateFragpipeManifest - writes experiment, bioreplicate and data type per file") {
+        function "generateFragpipeManifest"
+        when {
+            function {
+                """
+                input[0] = [['a.mzML', 'control', 1, 'DIA'], ['b.mzML', null, null, 'DDA+']]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == "a.mzML\tcontrol\t1\tDIA\nb.mzML\t\t\tDDA+" },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    // Tower (S3/Fusion): the published manifest keeps the path the user gave (S3Path.toString()
+    // drops the scheme, so an S3 input is written as its URI); the manifest a task loads names the
+    // staged files, because TabWorkflow.manifestLoad drops files that do not exist in the task.
+    test("fragpipeManifestEntries - local path absolute, S3 path as its URI") {
+        function "fragpipeManifestEntries"
+        when {
+            function {
+                """
+                input[0] = [
+                    [[experiment: 'control', bioreplicate: 1, data_type: 'DDA'], file('/data/runs/a.raw')],
+                    [[experiment: null, bioreplicate: null, data_type: 'DIA'], file('s3://bucket/runs/b.d')]
+                ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == [['/data/runs/a.raw', 'control', 1, 'DDA'], ['s3://bucket/runs/b.d', '', null, 'DIA']] },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    test("fragpipeManifestEntries - staged_dir names the files as staged in the task") {
+        function "fragpipeManifestEntries"
+        when {
+            function {
+                """
+                input[0] = [
+                    [[experiment: 'control', bioreplicate: 1, data_type: 'DDA'], file('/data/runs/a.raw')],
+                    [[experiment: null, bioreplicate: null, data_type: 'DIA'], file('s3://bucket/runs/b.d')]
+                ]
+                input[1] = 'spectra'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == [['spectra/a.raw', 'control', 1, 'DDA'], ['spectra/b.d', '', null, 'DIA']] },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    // FragPipe data type per LC-MS file. A manifest type is normalised by the
+    // InputLcmsFile constructor (InputLcmsFile.java:53-76); a blank type is guessed from the
+    // absolute path by guessDataType() (InputLcmsFile.java:86-101).
+    test("fragpipeDataType - explicit type kept, blank type guessed from the path like FragPipe") {
+        function "fragpipeDataType"
+        when {
+            function {
+                """
+                input[0] = 'DIA-Quant'
+                input[1] = file('/data/x_dda.mzML')
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'DIA-Quant' }
+            )
+        }
+    }
+
+    [
+        ['/data/x_DIA.mzML', 'DIA'], ['/data/x_dda_DIA.mzML', 'DDA'], ['/data/x_WWA.raw', 'DDA+'],
+        ['/data/DIA/plain.raw', 'DIA'], ['/data/plain.mzML', 'DDA'], ['/data/x_dia.mzML', 'DDA'],
+        ['/data/x_Q2.mzML', 'DDA'], ['/data/x_diatracer.mzML', 'DDA'], ['/data/WWA_DIA.raw', 'DIA'],
+        ['/data/DDA/x_DIA.mzML', 'DDA']
+    ].each { path, expected ->
+        test("fragpipeDataType - blank type for ${path} is guessed as ${expected} (InputLcmsFile.guessDataType)") {
+            function "fragpipeDataType"
+            when {
+                function {
+                    """
+                    input[0] = null
+                    input[1] = file('${path}')
+                    """
+                }
+            }
+            then {
+                assertAll(
+                    { assert function.success },
+                    { assert function.result == expected }
+                )
+            }
+        }
+    }
+
+    test("parseSamplesheet - data_type column carried in meta, blank guessed") {
+        function "parseSamplesheet"
+        when {
+            function {
+                """
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/data_types.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("\${fixtures}/samplesheets/data_types.csv").text.replace('\${FIXTURES}', fixtures)
+                input[0] = ss.toString()
+                input[1] = "${baseDir}/assets/schema_input.json"
+                input[2] = false
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.collect { row -> row[0].data_type } == ['DIA', 'DDA', 'DIA-Quant', 'GPF-DIA'] },
+                { assert snapshot(function.result.collect { row -> [row[0], row[1].toString().tokenize('/')[-1]] }).match() }
+            )
+        }
+    }
+
+    test("parseSamplesheet - unknown data_type fails with FragPipe's data types") {
+        function "parseSamplesheet"
+        when {
+            function {
+                """
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/data_type_invalid.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("\${fixtures}/samplesheets/data_type_invalid.csv").text.replace('\${FIXTURES}', fixtures)
+                input[0] = ss.toString()
+                input[1] = "${baseDir}/assets/schema_input.json"
+                input[2] = false
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains("data_type' (dia)") && ['DDA', 'DDA+', 'DIA', 'DIA-Quant', 'DIA-Lib', 'GPF-DIA'].every { t -> line.contains(t) } } : (function.stdout + function.stderr).join('\n') }
+            )
+        }
+    }
+
+    test("uniqueSpectraFiles - keeps the data type and fails when rows of one file disagree on it") {
+        function "uniqueSpectraFiles"
+        when {
+            function {
+                """
+                def f = file('/data/plex1.mzML')
+                input[0] = [
+                    [[group: 'plex1', experiment: 'plex1', bioreplicate: null, fraction: 1, data_type: 'DDA', label: 'TMT126'], f],
+                    [[group: 'plex1', experiment: 'plex1', bioreplicate: null, fraction: 1, data_type: 'DDA+', label: 'TMT127N'], f]
+                ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains('disagree on experiment/bioreplicate/fraction/data_type') } }
+            )
+        }
+    }
+
+    // CmdMsfragger.java:541-552: DDA -> fragger.params, DIA and DIA-Lib -> fragger_dia.params,
+    // GPF-DIA -> fragger_gpfdia.params, DDA+ -> fragger_dda_plus.params; anything else throws.
+    [['DDA', 'DDA'], ['DIA', 'DIA'], ['DIA-Lib', 'DIA'], ['GPF-DIA', 'GPF-DIA'], ['DDA+', 'DDA+']].each { data_type, expected ->
+        test("fraggerParamsType - ${data_type} files are searched with the ${expected} params") {
+            function "fraggerParamsType"
+            when {
+                function {
+                    """
+                    input[0] = '${data_type}'
+                    """
+                }
+            }
+            then {
+                assertAll(
+                    { assert function.success },
+                    { assert function.result == expected }
+                )
+            }
+        }
+    }
+
+    test("fraggerParamsType - DIA-Quant is never searched") {
+        function "fraggerParamsType"
+        when {
+            function {
+                """
+                input[0] = 'DIA-Quant'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains('Unknown data type: DIA-Quant') } }
+            )
+        }
+    }
+
+    // CmdMSBooster.java:134-149: one fragger params file for the whole run.
+    [
+        ["['DIA', 'DDA+']", false, false, 'DIA'],
+        ["['DIA', 'DDA+']", true, false, 'DDA'],
+        ["['GPF-DIA', 'DDA+']", false, false, 'GPF-DIA'],
+        ["['DDA+', 'DIA-Quant']", false, false, 'DDA+'],
+        ["['DIA-Lib']", false, true, 'DDA'],
+        ["['DDA', 'DIA']", false, false, 'DDA']
+    ].each { types, umpire, diatracer, expected ->
+        test("msboosterFraggerParamsType - ${types} umpire=${umpire} diatracer=${diatracer} gives ${expected}") {
+            function "msboosterFraggerParamsType"
+            when {
+                function {
+                    """
+                    input[0] = ${types}
+                    input[1] = ${umpire}
+                    input[2] = ${diatracer}
+                    """
+                }
+            }
+            then {
+                assertAll(
+                    { assert function.success },
+                    { assert function.result == expected }
+                )
+            }
+        }
+    }
+
+    // FragpipeRun.java:1360-1366 and :1397-1402
+    test("checkDiaPreprocessing - DIA-Umpire with timsTOF .d files fails like FragPipe") {
+        function "checkDiaPreprocessing"
+        when {
+            function {
+                """
+                input[0] = [[[id: 'a', data_type: 'DDA'], file('/data/a.d')], [[id: 'b', data_type: 'DIA'], file('/data/b.mzML')]]
+                input[1] = true
+                input[2] = false
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains('DIA-Umpire is enabled but there are timsTOF (.d) files. Please double check the parameter settings.') } }
+            )
+        }
+    }
+
+    test("checkDiaPreprocessing - diaTracer with non-.d DIA files fails like FragPipe") {
+        function "checkDiaPreprocessing"
+        when {
+            function {
+                """
+                input[0] = [[[id: 'a', data_type: 'DIA'], file('/data/a.d')], [[id: 'b', data_type: 'GPF-DIA'], file('/data/b.mzML')]]
+                input[1] = false
+                input[2] = true
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains('diaTracer is enabled but there are DIA files not in .d format. Please double check the parameter settings.') } }
+            )
+        }
+    }
+
+    test("checkDiaPreprocessing - accepts DDA mzML with diaTracer and DIA mzML with DIA-Umpire") {
+        function "checkDiaPreprocessing"
+        when {
+            function {
+                """
+                input[0] = [[[id: 'a', data_type: 'DDA'], file('/data/a.mzML')], [[id: 'b', data_type: 'DIA'], file('/data/b.mzML')]]
+                input[1] = true
+                input[2] = false
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.size() == 2 }
+            )
+        }
+    }
+
+    // CmdUmpireSe.java:73 / CmdDiaTracer.java:139: new InputLcmsFile(out, f.getGroup(), f.getReplicate(), "DDA")
+    // -> the pseudo-spectra file's experiment is the source file's group.
+    [
+        ["[id: 'a', group: 'control_1', experiment: 'control', bioreplicate: 1, fraction: 1, data_type: 'DIA']", 'a_Q1', false, ['a_Q1', 'control_1', 1, 'control_1_1', 'DDA']],
+        ["[id: 'a', group: '', experiment: null, bioreplicate: null, fraction: 1, data_type: 'GPF-DIA']", 'a_Q2', false, ['a_Q2', '', null, '', 'DDA']],
+        ["[id: 'a', group: '', experiment: 'control', bioreplicate: 1, fraction: 1, data_type: 'DIA']", 'a_diatracer', true, ['a_diatracer', '', 1, '', 'DDA']]
+    ].each { meta, id, single_group, expected ->
+        test("ddaPseudoSpectraMeta - ${id} from ${meta} single_group=${single_group}") {
+            function "ddaPseudoSpectraMeta"
+            when {
+                function {
+                    """
+                    input[0] = ${meta}
+                    input[1] = '${id}'
+                    input[2] = ${single_group}
+                    """
+                }
+            }
+            then {
+                def m = function.result
+                assertAll(
+                    { assert function.success },
+                    { assert [m.id, m.experiment, m.bioreplicate, m.group, m.data_type] == expected }
+                )
+            }
+        }
+    }
+
+    test("uniqueSpectraFiles - fails when rows of one file disagree on the group") {
+        function "uniqueSpectraFiles"
+        when {
+            function {
+                """
+                def f = file('/data/plex1.mzML')
+                input[0] = [
+                    [[group: 'plex1', experiment: 'plex1', bioreplicate: null, fraction: 1, label: 'TMT126'], f],
+                    [[group: 'plex2', experiment: 'plex2', bioreplicate: null, fraction: 1, label: 'TMT127N'], f]
+                ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains('disagree on experiment/bioreplicate/fraction') } }
+            )
+        }
+    }
+
+    test("tmtAnnotationLines - user annotation per group and FragPipe default for a group without labels") {
+        function "tmtAnnotationLines"
+        when {
+            function {
+                """
+                def f1 = file('/data/plex1.mzML')
+                def f2 = file('/data/plex2.mzML')
+                def channels = ['TMT126', 'TMT127N', 'TMT128C', 'TMT129N', 'TMT130C', 'TMT131N']
+                def rows = channels.withIndex().collect { label, i ->
+                    [[group: 'plex1', label: label, sample: i == 5 ? 'NA' : "S\${i}".toString(), condition: i % 2 ? 'treated' : 'control'], f1]
+                } + [[[group: '', label: null, sample: 'pool2', condition: 'pool2'], f2]]
+                def spectra = [[[group: 'plex1'], f1], [[group: ''], f2]]
+                def props = new java.util.Properties()
+                props.setProperty('tmtintegrator.run-tmtintegrator', 'true')
+                props.setProperty('tmtintegrator.channel_num', 'TMT-6')
+                props.setProperty('tmtintegrator.add_Ref', '1')
+                input[0] = rows
+                input[1] = spectra
+                input[2] = props
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result[0] == "plex\tchannel\tsample\tsample_name\tcondition\treplicate" },
+                { assert function.result.drop(1).findAll { line -> line.startsWith('\t') }.collect { line -> line.split('\t')[3] } == ['_126', '_127N', '_128C', '_129N', '_130C', '_131N'] },
+                { assert function.result.contains("plex1\t131N\tNA\tNA\ttreated\t1") },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    test("tmtAnnotationLines - empty when TMT-Integrator does not run") {
+        function "tmtAnnotationLines"
+        when {
+            function {
+                """
+                def props = new java.util.Properties()
+                props.setProperty('tmtintegrator.run-tmtintegrator', 'false')
+                input[0] = [[[group: 'plex1', label: 'TMT126', sample: 'S1', condition: 'c'], file('/data/plex1.mzML')]]
+                input[1] = [[[group: 'plex1'], file('/data/plex1.mzML')]]
+                input[2] = props
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == [] }
+            )
+        }
+    }
+
+    test("tmtAnnotationLines - fails like FragPipe when a plex misses channels") {
+        function "tmtAnnotationLines"
+        when {
+            function {
+                """
+                def f1 = file('/data/plex1.mzML')
+                def props = new java.util.Properties()
+                props.setProperty('tmtintegrator.run-tmtintegrator', 'true')
+                props.setProperty('tmtintegrator.channel_num', 'TMT-6')
+                props.setProperty('tmtintegrator.add_Ref', '1')
+                input[0] = [[[group: 'plex1', label: 'TMT126', sample: 'S1', condition: 'c'], f1]]
+                input[1] = [[[group: 'plex1'], f1]]
+                input[2] = props
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains("Number of the samples in the annotation file does not match the number of channels in the 'label type' of the Quant (Isobaric) tab.") } }
+            )
+        }
+    }
+
+    test("tmtAnnotationLines - fails when two samples share one plex channel") {
+        function "tmtAnnotationLines"
+        when {
+            function {
+                """
+                def f1 = file('/data/plex1.mzML')
+                def f2 = file('/data/plex1_f2.mzML')
+                def props = new java.util.Properties()
+                props.setProperty('tmtintegrator.run-tmtintegrator', 'true')
+                props.setProperty('tmtintegrator.channel_num', 'TMT-6')
+                props.setProperty('tmtintegrator.add_Ref', '1')
+                input[0] = [
+                    [[group: 'plex1', label: 'TMT126', sample: 'S1', condition: 'c'], f1],
+                    [[group: 'plex1', label: 'TMT126', sample: 'S2', condition: 'c'], f2]
+                ]
+                input[1] = [[[group: 'plex1'], f1], [[group: 'plex1'], f2]]
+                input[2] = props
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains("channel 126 is assigned to more than one sample") } }
+            )
+        }
+    }
+
+    test("tmtAnnotationLines - fails like FragPipe on duplicate sample names across plexes") {
+        function "tmtAnnotationLines"
+        when {
+            function {
+                """
+                def f1 = file('/data/plex1.mzML')
+                def f2 = file('/data/plex2.mzML')
+                def channels = ['TMT126', 'TMT127N', 'TMT128C', 'TMT129N', 'TMT130C', 'TMT131N']
+                def rows = ['plex1': f1, 'plex2': f2].collectMany { plex, f ->
+                    channels.withIndex().collect { label, i -> [[group: plex, label: label, sample: i == 0 ? 'Bridge' : "\${plex}_\${i}".toString(), condition: 'c'], f] }
+                }
+                def props = new java.util.Properties()
+                props.setProperty('tmtintegrator.run-tmtintegrator', 'true')
+                props.setProperty('tmtintegrator.channel_num', 'TMT-6')
+                props.setProperty('tmtintegrator.add_Ref', '1')
+                input[0] = rows
+                input[1] = [[[group: 'plex1'], f1], [[group: 'plex2'], f2]]
+                input[2] = props
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains("Duplicate samples found in annotation files. The sample names must be unique among all experiments.") } }
+            )
+        }
+    }
+
+    test("parseSamplesheet - accepts Bruker .d directories, compressed and raw spectra") {
+        function "parseSamplesheet"
+        when {
+            function {
+                """
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/spectra_formats.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("\${fixtures}/samplesheets/spectra_formats.csv").text.replace('\${FIXTURES}', fixtures)
+                input[0] = ss.toString()
+                input[1] = "${baseDir}/assets/schema_input.json"
+                input[2] = false
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.collect { row -> row[1].toString().tokenize('/')[-1] } == ['bruker.d', 'dia.mzML.gz', 'thermo.raw', 'bruker2.d.tar.gz'] },
+                { assert function.result.every { row -> row[0].group == '' } },
+                { assert snapshot(function.result.collect { row -> [row[0], row[1].toString().tokenize('/')[-1]] }).match() }
+            )
+        }
+    }
+
+    test("requireFragpipeLcmsFiles - rejects compressed and .dia spectra in FragPipe mode") {
+        function "requireFragpipeLcmsFiles"
+        when {
+            function {
+                """
+                input[0] = [[[id: 'a'], file('/data/a.mzML')], [[id: 'b'], file('/data/b.mzML.gz')], [[id: 'c'], file('/data/c.dia')]]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains('FragPipe mode takes .raw, .mzML, .mzXML, .mgf, .mzBIN or Bruker .d LC-MS files') && line.contains('b.mzML.gz') && line.contains('c.dia') && !line.contains('a.mzML,') } }
+            )
+        }
+    }
+
+    test("requireFragpipeLcmsFiles - accepts .raw, .mzML and Bruker .d") {
+        function "requireFragpipeLcmsFiles"
+        when {
+            function {
+                """
+                input[0] = [[[id: 'a'], file('/data/a.RAW')], [[id: 'b'], file('/data/b.mzML')], [[id: 'c'], file('/data/c.d')]]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.size() == 3 }
+            )
+        }
+    }
+
+    test("tmtAnnotationLines - empty reference tag fails like FragPipe") {
+        function "tmtAnnotationLines"
+        when {
+            function {
+                """
+                def f1 = file('/data/plex1.mzML')
+                def props = new java.util.Properties()
+                props.setProperty('tmtintegrator.run-tmtintegrator', 'true')
+                props.setProperty('tmtintegrator.channel_num', 'TMT-2')
+                props.setProperty('tmtintegrator.add_Ref', '-1')
+                props.setProperty('tmtintegrator.ref_tag', '')
+                input[0] = [[[group: 'plex1', label: 'TMT126', sample: 'A', condition: 'c'], f1], [[group: 'plex1', label: 'TMT127C', sample: 'B', condition: 'c'], f1]]
+                input[1] = [[[group: 'plex1'], f1]]
+                input[2] = props
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains("'Ref sample tag' can't be empty in 'Quant (Isobaric)' tab.") } }
+            )
+        }
+    }
+
+    test("tmtAnnotationLines - plex without a reference sample fails like FragPipe") {
+        function "tmtAnnotationLines"
+        when {
+            function {
+                """
+                def f1 = file('/data/plex1.mzML')
+                def props = new java.util.Properties()
+                props.setProperty('tmtintegrator.run-tmtintegrator', 'true')
+                props.setProperty('tmtintegrator.channel_num', 'TMT-2')
+                props.setProperty('tmtintegrator.add_Ref', '-1')
+                props.setProperty('tmtintegrator.ref_tag', 'Bridge')
+                input[0] = [[[group: 'plex1', label: 'TMT126', sample: 'A', condition: 'c'], f1], [[group: 'plex1', label: 'TMT127C', sample: 'B', condition: 'c'], f1]]
+                input[1] = [[[group: 'plex1'], f1]]
+                input[2] = props
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains('Found annotation files without reference channel') } },
+                { assert (function.stdout + function.stderr).any { line -> line.contains('the reference tag you set. You can change that in Quant tab, [Ref Sample Tag] text field.') } }
+            )
+        }
+    }
+
+    test("tmtAnnotationLines - TMT-35 tags that are substrings of each other fail like FragPipe") {
+        function "tmtAnnotationLines"
+        when {
+            function {
+                """
+                def props = new java.util.Properties()
+                props.setProperty('tmtintegrator.run-tmtintegrator', 'true')
+                props.setProperty('tmtintegrator.channel_num', 'TMT-35')
+                props.setProperty('tmtintegrator.add_Ref', '1')
+                props.setProperty('tmtintegrator.ref_tag', 'Pool')
+                props.setProperty('tmtintegrator.ref_d_tag', 'PoolD')
+                input[0] = []
+                input[1] = [[[group: 'plex1'], file('/data/plex1.mzML')]]
+                input[2] = props
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains("For TMT 35-plex, the 'Ref sample tag' and 'Ref D sample tag' can't be substrings of each other.") } }
+            )
+        }
+    }
+
+    // FragpipeRun.java:2420-2443 (timsTOF compatibility check), TabWorkflow.java:521-539 (input data type)
+    test("checkTimsTofTools - Crystal-C and LabelQuant on timsTOF .d input fail like FragPipe") {
+        function "checkTimsTofTools"
+        when {
+            function {
+                """
+                input[0] = '{"crystalc": {"run": true}, "freequant": {"run": false}, "labelquant": {"run": true}}'
+                input[1] = ['a.d', 'b.mzML']
+                input[2] = false
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains('timsTOF data is currently not compatible with some of tools to be run: Crystal-C, FreeQuant, Quant (Isobaric)') } }
+            )
+        }
+    }
+
+    test("checkTimsTofTools - mzML input with the IM-MS data type and FreeQuant fails like FragPipe") {
+        function "checkTimsTofTools"
+        when {
+            function {
+                """
+                input[0] = '{"crystalc": {"run": false}, "freequant": {"run": true}, "labelquant": {"run": false}}'
+                input[1] = ['a.mzML']
+                input[2] = true
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains('timsTOF data is currently not compatible with some of tools to be run: FreeQuant') } }
+            )
+        }
+    }
+
+    test("checkTimsTofTools - .raw input is regular MS even with the IM-MS data type") {
+        function "checkTimsTofTools"
+        when {
+            function {
+                """
+                input[0] = '{"crystalc": {"run": true}, "freequant": {"run": true}, "labelquant": {"run": false}}'
+                input[1] = ['a.raw', 'b.mzML']
+                input[2] = true
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    test("checkTimsTofTools - timsTOF input without the incompatible tools passes") {
+        function "checkTimsTofTools"
+        when {
+            function {
+                """
+                input[0] = '{"crystalc": {"run": false}, "freequant": {"run": false}, "labelquant": {"run": false}, "ionquant": {"run": true}}'
+                input[1] = ['a.d']
+                input[2] = false
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    // CmdMsfragger.java:764-766 - .mgf, .mzml, .mzxml, .mzbin, .raw, .d (case-insensitive)
+    test("requireFragpipeLcmsFiles - accepts every MSFragger LC-MS format") {
+        function "requireFragpipeLcmsFiles"
+        when {
+            function {
+                """
+                input[0] = ['a.RAW', 'b.mzML', 'c.d', 'd.mzXML', 'e.mgf', 'f.mzBIN'].collect { n -> [[id: n], file('/data/' + n)] }
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.size() == 6 }
+            )
+        }
+    }
+
+    // CmdPercolator.java:219-224 / CmdPeptideProphet.java:442-447, hasCalibratedMzml from FragpipeRun.java:1642
+    test("fragpipeValidationLcms - raw is named by MSFragger's uncalibrated mzML") {
+        function "fragpipeValidationLcms"
+        when {
+            function {
+                """
+                input[0] = [file('/w/x.raw'), file('/w/x_uncalibrated.mzML'), file('/w/x_uncalibrated.mzBIN')]
+                input[1] = false
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.toString().endsWith('x_uncalibrated.mzML') }
+            )
+        }
+    }
+
+    test("fragpipeValidationLcms - hasCalibratedMzml names the calibrated mzML") {
+        function "fragpipeValidationLcms"
+        when {
+            function {
+                """
+                input[0] = [file('/w/y.raw'), file('/w/y_uncalibrated.mzML'), file('/w/y_calibrated.mzML')]
+                input[1] = true
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.toString().endsWith('y_calibrated.mzML') }
+            )
+        }
+    }
+
+    test("fragpipeValidationLcms - a stray calibrated mzML is not used without hasCalibratedMzml") {
+        function "fragpipeValidationLcms"
+        when {
+            function {
+                """
+                input[0] = [file('/w/y.raw'), file('/w/y_uncalibrated.mzML'), file('/w/y_calibrated.mzML')]
+                input[1] = false
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.toString().endsWith('y_uncalibrated.mzML') }
+            )
+        }
+    }
+
+    test("fragpipeValidationLcms - mzML input is named as given") {
+        function "fragpipeValidationLcms"
+        when {
+            function {
+                """
+                input[0] = [file('/w/z.mzML'), file('/w/z_uncalibrated.mzBIN')]
+                input[1] = false
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.toString().endsWith('/w/z.mzML') }
+            )
+        }
+    }
+
+    test("fragpipeValidationLcms - hasCalibratedMzml without the calibrated mzML fails") {
+        function "fragpipeValidationLcms"
+        when {
+            function {
+                """
+                input[0] = [file('/w/z.mzML')]
+                input[1] = true
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains('MSFragger wrote no z_calibrated.mzML for z.mzML') } }
+            )
+        }
+    }
+
+    test("fragpipeValidationLcms - .raw without MSFragger's uncalibrated mzML fails") {
+        function "fragpipeValidationLcms"
+        when {
+            function {
+                """
+                input[0] = [file('/w/x.raw')]
+                input[1] = false
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains('MSFragger wrote no x_uncalibrated.mzML for x.raw') } }
+            )
+        }
+    }
+
+    test("fraggerWritesCalibratedMzml - write_calibrated_mzml and calibrate_mass > 0") {
+        function "fraggerWritesCalibratedMzml"
+        when {
+            function {
+                """
+                input[0] = "calibrate_mass = 2\\nwrite_calibrated_mzml = 1   # comment\\n"
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == true }
+            )
+        }
+    }
+
+    test("fraggerWritesCalibratedMzml - no calibration means no calibrated mzML") {
+        function "fraggerWritesCalibratedMzml"
+        when {
+            function {
+                """
+                input[0] = "calibrate_mass = 0\\nwrite_calibrated_mzml = 1\\n"
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == false }
+            )
+        }
+    }
+
+    // CheckCentroid reads the first file of the alphabetically first group, no DIA-Quant
+    test("checkCentroidFile - first file of the first sorted group, DIA-Quant skipped") {
+        function "checkCentroidFile"
+        when {
+            function {
+                """
+                input[0] = [
+                    [[id: 'q', group: 'A', data_type: 'DIA-Quant'], file('/d/q.raw')],
+                    [[id: 'b2', group: 'B', data_type: 'DDA'], file('/d/b2.raw')],
+                    [[id: 'a1', group: 'A', data_type: 'DDA'], file('/d/a1.raw')],
+                    [[id: 'a2', group: 'A', data_type: 'DDA'], file('/d/a2.raw')]
+                ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result[0].id == 'a1' }
+            )
+        }
+    }
+
+    test("checkCentroidFile - blank group sorts first") {
+        function "checkCentroidFile"
+        when {
+            function {
+                """
+                input[0] = [
+                    [[id: 'x', group: 'exp', data_type: 'DDA'], file('/d/x.mzML')],
+                    [[id: 'y', group: '', data_type: 'DDA'], file('/d/y.mzML')]
+                ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result[0].id == 'y' }
+            )
+        }
+    }
+
+    // glyco-N-LFQ PXD030670: FragPipe ran MSFragger on CANCER-3 (group cancer) before SALIVA-1 (group saliva),
+    // although the manifest lists SALIVA-1 first, so its SDRF carries CANCER-3's calibrated fragment tolerance
+    test("msfraggerConsoleLogs - groups in sorted order, not manifest order") {
+        function "msfraggerConsoleLogs"
+        when {
+            function {
+                """
+                input[0] = [
+                    [[id: 'SALIVA-1', group: 'saliva', data_type: 'DDA'], 'saliva.log'],
+                    [[id: 'CANCER-3', group: 'cancer', data_type: 'DDA'], 'cancer.log']
+                ]
+                input[1] = [[[id: 'SALIVA-1', group: 'saliva'], file('/r/SALIVA-1.raw')], [[id: 'CANCER-3', group: 'cancer'], file('/r/CANCER-3.raw')]]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == ['cancer.log', 'saliva.log'] }
+            )
+        }
+    }
+
+    // FPOP-coADAPTr-quant: the reverse case; the manifest lists A01 first, FragPipe ran B01 (Control_B01 < FPOP_A01) first
+    test("msfraggerConsoleLogs - group names compare as Java Strings") {
+        function "msfraggerConsoleLogs"
+        when {
+            function {
+                """
+                input[0] = [
+                    [[id: 'A01', group: 'FPOP_A01', data_type: 'DDA'], 'a01.log'],
+                    [[id: 'B01', group: 'Control_B01', data_type: 'DDA'], 'b01.log']
+                ]
+                input[1] = [[[id: 'A01', group: 'FPOP_A01'], file('/r/A01.mzML')], [[id: 'B01', group: 'Control_B01'], file('/r/B01.mzML')]]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == ['b01.log', 'a01.log'] }
+            )
+        }
+    }
+
+    // cptac-DIA-Umpire: MSFragger searches the DIA-Umpire Q1-Q3 files (DDA), which replace their DIA file in
+    // FragPipe's LC-MS list (CmdUmpireSe.java:64-75); diaTracer's _diatracer.mzML replaces its .d (CmdDiaTracer.java:138-139)
+    test("msfraggerConsoleLogs - DIA-Umpire and diaTracer outputs take their source file's place") {
+        function "msfraggerConsoleLogs"
+        when {
+            function {
+                """
+                input[0] = [
+                    [[id: 'dia_b_Q2', group: 'b', data_type: 'DDA'], 'b_q2.log'],
+                    [[id: 'tims_diatracer', group: 'a', data_type: 'DDA'], 'tims.log'],
+                    [[id: 'dia_b_Q1', group: 'b', data_type: 'DDA'], 'b_q1.log'],
+                    [[id: 'dia_a_Q3', group: 'a', data_type: 'DDA'], 'a_q3.log'],
+                    [[id: 'dia_a_Q1', group: 'a', data_type: 'DDA'], 'a_q1.log'],
+                    [[id: 'dda_b', group: 'b', data_type: 'DDA'], 'dda_b.log']
+                ]
+                input[1] = [
+                    [[id: 'dda_b', group: 'b'], file('/r/dda_b.mzML')],
+                    [[id: 'dia_b', group: 'b'], file('/r/dia_b.mzML')],
+                    [[id: 'tims', group: 'a'], file('/r/tims.d')],
+                    [[id: 'dia_a', group: 'a'], file('/r/dia_a.raw')]
+                ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == ['tims.log', 'a_q1.log', 'a_q3.log', 'dda_b.log', 'b_q1.log', 'b_q2.log'] }
+            )
+        }
+    }
+
+    test("msfraggerConsoleLogs - manifest order within a group, data types in TreeMap order") {
+        function "msfraggerConsoleLogs"
+        when {
+            function {
+                """
+                input[0] = [
+                    [[id: 'gpf', group: 'A', data_type: 'GPF-DIA'], 'gpf.log'],
+                    [[id: 'lib', group: 'A', data_type: 'DIA-Lib'], 'lib.log'],
+                    [[id: 'dia', group: 'B', data_type: 'DIA'], 'dia.log'],
+                    [[id: 'plus', group: 'A', data_type: 'DDA+'], 'plus.log'],
+                    [[id: 'dda2', group: 'A', data_type: 'DDA'], 'dda2.log'],
+                    [[id: 'dda1', group: 'A', data_type: 'DDA'], 'dda1.log']
+                ]
+                input[1] = ['dia': 'B', 'gpf': 'A', 'plus': 'A', 'lib': 'A', 'dda1': 'A', 'dda2': 'A'].collect { id, group -> [[id: id, group: group], file("/r/\${id}.mzML")] }
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == ['dda1.log', 'dda2.log', 'plus.log', 'lib.log', 'dia.log', 'gpf.log'] }
+            )
+        }
+    }
+
+    test("msfraggerConsoleLogs - a data type MSFragger does not search stops") {
+        function "msfraggerConsoleLogs"
+        when {
+            function {
+                """
+                input[0] = [[[id: 'q', group: 'A', data_type: 'DIA-Quant'], 'q.log'], [[id: 'a', group: 'A', data_type: 'DDA'], 'a.log']]
+                input[1] = [[[id: 'q', group: 'A'], file('/r/q.raw')], [[id: 'a', group: 'A'], file('/r/a.raw')]]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains("does not search data type 'DIA-Quant'") } }
+            )
+        }
+    }
+
+    test("fpopCoadaptrSource - IonQuant psm.tsv files are the final ones in label-free runs") {
+        function "fpopCoadaptrSource"
+        when {
+            function {
+                """
+                input[0] = groovy.json.JsonOutput.toJson([ionquant: [run: true], freequant: [run: false]])
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'ionquant' },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    test("fpopCoadaptrSource - Philosopher report after FreeQuant, filter without quantification") {
+        function "fpopCoadaptrSource"
+        when {
+            function {
+                """
+                input[0] = groovy.json.JsonOutput.toJson([ionquant: [run: false], freequant: [run: true]])
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'report' },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    test("fpopCoadaptrSource - Philosopher filter tables when nothing quantifies") {
+        function "fpopCoadaptrSource"
+        when {
+            function {
+                """
+                input[0] = groovy.json.JsonOutput.toJson([ionquant: [run: false], freequant: [run: false], labelquant: [run: false]])
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'filter' },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    test("fpopCoadaptrSource - DIA-NN report.tsv when DIA-NN runs") {
+        function "fpopCoadaptrSource"
+        when {
+            function {
+                """
+                input[0] = groovy.json.JsonOutput.toJson([diann: [run: true], ionquant: [run: true]])
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'diann' },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    test("fpopCoadaptrMeta - flags the task whose psm.tsv coADAPTr replaces") {
+        function "fpopCoadaptrMeta"
+        when {
+            function {
+                """
+                input[0] = [id: 'fragpipe']
+                input[1] = groovy.json.JsonOutput.toJson([fpop_coadaptr: [run: true], ionquant: [run: true]])
+                input[2] = ['ionquant']
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == [id: 'fragpipe', fpop_coadaptr: 'ionquant'] },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    test("fpopCoadaptrMeta - leaves other tasks' meta unchanged") {
+        function "fpopCoadaptrMeta"
+        when {
+            function {
+                """
+                input[0] = [id: 'control', group: 'control']
+                input[1] = groovy.json.JsonOutput.toJson([fpop_coadaptr: [run: true], ionquant: [run: true]])
+                input[2] = ['filter', 'report']
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == [id: 'control', group: 'control'] },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    test("checkFpopTools - FPOP TMT on DIA data fails like FragPipe") {
+        function "checkFpopTools"
+        when {
+            function {
+                """
+                input[0] = groovy.json.JsonOutput.toJson([fpop: [run: true], tmtintegrator_unmod: [run: true]])
+                input[1] = ['DDA', 'DIA']
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains('FPOP TMT Quant was requested on Downstream tab, but TMT-Integrator is not run') } }
+            )
+        }
+    }
+
+    test("checkFpopTools - label-free FPOP without IonQuant fails") {
+        function "checkFpopTools"
+        when {
+            function {
+                """
+                input[0] = groovy.json.JsonOutput.toJson([fpop: [run: true], tmtintegrator_unmod: [run: false], ionquant: [run: false]])
+                input[1] = ['DDA']
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains("Label-free FPOP Quant reads IonQuant's combined_modified_peptide.tsv") } }
+            )
+        }
+    }
+
+    test("checkFpopTools - FPOP.workflow settings pass on DDA data") {
+        function "checkFpopTools"
+        when {
+            function {
+                """
+                input[0] = groovy.json.JsonOutput.toJson([fpop: [run: false], fpop_coadaptr: [run: true], ionquant: [run: true], diann: [run: false]])
+                input[1] = ['DDA']
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    // FragPipe edits DIA-NN's report.tsv with FPOP_DiannReport_Editor (CmdFPOPcoadaptr.java:429-433);
+    // pipeline mode runs DIA-NN (FRAGPIPE_SPECLIB) and passes its report to FRAGPIPE_EXPORT
+    test("checkFpopTools - FPOP coADAPTr with DIA-NN passes (DIA-NN runs in pipeline mode)") {
+        function "checkFpopTools"
+        when {
+            function {
+                """
+                input[0] = groovy.json.JsonOutput.toJson([fpop_coadaptr: [run: true], diann: [run: true]])
+                input[1] = ['DIA']
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success }
+            )
+        }
+    }
+
+    test("matchedFragmentsManifest - FragPipe's work-dir manifest: sanitised experiment, bioreplicate, data type") {
+        function "matchedFragmentsManifest"
+        when {
+            function {
+                """
+                input[0] = [
+                    [[experiment: ' Ctrl-A 1 ', data_type: 'DDA'], file('/data/C02.mzML')],
+                    [[experiment: ' Ctrl-A 1 ', data_type: 'DDA'], file('/data/C02.mzML')],
+                    [[experiment: null, bioreplicate: 2, data_type: 'DIA'], file('/data/run1.raw')],
+                    [[experiment: 'x', data_type: 'DDA'], file('/data/run2.raw')],
+                    [[experiment: 'e', bioreplicate: 3, data_type: 'DDA+'], file('/data/b.d')]
+                ]
+                input[1] = ['run2_uncalibrated.mzML', 'b_uncalibrated.mzML']
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == '../spectra/C02.mzML\tCtrl_A_1\t\tDDA\n../spectra/b.d\te\t3\tDDA+\n../spectra/run1.mzML\t\t2\tDIA\n../spectra/run2.raw\tx\t\tDDA' },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+
+    // CmdCrystalc.java:176-185: one params-file index over the whole run, LC-MS files in InputLcmsFile
+    // order (group2, data type, path), then each file's pepXMLs by rank
+    test("crystalcRunIndex - index counts over the run in FragPipe's LC-MS order, then by rank") {
+        function "crystalcRunIndex"
+        when {
+            function {
+                """
+                input[0] = [
+                    [[id: 'B', experiment: 'b', bioreplicate: null, data_type: 'DDA', spectra_name: 'A.mzML'], 'B.pepXML', 'A.mzML', 0],
+                    [[id: 'A', experiment: 'a', bioreplicate: null, data_type: 'DIA', spectra_name: 'Z.mzML'], 'Z_rank2.pepXML', 'Z.mzML', 1],
+                    [[id: 'A', experiment: 'a', bioreplicate: null, data_type: 'DIA', spectra_name: 'Z.mzML'], 'Z_rank1.pepXML', 'Z.mzML', 0]
+                ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result.collect { item -> [item[0].id, item[1], item[0].crystalc_index] } == [['A', 'Z_rank1.pepXML', 0], ['A', 'Z_rank2.pepXML', 1], ['B', 'B.pepXML', 2]] },
+                { assert snapshot(function.result).match() }
+            )
+        }
+    }
+    // CmdMsfragger.java:612-630 and CmdPercolator.java:185-201: <stem>_percolator.weights below a _sub.mzML input's dir
+    test("subMzmlWeights - second-pass weights found below the input's directory") {
+        function "subMzmlWeights"
+        when {
+            function {
+                """
+                def d = java.nio.file.Files.createTempDirectory('submzml')
+                java.nio.file.Files.createDirectories(d.resolve('grp'))
+                ['a_sub.mzML', 'b.mzML', 'q_sub.mzML', 'grp/a_percolator.weights', 'grp/b_percolator.weights'].each { n -> d.resolve(n).text = 'x' }
+                input[0] = [
+                    [[ id: 'a', data_type: 'DDA' ], d.resolve('a_sub.mzML')],
+                    [[ id: 'b', data_type: 'DDA' ], d.resolve('b.mzML')],
+                    [[ id: 'q', data_type: 'DIA-Quant' ], d.resolve('q_sub.mzML')]
+                ]
+                """
+            }
+        }
+        then {
+            def r = function.result
+            assertAll(
+                { assert function.success },
+                { assert r[0][0].sub_mzml_weights.size() == 1 && r[0][0].sub_mzml_weights[0].toString().endsWith('/grp/a_percolator.weights') },
+                // one command per data-type params set: every DDA file gets the flag (CmdMsfragger.java:539-630)
+                { assert r[0][0].no_ptm_score_in_pin == true && r[1][0].no_ptm_score_in_pin == true },
+                { assert !r[1][0].containsKey('sub_mzml_weights') },
+                // DIA-Quant files are not searched; q has no weights
+                { assert r[2][0] == [ id: 'q', data_type: 'DIA-Quant' ] }
+            )
+        }
+    }
+
+    test("subMzmlWeights - first-pass inputs are unchanged") {
+        function "subMzmlWeights"
+        when {
+            function {
+                """
+                def d = java.nio.file.Files.createTempDirectory('submzml')
+                d.resolve('a.mzML').text = 'x'
+                d.resolve('a_percolator.weights').text = 'x'
+                input[0] = [ [[ id: 'a', data_type: 'DDA' ], d.resolve('a.mzML')] ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result[0][0] == [ id: 'a', data_type: 'DDA' ] }
+            )
+        }
+    }
+
+    // CmdPercolator.java:192-193: more than one match stops the run
+    test("percolatorInitWeights - two weights files fail like FragPipe") {
+        function "percolatorInitWeights"
+        when {
+            function {
+                """
+                input[0] = [ id: 'a', sub_mzml_weights: ['/x/a_percolator.weights', '/y/a_percolator.weights'] ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { l -> l.contains('Found more than one weights file: /x/a_percolator.weights, /y/a_percolator.weights') } }
+            )
+        }
+    }
+
+    test("percolatorInitWeights - none without weights") {
+        function "percolatorInitWeights"
+        when {
+            function {
+                """
+                input[0] = [ id: 'a' ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == [] }
+            )
+        }
+    }
+    // The published layout of a Write sub mzML run (conf/modules.config): fragpipe/<stem>_sub.mzML and
+    // fragpipe/<group>/<stem>_percolator.weights; a second run on the _sub.mzML files finds each weights file once
+    test("subMzmlWeights - finds the weights in the published fragpipe/ layout") {
+        function "subMzmlWeights"
+        when {
+            function {
+                """
+                def out = java.nio.file.Files.createTempDirectory('outdir').resolve('fragpipe')
+                ['control_1', 'treated_1'].each { g -> java.nio.file.Files.createDirectories(out.resolve(g)) }
+                ['ctrl_1_sub.mzML', 'trt_1_sub.mzML', 'fragpipe-files-second-pass.fp-manifest', 'fragpipe-second-pass.workflow',
+                 'control_1/ctrl_1_percolator.weights', 'treated_1/trt_1_percolator.weights'].each { n -> out.resolve(n).text = 'x' }
+                input[0] = [
+                    [[ id: 'ctrl_1_sub', data_type: 'DDA' ], out.resolve('ctrl_1_sub.mzML')],
+                    [[ id: 'trt_1_sub', data_type: 'DDA' ], out.resolve('trt_1_sub.mzML')]
+                ]
+                """
+            }
+        }
+        then {
+            def r = function.result
+            assertAll(
+                { assert function.success },
+                { assert r[0][0].sub_mzml_weights.size() == 1 && r[0][0].sub_mzml_weights[0].toString().endsWith('/fragpipe/control_1/ctrl_1_percolator.weights') },
+                { assert r[1][0].sub_mzml_weights.size() == 1 && r[1][0].sub_mzml_weights[0].toString().endsWith('/fragpipe/treated_1/trt_1_percolator.weights') },
+                { assert r.every { item -> item[0].no_ptm_score_in_pin == true } }
+            )
+        }
+    }
+}

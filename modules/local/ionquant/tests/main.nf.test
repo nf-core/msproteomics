@@ -5,50 +5,67 @@ nextflow_process {
     process "IONQUANT"
 
     tag "modules"
-    tag "modules_nfcore"
+    tag "modules_local"
     tag "ionquant"
 
-    test("ionquant - stub with config file") {
+    // Golden FragPipe 24.0 label-free IonQuant options (TMT-labelcheck-304 run), CmdIonquant order
+    def lfq_args = "--perform-ms1quant 1 --perform-isoquant 0 --isotol 20.0 --isolevel 2 --isotype tmt10 --ionmobility 0 --site-reports 1 --msstats 1 --minexps 1 --mbr 1 --maxlfq 0 --requantify 1 --mztol 10 --imtol 0.05 --rttol 0.4 --minscans 3 --writeindex 0 --uniqueness 0"
+
+    // Named groups: one --psm <group>/psm.tsv per group, --multidir . after the options,
+    // modmasses_ionquant.txt and the label-free experiment_annotation.tsv (CmdIonquant.java:178-377)
+    test("ionquant - stub named groups, modmasses and experiment annotation") {
         options "-stub"
         tag "stub"
 
         when {
             process {
                 """
-                def psm_file = file("\${workDir}/psm.tsv")
+                def groups = ['control_1', 'treated_1'].collect { g ->
+                    def d = file("\${workDir}/\${g}")
+                    d.mkdirs()
+                    file("\${d}/psm.tsv").text = "Spectrum\\tPeptide\\nmock\\tPEPTIDE\\n"
+                    d
+                }
                 def mzml_file = file("\${workDir}/test.mzML")
-                def annotation_file = file("\${workDir}/annotation.txt")
-                def config_file = file("\${workDir}/ionquant.config")
-                psm_file.text = "peptide\\tprotein\\nmock\\tmock"
                 mzml_file.text = "mock"
-                annotation_file.text = "sample\\tcondition\\nsample1\\tControl"
-                config_file.text = "--mbr 1 --maxlfq 1 --requantify 1 --mztol 10"
+                def raw_file = file("\${workDir}/run1.raw")
+                raw_file.text = "raw bytes"
 
-                input[0] = channel.of([
-                    [ id: 'test_quant' ],
-                    [ psm_file ],
-                    [ mzml_file ]
-                ])
-                input[1] = annotation_file
-                input[2] = config_file
-                input[3] = ""  // modmasses (empty = no --modlist)
-                input[4] = []  // ionquant_dir (use auto-discovery)
+                input[0] = channel.of([ [ id: 'test_quant' ], groups, [ mzml_file, raw_file ] ])
+                input[1] = []
+                input[2] = "${lfq_args}"
+                input[3] = ['15.9949', '42.0106', '57.02146']
+                input[4] = ""
+                input[5] = ['file\\tsample\\tsample_name\\tcondition\\treplicate', '/data/a.mzML\\tcontrol_1\\tcontrol_1\\tcontrol\\t1']
+                input[6] = []                  // glyco_masses: no AppendFile
                 """
             }
         }
 
         then {
+            def dir = process.out.results_dir[0][1]
+            def filelist = path("${dir}/filelist_ionquant.txt").readLines().collect { line -> line.replaceAll(/[^\s=]*\/work\/[0-9a-f]{2}\/[0-9a-f]+/, '<wd>') }
+            def command = path("${dir}/ionquant.log").readLines()[0]
             assertAll (
                 { assert process.success },
+                { assert filelist == ['flag\tvalue', '--psm\tcontrol_1/psm.tsv', '--psm\ttreated_1/psm.tsv', '--specdir\t<wd>'] },
+                { assert command == "ionquant.IonQuant ${lfq_args} --multidir . --filelist filelist_ionquant.txt --modlist modmasses_ionquant.txt" },
+                { assert path("${dir}/modmasses_ionquant.txt").text == '15.9949\n42.0106\n57.02146\n' },
+                { assert path(process.out.experiment_annotation[0][1]).readLines() == ['file\tsample\tsample_name\tcondition\treplicate', '/data/a.mzML\tcontrol_1\tcontrol_1\tcontrol\t1'] },
+                { assert !path("${dir}/experiment_annotation.tsv").exists() },
+                // no blank group: no root_group output and no (empty) ionquant_root directory, which
+                // object storage cannot hold (Tower: Missing output file(s) `ionquant_root`)
+                { assert process.out.root_group == [] },
+                { assert !java.nio.file.Files.exists(java.nio.file.Paths.get(path("${dir}").toFile().parentFile.path, 'ionquant_root')) },
+                // Thermo .raw reaches IonQuant as a real file (batmass-io under Mono sizes a symlink as the link)
+                { assert java.nio.file.Files.isRegularFile(java.nio.file.Paths.get(path("${dir}").toFile().parentFile.path, 'run1.raw'), java.nio.file.LinkOption.NOFOLLOW_LINKS) },
                 { assert snapshot(
-                    process.out.results_dir,
-                    process.out.ions,
-                    process.out.combined_ions,
+                    filelist,
+                    command,
+                    // file names; contents are covered by the assertions above
+                    path("${dir}").toFile().listFiles().collect { f -> f.name }.sort(),
                     process.out.combined_protein,
-                    process.out.combined_peptide,
-                    process.out.combined_modified_peptide,
-                    process.out.combined_site,
-                    process.out.all_tsv,
+                    process.out.experiment_annotation,
                     process.out.license_agreement,
                     process.out.versions_ionquant,
                     process.out.versions_fragpipe
@@ -57,12 +74,122 @@ nextflow_process {
         }
     }
 
-    // Integration test note:
-    // IonQuant cannot be integration-tested at the module level because it requires:
-    //   1. A FragPipe container with the licensed IonQuant JAR
-    //   2. Real Philosopher PSM output directories with properly formatted psm.tsv files
-    //   3. Real mzML files with MS1 scans for quantification / match-between-runs
-    // Mock data causes IonQuant to crash with NullPointerException or malformed input errors.
-    // Full integration coverage is provided by the FRAGPIPE_DDA subworkflow integration tests,
-    // which exercise IonQuant end-to-end with real pipeline output from upstream modules.
+    // FragPipe writes modmasses_ionquant.txt and passes --modlist even without masses; with O-Pair
+    // it passes no mass set at all (CmdIonquant.java:340-350, FragpipeRun.java:1885)
+    test("ionquant - stub empty mod mass list and no modlist") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def d = file("\${workDir}/g1")
+                d.mkdirs()
+                file("\${d}/psm.tsv").text = "Spectrum\\tPeptide\\nmock\\tPEPTIDE\\n"
+                def mzml_file = file("\${workDir}/test.mzML")
+                mzml_file.text = "mock"
+                input[0] = channel.of([ [ id: 'empty' ], [ d ], [ mzml_file ] ], [ [ id: 'none' ], [ d ], [ mzml_file ] ])
+                input[1] = []
+                input[2] = "${lfq_args}"
+                input[3] = channel.of([], false)
+                input[4] = ""
+                input[5] = []
+                input[6] = []                  // glyco_masses: no AppendFile
+                """
+            }
+        }
+
+        then {
+            def dirs = process.out.results_dir.collectEntries { item -> [item[0].id, item[1]] }
+            assertAll (
+                { assert process.success },
+                { assert path("${dirs.empty}/modmasses_ionquant.txt").text == '' },
+                { assert path("${dirs.empty}/ionquant.log").text.contains('--modlist modmasses_ionquant.txt') },
+                { assert !path("${dirs.none}/modmasses_ionquant.txt").exists() },
+                { assert !path("${dirs.none}/ionquant.log").text.contains('--modlist') },
+                { assert process.out.experiment_annotation.isEmpty() },
+                { assert snapshot(process.out.versions_ionquant).match() }
+            )
+        }
+    }
+
+    // Blank group "" only: FragPipe reads it from the work-dir root (psm.tsv, _annotation.txt),
+    // puts --annotation before --minexps and runs without --multidir
+    // (CmdIonquant.java:204-222; TmtiPanel.java:712-720)
+    test("ionquant - stub blank group is read from the work-dir root without --multidir") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def root = file("\${workDir}/workdir-root")
+                root.mkdirs()
+                file("\${root}/psm.tsv").text = "Spectrum\\tPeptide\\nmock\\tPEPTIDE\\n"
+                file("\${root}/protein.tsv").text = "Protein\\nP1\\n"
+                def mzml_file = file("\${workDir}/test.mzML")
+                mzml_file.text = "mock"
+                def annotation = file("\${workDir}/tmt_annotation.tsv")
+                annotation.text = "plex\\tchannel\\tsample\\tsample_name\\tcondition\\treplicate\\n\\t126\\t_126\\t_126\\t_126\\t1\\n\\t127N\\t_127N\\t_127N\\t_127N\\t1\\n"
+
+                input[0] = channel.of([ [ id: 'fragpipe' ], [ root ], [ mzml_file ] ])
+                input[1] = annotation.readLines()
+                input[2] = "--perform-ms1quant 0 --perform-isoquant 1 --isotol 20.0 --isolevel 2 --isotype TMT-2 --ionmobility 0 --site-reports 0 --msstats 0 --minexps 1 --mbr 0"
+                input[3] = []
+                input[4] = "workdir-root"
+                input[5] = ['plex\\tchannel\\tsample\\tsample_name\\tcondition\\treplicate', '\\t126\\t_126\\t_126\\t\\t126']
+                input[6] = []                  // glyco_masses: no AppendFile
+                """
+            }
+        }
+
+        then {
+            def dir = process.out.results_dir[0][1]
+            def filelist = path("${dir}/filelist_ionquant.txt").readLines().collect { line -> line.replaceAll(/[^\s=]*\/work\/[0-9a-f]{2}\/[0-9a-f]+/, '<wd>') }
+            def command = path("${dir}/ionquant.log").readLines().collect { line -> line.replaceAll(/[^\s=]*\/work\/[0-9a-f]{2}\/[0-9a-f]+/, '<wd>') }[0]
+            def root_group = process.out.root_group[0][1]
+            assertAll (
+                { assert process.success },
+                { assert filelist == ['flag\tvalue', '--psm\tpsm.tsv', '--specdir\t<wd>'] },
+                { assert command.contains('--msstats 0 --annotation <wd>/psm.tsv=<wd>/_annotation.txt --minexps 1') : command },
+                { assert path("${dir}/_annotation.txt").readLines() == ['126 _126', '127N _127N'] },
+                { assert !command.contains('--multidir') },
+                { assert path("${dir}/psm.tsv").exists() && path("${root_group}/workdir-root/psm.tsv").exists() },
+                { assert snapshot(filelist, command, path("${dir}/_annotation.txt").readLines(), process.out.experiment_annotation).match() }
+            )
+        }
+    }
+
+    // CmdIonquant.java:288-294: MBR without any named experiment is refused
+    test("ionquant - stub MBR with only the blank group fails like FragPipe") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            process {
+                """
+                def root = file("\${workDir}/workdir-root")
+                root.mkdirs()
+                file("\${root}/psm.tsv").text = "Spectrum\\tPeptide\\nmock\\tPEPTIDE\\n"
+                def mzml_file = file("\${workDir}/test.mzML")
+                mzml_file.text = "mock"
+
+                input[0] = channel.of([ [ id: 'fragpipe' ], [ root ], [ mzml_file ] ])
+                input[1] = []
+                input[2] = "${lfq_args}"
+                input[3] = []
+                input[4] = "workdir-root"
+                input[5] = []
+                input[6] = []                  // glyco_masses: no AppendFile
+                """
+            }
+        }
+
+        then {
+            assertAll (
+                { assert process.failed },
+                { assert (process.stdout + process.stderr).any { line -> line.contains("IonQuant with MBR requires designating LCMS runs to experiments.") } }
+            )
+        }
+    }
 }

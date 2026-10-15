@@ -5,7 +5,7 @@ nextflow_process {
     process "FREEQUANT"
 
     tag "modules"
-    tag "modules_nfcore"
+    tag "modules_local"
     tag "freequant"
 
     test("freequant - stub") {
@@ -15,9 +15,12 @@ nextflow_process {
         when {
             process {
                 """
-                def results_dir = file("\${workDir}/results")
+                // the group dir PHILOSOPHERFILTER left without report/clean (named like the output)
+                def results_dir = file("\${workDir}/test_freequant")
                 results_dir.mkdirs()
-                def psm_file = file("\${workDir}/results/psm.tsv")
+                file("\${results_dir}/.meta").mkdirs()
+                file("\${results_dir}/.meta/psm.bin").text = "mock"
+                def psm_file = file("\${results_dir}/psm.tsv")
                 psm_file.text = "peptide\\tprotein\\nPEPTIDEK\\tPROT1"
                 def mzml_dir = file("\${workDir}/spectra")
                 mzml_dir.mkdirs()
@@ -26,17 +29,20 @@ nextflow_process {
                 // FreeQuant CLI config
                 def config_cli = "--ptw 0.4 --tol 10"
 
-                input[0] = channel.of([[ id: 'test_freequant' ], results_dir, mzml_dir, config_cli])
+                input[0] = channel.of([[ id: 'test_freequant' ], results_dir, [mzml_file], config_cli])
                 """
             }
         }
 
         then {
+            def dir = new File(process.out.results_dir[0][1].toString())
             assertAll (
                 { assert process.success },
+                // FreeQuant runs in a copy of the group workspace (the upstream dir is not modified)
+                { assert new File(dir, '.meta/psm.bin').exists() },
+                { assert !java.nio.file.Files.isSymbolicLink(dir.toPath()) },
                 { assert snapshot(
                     process.out.results_dir,
-                    process.out.ions,
                     process.out.versions_philosopher,
                     process.out.versions_fragpipe
                 ).match() }

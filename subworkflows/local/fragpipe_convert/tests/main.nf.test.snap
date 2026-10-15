@@ -1,42 +1,113 @@
 {
+    "fragpipe_convert - stub DIA-Umpire replaces DIA files by their enabled Q tiers": {
+        "content": [
+            [
+                [
+                    "run_dda.mzML",
+                    "run_dda",
+                    "control_1",
+                    "control",
+                    "DDA"
+                ],
+                [
+                    "run_ddaplus.mzML",
+                    "run_ddaplus",
+                    "control_1",
+                    "control",
+                    "DDA+"
+                ],
+                [
+                    "run_dia_Q1.mzML",
+                    "run_dia_Q1",
+                    "control_1_1",
+                    "control_1",
+                    "DDA"
+                ],
+                [
+                    "run_dia_Q3.mzML",
+                    "run_dia_Q3",
+                    "control_1_1",
+                    "control_1",
+                    "DDA"
+                ],
+                [
+                    "run_quant.mzML",
+                    "run_quant",
+                    "control_1",
+                    "control",
+                    "DIA-Quant"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-05T03:31:39.926310478",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "fragpipe_convert - stub diaTracer replaces DIA .d files only": {
+        "content": [
+            [
+                [
+                    "run_dda.d",
+                    "run_dda",
+                    "",
+                    "DDA+"
+                ],
+                [
+                    "run_dia_diatracer.mzML",
+                    "run_dia_diatracer",
+                    "",
+                    "DDA"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-05T02:57:58.928708587",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
     "fragpipe_convert - stub with mzML input": {
         "content": [
             [
                 [
                     {
-                        "id": "sample1"
+                        "id": "sample1",
+                        "group": "",
+                        "experiment": null,
+                        "bioreplicate": null,
+                        "data_type": "DDA"
                     },
                     "sample.mzML:md5,17404a596cbd0d1e6c7d23fcd845ab82"
                 ]
-            ],
-            [
-                
             ]
         ],
-        "timestamp": "2026-03-25T03:54:01.883548535",
+        "timestamp": "2026-10-05T02:57:42.552487198",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
         }
     },
-    "fragpipe_convert - stub with RAW input": {
+    "fragpipe_convert - stub RAW input passes through unconverted": {
         "content": [
             [
                 [
                     {
-                        "id": "sample1"
+                        "id": "sample1",
+                        "group": "",
+                        "experiment": null,
+                        "bioreplicate": null,
+                        "data_type": "DDA"
                     },
-                    "sample1.mzML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    "sample.raw:md5,17404a596cbd0d1e6c7d23fcd845ab82"
                 ]
-            ],
-            [
-                
             ]
         ],
-        "timestamp": "2026-03-31T18:31:50.458220486",
+        "timestamp": "2026-10-05T14:42:04.908761761",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
         }
     }
 }

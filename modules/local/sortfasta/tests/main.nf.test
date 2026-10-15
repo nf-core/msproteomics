@@ -1,0 +1,58 @@
+nextflow_process {
+
+    name "Test Process SORTFASTA"
+    script "../main.nf"
+    process "SORTFASTA"
+
+    tag "modules"
+    tag "modules_local"
+    tag "sortfasta"
+
+    // msfragger_pep_split.py:615-620: '>' + protein + '\n', sorted bytewise; the last protein keeps its own
+    // trailing newline, so it ends with an empty line
+    test("sort_fasta - proteins sorted as msfragger_pep_split.py") {
+        tag "integration"
+
+        when {
+            process {
+                """
+                def fasta = file("\${workDir}/db.fasta")
+                fasta.text = ">sp|B|b\\nMKB\\n>rev_sp|A|a\\nMKA\\n>sp|A|a\\nMKA\\n"
+                input[0] = fasta
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert path(process.out.fasta[0]).text == ">rev_sp|A|a\nMKA\n>sp|A|a\nMKA\n\n>sp|B|b\nMKB\n" },
+                // The python3 on PATH is the host's or the container's, so only the version format is pinned
+                { assert process.out.versions_python.every { entry -> entry[2] ==~ /^3\.\d+\.\d+$/ } : process.out.versions_python },
+                { assert snapshot(process.out.fasta, process.out.versions_python.collect { entry -> entry.take(2) }).match() }
+            )
+        }
+    }
+
+    test("sort_fasta - stub") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            process {
+                """
+                def fasta = file("\${workDir}/db.fasta")
+                fasta.text = ">p\\nMK\\n"
+                input[0] = fasta
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.fasta.collect { f -> file(f).name }).match() }
+            )
+        }
+    }
+}

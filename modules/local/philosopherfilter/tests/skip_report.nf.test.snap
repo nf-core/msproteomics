@@ -1,0 +1,129 @@
+{
+    "philosopher_filter - stub, Report after FreeQuant / LabelQuant writes no tables here": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "A",
+                            "group": "A"
+                        },
+                        [
+                            "filter.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "philosopher_filter.log:md5,fc63730ac066a8cde91763b9394d031c"
+                        ]
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "A",
+                            "group": "A"
+                        },
+                        [
+                            "meta.bin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ],
+                "2": [
+                    
+                ],
+                "3": [
+                    
+                ],
+                "4": [
+                    
+                ],
+                "5": [
+                    
+                ],
+                "6": [
+                    [
+                        {
+                            "id": "A",
+                            "group": "A"
+                        },
+                        "philosopher_filter.log:md5,fc63730ac066a8cde91763b9394d031c"
+                    ]
+                ],
+                "7": [
+                    [
+                        "PHILOSOPHERFILTER",
+                        "philosopher",
+                        "5.1.3"
+                    ]
+                ],
+                "8": [
+                    [
+                        "PHILOSOPHERFILTER",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "ions": [
+                    
+                ],
+                "log": [
+                    [
+                        {
+                            "id": "A",
+                            "group": "A"
+                        },
+                        "philosopher_filter.log:md5,fc63730ac066a8cde91763b9394d031c"
+                    ]
+                ],
+                "peptides": [
+                    
+                ],
+                "proteins": [
+                    
+                ],
+                "psms": [
+                    
+                ],
+                "results_files": [
+                    [
+                        {
+                            "id": "A",
+                            "group": "A"
+                        },
+                        [
+                            "filter.log:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "philosopher_filter.log:md5,fc63730ac066a8cde91763b9394d031c"
+                        ]
+                    ]
+                ],
+                "versions_fragpipe": [
+                    [
+                        "PHILOSOPHERFILTER",
+                        "fragpipe",
+                        "24.0"
+                    ]
+                ],
+                "versions_philosopher": [
+                    [
+                        "PHILOSOPHERFILTER",
+                        "philosopher",
+                        "5.1.3"
+                    ]
+                ],
+                "workspace": [
+                    [
+                        {
+                            "id": "A",
+                            "group": "A"
+                        },
+                        [
+                            "meta.bin:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-10-14T14:13:49.436968798",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}
