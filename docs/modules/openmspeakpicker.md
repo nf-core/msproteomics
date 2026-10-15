@@ -34,7 +34,7 @@ This module supports in-memory or low-memory processing modes and configurable M
 
 ## Container
 
-`quay.io/biocontainers/openms:3.5.0--h78fb946_0` (bioconda OpenMS 3.5.0; `environment.yml`)
+`community.wave.seqera.io/library/openms:3.6.0--88df48c0a426b7f7` (bioconda OpenMS 3.6.0, the image of nf-core/modules openms modules; `environment.yml`)
 
 ## Usage
 

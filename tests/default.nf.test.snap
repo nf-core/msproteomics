@@ -119,7 +119,7 @@
                     "bioconductor-msstats": "4.14.0"
                 },
                 "MZMLINDEXING": {
-                    "FileConverter": "3.5.0-pre-exported-20251212"
+                    "FileConverter": "3.6.0"
                 },
                 "PMULTIQC": {
                     "pmultiqc": "0.0.39"
