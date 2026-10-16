@@ -1,0 +1,107 @@
+name: tmtanndata
+description: Convert TMT-Integrator abundance reports to MuData (.h5mu) and AnnData (.h5ad)
+keywords:
+  - proteomics
+  - TMT
+  - TMT-Integrator
+  - anndata
+  - mudata
+tools:
+  - anndata:
+      description: |
+        Annotated data matrices in memory and on disk (the image is bigbio qpx 1.1.4, which ships anndata and mudata).
+      homepage: https://github.com/scverse/anndata
+      documentation: https://anndata.readthedocs.io
+      licence: ["BSD-3-Clause"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: Aggregate metadata map (meta.id is the output prefix)
+    - abundance:
+        type: file
+        description: TMT-Integrator abundance_<level>_<norm>.tsv files
+        pattern: "abundance_*.tsv"
+        ontologies: []
+    - annotation:
+        type: file
+        description: Multi-plex TMT annotation (plex channel sample sample_name condition replicate)
+        pattern: "*.tsv"
+        ontologies: []
+    - log2transformed:
+        type: string
+        description: TMT-Integrator log2transformed setting ('true' or 'false')
+output:
+  h5mu:
+    - - meta:
+          type: map
+          description: Metadata map (meta.id is the output prefix)
+      - "${prefix}.tmt_*.h5mu":
+          type: file
+          description: One MuData per normalization, one modality per level
+          pattern: "${prefix}.tmt_*.h5mu"
+          ontologies: []
+  h5ad:
+    - - meta:
+          type: map
+          description: Metadata map (meta.id is the output prefix)
+      - "${prefix}.tmt_*.h5ad":
+          type: file
+          description: One AnnData per level x normalization
+          pattern: "${prefix}.tmt_*.h5ad"
+          ontologies: []
+  summary:
+    - - meta:
+          type: map
+          description: Metadata map (meta.id is the output prefix)
+      - "${prefix}.tmt.summary.tsv":
+          type: file
+          description: Sorted key<TAB>value summary of the export
+          pattern: "${prefix}.tmt.summary.tsv"
+          ontologies: []
+  versions_anndata:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - anndata:
+          type: string
+          description: The name of the tool
+      - "python3 -c \"import importlib.metadata as m; print(m.version('anndata'))\"":
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_mudata:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - mudata:
+          type: string
+          description: The name of the tool
+      - "python3 -c \"import importlib.metadata as m; print(m.version('mudata'))\"":
+          type: eval
+          description: The expression to obtain the version of the tool
+
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - anndata:
+          type: string
+          description: The name of the tool
+      - "python3 -c \"import importlib.metadata as m; print(m.version('anndata'))\"":
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - mudata:
+          type: string
+          description: The name of the tool
+      - "python3 -c \"import importlib.metadata as m; print(m.version('mudata'))\"":
+          type: eval
+          description: The expression to obtain the version of the tool
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"
