@@ -1516,8 +1516,10 @@ def parseFragpipeWorkflowTemplates(project_dir) {
  * - 'tmt': TMT-Integrator runs; its abundance_*.tsv reports go to TMTANNDATA.
  * - 'lfq': label-free IonQuant runs (ionquant.run-ionquant=true, no TMT-Integrator); its
  *   combined_protein.tsv / combined_ion.tsv go to QPXFRAGPIPE, which needs the MaxLFQ intensities.
- *   IonQuant writes them only with at least 3 experiment+bioreplicate combinations ("Add MaxLFQ",
- *   QuantPanelLabelfree.java:316), i.e. FragPipe groups, so fewer stop the run here instead of after the search.
+ *   IonQuant writes them only with --maxlfq 1, which FragPipe passes from the "Add MaxLFQ" check box
+ *   ionquant.maxlfq (on when absent; QuantPanelLabelfree.java:316, CmdIonquant.java:256-258), and only with
+ *   at least 3 experiment+bioreplicate combinations (the check box's tooltip), i.e. FragPipe groups. Either
+ *   unmet stops the run here instead of after the search.
  * - '': no export (--skip_qpx_export, the TMT label check, or a workflow without IonQuant or TMT-Integrator).
  *
  * @param skip           params.skip_qpx_export
@@ -1535,6 +1537,10 @@ def qpxFragpipeExport(skip, tmt_mode, workflow_props, spectra_files) {
     }
     if (workflow_props.getProperty('ionquant.run-ionquant') != 'true') {
         return ''
+    }
+    def maxlfq = workflow_props.getProperty('ionquant.maxlfq', '1').trim()
+    if (!(maxlfq in ['1', 'true'])) {
+        error("qpx export: the .workflow file sets ionquant.maxlfq=${maxlfq}, so IonQuant writes no MaxLFQ intensities for QPXFRAGPIPE to convert. Set ionquant.maxlfq=1, or rerun with --skip_qpx_export true.")
     }
     def min_groups = 3
     def groups = spectra_files.collect { item -> item[0].group }.unique().sort()

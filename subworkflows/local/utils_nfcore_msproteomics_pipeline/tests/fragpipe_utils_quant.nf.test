@@ -307,6 +307,30 @@ nextflow_function {
         }
     }
 
+    // FragPipe passes ionquant.maxlfq as IonQuant's --maxlfq (CmdIonquant.java:256-258)
+    test("qpxFragpipeExport - label-free IonQuant without MaxLFQ fails") {
+        function "qpxFragpipeExport"
+        when {
+            function {
+                """
+                def props = new java.util.Properties()
+                props.setProperty('ionquant.run-ionquant', 'true')
+                props.setProperty('ionquant.maxlfq', '0')
+                input[0] = false
+                input[1] = null
+                input[2] = props
+                input[3] = [[[group: 'a_1'], file('/in/r1.mzML')], [[group: 'a_2'], file('/in/r2.mzML')], [[group: 'b_1'], file('/in/r3.mzML')]]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains('qpx export: the .workflow file sets ionquant.maxlfq=0') && line.contains('--skip_qpx_export true') } : (function.stdout + function.stderr).join('\\n') }
+            )
+        }
+    }
+
     test("qpxFragpipeExport - label-free IonQuant with fewer than 3 groups fails") {
         function "qpxFragpipeExport"
         when {
