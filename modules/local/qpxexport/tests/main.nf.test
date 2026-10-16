@@ -47,11 +47,11 @@ nextflow_process {
                 script "../../../bigbio/qpx/diann/main.nf"
                 process {
                     """
-                    def d = "\${projectDir}/tests/fixtures/qpx/diann_multi"
-                    input[0] = file("\${d}/report.tsv", checkIfExists: true)
-                    input[1] = file("\${d}/pg_matrix.tsv", checkIfExists: true)
-                    input[2] = file("\${d}/sdrf.tsv", checkIfExists: true)
-                    input[3] = file("\${d}/diann.log.txt", checkIfExists: true)
+                    def setup_dir = "\${projectDir}/tests/fixtures/qpx/diann_multi"
+                    input[0] = file("\${setup_dir}/report.tsv", checkIfExists: true)
+                    input[1] = file("\${setup_dir}/pg_matrix.tsv", checkIfExists: true)
+                    input[2] = file("\${setup_dir}/sdrf.tsv", checkIfExists: true)
+                    input[3] = file("\${setup_dir}/diann.log.txt", checkIfExists: true)
                     input[4] = ''
                     input[5] = []
                     """
@@ -91,11 +91,11 @@ nextflow_process {
                 script "../../../bigbio/qpx/diann/main.nf"
                 process {
                     """
-                    def d = "\${projectDir}/tests/fixtures/qpx/diann_single"
-                    input[0] = file("\${d}/report.tsv", checkIfExists: true)
-                    input[1] = file("\${d}/pg_matrix.tsv", checkIfExists: true)
-                    input[2] = file("\${d}/sdrf.tsv", checkIfExists: true)
-                    input[3] = file("\${d}/diann.log.txt", checkIfExists: true)
+                    def setup_dir = "\${projectDir}/tests/fixtures/qpx/diann_single"
+                    input[0] = file("\${setup_dir}/report.tsv", checkIfExists: true)
+                    input[1] = file("\${setup_dir}/pg_matrix.tsv", checkIfExists: true)
+                    input[2] = file("\${setup_dir}/sdrf.tsv", checkIfExists: true)
+                    input[3] = file("\${setup_dir}/diann.log.txt", checkIfExists: true)
                     input[4] = ''
                     input[5] = []
                     """
@@ -123,7 +123,8 @@ nextflow_process {
         }
     }
 
-    // Guard G2: an empty pg_matrix (no protein group passed DIA-NN's matrix FDR) leaves no proteins modality
+    // Guard G4: with an empty pg_matrix (no protein group passed DIA-NN's matrix FDR) qpxc writes an empty
+    // pg view, so the proteins matrix has no values
     test("qpxexport - empty pg_matrix fails") {
         tag "qpx"
         tag "integration"
@@ -133,13 +134,13 @@ nextflow_process {
                 script "../../../bigbio/qpx/diann/main.nf"
                 process {
                     """
-                    def d = "\${projectDir}/tests/fixtures/qpx/diann_single"
-                    def pg_matrix = file("\${workDir}/empty_pg_matrix.tsv")
-                    pg_matrix.text = file("\${d}/pg_matrix.tsv").readLines()[0] + "\\n"
-                    input[0] = file("\${d}/report.tsv", checkIfExists: true)
-                    input[1] = pg_matrix
-                    input[2] = file("\${d}/sdrf.tsv", checkIfExists: true)
-                    input[3] = file("\${d}/diann.log.txt", checkIfExists: true)
+                    def setup_dir = "\${projectDir}/tests/fixtures/qpx/diann_single"
+                    def setup_pg_matrix = file("\${workDir}/empty_pg_matrix.tsv")
+                    setup_pg_matrix.text = file("\${setup_dir}/pg_matrix.tsv").readLines()[0] + "\\n"
+                    input[0] = file("\${setup_dir}/report.tsv", checkIfExists: true)
+                    input[1] = setup_pg_matrix
+                    input[2] = file("\${setup_dir}/sdrf.tsv", checkIfExists: true)
+                    input[3] = file("\${setup_dir}/diann.log.txt", checkIfExists: true)
                     input[4] = ''
                     input[5] = []
                     """
@@ -161,8 +162,8 @@ nextflow_process {
         then {
             assertAll(
                 { assert process.failed },
-                { assert process.exitStatus == 3 },
-                { assert process.stderr.any { line -> line.contains("ERROR: G2: no 'proteins' modality") } : process.stderr }
+                { assert process.stdout.any { line -> line.contains('terminated with an error exit status (3)') } : process.stdout },
+                { assert process.stdout.any { line -> line.contains("ERROR: G4: 'proteins' matrix is empty") } : process.stdout }
             )
         }
     }
@@ -177,11 +178,11 @@ nextflow_process {
                 script "../../../bigbio/qpx/diann/main.nf"
                 process {
                     """
-                    def d = "\${projectDir}/tests/fixtures/qpx/diann_single"
-                    input[0] = file("\${d}/report.tsv", checkIfExists: true)
-                    input[1] = file("\${d}/pg_matrix.tsv", checkIfExists: true)
-                    input[2] = file("\${d}/sdrf.tsv", checkIfExists: true)
-                    input[3] = file("\${d}/diann.log.txt", checkIfExists: true)
+                    def setup_dir = "\${projectDir}/tests/fixtures/qpx/diann_single"
+                    input[0] = file("\${setup_dir}/report.tsv", checkIfExists: true)
+                    input[1] = file("\${setup_dir}/pg_matrix.tsv", checkIfExists: true)
+                    input[2] = file("\${setup_dir}/sdrf.tsv", checkIfExists: true)
+                    input[3] = file("\${setup_dir}/diann.log.txt", checkIfExists: true)
                     input[4] = ''
                     input[5] = []
                     """
@@ -202,8 +203,8 @@ nextflow_process {
         then {
             assertAll(
                 { assert process.failed },
-                { assert process.exitStatus == 3 },
-                { assert process.stderr.any { line -> line.contains('ERROR: G') } : process.stderr }
+                { assert process.stdout.any { line -> line.contains('terminated with an error exit status (3)') } : process.stdout },
+                { assert process.stdout.any { line -> line.contains('ERROR: G') } : process.stdout }
             )
         }
     }

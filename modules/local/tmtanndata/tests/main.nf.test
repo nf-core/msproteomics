@@ -101,8 +101,8 @@ nextflow_process {
         then {
             assertAll(
                 { assert process.failed },
-                { assert process.exitStatus == 3 },
-                { assert process.stderr.any { line -> line.contains('ERROR: G12:') && line.contains('P1_126') } : process.stderr }
+                { assert process.stdout.any { line -> line.contains('terminated with an error exit status (3)') } : process.stdout },
+                { assert process.stdout.any { line -> line.contains('ERROR: G12:') && line.contains('P1_126') } : process.stdout }
             )
         }
     }
