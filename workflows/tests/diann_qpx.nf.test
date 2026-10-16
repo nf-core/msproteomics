@@ -49,7 +49,7 @@ nextflow_workflow {
                 { assert script.contains('--sdrf-file samplesheet.sdrf.tsv') : script },
                 { assert script.contains('--output-prefix diann') : script },
                 { assert script.contains('--qvalue-threshold 0.01') : script },
-                { assert script.contains('--fasta test.fasta') : script },
+                { assert script.contains('--fasta test.fasta') && script.contains('--no-mudata') : script },
                 { assert export.contains('--pg-matrix-file diann_report.pg_matrix.tsv') && export.contains('--prefix diann') && export.contains('--matrix-qvalue 0.01') : export },
                 { assert snapshot(qpx, workflow.trace.succeeded()*.name.collect { name -> name.replaceAll(/ \(.*\)$/, '') }.unique().sort()).match() }
             )

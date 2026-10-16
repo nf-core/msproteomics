@@ -50,17 +50,6 @@ Changes in 'qpx/diann/main.nf':
          --standardized-intensities \\
          --max-cpus ${task.cpus} \\
          --max-memory ${task.memory ? task.memory.toGiga() : 4}GB \\
-@@ -74,7 +66,8 @@
-         mv "qpx_output/${prefix}.h5mu" "${prefix}.h5mu"
-         echo "MuData -> ${prefix}.h5mu"
-     else
--        echo "WARNING: no MuData view was written; see the log above. The qpx_output parquet views are complete and authoritative."
-+        echo "ERROR: no MuData view was written; see the log above." >&2
-+        exit 1
-     fi
- 
- cat <<-END_VERSIONS > versions.yml
-
 'modules/bigbio/qpx/diann/tests/main.nf.test' is unchanged
 'modules/bigbio/qpx/diann/tests/nextflow.config' is unchanged
 ************************************************************
