@@ -88,6 +88,7 @@ FragPipe: `proteins.X` = `<experiment> MaxLFQ Intensity`, `precursors.X` = `<exp
 Missing values are NaN, never 0, in a dense float32 matrix; `uns` records the quantity source and the missing-value convention, and `*.summary.tsv` the counts.
 The export is on by default and a failed conversion fails the run; `--skip_qpx_export` turns it off.
 A FragPipe LFQ export needs at least 3 experiment+bioreplicate combinations (IonQuant writes MaxLFQ intensities only then), so a run with fewer stops before the search; the TMT label check has no export.
+FPOP's second TMT-Integrator run (`tmt-report-unmod/`, TMT FPOP) is not exported; only the main `tmt-report/` abundance reports are.
 
 ### MultiQC
 
