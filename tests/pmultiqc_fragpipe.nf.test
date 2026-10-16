@@ -1,0 +1,64 @@
+// pmultiqc's FragPipe plugin (bigbio/pmultiqc, pmultiqc 0.0.48) on FragPipe 24.0 LFQ tables, staged as
+// MSPROTEOMICS_FRAGPIPE stages them (pmultiqcFragpipeInputs): the work dir's root files and each group's
+// directory. tests/fixtures/pmultiqc/fragpipe holds the first rows of a DDA HeLa run's tables; the second group
+// is tests/fixtures/fpop/psm_dirs/control. The plugin logs its errors and is skipped
+// (pmultiqc/modules/core/core.py load_and_run_plugin), so the run succeeds either way: the test checks the
+// report's FragPipe sections and the log.
+
+nextflow_process {
+
+    name "Test Process PMULTIQC - FragPipe plugin"
+    script "../modules/bigbio/pmultiqc/main.nf"
+    process "PMULTIQC"
+    config "./pmultiqc_fragpipe.config"
+
+    tag "modules"
+    tag "pmultiqc"
+    tag "integration"
+
+    test("pmultiqc - fragpipe plugin, two groups") {
+
+        when {
+            process {
+                """
+                def fixtures = "${projectDir}/tests/fixtures"
+                def workflow_file = file("\${workDir}/fragpipe.workflow")
+                workflow_file.text = file("${projectDir}/assets/LFQ-MBR.workflow").text
+                def manifest = file("\${workDir}/fragpipe-files.fp-manifest")
+                manifest.text = "b1906_293T_proteinID_01A_QE3_122212.mzML\\tDDA_HeLa\\t1\\tDDA\\n"
+
+                input[0] = [
+                    file("\${fixtures}/pmultiqc/fragpipe/combined_ion.tsv", checkIfExists: true),
+                    file("\${fixtures}/pmultiqc/fragpipe/combined_peptide.tsv", checkIfExists: true),
+                    file("\${fixtures}/pmultiqc/fragpipe/combined_protein.tsv", checkIfExists: true),
+                    manifest,
+                    workflow_file,
+                    file("\${fixtures}/pmultiqc/fragpipe/DDA_HeLa_1", checkIfExists: true),
+                    file("\${fixtures}/fpop/psm_dirs/control", checkIfExists: true),
+                    file("${projectDir}/assets/multiqc_config.yml", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            def report = path(process.out.ch_pmultiqc_report[0]).text
+            // pmultiqc logs to stdout (pmultiqc/modules/common/logging.py get_logger), MultiQC to multiqc.log
+            def log = process.stdout.join('\n') + path("${process.out.data[0]}/multiqc.log").text
+            assertAll(
+                { assert process.success },
+                // plot ids of pmultiqc/modules/fragpipe/fragpipe.py: charge states (psm.tsv), parameters
+                // (fragpipe.workflow), experiment design (manifest), intensities (ion.tsv, combined_protein.tsv)
+                { assert ['charge_state', 'fragpipe_parameters', 'fragpipe_experiment_design',
+                          'ion_intensity_distribution_box', 'protein_intensity_distribution_box'].every { id -> report.contains(id) } },
+                // both groups' psm.tsv, found inside their directories
+                { assert log.contains('FragPipe data loaded: psm (2 files).') },
+                { assert !log.contains('encountered an error and was skipped') && !log.contains('No pmultiqc plugin selected') },
+                { assert snapshot(
+                    process.out.versions,
+                    file(process.out.data[0]).list().findAll { name -> name.endsWith('.txt') }.sort()
+                ).match() }
+            )
+        }
+    }
+}

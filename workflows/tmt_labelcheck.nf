@@ -51,6 +51,7 @@ workflow MSPROTEOMICS_TMT_LABELCHECK {
 
     emit:
     multiqc_files = MSPROTEOMICS_FRAGPIPE.out.multiqc_files
+    versions      = MSPROTEOMICS_FRAGPIPE.out.versions // channel: path(versions.yml) - PMULTIQC_FRAGPIPE's (bigbio module, no topic)
 }
 
 /*

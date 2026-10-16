@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `main.nf` follows the nf-core template: `PIPELINE_INITIALISATION` (nf-schema parameter and samplesheet validation, `--help`, `--version`), the `NFCORE_MSPROTEOMICS` named workflow, a pipeline-level `MULTIQC` with software versions from the `versions` topic, and `PIPELINE_COMPLETION` (summary and email); none of these ran before.
 - `PMULTIQC` runs in the DIA workflow when `--enable_pmultiqc` is set (the default); the module existed but was never called.
+- `PMULTIQC_FRAGPIPE`: a pmultiqc report of FragPipe results (its FragPipe plugin) in `--mode fragpipe`, both `--fragpipe_mode` values and the TMT label check, when `--enable_pmultiqc` is set.
 - iProteomes: `--proteome <key>` selects a versioned reference proteome from `conf/iproteomes.config` (paths under `--iproteomes_base`) with its FASTA and, when the run's settings match, a hosted DIA-NN library and FragPipe decoy database.
 - `--save_reference` publishes the DIA-NN library and FragPipe database built by the pipeline to `<outdir>/proteome/`.
 - `--add_philosopher_decoy` and `--add_philosopher_contaminants` run FragPipe's database update (`philosopher database`) on `--database` before a FragPipe search.
@@ -23,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `PMULTIQC` is the `pmultiqc` module of bigbio/nf-modules (`modules/bigbio/pmultiqc`, as in quantms), pmultiqc 0.0.39 -> 0.0.48, instead of a local module; its options are hyphenated since 0.0.39 (`--quantms-plugin`, `--disable-table`, `--ignored-idxml`, `--contaminant-affix`, `--quantification-method`), and the module patch fixes its version query (`--pmultiqc-version`; `--pmultiqc_version` exits with `No such option`).
 - Tasks never write their inputs: FragPipe tasks copy only the staged inputs a tool misreads or writes through, and the docker tests mount inputs read-only (`docker.writableInputMounts = false` in `tests/nextflow.config`).
 - nf-core template 3.5.2 -> 4.1.0.
 - `manifest.nextflowVersion` `!>=25.04.0` -> `!>=25.10.4`.
@@ -82,6 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- `--export_mztab`: it only chose pmultiqc's quantms plugin, and without a plugin pmultiqc writes no report (0.0.39 stopped with `No pmultiqc plugin selected`); DIA mode now always runs the quantms plugin.
 - `DIANNR` (DIA-NN R matrices); `IQ` gives the MaxLFQ tables.
 - `SKYLINE` (FragPipe on Linux does not run Skyline).
 - `MSFRAGGER_INDEX`: MSFragger builds its pepindex inside every search task, as FragPipe does.

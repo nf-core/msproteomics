@@ -538,12 +538,6 @@
                     "description": "Prefix string identifying contaminant proteins.",
                     "fa_icon": "fas fa-biohazard"
                 },
-                "export_mztab": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Export results in mzTab format.",
-                    "fa_icon": "fas fa-file-export"
-                },
                 "quantification_method": {
                     "type": "string",
                     "default": "feature_intensity",
