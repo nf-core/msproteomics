@@ -60,6 +60,10 @@
                     "fragpipe",
                     "philosopher"
                 ],
+                "TMTANNDATA": [
+                    "anndata",
+                    "mudata"
+                ],
                 "TMTINTEGRATOR": [
                     "fragpipe",
                     "tmtintegrator"
@@ -90,11 +94,12 @@
                 "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_VALIDATE:PERCOLATOR",
                 "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:PARSEFRAGPIPEWORKFLOW",
                 "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:GENERATESDRFFROMSAMPLESHEET",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:TMTANNDATA",
                 "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:WRITE_FRAGPIPE_MANIFEST",
                 "NFCORE_MSPROTEOMICS:MULTIQC"
             ]
         ],
-        "timestamp": "2026-10-15T20:39:34.243669596",
+        "timestamp": "2026-10-16T17:51:50.160715222",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"

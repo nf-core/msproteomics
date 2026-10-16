@@ -59,5 +59,68 @@
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"
         }
+    },
+    "qpx export - pipeline mode TMT converts TMT-Integrator's reports": {
+        "content": [
+            [
+                "fragpipe.tmt.summary.tsv",
+                "fragpipe.tmt_None.h5mu",
+                "fragpipe.tmt_protein_None.h5ad"
+            ],
+            [
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPESAVEWORKFLOW",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPESDRF",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:CHECKCENTROID",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_DATABASE:CHECKDBCONFIG",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_INFERENCE:PHILOSOPHERFILTER",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_INFERENCE:PHILOSOPHERFILTER_LATER",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_INFERENCE:PHILOSOPHERPROTEINPROPHET",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_PHILOSOPHER_QUANT:PHILOSOPHERWORKSPACECLEAN",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_QUANT:IONQUANT_ISOBARIC",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_QUANT:IONQUANT_MS1",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_QUANT:TMTINTEGRATOR",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSBOOSTER",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:MSFRAGGER",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_SEARCH:WRITE_FRAGGER_PARAMS",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_VALIDATE:PERCOLATOR",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:PARSEFRAGPIPEWORKFLOW",
+                "MSPROTEOMICS_FRAGPIPE:GENERATESDRFFROMSAMPLESHEET",
+                "MSPROTEOMICS_FRAGPIPE:TMTANNDATA",
+                "MSPROTEOMICS_FRAGPIPE:WRITE_FRAGPIPE_MANIFEST"
+            ]
+        ],
+        "timestamp": "2026-10-16T17:49:42.602550056",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "qpx export - headless mode LFQ converts FragPipe's results": {
+        "content": [
+            [
+                "fragpipe.dataset.parquet",
+                "fragpipe.feature.parquet",
+                "fragpipe.h5mu",
+                "fragpipe.ontology.parquet",
+                "fragpipe.pg.parquet",
+                "fragpipe.proteins.h5ad",
+                "fragpipe.provenance.parquet",
+                "fragpipe.run.parquet",
+                "fragpipe.sample.parquet",
+                "fragpipe.summary.tsv"
+            ],
+            [
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_HEADLESS_WF:FRAGPIPEHEADLESS",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_HEADLESS_WF:FRAGPIPE_DATABASE:CHECKDBCONFIG",
+                "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_HEADLESS_WF:PARSEFRAGPIPEWORKFLOW",
+                "MSPROTEOMICS_FRAGPIPE:GENERATESDRFFROMSAMPLESHEET",
+                "MSPROTEOMICS_FRAGPIPE:QPXFRAGPIPE"
+            ]
+        ],
+        "timestamp": "2026-10-16T17:49:13.457631923",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
     }
 }

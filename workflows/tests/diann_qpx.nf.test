@@ -39,15 +39,15 @@ nextflow_workflow {
         }
 
         then {
-            // bigbio's QPX_DIANN stub runs no qpxc (its argv is checked by the module and DIA integration tests): check what it was given
-            def staged = taskDir(outputDir, 'QPX_DIANN').list().sort()
-            def export = new File(taskDir(outputDir, 'QPXEXPORT'), '.command.sh').text
+            // the stubs run no tool (their argv is checked by the module and DIA integration tests): check what they were given
+            def staged = (taskDir(outputDir, 'QPX_DIANN').list() as List).sort()
+            def export = (taskDir(outputDir, 'QPXEXPORT').list() as List).sort()
             def qpx = new File("${outputDir}/qpx").list().sort()
             assertAll(
                 { assert workflow.success },
                 { assert staged.containsAll(['diann_report.tsv', 'diann_report.pg_matrix.tsv', 'diann_report.log.txt', 'samplesheet.sdrf.tsv', 'test.fasta']) : staged },
-                { assert export.contains('--pg-matrix-file diann_report.pg_matrix.tsv') && export.contains('--sdrf-file samplesheet.sdrf.tsv') : export },
-                { assert export.contains('--prefix diann') && export.contains('--matrix-qvalue 0.01') : export },
+                { assert export.containsAll(['qpx_output', 'diann_report.pg_matrix.tsv', 'samplesheet.sdrf.tsv']) : export },
+                { assert new File(taskDir(outputDir, 'QPXEXPORT'), 'qpx_output').list() as List == ['stub.parquet'] },
                 { assert snapshot(qpx, workflow.trace.succeeded()*.name.collect { name -> name.replaceAll(/ \(.*\)$/, '') }.unique().sort()).match() }
             )
         }
