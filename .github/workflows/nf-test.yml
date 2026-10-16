@@ -199,7 +199,7 @@ jobs:
         env:
           NFT_WORKDIR: ${{ env.NFT_WORKDIR }}
         run: |
-          nf-test test tests/pmultiqc_fragpipe.nf.test \
+          nf-test test tests/modules/pmultiqc_fragpipe.nf.test \
             --profile=+docker \
             --tag integration \
             --ci \

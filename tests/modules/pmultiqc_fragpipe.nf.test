@@ -8,7 +8,7 @@
 nextflow_process {
 
     name "Test Process PMULTIQC - FragPipe plugin"
-    script "../modules/bigbio/pmultiqc/main.nf"
+    script "../../modules/bigbio/pmultiqc/main.nf"
     process "PMULTIQC"
     config "./pmultiqc_fragpipe.config"
 
