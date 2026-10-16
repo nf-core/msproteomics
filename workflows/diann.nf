@@ -15,6 +15,7 @@ include { DIA_PROTEOMICS_ANALYSIS } from '../subworkflows/nf-core/dia_proteomics
 include { MSSTATSLFQ as MSSTATS } from '../modules/local/msstatslfq/main'
 include { IQ                     } from '../modules/local/iq/main'
 include { PMULTIQC               } from '../modules/local/pmultiqc/main'
+include { QPXDIANN               } from '../modules/local/qpxdiann/main'
 
 // Samplesheet parsing (shared with the FragPipe workflows)
 include { parseSamplesheet       } from '../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils'
@@ -133,6 +134,17 @@ workflow MSPROTEOMICS_DIANN {
             params.msstatslfq_feature_subset_protein,
             params.msstatslfq_quant_summary_method,
             params.msstats_threshold
+        )
+    }
+
+    // qpx export (.h5mu / .h5ad / QPX Parquet under <outdir>/qpx) of the final quantification:
+    // its report, pg_matrix and log, with the samplesheet's SDRF (run set and sample metadata)
+    if (!params.skip_qpx_export) {
+        QPXDIANN(
+            DIA_PROTEOMICS_ANALYSIS.out.diann_report
+                .join(DIA_PROTEOMICS_ANALYSIS.out.pg_matrix, failOnMismatch: true, failOnDuplicate: true)
+                .join(DIA_PROTEOMICS_ANALYSIS.out.diann_log, failOnMismatch: true, failOnDuplicate: true),
+            GENERATESDRFFROMSAMPLESHEET.out.sdrf.first()
         )
     }
 

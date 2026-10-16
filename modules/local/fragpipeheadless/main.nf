@@ -108,6 +108,8 @@ ${headlessStagingLines(raw_files, layout)}
     touch results/combined_protein.tsv
     touch results/combined_peptide.tsv
     touch results/combined_ion.tsv
+    touch results/experiment_annotation.tsv
+    ${annotation_rows ? 'mkdir -p results/tmt-report && touch results/tmt-report/abundance_protein_None.tsv' : ''}
     touch results/sample1/psm.tsv
     touch results/sample1/protein.tsv
 

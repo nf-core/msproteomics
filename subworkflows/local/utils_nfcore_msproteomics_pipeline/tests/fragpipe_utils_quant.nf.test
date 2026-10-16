@@ -196,4 +196,173 @@ nextflow_function {
             )
         }
     }
+
+    test("qpxFragpipeExport - label-free IonQuant with 3 groups is lfq") {
+        function "qpxFragpipeExport"
+        when {
+            function {
+                """
+                def props = new java.util.Properties()
+                ['ionquant.run-ionquant': 'true', 'tmtintegrator.run-tmtintegrator': 'false'].each { key, value -> props.setProperty(key, value) }
+                input[0] = false
+                input[1] = null
+                input[2] = props
+                input[3] = [[[group: 'a_1'], file('/in/r0.mzML')], [[group: 'a_2'], file('/in/r1.mzML')], [[group: 'b_1'], file('/in/r2.mzML')]]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'lfq' }
+            )
+        }
+    }
+
+    test("qpxFragpipeExport - TMT-Integrator is tmt") {
+        function "qpxFragpipeExport"
+        when {
+            function {
+                """
+                def props = new java.util.Properties()
+                ['ionquant.run-ionquant': 'true', 'tmtintegrator.run-tmtintegrator': 'true'].each { key, value -> props.setProperty(key, value) }
+                input[0] = false
+                input[1] = 'quant'
+                input[2] = props
+                input[3] = [[[group: 'plex1'], file('/in/r0.mzML')]]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'tmt' }
+            )
+        }
+    }
+
+    test("qpxFragpipeExport - the TMT label check has no export") {
+        function "qpxFragpipeExport"
+        when {
+            function {
+                """
+                def props = new java.util.Properties()
+                ['ionquant.run-ionquant': 'true', 'tmtintegrator.run-tmtintegrator': 'false'].each { key, value -> props.setProperty(key, value) }
+                input[0] = false
+                input[1] = 'labelcheck'
+                input[2] = props
+                input[3] = [[[group: 'a'], file('/in/r0.mzML')], [[group: 'b'], file('/in/r1.mzML')], [[group: 'c'], file('/in/r2.mzML')]]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == '' }
+            )
+        }
+    }
+
+    test("qpxFragpipeExport - --skip_qpx_export has no export") {
+        function "qpxFragpipeExport"
+        when {
+            function {
+                """
+                def props = new java.util.Properties()
+                ['ionquant.run-ionquant': 'true', 'tmtintegrator.run-tmtintegrator': 'false'].each { key, value -> props.setProperty(key, value) }
+                input[0] = true
+                input[1] = null
+                input[2] = props
+                input[3] = [[[group: 'a'], file('/in/r0.mzML')], [[group: 'b'], file('/in/r1.mzML')], [[group: 'c'], file('/in/r2.mzML')]]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == '' }
+            )
+        }
+    }
+
+    test("qpxFragpipeExport - a workflow without IonQuant or TMT-Integrator has no export") {
+        function "qpxFragpipeExport"
+        when {
+            function {
+                """
+                def props = new java.util.Properties()
+                ['ionquant.run-ionquant': 'false'].each { key, value -> props.setProperty(key, value) }
+                input[0] = false
+                input[1] = null
+                input[2] = props
+                input[3] = [[[group: 'a'], file('/in/r0.mzML')], [[group: 'b'], file('/in/r1.mzML')], [[group: 'c'], file('/in/r2.mzML')]]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == '' }
+            )
+        }
+    }
+
+    test("qpxFragpipeExport - label-free IonQuant with fewer than 3 groups fails") {
+        function "qpxFragpipeExport"
+        when {
+            function {
+                """
+                def props = new java.util.Properties()
+                props.setProperty('ionquant.run-ionquant', 'true')
+                input[0] = false
+                input[1] = null
+                input[2] = props
+                input[3] = [[[group: 'b_1'], file('/in/r1.mzML')], [[group: 'a_1'], file('/in/r2.mzML')], [[group: 'a_1'], file('/in/r3.mzML')]]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.failed },
+                { assert (function.stdout + function.stderr).any { line -> line.contains('qpx export: the samplesheet has 2 experiment+bioreplicate combination(s) [a_1, b_1], fewer than the 3 IonQuant needs') && line.contains('--skip_qpx_export true') } : (function.stdout + function.stderr).join('\n') }
+            )
+        }
+    }
+
+    // TmtiPanel check box: "true" in any case is true, anything else false; an absent key is true
+    test("tmtLog2Transformed - absent key is true") {
+        function "tmtLog2Transformed"
+        when {
+            function {
+                """
+                input[0] = new java.util.Properties()
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'true' }
+            )
+        }
+    }
+
+    test("tmtLog2Transformed - false") {
+        function "tmtLog2Transformed"
+        when {
+            function {
+                """
+                def props = new java.util.Properties()
+                props.setProperty('tmtintegrator.log2transformed', 'False ')
+                input[0] = props
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'false' }
+            )
+        }
+    }
 }
