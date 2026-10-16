@@ -443,6 +443,7 @@ workflow FRAGPIPE {
     combined_peptide      = FRAGPIPE_QUANT.out.combined_peptide                // channel: [ val(meta), path(combined_peptide.tsv) ]
     combined_ion          = FRAGPIPE_QUANT.out.combined_ion                    // channel: [ val(meta), path(combined_ion.tsv) ]
     experiment_annotation = FRAGPIPE_QUANT.out.experiment_annotation           // channel: [ val(meta), path(experiment_annotation.tsv) ]
+    tool_configs          = ch_tool_configs                                    // channel: val(tool_configs JSON) - read with shouldRunTool / getToolArgs
     ionquant_dir          = FRAGPIPE_QUANT.out.ionquant_dir                    // channel: [ val(meta), path(results_dir) ]
     tmt_abundance         = FRAGPIPE_QUANT.out.tmt_abundance                   // channel: [ val(meta), path(abundance_*.tsv) ]
     tmt_dir               = FRAGPIPE_QUANT.out.tmt_dir                         // channel: [ val(meta), path(tmt-report) ]

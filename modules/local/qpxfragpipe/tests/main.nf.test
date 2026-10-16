@@ -83,7 +83,7 @@ nextflow_process {
             assertAll(
                 { assert process.failed },
                 { assert process.exitStatus == 3 },
-                { assert process.stderr.any { line -> line.contains('ERROR: G3: combined_protein.tsv has no MaxLFQ Intensity / Total Intensity column') } : process.stderr }
+                { assert process.stderr.any { line -> line.contains('ERROR: G3: combined_protein.tsv has no MaxLFQ Intensity / Total Intensity column') && line.contains('--skip_qpx_export') } : process.stderr }
             )
         }
     }

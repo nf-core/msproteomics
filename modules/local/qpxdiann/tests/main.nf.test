@@ -84,4 +84,53 @@ nextflow_process {
             )
         }
     }
+
+    // Guard G2: an empty pg_matrix (no protein group passed DIA-NN's matrix FDR) leaves no proteins modality
+    test("qpxdiann - empty pg_matrix fails") {
+        tag "qpx"
+        tag "integration"
+
+        when {
+            process {
+                """
+                def d = "\${projectDir}/tests/fixtures/qpx/diann_single"
+                def pg_matrix = file("\${workDir}/pg_matrix.tsv")
+                pg_matrix.text = file("\${d}/pg_matrix.tsv").readLines()[0] + "\\n"
+                input[0] = [[id: 'experiment'], file("\${d}/report.tsv", checkIfExists: true), pg_matrix, file("\${d}/diann.log.txt", checkIfExists: true)]
+                input[1] = file("\${d}/sdrf.tsv", checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.failed },
+                { assert process.exitStatus == 3 },
+                { assert process.stderr.any { line -> line.contains("ERROR: G2: no 'proteins' modality") } : process.stderr }
+            )
+        }
+    }
+
+    // Guard G6: the report's runs must be the SDRF's runs
+    test("qpxdiann - SDRF runs that DIA-NN did not quantify fail") {
+        tag "qpx"
+        tag "integration"
+
+        when {
+            process {
+                """
+                def d = "\${projectDir}/tests/fixtures/qpx/diann_single"
+                input[0] = [[id: 'experiment'], file("\${d}/report.tsv", checkIfExists: true), file("\${d}/pg_matrix.tsv", checkIfExists: true), file("\${d}/diann.log.txt", checkIfExists: true)]
+                input[1] = file("\${projectDir}/tests/fixtures/qpx/diann_multi/sdrf.tsv", checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.failed },
+                { assert process.stderr.any { line -> line.contains('ERROR: G') } : process.stderr }
+            )
+        }
+    }
 }

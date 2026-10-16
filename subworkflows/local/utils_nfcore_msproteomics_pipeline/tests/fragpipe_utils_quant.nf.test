@@ -329,13 +329,30 @@ nextflow_function {
         }
     }
 
-    // TmtiPanel check box: "true" in any case is true, anything else false; an absent key is true
-    test("tmtLog2Transformed - absent key is true") {
+    // tmt-integrator-conf.yml text as the parser / FragPipe's plan write it (TmtiConfig.write)
+    test("tmtLog2Transformed - reads the config line") {
         function "tmtLog2Transformed"
         when {
             function {
                 """
-                input[0] = new java.util.Properties()
+                input[0] = 'tmtintegrator:\n  groupby: -1\n  log2transformed: false\n  ms1_int: true\n'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == 'false' }
+            )
+        }
+    }
+
+    test("tmtLog2Transformed - true") {
+        function "tmtLog2Transformed"
+        when {
+            function {
+                """
+                input[0] = 'tmtintegrator:\n  log2transformed: true\n'
                 """
             }
         }
@@ -347,21 +364,19 @@ nextflow_function {
         }
     }
 
-    test("tmtLog2Transformed - false") {
+    test("tmtLog2Transformed - no setting gives null") {
         function "tmtLog2Transformed"
         when {
             function {
                 """
-                def props = new java.util.Properties()
-                props.setProperty('tmtintegrator.log2transformed', 'False ')
-                input[0] = props
+                input[0] = 'tmtintegrator:\n  groupby: -1\n'
                 """
             }
         }
         then {
             assertAll(
                 { assert function.success },
-                { assert function.result == 'false' }
+                { assert function.result == null }
             )
         }
     }

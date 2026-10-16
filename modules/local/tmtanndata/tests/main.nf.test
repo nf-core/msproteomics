@@ -81,4 +81,29 @@ nextflow_process {
             )
         }
     }
+
+    // Guard G12: every report sample column must be an annotation sample_name
+    test("tmtanndata - samples missing from the annotation fail") {
+        tag "qpx"
+        tag "integration"
+
+        when {
+            process {
+                """
+                def d = "\${projectDir}/tests/fixtures/qpx"
+                def annotation = file("\${workDir}/tmt_annotation.tsv")
+                annotation.text = file("\${d}/tmt_annotation.tsv").readLines().findAll { line -> !line.contains('P1_126') }.join('\\n') + '\\n'
+                input[0] = [[id: 'fragpipe'], files("\${d}/tmt_log2/abundance_*.tsv", checkIfExists: true), annotation, 'true']
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.failed },
+                { assert process.exitStatus == 3 },
+                { assert process.stderr.any { line -> line.contains('ERROR: G12:') && line.contains('P1_126') } : process.stderr }
+            )
+        }
+    }
 }

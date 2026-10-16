@@ -78,6 +78,10 @@ nextflow_pipeline {
                 // pipeline params; tests/lib/test_data_base_path.nf.test checks this URL follows the base path)
                 database = 'https://raw.githubusercontent.com/an-altosian/test-datasets/refs/heads/msproteomics/databases/human_sp_subset.fasta'
                 organism = 'homo_sapiens'
+                // as conf/tests/test_dia.config: no matrix q-value filter, so the qpx export has proteins
+                skip_qpx_export                = false
+                diann_additional_analysis_args = '--matrix-qvalue 1'
+                qpx_qvalue_threshold           = 1.0
                 outdir   = "$outputDir"
             }
         }
@@ -120,6 +124,11 @@ nextflow_pipeline {
             def report_column = { name -> report_lines.drop(1).collect { line -> line.split('\t')[report_header.indexOf(name)] } }
             def precursor_set = report_column('Precursor.Id').unique().sort()
             def protein_group_set = report_column('Protein.Group').unique().sort()
+            // qpx export summary (qpx/** is in tests/.nftignore: HDF5/Parquet bytes carry timestamps). The
+            // count.* rows are the obs x var shapes of the written matrices and follow the DIA-NN tables (per CPU class).
+            def qpx_summary = new File("$outputDir/qpx/diann.summary.tsv").readLines()
+            def qpx_counts = qpx_summary.findAll { line -> line.startsWith('count.') }
+            def qpx_count = { key -> (qpx_counts.find { line -> line.startsWith("${key}\t") } ?: "${key}\t-1").split('\t')[1] as long }
             assertAll(
                 { assert workflow.success },
                 { assert report.exists() && report.readLines().size() > 1 : "DIA-NN report missing or empty" },
@@ -133,11 +142,18 @@ nextflow_pipeline {
                 { assert snapshot(precursor_set).match("dia_precursor_set__${snapshot_key}") },
                 { assert snapshot(protein_group_set).match("dia_protein_group_set__${snapshot_key}") },
                 { assert snapshot(diann_tables).match("dia_diann_tables__${snapshot_key}") },
+                // one run; the proteins / precursors modalities hold the pg_matrix / pr_matrix of that run
+                { assert qpx_count('count.proteins.n_obs') == 1 && qpx_count('count.precursors.n_obs') == 1 : qpx_counts },
+                { assert qpx_count('count.proteins.n_vars') >= 1 && qpx_count('count.precursors.n_vars') >= 1 : qpx_counts },
+                { assert new File("$outputDir/qpx/diann.proteins.h5ad").length() > 0 && new File("$outputDir/qpx/diann.h5mu").length() > 0 },
+                { assert snapshot(qpx_counts).match("dia_qpx_counts__${snapshot_key}") },
                 { assert snapshot(
                     // pipeline versions.yml file for multiqc from which Nextflow version is removed because we test pipelines on multiple Nextflow versions
                     removeNextflowVersion("$outputDir/pipeline_info/nf_core_msproteomics_software_mqc_versions.yml"),
                     // All stable path name, with a relative path
                     stable_name,
+                    // qpx export summary without the per-CPU counts
+                    qpx_summary.findAll { line -> !line.startsWith('count.') },
                     // All files with stable contents
                     stable_path
                 ).match() }

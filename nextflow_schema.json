@@ -568,7 +568,7 @@
                     "default": 0.01,
                     "minimum": 0,
                     "maximum": 1,
-                    "description": "Precursor q-value threshold of qpxc convert diann (--qvalue-threshold).",
+                    "description": "Q-value threshold of the DIA-NN qpx export: qpxc convert diann --qvalue-threshold and the pr_matrix filter of the precursors modality.",
                     "fa_icon": "fas fa-filter",
                     "help_text": "The default 0.01 is the 1% precursor and protein-group FDR at which DIA-NN writes pg_matrix, so the proteins .h5ad matches pg_matrix."
                 },

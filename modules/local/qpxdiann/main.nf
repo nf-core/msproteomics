@@ -5,7 +5,8 @@
  * pg_matrix required (without it qpxc writes no pg view and the MuData has no
  * proteins modality) and the inline MuData step replaced by the guarded
  * bin/qpx_export.py (silent-failure guards, NaN for missing values, dense float32).
- * The q-value filter (--qvalue-threshold) comes from ext.args (conf/modules.config).
+ * The q-value filters come from ext.args (qpxc --qvalue-threshold) and ext.args2 (qpx_export.py
+ * --matrix-qvalue, the pr_matrix filter of the precursors modality), set in conf/modules.config.
  *
  * Input:
  *   - meta: experiment x search-database metadata map (meta.id is the output prefix)
@@ -48,6 +49,7 @@ process QPXDIANN {
 
     script:
     def args = task.ext.args ?: ''
+    def args2 = task.ext.args2 ?: ''
     prefix = task.ext.prefix ?: "${meta.id}"
     if (!task.memory) {
         error("QPXDIANN: task.memory is not set, but qpxc convert diann needs --max-memory. Set memory for process_medium (or QPXDIANN) in your config.")
@@ -71,7 +73,8 @@ process QPXDIANN {
         --sdrf-file ${sdrf} \\
         --pg-matrix-file ${pg_matrix} \\
         --qpx-folder qpx_output \\
-        --prefix ${prefix}
+        --prefix ${prefix} \\
+        ${args2}
     """
 
     stub:
