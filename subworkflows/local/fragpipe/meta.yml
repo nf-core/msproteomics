@@ -143,16 +143,16 @@ output:
       description: |
         Combined ion quantification table from IonQuant.
         Structure: [ val(meta), path(combined_ion.tsv) ]
-  - tool_configs:
-      type: channel
-      description: |
-        The run's tool configs JSON (shouldRunTool / getToolArgs read it).
-        Structure: val(tool_configs JSON)
   - experiment_annotation:
       type: channel
       description: |
         FragPipe's experiment_annotation.tsv of the IonQuant run (label-free or isobaric pass).
         Structure: [ val(meta), path(experiment_annotation.tsv) ]
+  - tool_configs:
+      type: channel
+      description: |
+        The run's tool configs JSON (shouldRunTool / getToolArgs read it).
+        Structure: val(tool_configs JSON)
   - ionquant_dir:
       type: channel
       description: |
