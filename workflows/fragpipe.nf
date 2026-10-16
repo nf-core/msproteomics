@@ -276,12 +276,17 @@ workflow MSPROTEOMICS_FRAGPIPE {
     }
 
     // qpx export (.h5mu / .h5ad / QPX Parquet under <outdir>/qpx), see qpxFragpipeExport
+    // A due export whose IonQuant / TMT-Integrator (or FragPipe headless) task emitted nothing stops the run
     if (qpx_export == 'lfq') {
-        QPXFRAGPIPE(ch_qpx_lfq, GENERATESDRFFROMSAMPLESHEET.out.sdrf.first())
+        QPXFRAGPIPE(
+            ch_qpx_lfq.ifEmpty { error("qpx export: no IonQuant results reached QPXFRAGPIPE (IonQuant or FragPipe headless emitted none). Rerun with --skip_qpx_export true.") },
+            GENERATESDRFFROMSAMPLESHEET.out.sdrf.first()
+        )
     }
     if (qpx_export == 'tmt') {
         TMTANNDATA(
             ch_qpx_tmt
+                .ifEmpty { error("qpx export: no TMT-Integrator results reached TMTANNDATA (TMT-Integrator or FragPipe headless emitted none). Rerun with --skip_qpx_export true.") }
                 .combine(ch_annotation)
                 .map { meta, abundance, log2transformed, annotation -> [meta, abundance, annotation, log2transformed] }
         )
