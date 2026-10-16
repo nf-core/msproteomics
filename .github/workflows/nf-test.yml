@@ -222,6 +222,30 @@ jobs:
             exit 1
           fi
 
+  # Real qpx export modules (QPXDIANN, QPXFRAGPIPE, TMTANNDATA) in the public qpx image on the
+  # synthetic tables in tests/fixtures/qpx; no other job selects the qpx tag
+  qpx-module-tests:
+    name: "qpx module tests"
+    needs: [nf-test-changes]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Setup Nextflow
+        uses: nf-core/setup-nextflow@893c28b667aedeba26e37f296d260ccc5bc4d914 # v3
+        with:
+          version: "25.10.4"
+
+      - name: Install nf-test
+        uses: nf-core/setup-nf-test@4069fbbaabe94c08faba4ad261bfa88225ba133f # v2
+        with:
+          version: ${{ env.NFT_VER }}
+
+      - name: Run qpx module tests
+        env:
+          NFT_WORKDIR: ${{ env.NFT_WORKDIR }}
+        run: nf-test test --profile=+docker --tag qpx --ci --verbose
+
   # Unit tests of the pipeline's Python scripts (bin/, modules/local/*/resources/usr/bin/) and of the
   # developer tooling in tests/tools/ (make test-python)
   python-tests:
@@ -243,7 +267,7 @@ jobs:
         run: make test-python
 
   confirm-pass:
-    needs: [nf-test, dia-integration, python-tests]
+    needs: [nf-test, dia-integration, qpx-module-tests, python-tests]
     if: always()
     runs-on: ubuntu-latest
     steps:

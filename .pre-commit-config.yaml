@@ -18,7 +18,7 @@ repos:
               modules/local/parsefragpipeworkflow/assets/diaumpire_se\.params|
               modules/local/parsefragpipeworkflow/assets/fragger_closed\.params|
               tests/fixtures/fragger_params/.*|
-              tests/fixtures/(fpop|metaproteomics)/.*\.(tsv|pin)$|
+              tests/fixtures/(fpop|metaproteomics|qpx)/.*\.(tsv|pin)$|
               .*\.snap$
           )$
       - id: end-of-file-fixer

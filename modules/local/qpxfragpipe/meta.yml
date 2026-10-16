@@ -93,7 +93,7 @@ output:
       - anndata:
           type: string
           description: The name of the tool
-      - "python3 -c \"import importlib.metadata as m; print(m.version('anndata'))\"":
+      - 'python3 -c "import importlib.metadata as m; print(m.version(''anndata''))"':
           type: eval
           description: The expression to obtain the version of the tool
   versions_mudata:
@@ -103,7 +103,7 @@ output:
       - mudata:
           type: string
           description: The name of the tool
-      - "python3 -c \"import importlib.metadata as m; print(m.version('mudata'))\"":
+      - 'python3 -c "import importlib.metadata as m; print(m.version(''mudata''))"':
           type: eval
           description: The expression to obtain the version of the tool
 
@@ -124,7 +124,7 @@ topics:
       - anndata:
           type: string
           description: The name of the tool
-      - "python3 -c \"import importlib.metadata as m; print(m.version('anndata'))\"":
+      - 'python3 -c "import importlib.metadata as m; print(m.version(''anndata''))"':
           type: eval
           description: The expression to obtain the version of the tool
     - - ${task.process}:
@@ -133,7 +133,7 @@ topics:
       - mudata:
           type: string
           description: The name of the tool
-      - "python3 -c \"import importlib.metadata as m; print(m.version('mudata'))\"":
+      - 'python3 -c "import importlib.metadata as m; print(m.version(''mudata''))"':
           type: eval
           description: The expression to obtain the version of the tool
 
