@@ -24,7 +24,7 @@ nextflow_process {
                 def d = "\${projectDir}/tests/fixtures/qpx/diann_multi"
                 def dataset = file("\${workDir}/diann.pg.parquet")
                 dataset.text = ''
-                input[0] = [[id: 'diann'], [dataset], file("\${d}/pg_matrix.tsv", checkIfExists: true)]
+                input[0] = [[id: 'diann', matrix_qvalue: '0.01'], [dataset], file("\${d}/pg_matrix.tsv", checkIfExists: true)]
                 input[1] = file("\${d}/sdrf.tsv", checkIfExists: true)
                 """
             }
@@ -63,7 +63,7 @@ nextflow_process {
             process {
                 """
                 def d = "\${projectDir}/tests/fixtures/qpx/diann_multi"
-                input[0] = QPX_DIANN.out.qpx_dataset.map { dataset -> [[id: 'diann'], dataset, file("\${d}/pg_matrix.tsv", checkIfExists: true)] }
+                input[0] = QPX_DIANN.out.qpx_dataset.map { dataset -> [[id: 'diann', matrix_qvalue: '0.01'], dataset, file("\${d}/pg_matrix.tsv", checkIfExists: true)] }
                 input[1] = file("\${d}/sdrf.tsv", checkIfExists: true)
                 """
             }
@@ -107,7 +107,7 @@ nextflow_process {
             process {
                 """
                 def d = "\${projectDir}/tests/fixtures/qpx/diann_single"
-                input[0] = QPX_DIANN.out.qpx_dataset.map { dataset -> [[id: 'diann'], dataset, file("\${d}/pg_matrix.tsv", checkIfExists: true)] }
+                input[0] = QPX_DIANN.out.qpx_dataset.map { dataset -> [[id: 'diann', matrix_qvalue: '0.01'], dataset, file("\${d}/pg_matrix.tsv", checkIfExists: true)] }
                 input[1] = file("\${d}/sdrf.tsv", checkIfExists: true)
                 """
             }
@@ -153,7 +153,7 @@ nextflow_process {
                 """
                 def d = "\${projectDir}/tests/fixtures/qpx/diann_single"
                 def pg_matrix = file("\${workDir}/empty_pg_matrix.tsv")
-                input[0] = QPX_DIANN.out.qpx_dataset.map { dataset -> [[id: 'diann'], dataset, pg_matrix] }
+                input[0] = QPX_DIANN.out.qpx_dataset.map { dataset -> [[id: 'diann', matrix_qvalue: '0.01'], dataset, pg_matrix] }
                 input[1] = file("\${d}/sdrf.tsv", checkIfExists: true)
                 """
             }
@@ -194,7 +194,7 @@ nextflow_process {
             process {
                 """
                 def d = "\${projectDir}/tests/fixtures/qpx/diann_single"
-                input[0] = QPX_DIANN.out.qpx_dataset.map { dataset -> [[id: 'diann'], dataset, file("\${d}/pg_matrix.tsv", checkIfExists: true)] }
+                input[0] = QPX_DIANN.out.qpx_dataset.map { dataset -> [[id: 'diann', matrix_qvalue: '0.01'], dataset, file("\${d}/pg_matrix.tsv", checkIfExists: true)] }
                 input[1] = file("\${projectDir}/tests/fixtures/qpx/diann_multi/sdrf.tsv", checkIfExists: true)
                 """
             }

@@ -7,7 +7,8 @@
  * sparse zeros) and the proteins AnnData. The pr_matrix filter (--matrix-qvalue) comes from ext.args.
  *
  * Input:
- *   - meta: Metadata map (meta.id is the dataset prefix, the qpxc --output-prefix)
+ *   - meta: Metadata map (meta.id is the dataset prefix, the qpxc --output-prefix; meta.matrix_qvalue the
+ *     matrix FDR DIA-NN applied, which conf/modules.config passes as --matrix-qvalue)
  *   - qpx_dataset: QPX Parquet files of the dataset
  *   - pg_matrix: DIA-NN protein-group matrix (pg_matrix.tsv)
  *   - sdrf: SDRF of the run (run set and obs metadata)
