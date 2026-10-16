@@ -1,0 +1,19 @@
+{
+    "pmultiqc - fragpipe plugin, two groups": {
+        "content": [
+            [
+                "versions.yml:md5,44aef3fe2afb48cb85b651ac1150fa33"
+            ],
+            [
+                "llms-full.txt",
+                "multiqc_citations.txt",
+                "multiqc_sources.txt"
+            ]
+        ],
+        "timestamp": "2026-10-16T14:17:59.457826324",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

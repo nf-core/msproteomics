@@ -28,10 +28,11 @@
                 "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_VALIDATE:PERCOLATOR (trt_2)",
                 "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:PARSEFRAGPIPEWORKFLOW (fragpipe_config)",
                 "MSPROTEOMICS_FRAGPIPE:GENERATESDRFFROMSAMPLESHEET (generate_sdrf)",
+                "MSPROTEOMICS_FRAGPIPE:PMULTIQC_FRAGPIPE (1)",
                 "MSPROTEOMICS_FRAGPIPE:WRITE_FRAGPIPE_MANIFEST (fragpipe)"
             ]
         ],
-        "timestamp": "2026-10-15T20:46:00.161214596",
+        "timestamp": "2026-10-16T17:53:33.796646455",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"
@@ -66,10 +67,11 @@
                 "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_VALIDATE:PERCOLATOR (trt_2)",
                 "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:PARSEFRAGPIPEWORKFLOW (fragpipe_config)",
                 "MSPROTEOMICS_FRAGPIPE:GENERATESDRFFROMSAMPLESHEET (generate_sdrf)",
+                "MSPROTEOMICS_FRAGPIPE:PMULTIQC_FRAGPIPE (1)",
                 "MSPROTEOMICS_FRAGPIPE:WRITE_FRAGPIPE_MANIFEST (fragpipe)"
             ]
         ],
-        "timestamp": "2026-10-15T20:46:40.45015469",
+        "timestamp": "2026-10-16T17:54:05.660059077",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"
@@ -105,10 +107,11 @@
                 "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_VALIDATE:PERCOLATOR (trt_2)",
                 "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:PARSEFRAGPIPEWORKFLOW (fragpipe_config)",
                 "MSPROTEOMICS_FRAGPIPE:GENERATESDRFFROMSAMPLESHEET (generate_sdrf)",
+                "MSPROTEOMICS_FRAGPIPE:PMULTIQC_FRAGPIPE (1)",
                 "MSPROTEOMICS_FRAGPIPE:WRITE_FRAGPIPE_MANIFEST (fragpipe)"
             ]
         ],
-        "timestamp": "2026-10-15T20:45:20.576111723",
+        "timestamp": "2026-10-16T17:53:03.841141937",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"
@@ -143,10 +146,11 @@
                 "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_VALIDATE:PERCOLATOR (trt_2)",
                 "MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:PARSEFRAGPIPEWORKFLOW (fragpipe_config)",
                 "MSPROTEOMICS_FRAGPIPE:GENERATESDRFFROMSAMPLESHEET (generate_sdrf)",
+                "MSPROTEOMICS_FRAGPIPE:PMULTIQC_FRAGPIPE (1)",
                 "MSPROTEOMICS_FRAGPIPE:WRITE_FRAGPIPE_MANIFEST (fragpipe)"
             ]
         ],
-        "timestamp": "2026-10-15T20:44:40.022722025",
+        "timestamp": "2026-10-16T17:52:32.751839044",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"

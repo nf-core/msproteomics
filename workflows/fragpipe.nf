@@ -244,18 +244,15 @@ workflow MSPROTEOMICS_FRAGPIPE {
     }
 
     // Proteomics QC report (pmultiqc FragPipe plugin); multiqc_config.yml is staged with the results (ext.args --config)
-    ch_versions = channel.empty()
     if (params.enable_pmultiqc) {
         def pmultiqc_config = file("${projectDir}/assets/multiqc_config.yml", checkIfExists: true)
         PMULTIQC_FRAGPIPE(ch_pmultiqc_files.map { inputs -> inputs + [pmultiqc_config] })
-        ch_versions = PMULTIQC_FRAGPIPE.out.versions
     }
 
     emit:
     group_psms                = ch_group_psms                 // channel: [ path(psm.tsv), ... ] - each group's Report psm.tsv, groups by name
     combined_modified_peptide = ch_combined_modified_peptide  // channel: [ val(meta), path(combined_modified_peptide.tsv) ] - IonQuant's, when it runs
     multiqc_files             = channel.empty()               // every module reports its version on the 'versions' topic (main.nf collects them)
-    versions                  = ch_versions                   // channel: path(versions.yml) - PMULTIQC_FRAGPIPE's (bigbio module, no topic)
 }
 
 /*

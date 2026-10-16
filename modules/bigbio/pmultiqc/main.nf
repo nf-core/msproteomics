@@ -17,7 +17,7 @@ process PMULTIQC {
     output:
     path "*.html",       emit: ch_pmultiqc_report
     path "*.db",         optional: true, emit: ch_pmultiqc_db
-    path "versions.yml", emit: versions
+    path "versions.yml", emit: versions, topic: versions
     path "*_data",       emit: data
 
     when:
@@ -30,7 +30,12 @@ process PMULTIQC {
         -f \\
         ${args} \\
         ./results \\
-        -o .
+        -o . 2>&1 | tee pmultiqc.log
+    # pmultiqc logs a failed or missing plugin as a warning and exits 0 (pmultiqc 0.0.48 pmultiqc/modules/core/core.py:107,113)
+    if grep -E "pmultiqc plugin '.+' encountered an error and was skipped|No pmultiqc plugin selected" pmultiqc.log; then
+        echo "pmultiqc: the plugin did not run (see the line above)" >&2
+        exit 1
+    fi
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

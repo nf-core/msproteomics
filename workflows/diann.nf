@@ -138,7 +138,6 @@ workflow MSPROTEOMICS_DIANN {
 
     // Proteomics QC report (pmultiqc) over the mzTab, experimental design, mzML statistics and DIA-NN report;
     // multiqc_config.yml is staged with them (ext.args --config), as in bigbio/quantmsdiann
-    ch_versions = channel.empty()
     if (params.enable_pmultiqc) {
         def pmultiqc_config = file("${projectDir}/assets/multiqc_config.yml", checkIfExists: true)
         PMULTIQC(
@@ -151,12 +150,10 @@ workflow MSPROTEOMICS_DIANN {
                 )
                 .collect()
         )
-        ch_versions = PMULTIQC.out.versions
     }
 
     emit:
     multiqc_files = channel.empty() // every module reports its version on the 'versions' topic (main.nf collects them)
-    versions      = ch_versions     // channel: path(versions.yml) - PMULTIQC's (bigbio module, no topic)
 }
 
 /*

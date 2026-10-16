@@ -48,9 +48,11 @@ nextflow_process {
             assertAll(
                 { assert process.success },
                 // plot ids of pmultiqc/modules/fragpipe/fragpipe.py: charge states (psm.tsv), parameters
-                // (fragpipe.workflow), experiment design (manifest), intensities (ion.tsv, combined_protein.tsv)
+                // (fragpipe.workflow), experiment design (manifest), protein intensities (combined_protein.tsv).
+                // No ion intensity plot: it reads per-sample columns after "Mapped Proteins" (fragpipe_io.py:168-172),
+                // and a one-experiment LFQ ion.tsv has none.
                 { assert ['charge_state', 'fragpipe_parameters', 'fragpipe_experiment_design',
-                          'ion_intensity_distribution_box', 'protein_intensity_distribution_box'].every { id -> report.contains(id) } },
+                          'protein_intensity_distribution_box'].every { id -> report.contains(id) } },
                 // both groups' psm.tsv, found inside their directories
                 { assert log.contains('FragPipe data loaded: psm (2 files).') },
                 { assert !log.contains('encountered an error and was skipped') && !log.contains('No pmultiqc plugin selected') },
@@ -58,6 +60,31 @@ nextflow_process {
                     process.out.versions,
                     file(process.out.data[0]).list().findAll { name -> name.endsWith('.txt') }.sort()
                 ).match() }
+            )
+        }
+    }
+
+    // A psm.tsv without a Spectrum column: psm_reader raises (fragpipe_io.py:129-130), core.py:105-107 logs
+    // "pmultiqc plugin 'FragPipeModule' encountered an error and was skipped" and exits 0; the module patch fails the task
+    test("pmultiqc - fragpipe plugin error fails the task") {
+
+        when {
+            process {
+                """
+                def group = file("\${workDir}/broken_group")
+                group.mkdirs()
+                file("\${group}/psm.tsv").text = "Peptide\\tCharge\\nPEPTIDE\\t2\\n"
+                input[0] = [group, file("${projectDir}/assets/multiqc_config.yml", checkIfExists: true)]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.failed },
+                { assert process.stdout.any { line -> line.contains("pmultiqc plugin 'FragPipeModule' encountered an error and was skipped") } },
+                // the task's stderr, in Nextflow's error report
+                { assert process.stdout.any { line -> line.contains('pmultiqc: the plugin did not run') } }
             )
         }
     }

@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- `PMULTIQC` is the `pmultiqc` module of bigbio/nf-modules (`modules/bigbio/pmultiqc`, as in quantms), pmultiqc 0.0.39 -> 0.0.48, instead of a local module; its options are hyphenated since 0.0.39 (`--quantms-plugin`, `--disable-table`, `--ignored-idxml`, `--contaminant-affix`, `--quantification-method`), and the module patch fixes its version query (`--pmultiqc-version`; `--pmultiqc_version` exits with `No such option`).
+- `PMULTIQC` is the `pmultiqc` module of bigbio/nf-modules (`modules/bigbio/pmultiqc`, as in quantms), pmultiqc 0.0.39 -> 0.0.48, instead of a local module; its options are hyphenated since 0.0.39 (`--quantms-plugin`, `--disable-table`, `--ignored-idxml`, `--contaminant-affix`, `--quantification-method`), and the module patch fixes its version query (`--pmultiqc-version`; `--pmultiqc_version` exits with `No such option`), sends `versions.yml` to the `versions` topic and fails the task when pmultiqc logs a plugin error or no plugin (it exits 0 then, `pmultiqc/modules/core/core.py:107,113`).
 - Tasks never write their inputs: FragPipe tasks copy only the staged inputs a tool misreads or writes through, and the docker tests mount inputs read-only (`docker.writableInputMounts = false` in `tests/nextflow.config`).
 - nf-core template 3.5.2 -> 4.1.0.
 - `manifest.nextflowVersion` `!>=25.04.0` -> `!>=25.10.4`.

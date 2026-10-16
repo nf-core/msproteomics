@@ -1654,7 +1654,7 @@ nextflow_function {
             }
         }
         then {
-            def names = function.result.collect { f -> f.name }
+            def names = function.result.collect { f -> f.toString().tokenize("/")[-1] }
             assertAll(
                 { assert function.success },
                 { assert names == ['combined_ion.tsv', 'combined_peptide.tsv', 'combined_protein.tsv', 'fragpipe-files.fp-manifest',
@@ -1682,7 +1682,7 @@ nextflow_function {
             }
         }
         then {
-            def names = function.result.collect { f -> f.name }
+            def names = function.result.collect { f -> f.toString().tokenize("/")[-1] }
             assertAll(
                 { assert function.success },
                 { assert names == ['fragpipe-files.fp-manifest', 'fragpipe.workflow', 'grp_a', 'grp_b'] },

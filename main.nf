@@ -47,15 +47,12 @@ workflow NFCORE_MSPROTEOMICS {
     if (params.mode == 'diann') {
         MSPROTEOMICS_DIANN()
         ch_multiqc_files = MSPROTEOMICS_DIANN.out.multiqc_files
-        ch_versions      = MSPROTEOMICS_DIANN.out.versions
     } else if (params.mode == 'fragpipe' && params.tmt_mode == 'labelcheck') {
         MSPROTEOMICS_TMT_LABELCHECK()
         ch_multiqc_files = MSPROTEOMICS_TMT_LABELCHECK.out.multiqc_files
-        ch_versions      = MSPROTEOMICS_TMT_LABELCHECK.out.versions
     } else if (params.mode == 'fragpipe') {
         MSPROTEOMICS_FRAGPIPE()
         ch_multiqc_files = MSPROTEOMICS_FRAGPIPE.out.multiqc_files
-        ch_versions      = MSPROTEOMICS_FRAGPIPE.out.versions
     } else {
         error("--mode must be 'diann' or 'fragpipe', got '${params.mode}'")
     }
@@ -80,8 +77,7 @@ workflow NFCORE_MSPROTEOMICS {
             "${process}:\n${tool_versions.join('\n')}"
         }
 
-    // versions.yml of modules that do not send it to the topic (bigbio pmultiqc)
-    def ch_collated_versions = softwareVersionsToYAML(topic_versions.versions_file.mix(ch_versions))
+    def ch_collated_versions = softwareVersionsToYAML(topic_versions.versions_file)
         .mix(topic_versions_string)
         .collectFile(
             storeDir: "${outdir}/pipeline_info",
