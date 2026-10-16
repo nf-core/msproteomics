@@ -65,14 +65,14 @@ workflow MSPROTEOMICS_FRAGPIPE {
     // the database FragPipe searches, resolved once (--database > iProteome)
     def fragpipe_database = resolveFragPipeDatabase(proteome, params)
     checkWorkflowDatabase(workflow_props, [resolveDatabase(proteome, params), fragpipe_database])
+    // checks that can stop the run come before the first channel operator (see workflows/diann.nf)
+    def db_channels = resolveFragPipeDatabaseChannels(proteome, params)
 
     GENERATESDRFFROMSAMPLESHEET(
         channel.fromPath(params.input, checkIfExists: true),
         generateSdrfBookkeeping(params, resolveOrganism(proteome, params)),
         file(fragpipe_database, glob: false, checkIfExists: true)
     )
-
-    def db_channels = resolveFragPipeDatabaseChannels(proteome, params)
 
     ch_workflow_file = channel.of([[id: 'fragpipe_config'], fragpipe_workflow_file])
 

@@ -34,6 +34,11 @@ workflow MSPROTEOMICS_DIANN {
     // iProteome (--proteome): fasta and hosted DIA-NN library; --database / --diann_speclib win
     def proteome = resolveProteome(params)
     def database = resolveDatabase(proteome, params)
+    // --diann_speclib > the iProteome's hosted library > built by DIANN_INSILICOLIBRARYGENERATION.
+    // Every check that can stop the run comes before the first channel operator: an error() raised while
+    // operators exist aborts them, and an interrupted collectFile can log its ClosedByInterruptException
+    // first, which Nextflow then prints instead of the error (LoggerHelper prints only the first ERROR).
+    def diann_speclib = resolveDiannSpeclib(proteome, params)
 
     GENERATESDRFFROMSAMPLESHEET(
         channel.fromPath(params.input, checkIfExists: true),
@@ -82,9 +87,7 @@ workflow MSPROTEOMICS_DIANN {
         .collectFile(name: 'experimental_design.tsv')
         .map { expdesign -> [[id: 'experiment'], expdesign] }
 
-    // Pre-built in-silico spectral library (skips QUANTMSUTILS_DIANNCFG and in-silico generation):
-    // --diann_speclib > the iProteome's hosted library > built by DIANN_INSILICOLIBRARYGENERATION
-    def diann_speclib = resolveDiannSpeclib(proteome, params)
+    // Pre-built in-silico spectral library (skips QUANTMSUTILS_DIANNCFG and in-silico generation), resolved above
     ch_speclib = diann_speclib
         ? channel.of(file(diann_speclib, checkIfExists: true))
         : channel.empty()
