@@ -528,26 +528,26 @@
                 "pmultiqc_idxml_skip": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Skip idXML indexing in pmultiqc (faster reporting).",
+                    "description": "Skip idXML indexing in pmultiqc (faster reporting; DIA mode).",
                     "fa_icon": "fas fa-forward",
                     "hidden": true
                 },
                 "contaminant_string": {
                     "type": "string",
                     "default": "CONT",
-                    "description": "Prefix string identifying contaminant proteins.",
+                    "description": "Text that marks contaminant proteins in pmultiqc: matched anywhere in the protein name (FragPipe mode ignores case).",
                     "fa_icon": "fas fa-biohazard"
                 },
                 "quantification_method": {
                     "type": "string",
                     "default": "feature_intensity",
-                    "description": "Quantification method for pmultiqc reporting.",
+                    "description": "Quantification method for pmultiqc reporting (DIA mode).",
                     "fa_icon": "fas fa-calculator"
                 },
                 "skip_table_plots": {
                     "type": "boolean",
                     "default": false,
-                    "description": "Skip table plot generation in pmultiqc.",
+                    "description": "Skip table plot generation in pmultiqc (DIA mode).",
                     "fa_icon": "fas fa-table"
                 },
                 "enable_diann_mztab": {

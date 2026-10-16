@@ -148,7 +148,7 @@ workflow MSPROTEOMICS_DIANN {
                     ch_diann_report,
                     channel.of(pmultiqc_config)
                 )
-                .collect()
+                .collect(sort: true)
         )
     }
 
