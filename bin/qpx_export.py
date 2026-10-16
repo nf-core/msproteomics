@@ -10,15 +10,15 @@ for missing values, and only then writes:
     <prefix>.proteins.h5ad   the proteins modality
     <prefix>.summary.tsv     sorted key<TAB>value rows (count.* rows are data-dependent)
 
-DIA-NN values (user decision 2026-09-27, docs/plans/2026-09-27_h5ad_decisions.md "DIA X"):
+DIA-NN values:
 ``proteins.X`` = PG.MaxLFQ read from DIA-NN's own ``pg_matrix.tsv`` (``--pg-matrix-file``;
 DIA-NN applies its precursor ``Global.Q.Value`` and protein-group FDR filter there),
 ``layers['raw']`` = PG.Quantity from qpx on the same cells; ``precursors.X`` =
 Precursor.Normalised on DIA-NN's pr_matrix cells (Global.Q.Value and Global.PG.Q.Value
 <= ``--matrix-qvalue``), ``layers['raw']`` =
 Precursor.Quantity on the same cells.
-obs carries every SDRF column (sanitized names) and, for allinone FragPipe, the
-annotation ``condition`` / ``replicate``.
+obs carries every SDRF column (sanitized names) and, for FragPipe, the
+experiment annotation's ``condition`` / ``replicate``.
 
 ``--precheck`` (FragPipe) only runs guard G3 on combined_protein.tsv, before
 ``qpxc`` is started, because qpxc exits 0 while dropping the protein view when
@@ -102,8 +102,8 @@ DIANN_PG_METHOD_QUERY = """
 """
 DIANN_MEMBERSHIP_QUERY = "SELECT DISTINCT anchor_protein, pg_accessions FROM read_parquet($path)"
 # DIA-NN pr_matrix = report rows with Global.Q.Value <= q AND Global.PG.Q.Value <= q ("1% precursor and
-# protein group FDR", diann_report.log.txt), values = Precursor.Normalised. Reproduced cell for cell on
-# EXP26000884 (104,050 cells / 26,948 precursors). qpx keeps Global.Q.Value as the additional score
+# protein group FDR", diann_report.log.txt), values = Precursor.Normalised (reproduced cell for cell on a
+# DIA-NN 1.8.1 run of 26,948 precursors). qpx keeps Global.Q.Value as the additional score
 # 'global_qvalue' and Global.PG.Q.Value as pg_global_qvalue.
 DIANN_NORMALISED_QUERY = """
     SELECT f.run_file_name, f.peptidoform || '|' || CAST(f.charge AS VARCHAR) AS precursor_id,

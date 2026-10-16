@@ -3,7 +3,7 @@
 Needs the qpx package (tests/python/requirements.txt).
 Fixtures in tests/fixtures/qpx/ are tiny synthetic DIA-NN / FragPipe outputs with a
 literal 0 and missing cells, a single-run DIA case, pipeline (``<source name>``)
-and allinone (``<source name>_1``) FragPipe naming, a fractionated FragPipe
+and experiment annotation (``<experiment>_<bioreplicate>``) FragPipe naming, a fractionated FragPipe
 case and a FragPipe table without MaxLFQ columns.
 
 diann_multi: pg_matrix (PG.MaxLFQ) differs from the report PG.Quantity (2x),
@@ -216,7 +216,7 @@ class TestDiann:
 
 
 class TestFragpipe:
-    @pytest.mark.parametrize("case", ["fragpipe_pipeline", "fragpipe_allinone"])
+    @pytest.mark.parametrize("case", ["fragpipe_pipeline", "fragpipe_annotation"])
     def test_precursors_relabelled_to_run_stems(self, converted, tmp_path, case):
         result = export("fragpipe", DATA / case, converted("fragpipe", case), tmp_path)
         assert result.returncode == 0, result.stderr
@@ -241,7 +241,7 @@ class TestFragpipe:
         assert proteins.var.loc["sp|P11111|GENEA_HUMAN", "protein_group"] == "P11111;P11111-2"
         assert not proteins.var["is_contaminant"].any()
         assert proteins.obs.loc["R2_DDA_S2", "comment_data_file"] == "R2_DDA_S2.raw"
-        if case == "fragpipe_allinone":
+        if case == "fragpipe_annotation":
             assert proteins.obs.loc["R2_DDA_S2", "condition"] == "EXP"
             assert proteins.obs.loc["R2_DDA_S2", "replicate"] == "1"
         stable, counts = read_summary(tmp_path)
@@ -296,25 +296,25 @@ class TestFragpipe:
         assert "precheck OK" in result.stdout
 
     def test_g6_annotation_runs_not_in_sdrf(self, converted, tmp_path):
-        case = tmp_path / "fragpipe_allinone"
-        shutil.copytree(DATA / "fragpipe_allinone", case)
+        case = tmp_path / "fragpipe_annotation"
+        shutil.copytree(DATA / "fragpipe_annotation", case)
         (case / "sdrf.tsv").write_text((case / "sdrf.tsv").read_text().replace("R3_DDA_S3.raw", "R9_DDA_S3.raw"))
-        result = export("fragpipe", case, converted("fragpipe", "fragpipe_allinone"), tmp_path / "out")
+        result = export("fragpipe", case, converted("fragpipe", "fragpipe_annotation"), tmp_path / "out")
         assert result.returncode == 3
         assert last_error(result) == (
             "ERROR: G6: 'experiment->run mapping' obs_names differ from the expected set: missing=['R9_DDA_S3'], "
             "unexpected=['R3_DDA_S3']"
         )
 
-    def test_g6_allinone_mzml_named_after_source_name(self, converted, tmp_path):
-        """Tower 5RdPNOwBW6vjpb: allinone mzML named after meta.id (source name), not the raw file."""
-        case = DATA / "fragpipe_allinone"
+    def test_g6_mzml_named_after_source_name(self, converted, tmp_path):
+        """An annotation whose files are named after the source name, not the run file, fails G6."""
+        case = DATA / "fragpipe_annotation"
         annotation = tmp_path / "experiment_annotation.tsv"
         text = (case / "experiment_annotation.tsv").read_text()
         for run, source in [("R1_DDA_S1", "DDA_S1"), ("R2_DDA_S2", "DDA_S2"), ("R3_DDA_S3", "DDA_S3")]:
             text = text.replace(f"/{run}.mzML", f"/{source}.mzML")
         annotation.write_text(text)
-        qpx_folder = converted("fragpipe", "fragpipe_allinone", annotation=annotation)
+        qpx_folder = converted("fragpipe", "fragpipe_annotation", annotation=annotation)
         cmd = [sys.executable, EXPORT, "--engine", "fragpipe", "--sdrf-file", case / "sdrf.tsv",
                "--qpx-folder", qpx_folder, "--prefix", PREFIX, "--outdir", tmp_path / "out",
                "--pg-file", case / "combined_protein.tsv", "--experiment-annotation-file", annotation]
@@ -326,7 +326,7 @@ class TestFragpipe:
         )
         assert not (tmp_path / "out").exists()
 
-    @pytest.mark.parametrize("case", ["fragpipe_pipeline", "fragpipe_allinone"])
+    @pytest.mark.parametrize("case", ["fragpipe_pipeline", "fragpipe_annotation"])
     def test_proteins_h5ad_carries_dataset_level_uns(self, converted, tmp_path, case):
         result = export("fragpipe", DATA / case, converted("fragpipe", case), tmp_path)
         assert result.returncode == 0, result.stderr

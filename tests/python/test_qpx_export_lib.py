@@ -1,8 +1,7 @@
 """Unit tests for ``bin/qpx_export_lib.py`` (no qpx needed).
 
 Every guard has a failing case that asserts the exact ``ERROR:`` text and a
-passing case. Missing values must be NaN, never 0
-(docs/plans/2026-09-27_PLAN_qpx_h5ad_export.md, "Evidence for the missing-value rule").
+passing case. Missing values must be NaN, never 0.
 """
 
 from __future__ import annotations
@@ -263,8 +262,8 @@ class TestReadExperimentRuns:
         mapping = lib.read_experiment_runs(DATA / "fragpipe_pipeline" / "sdrf.tsv")
         assert mapping == {"DDA_S1": ["R1_DDA_S1"], "DDA_S2": ["R2_DDA_S2"], "DDA_S3": ["R3_DDA_S3"]}
 
-    def test_allinone_naming_uses_annotation(self):
-        case = DATA / "fragpipe_allinone"
+    def test_ionquant_naming_uses_annotation(self):
+        case = DATA / "fragpipe_annotation"
         mapping = lib.read_experiment_runs(case / "sdrf.tsv", case / "experiment_annotation.tsv")
         assert mapping == {"DDA_S1_1": ["R1_DDA_S1"], "DDA_S2_1": ["R2_DDA_S2"], "DDA_S3_1": ["R3_DDA_S3"]}
 
@@ -309,12 +308,12 @@ class TestG3FragpipePrecheck:
             "--skip_qpx_export",
         )
 
-    def test_fails_on_allinone_naming_without_annotation(self):
-        mapping = lib.read_experiment_runs(DATA / "fragpipe_allinone" / "sdrf.tsv")
+    def test_fails_on_ionquant_naming_without_annotation(self):
+        mapping = lib.read_experiment_runs(DATA / "fragpipe_annotation" / "sdrf.tsv")
         raises(
-            lambda: lib.precheck_fragpipe_columns(self.columns("fragpipe_allinone"), mapping),
+            lambda: lib.precheck_fragpipe_columns(self.columns("fragpipe_annotation"), mapping),
             "ERROR: G3: experiments ['DDA_S1', 'DDA_S2', 'DDA_S3'] have no columns in combined_protein.tsv "
-            "(experiments found in the header: ['DDA_S1_1', 'DDA_S2_1', 'DDA_S3_1']); allinone naming "
+            "(experiments found in the header: ['DDA_S1_1', 'DDA_S2_1', 'DDA_S3_1']); IonQuant naming "
             "'<source name>_<bioreplicate>' needs --experiment-annotation-file",
         )
 
@@ -447,7 +446,7 @@ class TestObsMetadata:
         )
 
     def test_annotation_table_has_condition_and_replicate(self):
-        table = lib.annotation_obs_table(DATA / "fragpipe_allinone" / "experiment_annotation.tsv")
+        table = lib.annotation_obs_table(DATA / "fragpipe_annotation" / "experiment_annotation.tsv")
         assert table.to_dict("index")["R1_DDA_S1"] == {"condition": "EXP", "replicate": "1"}
 
 

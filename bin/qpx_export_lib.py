@@ -10,7 +10,7 @@ The CLIs turn it into exit code :data:`GUARD_EXIT_CODE` (3), distinct from a
 Python crash (1) and an argparse error (2), so Nextflow can terminate instead of
 retrying a deterministic guard failure. Nothing is written before all guards pass.
 
-Missing-value rule (docs/plans/2026-09-27_PLAN_qpx_h5ad_export.md): missing is
+Missing-value rule: missing is
 NaN, never 0. On a linear scale an unstored cell or a value <= 0 becomes NaN; on
 a log2 scale only NA/empty becomes NaN (0 is a valid log2 value).
 """
@@ -284,7 +284,7 @@ def precheck_fragpipe_columns(columns, exp_to_runs: dict[str, list[str]]) -> str
     if unmatched:
         hint = ""
         if any(f"{e}_1" in header_experiments for e in unmatched):
-            hint = "; allinone naming '<source name>_<bioreplicate>' needs --experiment-annotation-file"
+            hint = "; IonQuant naming '<experiment>_<bioreplicate>' needs --experiment-annotation-file"
         raise GuardError(
             "G3",
             f"experiments {unmatched} have no columns in combined_protein.tsv "

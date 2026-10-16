@@ -19,7 +19,7 @@ nextflow_process {
         when {
             process {
                 """
-                def d = "\${projectDir}/tests/fixtures/qpx/fragpipe_allinone"
+                def d = "\${projectDir}/tests/fixtures/qpx/fragpipe_annotation"
                 input[0] = [[id: 'fragpipe'], file("\${d}/combined_protein.tsv", checkIfExists: true), file("\${d}/combined_ion.tsv", checkIfExists: true), file("\${d}/experiment_annotation.tsv", checkIfExists: true)]
                 input[1] = file("\${d}/sdrf.tsv", checkIfExists: true)
                 """
@@ -42,7 +42,7 @@ nextflow_process {
         when {
             process {
                 """
-                def d = "\${projectDir}/tests/fixtures/qpx/fragpipe_allinone"
+                def d = "\${projectDir}/tests/fixtures/qpx/fragpipe_annotation"
                 input[0] = [[id: 'fragpipe'], file("\${d}/combined_protein.tsv", checkIfExists: true), file("\${d}/combined_ion.tsv", checkIfExists: true), file("\${d}/experiment_annotation.tsv", checkIfExists: true)]
                 input[1] = file("\${d}/sdrf.tsv", checkIfExists: true)
                 """
