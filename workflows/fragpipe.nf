@@ -138,7 +138,6 @@ workflow MSPROTEOMICS_FRAGPIPE {
         ch_pmultiqc_files = FRAGPIPE_HEADLESS_WF.out.all_results.map { results ->
             def files = [results].flatten()
             pmultiqcFragpipeInputs(
-                null,
                 files.findAll { result -> result.parent.name == 'results' },
                 files.findAll { result -> result.name == 'psm.tsv' && result.parent.name != 'results' }.collect { psm -> psm.parent }
             )
@@ -189,15 +188,16 @@ workflow MSPROTEOMICS_FRAGPIPE {
             .map { dirs -> dirs.sort(false) { dir -> dir.name }.collect { dir -> dir.resolve('psm.tsv') } }
         ch_combined_modified_peptide = FRAGPIPE_PIPELINE.out.combined_modified_peptide
 
-        // pmultiqc: the work dir of the last IonQuant pass (its combined_*.tsv and each group's rewritten psm.tsv
-        // and ion.tsv), else each group's final Report directory; with fragpipe.workflow and the manifest
-        ch_pmultiqc_files = FRAGPIPE_PIPELINE.out.quant_dir.map { dir -> [1, dir, []] }
-            .mix(FRAGPIPE_PIPELINE.out.results_dir.map { _meta, dir -> dir }.collect(sort: true).map { dirs -> [0, null, dirs] })
+        // pmultiqc: the whole work dir of the last IonQuant pass (its combined_*.tsv, the blank group's tables and each
+        // group's rewritten psm.tsv and ion.tsv, in FragPipe's layout), else each group's final Report directory;
+        // with fragpipe.workflow and the manifest
+        ch_pmultiqc_files = FRAGPIPE_PIPELINE.out.quant_dir.map { dir -> [1, [dir]] }
+            .mix(FRAGPIPE_PIPELINE.out.results_dir.map { _meta, dir -> dir }.collect(sort: true).map { dirs -> [0, dirs] })
             .toList()
             .map { sources -> sources.max { source -> source[0] } }
             .combine(FRAGPIPESAVEWORKFLOW.out.workflow.map { _meta, saved_workflow -> saved_workflow })
             .combine(ch_fragpipe_manifest)
-            .map { _source, work_dir, group_dirs, saved_workflow, manifest -> pmultiqcFragpipeInputs(work_dir, [saved_workflow, manifest], group_dirs) }
+            .map { _source, dirs, saved_workflow, manifest -> pmultiqcFragpipeInputs([saved_workflow, manifest], dirs) }
 
         // MSFragger console text in the order FragPipe runs MSFragger (FRAGPIPESDRF, FRAGPIPESECONDPASS)
         def ch_msfragger_logs = FRAGPIPE_PIPELINE.out.msfragger_logs

@@ -1632,24 +1632,18 @@ nextflow_function {
             )
         }
     }
-    // pmultiqc 0.0.48 fragpipe_io.py:50-124: an IonQuant work dir gives its root tables (the blank group's psm.tsv,
-    // combined_*.tsv) and its group directories, never the root's other *.tsv (a Percolator *_psms.tsv would
-    // match the plugin's "psm" rule)
-    test("pmultiqcFragpipeInputs - IonQuant work dir: root tables by name, then group directories") {
+    // pmultiqc 0.0.48 fragpipe_io.py:50-124: of FragPipe's root files only the names the plugin reads, sorted, then
+    // the directories, each once; nothing is read or listed (the paths need not exist)
+    test("pmultiqcFragpipeInputs - root files by name, then directories") {
         function "pmultiqcFragpipeInputs"
         when {
             function {
                 """
-                def wd = java.nio.file.Files.createTempDirectory('pmultiqc').resolve('fragpipe')
-                ['treated', 'control', 'tmt-report'].each { g -> java.nio.file.Files.createDirectories(wd.resolve(g)) }
-                ['psm.tsv', 'ion.tsv', 'combined_protein.tsv', 'combined_peptide.tsv', 'combined_ion.tsv',
-                 'combined_modified_peptide.tsv', 'reprint.spc.tsv', 'a_percolator_target_psms.tsv',
-                 'control/psm.tsv', 'control/ion.tsv', 'treated/psm.tsv', 'tmt-report/abundance_protein_MD.tsv'].each { n -> wd.resolve(n).text = 'x' }
-                def saved = java.nio.file.Files.createTempDirectory('saved')
-                ['fragpipe.workflow', 'fragpipe-files.fp-manifest'].each { n -> saved.resolve(n).text = 'x' }
-                input[0] = wd
-                input[1] = [saved.resolve('fragpipe.workflow'), saved.resolve('fragpipe-files.fp-manifest')]
-                input[2] = []
+                def results = file('/fragpipe/results')
+                input[0] = ['psm.tsv', 'fragpipe.workflow', 'combined_protein.tsv', 'combined_modified_peptide.tsv', 'fragger.params',
+                            'a_percolator_target_psms.tsv', 'fragpipe-files.fp-manifest', 'ion.tsv', 'combined_ion.tsv',
+                            'combined_peptide.tsv', 'reprint.spc.tsv'].collect { n -> results.resolve(n) }
+                input[1] = [results.resolve('treated'), results.resolve('control'), results.resolve('control')]
                 """
             }
         }
@@ -1659,34 +1653,28 @@ nextflow_function {
                 { assert function.success },
                 { assert names == ['combined_ion.tsv', 'combined_peptide.tsv', 'combined_protein.tsv', 'fragpipe-files.fp-manifest',
                                    'fragpipe.workflow', 'ion.tsv', 'psm.tsv', 'control', 'treated'] },
-                { assert function.result[-2].toString().endsWith('/fragpipe/control') },
                 { assert snapshot(names).match() }
             )
         }
     }
 
-    // Without IonQuant: each group's final Report directory, plus fragpipe.workflow and the manifest
-    test("pmultiqcFragpipeInputs - Report group directories without a work dir") {
+    // Pipeline mode: the IonQuant work dir or the Report group directories, with fragpipe.workflow and the manifest
+    test("pmultiqcFragpipeInputs - a work dir with fragpipe.workflow and the manifest") {
         function "pmultiqcFragpipeInputs"
         when {
             function {
                 """
-                def base = java.nio.file.Files.createTempDirectory('report')
-                ['grp_b', 'grp_a'].each { g -> java.nio.file.Files.createDirectories(base.resolve(g)); base.resolve("\${g}/psm.tsv").text = 'x' }
-                base.resolve('fragpipe.workflow').text = 'x'
-                base.resolve('fragpipe-files.fp-manifest').text = 'x'
-                input[0] = null
-                input[1] = [base.resolve('fragpipe.workflow'), base.resolve('fragpipe-files.fp-manifest')]
-                input[2] = [base.resolve('grp_b'), base.resolve('grp_a'), base.resolve('grp_a')]
+                input[0] = [file('/work/ab/fragpipe.workflow'), file('/work/cd/fragpipe-files.fp-manifest')]
+                input[1] = [file('/work/ef/fragpipe')]
                 """
             }
         }
         then {
-            def names = function.result.collect { f -> f.toString().tokenize("/")[-1] }
+            def paths = function.result.collect { f -> f.toString() }
             assertAll(
                 { assert function.success },
-                { assert names == ['fragpipe-files.fp-manifest', 'fragpipe.workflow', 'grp_a', 'grp_b'] },
-                { assert snapshot(names).match() }
+                { assert paths == ['/work/cd/fragpipe-files.fp-manifest', '/work/ab/fragpipe.workflow', '/work/ef/fragpipe'] },
+                { assert snapshot(paths).match() }
             )
         }
     }

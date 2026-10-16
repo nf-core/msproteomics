@@ -31,9 +31,17 @@ process PMULTIQC {
         ${args} \\
         ./results \\
         -o . 2>&1 | tee pmultiqc.log
-    # pmultiqc logs a failed or missing plugin as a warning and exits 0 (pmultiqc 0.0.48 pmultiqc/modules/core/core.py:107,113)
-    if grep -E "pmultiqc plugin '.+' encountered an error and was skipped|No pmultiqc plugin selected" pmultiqc.log; then
-        echo "pmultiqc: the plugin did not run (see the line above)" >&2
+    # pmultiqc 0.0.48 logs these and exits 0 with an empty report: a plugin error (pmultiqc/modules/core/core.py:107),
+    # no plugin (core.py:113), and a plugin that found nothing to report (fragpipe/fragpipe.py:135,155; diann/diann.py:102
+    # for --diann-plugin). The quantms plugin has no such exit: its get_data() always returns True (quantms/quantms.py:191)
+    if grep -F \\
+        -e "encountered an error and was skipped" \\
+        -e "No pmultiqc plugin selected; skipping." \\
+        -e "No FragPipe files found." \\
+        -e "Required input not found: psm.tsv" \\
+        -e "DIANN report not found. Please check your data!" \\
+        pmultiqc.log; then
+        echo "pmultiqc: the plugin failed or found nothing to report (see the line above)" >&2
         exit 1
     fi
 

@@ -274,7 +274,8 @@ The task then fails with SAINTexpress's output and names the step; add control e
 DIA mode runs its quantms plugin (`--quantms-plugin`) on the experimental design, the mzML statistics and the DIA-NN report.
 FragPipe mode (both `--fragpipe_mode` values, and the TMT label check) runs its FragPipe plugin (`--fragpipe-plugin`) on FragPipe's work dir layout: each group's directory (its `psm.tsv` and `ion.tsv`), and of the work dir root the `psm.tsv` and `ion.tsv` of the blank group, IonQuant's `combined_protein.tsv`, `combined_peptide.tsv` and `combined_ion.tsv`, `fragpipe.workflow` and the manifest.
 In pipeline mode these are the tables after the last IonQuant pass, or each group's final Philosopher Report directory when IonQuant does not run.
-`--contaminant_string` (default `CONT`) is the contaminant prefix in both modes; `--skip_table_plots`, `--pmultiqc_idxml_skip` and `--quantification_method` apply to DIA mode only, as the FragPipe plugin reads none of them.
+Percolator's `*_psms.tsv`, which a group directory keeps with `percolator.keep-tsv-files=true`, are not read: the plugin's table search is set to `psm.tsv`, `ion.tsv` and `combined_{protein,peptide,ion}.tsv`, and the task fails when pmultiqc reports a plugin error or finds nothing to report.
+`--contaminant_string` (default `CONT`) marks contaminant proteins in both modes, matched anywhere in the protein name (the FragPipe plugin ignores case); `--skip_table_plots`, `--pmultiqc_idxml_skip` and `--quantification_method` apply to DIA mode only, as the FragPipe plugin reads none of them.
 
 ## Key Parameters
 

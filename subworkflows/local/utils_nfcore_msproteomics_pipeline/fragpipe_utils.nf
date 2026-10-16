@@ -514,31 +514,25 @@ def psmGroupDirs(dir) {
 }
 
 /**
- * pmultiqc's inputs for its FragPipe plugin, laid out as FragPipe's work dir: the root files it reads and each
- * group's directory. The plugin finds psm.tsv, ion.tsv, combined_{protein,peptide,ion}.tsv, fragpipe.workflow,
- * the manifest and fragger.params by name anywhere below its input folder (pmultiqc 0.0.48
+ * pmultiqc's inputs for its FragPipe plugin, laid out as FragPipe's work dir: the root files it reads and the
+ * directories holding the groups' tables. The plugin finds psm.tsv, ion.tsv, combined_{protein,peptide,ion}.tsv,
+ * fragpipe.workflow, the manifest and fragger.params by name anywhere below its input folder (pmultiqc 0.0.48
  * fragpipe_io.py:50-124); PMULTIQC stages its inputs flat (results/*), so each group's same-named psm.tsv and
- * ion.tsv come in the group's own directory, and of the root files only those names are passed (the plugin's
- * PSM rule takes every *.tsv whose name contains "psm", fragpipe_io.py:88-89).
+ * ion.tsv come in a directory, and of the root files only those names are passed (the plugin's PSM rule takes
+ * every *.tsv whose name contains "psm", fragpipe_io.py:88-89; PMULTIQC_FRAGPIPE limits that search to those names in the
+ * directories). fragger.params is not passed, so both modes give the plugin the same files: pipeline mode has no
+ * work dir copy, and the parameters table takes its search, tolerance and modification rows from
+ * fragpipe.workflow (fragpipe_io.py:403-416); only the rows fragger.params alone has (threads, decoy prefix,
+ * isotope error, fragpipe_io.py:428-432) are left out. Path operations only: no file is read or listed.
  *
- * @param work_dir   A FragPipe work dir (IonQuant's results directory) or null: its files are root files and
- *                   its sub-directories holding a psm.tsv (psmGroupDirs) are group directories
- * @param root_files Files of the work dir root (FragPipe's fragpipe.workflow, the manifest, ...)
- * @param group_dirs Group directories, each holding a psm.tsv
- * @return The root files pmultiqc reads, by name, then the group directories, by name
+ * @param root_files Files of FragPipe's work dir root (only the names the plugin reads are kept)
+ * @param dirs       Directories with the groups' tables: each group's directory, or a whole FragPipe work dir
+ * @return The root files, by name, then the directories, by name
  */
-def pmultiqcFragpipeInputs(work_dir, root_files, group_dirs) {
+def pmultiqcFragpipeInputs(root_files, dirs) {
     def names = ['psm.tsv', 'ion.tsv', 'combined_protein.tsv', 'combined_peptide.tsv', 'combined_ion.tsv',
-        'fragpipe.workflow', 'fragpipe-files.fp-manifest', 'fragger.params']
-    def work_dir_files = []
-    if (work_dir != null) {
-        java.nio.file.Files.list(work_dir).withCloseable { stream ->
-            work_dir_files = stream.collect(java.util.stream.Collectors.toList()).findAll { f -> java.nio.file.Files.isRegularFile(f) }
-        }
-    }
-    def files = (work_dir_files + root_files).findAll { f -> f.name in names }.unique().sort { f -> f.name }
-    def dirs = ((work_dir != null ? psmGroupDirs(work_dir) : []) + group_dirs).unique().sort { d -> d.name }
-    return files + dirs
+        'fragpipe.workflow', 'fragpipe-files.fp-manifest']
+    return root_files.findAll { f -> f.name in names }.unique().sort { f -> f.name } + dirs.unique().sort { d -> d.name }
 }
 
 /**

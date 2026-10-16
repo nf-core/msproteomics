@@ -9,7 +9,17 @@
             "nextflow": "25.10.4"
         }
     },
-    "pmultiqcFragpipeInputs - IonQuant work dir: root tables by name, then group directories": {
+    "fragpipeGroup - experiment is trimmed and sanitised, no bioreplicate gives experiment": {
+        "content": [
+            "Ctrl_A_1"
+        ],
+        "timestamp": "2026-10-04T22:50:40.841648803",
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "pmultiqcFragpipeInputs - root files by name, then directories": {
         "content": [
             [
                 "combined_ion.tsv",
@@ -23,19 +33,9 @@
                 "treated"
             ]
         ],
-        "timestamp": "2026-10-16T14:17:12.776739378",
+        "timestamp": "2026-10-16T20:41:16.201826076",
         "meta": {
             "nf-test": "0.9.5",
-            "nextflow": "25.10.4"
-        }
-    },
-    "fragpipeGroup - experiment is trimmed and sanitised, no bioreplicate gives experiment": {
-        "content": [
-            "Ctrl_A_1"
-        ],
-        "timestamp": "2026-10-04T22:50:40.841648803",
-        "meta": {
-            "nf-test": "0.9.3",
             "nextflow": "25.10.4"
         }
     },
@@ -286,21 +286,6 @@
             "nextflow": "25.10.4"
         }
     },
-    "pmultiqcFragpipeInputs - Report group directories without a work dir": {
-        "content": [
-            [
-                "fragpipe-files.fp-manifest",
-                "fragpipe.workflow",
-                "grp_a",
-                "grp_b"
-            ]
-        ],
-        "timestamp": "2026-10-16T14:17:30.761048965",
-        "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.4"
-        }
-    },
     "fpopCoadaptrMeta - leaves other tasks' meta unchanged": {
         "content": [
             {
@@ -341,6 +326,20 @@
         "timestamp": "2026-10-06T00:40:38.593860606",
         "meta": {
             "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "pmultiqcFragpipeInputs - a work dir with fragpipe.workflow and the manifest": {
+        "content": [
+            [
+                "/work/cd/fragpipe-files.fp-manifest",
+                "/work/ab/fragpipe.workflow",
+                "/work/ef/fragpipe"
+            ]
+        ],
+        "timestamp": "2026-10-16T20:41:21.579461626",
+        "meta": {
+            "nf-test": "0.9.5",
             "nextflow": "25.10.4"
         }
     },
