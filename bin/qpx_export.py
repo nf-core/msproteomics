@@ -15,7 +15,7 @@ DIA-NN values (user decision 2026-09-27, docs/plans/2026-09-27_h5ad_decisions.md
 DIA-NN applies its precursor ``Global.Q.Value`` and protein-group FDR filter there),
 ``layers['raw']`` = PG.Quantity from qpx on the same cells; ``precursors.X`` =
 Precursor.Normalised on DIA-NN's pr_matrix cells (Global.Q.Value and Global.PG.Q.Value
-<= ``--matrix-qvalue``; G18 against ``--pr-matrix-file`` when given), ``layers['raw']`` =
+<= ``--matrix-qvalue``), ``layers['raw']`` =
 Precursor.Quantity on the same cells.
 obs carries every SDRF column (sanitized names) and, for allinone FragPipe, the
 annotation ``condition`` / ``replicate``.
@@ -138,25 +138,15 @@ def parse_args(argv=None) -> argparse.Namespace:
     parser.add_argument("--qpx-folder", help="qpxc --output-folder")
     parser.add_argument("--prefix", help="qpxc --output-prefix; also the output file prefix")
     parser.add_argument("--pg-matrix-file", help="DIA-NN pg_matrix.tsv (required for --engine diann)")
-    parser.add_argument("--pr-matrix-file", help="DIA-NN pr_matrix.tsv (optional): guard G18 compares precursors.X to it")
     parser.add_argument("--matrix-qvalue", type=float, default=0.01,
-                        help="DIA-NN matrix FDR (--qvalue of the DIA-NN run; default 0.01) for the precursor filter")
+                        help="the matrix FDR the DIA-NN run applied (its log; default 0.01) for the precursor filter")
     parser.add_argument("--pg-file", help="FragPipe combined_protein.tsv (required for --engine fragpipe)")
-    parser.add_argument("--experiment-annotation-file", help="FragPipe experiment_annotation.tsv (allinone)")
-    parser.add_argument(
-        "--sample-map",
-        help="FragPipe pipeline mode: headerless '<file><TAB><group>' TSV (buildFileExperimentMap); "
-        "authoritative run -> experiment mapping",
-    )
+    parser.add_argument("--experiment-annotation-file", help="FragPipe experiment_annotation.tsv (file -> IonQuant experiment)")
     parser.add_argument("--outdir", default=".", help="output directory (default: .)")
     parser.add_argument("--precheck", action="store_true", help="FragPipe only: run guard G3 and exit")
     args = parser.parse_args(argv)
     if args.engine == "fragpipe" and not args.pg_file:
         parser.error("--engine fragpipe requires --pg-file")
-    if args.sample_map and args.experiment_annotation_file:
-        parser.error("--sample-map and --experiment-annotation-file are mutually exclusive")
-    if args.sample_map and args.engine != "fragpipe":
-        parser.error("--sample-map is only defined for --engine fragpipe")
     if args.precheck and args.engine != "fragpipe":
         parser.error("--precheck is only defined for --engine fragpipe")
     if not args.precheck and not (args.qpx_folder and args.prefix):
@@ -167,11 +157,11 @@ def parse_args(argv=None) -> argparse.Namespace:
 
 
 def experiment_runs(args) -> dict[str, list[str]]:
-    return read_experiment_runs(args.sdrf_file, args.experiment_annotation_file, args.sample_map)
+    return read_experiment_runs(args.sdrf_file, args.experiment_annotation_file)
 
 
 def run_precheck(args) -> str:
-    """G3 on combined_protein.tsv against the sample-map / annotation / SDRF experiments."""
+    """G3 on combined_protein.tsv against the annotation / SDRF experiments."""
     return precheck_fragpipe_columns(read_tsv_header(args.pg_file), experiment_runs(args))
 
 
@@ -294,8 +284,6 @@ def diann_precursors(args, precursors, raw: np.ndarray):
     raw = raw[:, keep]
     n_masked = int((~identified & ~np.isnan(raw)).sum())
     raw[~identified] = np.nan
-    if args.pr_matrix_file:
-        check_matches_pr_matrix(dense, identified, args.pr_matrix_file)
     uns = modality_uns(stats, linear=True, quantity_source=DIANN_SOURCES["precursors"].format(q=args.matrix_qvalue))
     uns.update({
         "layers": {"raw": DIANN_SOURCES["precursors.raw"]},
@@ -303,27 +291,6 @@ def diann_precursors(args, precursors, raw: np.ndarray):
         "n_raw_cells_outside_pr_matrix": n_masked,
     })
     return dense, {"raw": raw}, precursors.var.loc[var_names].copy(), uns
-
-
-def check_matches_pr_matrix(dense: np.ndarray, identified: np.ndarray, path) -> None:
-    """G18: same precursor count, same non-empty cells count and the same values as DIA-NN's pr_matrix.
-
-    qpx renames Precursor.Id to peptidoform|charge, so the comparison is by counts and by the
-    sorted values (Precursor.Normalised), not by name.
-    """
-    table = pd.read_csv(path, sep="\t")
-    runs = [c for c in table.columns if run_file_stem(c) != c]
-    values = table[runs].to_numpy(dtype=np.float64)
-    n_cells, n_x = int(np.isfinite(values).sum()), int(identified.sum())
-    if len(table) != dense.shape[1] or n_cells != n_x:
-        raise GuardError(
-            "G18", f"precursors have {dense.shape[1]} vars / {n_x} cells but {Path(path).name} has "
-            f"{len(table)} precursors / {n_cells} cells",
-        )
-    expected = np.sort(values[values > 0]).astype(np.float32)
-    got = np.sort(dense[~np.isnan(dense)])
-    if expected.shape != got.shape or not np.allclose(got, expected, rtol=1e-6, atol=0):
-        raise GuardError("G18", f"precursors.X values differ from {Path(path).name} beyond float32 tolerance")
 
 
 def assemble_diann(args, mdata, dense):
@@ -434,7 +401,7 @@ def export(args) -> None:
     out = build_output(mdata, parts)
 
     summary = {"engine": args.engine, "prefix": args.prefix, "obs_key": obs_key, "modalities": ",".join(out.mod)}
-    summary["guards_passed"] = GUARDS_RUN[args.engine] + (",G18" if args.pr_matrix_file else "")
+    summary["guards_passed"] = GUARDS_RUN[args.engine]
     for name in MODALITIES:
         adata = out.mod[name]
         summary.update(summary_rows("", name, adata.X, adata.uns, {k: adata.layers[k] for k in adata.layers.keys() if k is not None}))

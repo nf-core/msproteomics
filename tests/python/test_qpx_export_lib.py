@@ -398,37 +398,6 @@ class TestSummary:
             lib.write_summary_tsv(tmp_path / "s.tsv", {"k": "a\tb"})
 
 
-class TestSampleMap:
-    def test_map_is_authoritative_over_sdrf_source_name(self):
-        case = DATA / "fragpipe_sample_map"
-        mapping = lib.read_experiment_runs(case / "sdrf.tsv", sample_map_path=case / "sample_map.tsv")
-        assert mapping == {"DDA_S1": ["R1_DDA_S1"], "DDA_S2": ["R2_DDA_S2"], "DDA_S3": ["R3_DDA_S3"]}
-
-    def test_sdrf_with_not_available_source_name_is_one_bogus_experiment(self):
-        # why the map exists: the SDRF alone would merge every run into "not available"
-        mapping = lib.read_experiment_runs(DATA / "fragpipe_sample_map" / "sdrf.tsv")
-        assert list(mapping) == ["not available"]
-
-    def test_runs_of_one_group_are_kept_in_order(self, tmp_path):
-        path = tmp_path / "map.tsv"
-        path.write_text("/w/A_F2.mzML\tA\n/w/A_F1.mzML\tA\nB.mzML\tB\n")
-        assert lib.read_sample_map(path) == {"A": ["A_F2", "A_F1"], "B": ["B"]}
-
-    def test_fails_on_malformed_line(self, tmp_path):
-        path = tmp_path / "map.tsv"
-        path.write_text("A.mzML\tA\nB.mzML\n")
-        raises(lambda: lib.read_sample_map(path), "ERROR: G3: sample map map.tsv line 2 is not '<file><TAB><group>': 'B.mzML'")
-
-    def test_fails_on_repeated_run(self, tmp_path):
-        path = tmp_path / "map.tsv"
-        path.write_text("A.mzML\tA\n/x/A.mzML\tB\n")
-        raises(lambda: lib.read_sample_map(path), "ERROR: G3: sample map map.tsv lists run 'A' more than once")
-
-    def test_fails_on_empty_map(self, tmp_path):
-        path = tmp_path / "map.tsv"
-        path.write_text("")
-        raises(lambda: lib.read_sample_map(path), "ERROR: G3: sample map map.tsv is empty")
-
 
 class TestObsMetadata:
     @pytest.mark.parametrize(

@@ -231,43 +231,15 @@ def fragpipe_header_experiments(columns) -> list[str]:
     )
 
 
-def read_sample_map(path) -> dict[str, list[str]]:
-    """Experiment -> run stems from a headerless ``file<TAB>group`` TSV.
-
-    This is the pipeline's own ``buildFileExperimentMap`` output
-    (modules/local/utils.nf), i.e. the ``meta.group`` IonQuant used as the
-    experiment name, so it needs no re-derivation from the SDRF.
-    """
-    name = Path(path).name
-    mapping: dict[str, list[str]] = {}
-    seen: set[str] = set()
-    with open(path, newline="") as handle:
-        for number, line in enumerate(handle, start=1):
-            fields = line.rstrip("\r\n").split("\t")
-            if len(fields) != 2 or not fields[0].strip() or not fields[1].strip():
-                raise GuardError("G3", f"sample map {name} line {number} is not '<file><TAB><group>': {line.rstrip()!r}")
-            stem = run_file_stem(fields[0])
-            if stem in seen:
-                raise GuardError("G3", f"sample map {name} lists run '{stem}' more than once")
-            seen.add(stem)
-            mapping.setdefault(fields[1].strip(), []).append(stem)
-    if not mapping:
-        raise GuardError("G3", f"sample map {name} is empty")
-    return mapping
-
-
-def read_experiment_runs(sdrf_path, annotation_path=None, sample_map_path=None) -> dict[str, list[str]]:
+def read_experiment_runs(sdrf_path, annotation_path=None) -> dict[str, list[str]]:
     """Map each FragPipe experiment to its run stems.
 
-    ``sample_map_path`` (pipeline mode, see :func:`read_sample_map`) is
-    authoritative when given. With ``experiment_annotation.tsv`` (``file``/``sample``
-    columns, allinone naming ``<source name>_<bioreplicate>``) that file is
+    With FragPipe's ``experiment_annotation.tsv`` (``file``/``sample`` columns, the
+    IonQuant experiment names ``<experiment>_<bioreplicate>``) that file is
     authoritative, as in qpx. Otherwise the SDRF ``source name`` is the
     experiment (pipeline naming) and ``comment[data file]`` gives its runs; rows
     sharing a source name are runs of one experiment. Run order follows the file.
     """
-    if sample_map_path:
-        return read_sample_map(sample_map_path)
     if annotation_path:
         table = pd.read_csv(annotation_path, sep="\t", dtype=str, keep_default_na=False)
         exp_col, file_col = "sample", "file"

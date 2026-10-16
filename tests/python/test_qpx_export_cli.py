@@ -4,8 +4,7 @@ Needs the qpx package (tests/python/requirements.txt).
 Fixtures in tests/fixtures/qpx/ are tiny synthetic DIA-NN / FragPipe outputs with a
 literal 0 and missing cells, a single-run DIA case, pipeline (``<source name>``)
 and allinone (``<source name>_1``) FragPipe naming, a fractionated FragPipe
-case, a FragPipe table without MaxLFQ columns and a pipeline case whose SDRF
-``Source Name`` is ``not available`` (run -> experiment from ``--sample-map``).
+case and a FragPipe table without MaxLFQ columns.
 
 diann_multi: pg_matrix (PG.MaxLFQ) differs from the report PG.Quantity (2x),
 Precursor.Normalised = 1.5 x Precursor.Quantity, P44444;P40000 is a two-member
@@ -205,34 +204,6 @@ class TestDiann:
             "ERROR: G16: pg.parquet has 13 rows for 12 distinct (run, protein) cells; qpx would sum the duplicates"
         )
 
-    PR_MATRIX = DATA / "diann_multi" / "pr_matrix.tsv"
-
-    def test_g18_precursors_match_pr_matrix(self, converted, tmp_path):
-        result = export("diann", DATA / "diann_multi", converted("diann", "diann_multi"), tmp_path,
-                        extra=["--pr-matrix-file", self.PR_MATRIX])
-        assert result.returncode == 0, result.stderr
-        stable, _ = read_summary(tmp_path)
-        assert stable["guards_passed"] == "G1,G2,G4,G5,G6,G7,G8,G9,G10,G16,G17,G18"
-
-    def test_g18_fails_on_extra_pr_matrix_cell(self, converted, tmp_path):
-        pr_matrix = tmp_path / "pr_matrix.tsv"
-        pr_matrix.write_text(self.PR_MATRIX.read_text().replace("\t\t\t2250.0", "\t\t2100.0\t2250.0"))
-        result = export("diann", DATA / "diann_multi", converted("diann", "diann_multi"), tmp_path / "out",
-                        extra=["--pr-matrix-file", pr_matrix])
-        assert result.returncode == 3
-        assert last_error(result) == (
-            "ERROR: G18: precursors have 5 vars / 11 cells but pr_matrix.tsv has 5 precursors / 12 cells"
-        )
-        assert not (tmp_path / "out").exists()
-
-    def test_g18_fails_on_value_drift(self, converted, tmp_path):
-        pr_matrix = tmp_path / "pr_matrix.tsv"
-        pr_matrix.write_text(self.PR_MATRIX.read_text().replace("\t825.0\t", "\t826.0\t"))
-        result = export("diann", DATA / "diann_multi", converted("diann", "diann_multi"), tmp_path / "out",
-                        extra=["--pr-matrix-file", pr_matrix])
-        assert result.returncode == 3
-        assert last_error(result) == "ERROR: G18: precursors.X values differ from pr_matrix.tsv beyond float32 tolerance"
-
     def test_g6_sdrf_from_other_experiment(self, converted, tmp_path):
         sdrf = tmp_path / "other.sdrf.tsv"
         sdrf.write_text((DATA / "diann_multi" / "sdrf.tsv").read_text().replace("S3.raw", "X9.raw"))
@@ -365,65 +336,6 @@ class TestFragpipe:
         for key, value in mdata.uns.items():
             assert proteins.uns[key] == value, key
 
-
-class TestSampleMap:
-    """Pipeline mode: the run -> experiment map comes from the pipeline (buildFileExperimentMap).
-
-    The SDRF has a ``Source Name`` header and ``not available`` in every row
-    (parse_sdrf_inputs falls back to comment[sample name] for meta.group). qpxc
-    gets the same map as an experiment_annotation.tsv (file/sample header).
-    """
-
-    CASE = DATA / "fragpipe_sample_map"
-
-    @pytest.fixture(scope="class")
-    @classmethod
-    def folder(cls, tmp_path_factory):
-        tmp = tmp_path_factory.mktemp("sample_map")
-        annotation = tmp / "experiment_annotation.tsv"
-        annotation.write_text("file\tsample\n" + (cls.CASE / "sample_map.tsv").read_text())
-        return qpxc_convert("fragpipe", cls.CASE, tmp / "qpx", annotation=annotation)
-
-    def test_sample_map_is_authoritative(self, folder, tmp_path):
-        result = export("fragpipe", self.CASE, folder, tmp_path, extra=["--sample-map", self.CASE / "sample_map.tsv"])
-        assert result.returncode == 0, result.stderr
-        proteins = assert_no_zero_and_nan_float32(tmp_path / f"{PREFIX}.proteins.h5ad")
-        assert list(proteins.obs_names) == ["R1_DDA_S1", "R2_DDA_S2", "R3_DDA_S3"]
-        assert list(proteins.obs["source_name"]) == ["not available"] * 3
-        assert list(proteins.obs["comment_sample_name"]) == ["DDA_S1", "DDA_S2", "DDA_S3"]
-        stable, _ = read_summary(tmp_path)
-        assert stable == stable_summary("fragpipe", "run_stem", FRAGPIPE_SOURCES)
-
-    def test_without_sample_map_the_sdrf_names_fail_g3(self, folder, tmp_path):
-        result = export("fragpipe", self.CASE, folder, tmp_path / "out")
-        assert result.returncode == 3
-        assert last_error(result) == (
-            "ERROR: G3: experiments ['not available'] have no columns in combined_protein.tsv "
-            "(experiments found in the header: ['DDA_S1', 'DDA_S2', 'DDA_S3'])"
-        )
-
-    def test_precheck_uses_the_sample_map(self):
-        cmd = [sys.executable, EXPORT, "--engine", "fragpipe", "--precheck", "--pg-file",
-               self.CASE / "combined_protein.tsv", "--sdrf-file", self.CASE / "sdrf.tsv",
-               "--sample-map", self.CASE / "sample_map.tsv"]
-        result = subprocess.run(list(map(str, cmd)), capture_output=True, text=True)
-        assert result.returncode == 0, result.stderr
-
-    def test_g6_sample_map_runs_differ_from_sdrf(self, folder, tmp_path):
-        bad = tmp_path / "map.tsv"
-        bad.write_text((self.CASE / "sample_map.tsv").read_text().replace("R3_DDA_S3", "R9_DDA_S3"))
-        result = export("fragpipe", self.CASE, folder, tmp_path / "out", extra=["--sample-map", bad])
-        assert result.returncode == 3
-        assert last_error(result) == (
-            "ERROR: G6: 'experiment->run mapping' obs_names differ from the expected set: missing=['R3_DDA_S3'], "
-            "unexpected=['R9_DDA_S3']"
-        )
-
-    def test_sample_map_and_annotation_are_exclusive(self, tmp_path):
-        case = DATA / "fragpipe_allinone"
-        result = export("fragpipe", case, tmp_path, tmp_path / "out", extra=["--sample-map", self.CASE / "sample_map.tsv"])
-        assert result.returncode == 2
-        assert "--sample-map and --experiment-annotation-file are mutually exclusive" in result.stderr
 
 
 class TestCli:
