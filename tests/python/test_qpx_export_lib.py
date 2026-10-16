@@ -314,7 +314,7 @@ class TestG3FragpipePrecheck:
             lambda: lib.precheck_fragpipe_columns(self.columns("fragpipe_annotation"), mapping),
             "ERROR: G3: experiments ['DDA_S1', 'DDA_S2', 'DDA_S3'] have no columns in combined_protein.tsv "
             "(experiments found in the header: ['DDA_S1_1', 'DDA_S2_1', 'DDA_S3_1']); IonQuant naming "
-            "'<source name>_<bioreplicate>' needs --experiment-annotation-file",
+            "'<experiment>_<bioreplicate>' needs --experiment-annotation-file",
         )
 
     def test_fails_on_header_experiment_missing_from_sdrf(self):
