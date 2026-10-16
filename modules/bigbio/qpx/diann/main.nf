@@ -37,7 +37,7 @@ process QPX_DIANN {
     def log_arg = diann_log ? "--diann-log ${diann_log}" : ''
     def acc_arg = project_accession ? "--project-accession ${project_accession}" : ''
     def fasta_arg = fasta ? "--fasta ${fasta}" : ''
-    // The precursor q-value cutoff (--qvalue-threshold) comes from ext.args
+    // No --qvalue-threshold here: a cutoff, if any, comes from ext.args
     """
     set -o pipefail
     qpxc convert diann \\

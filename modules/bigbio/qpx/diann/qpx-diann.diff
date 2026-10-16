@@ -38,7 +38,7 @@ Changes in 'qpx/diann/main.nf':
 -    // the report to 1% while the run itself was analysed at the DIA-NN >= 2.5
 -    // default of 5%. Unset precursor_qvalue keeps that 5% default.
 -    def qvalue  = params.precursor_qvalue ?: 0.05
-+    // The precursor q-value cutoff (--qvalue-threshold) comes from ext.args
++    // No --qvalue-threshold here: a cutoff, if any, comes from ext.args
      """
      set -o pipefail
      qpxc convert diann \\

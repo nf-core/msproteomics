@@ -596,3 +596,25 @@ def getTmtLabelcheckWorkflow(tmt_type, project_dir) {
     }
     return "${project_dir}/assets/TMT-labelcheck-${mass}.workflow"
 }
+
+/**
+ * The q-value at which DIA-NN filtered its precursor and protein-group matrices, from the log of the run:
+ * "Precursor/protein x sample matrices will be filtered at <q> precursor & protein-level FDR" when
+ * --matrix-qvalue is given (DIA-NN 1.8.1 caps it: --matrix-qvalue 1 logs 0.05), else the saved matrix line
+ * "Precursor levels matrix (<n>% precursor and protein group FDR)" (1% by default).
+ * qpx_export.py filters the precursors modality at this value, so it holds the pr_matrix cells.
+ * Returns null when the log has neither line; the caller raises the error (an error raised in an included
+ * function called from an operator closure reaches the console as InvocationTargetException).
+ *
+ * @param log_text DIA-NN log text of the final quantification
+ * @return The q-value as a String, or null
+ */
+def diannMatrixQvalue(log_text) {
+    def text = log_text.toString()
+    def given = text =~ /matrices will be filtered at (\S+) precursor/
+    if (given) {
+        return given[0][1]
+    }
+    def saved = text =~ /Precursor levels matrix \((\d+(?:\.\d+)?)% precursor/
+    return saved ? (new BigDecimal(saved[0][1]) / 100).stripTrailingZeros().toPlainString() : null
+}

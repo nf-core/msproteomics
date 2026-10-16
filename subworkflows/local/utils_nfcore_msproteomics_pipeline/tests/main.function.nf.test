@@ -964,4 +964,56 @@ nextflow_function {
             )
         }
     }
+
+    // Log lines of DIA-NN 1.8.1 final quantifications (test_dia: default, and --matrix-qvalue 1, which DIA-NN caps at 0.05)
+    test("diannMatrixQvalue - default 1% matrix") {
+        function "diannMatrixQvalue"
+        when {
+            function {
+                """
+                input[0] = 'Output will be filtered at 0.01 FDR\\n[0:00] Precursor levels matrix (1% precursor and protein group FDR) saved to diann_report.pr_matrix.tsv.\\n'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == '0.01' }
+            )
+        }
+    }
+
+    test("diannMatrixQvalue - --matrix-qvalue states the applied value") {
+        function "diannMatrixQvalue"
+        when {
+            function {
+                """
+                input[0] = 'Output will be filtered at 0.01 FDR\\nPrecursor/protein x sample matrices will be filtered at 0.05 precursor & protein-level FDR\\n[0:00] Precursor levels matrix (5% precursor and protein group FDR) saved to diann_report.pr_matrix.tsv.\\n'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == '0.05' }
+            )
+        }
+    }
+
+    test("diannMatrixQvalue - a log without matrices gives null") {
+        function "diannMatrixQvalue"
+        when {
+            function {
+                """
+                input[0] = 'Output will be filtered at 0.01 FDR\\n'
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert function.success },
+                { assert function.result == null }
+            )
+        }
+    }
 }

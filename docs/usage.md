@@ -281,8 +281,8 @@ The export is on by default and a failed conversion fails the run; `--skip_qpx_e
 | `--tmt_mode labelcheck`, or neither IonQuant nor TMT-Integrator | none                                                                        |
 
 A FragPipe label-free export needs IonQuant's MaxLFQ intensities, which IonQuant writes only with at least 3 experiment+bioreplicate combinations; with fewer the run stops before any task and names `--skip_qpx_export`.
-`--qpx_qvalue_threshold` (default 0.01, DIA-NN's matrix FDR) filters the DIA-NN export.
-The `test` and `test_dda_lfq` profiles (2 experiments) skip the export; `test_dia` runs it with DIA-NN's `--matrix-qvalue 1` and `--qpx_qvalue_threshold 1.0`, because no protein group of its subset passes a 1% protein-group FDR.
+The DIA-NN export follows DIA-NN's own filters: the main report as DIA-NN filtered it (`--qvalue`), and the precursors at the matrix q-value the DIA-NN log states (1% by default, `--matrix-qvalue` in `--diann_additional_analysis_args`).
+The `test` and `test_dda_lfq` profiles (2 experiments) skip the export; `test_dia` runs it with DIA-NN's `--matrix-qvalue 1` (capped at 0.05 by DIA-NN 1.8.1), because no protein group of its subset passes a 1% protein-group FDR.
 
 ## Key Parameters
 

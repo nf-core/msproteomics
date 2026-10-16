@@ -4,7 +4,7 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { generateSdrfBookkeeping; resolveProteome; resolveOrganism; resolveDatabase; resolveDiannSpeclib } from '../subworkflows/local/utils_nfcore_msproteomics_pipeline'
+include { generateSdrfBookkeeping; resolveProteome; resolveOrganism; resolveDatabase; resolveDiannSpeclib; diannMatrixQvalue } from '../subworkflows/local/utils_nfcore_msproteomics_pipeline'
 
 // SDRF generation (bookkeeping only)
 include { GENERATESDRFFROMSAMPLESHEET } from '../modules/local/generatesdrffromsamplesheet/main'
@@ -140,7 +140,7 @@ workflow MSPROTEOMICS_DIANN {
 
     // qpx export (.h5mu / .h5ad / QPX Parquet under <outdir>/qpx) of the final quantification: QPX_DIANN
     // (bigbio) converts its report, pg_matrix and log with the samplesheet's SDRF and the searched FASTA,
-    // QPXEXPORT checks the dataset and writes the MuData / AnnData
+    // QPXEXPORT checks the dataset and writes the MuData / AnnData, filtering precursors at DIA-NN's matrix q-value
     if (!params.skip_qpx_export) {
         def ch_qpx_diann = DIA_PROTEOMICS_ANALYSIS.out.diann_report
             .join(DIA_PROTEOMICS_ANALYSIS.out.pg_matrix, failOnMismatch: true, failOnDuplicate: true)
@@ -158,7 +158,14 @@ workflow MSPROTEOMICS_DIANN {
             QPX_DIANN.out.qpx_dataset
                 .map { dataset -> [dataset] }  // one list of Parquet files, kept as one element by combine
                 .combine(DIA_PROTEOMICS_ANALYSIS.out.pg_matrix.map { _meta, pg_matrix -> pg_matrix })
-                .map { dataset, pg_matrix -> [[id: 'diann'], dataset, pg_matrix] },
+                .combine(DIA_PROTEOMICS_ANALYSIS.out.diann_log.map { _meta, log -> log })
+                .map { dataset, pg_matrix, log ->
+                    def matrix_qvalue = diannMatrixQvalue(log.text)
+                    if (matrix_qvalue == null) {
+                        error("qpx export: the DIA-NN log ${log.name} states no matrix q-value, so QPXEXPORT cannot filter the precursors. Rerun with --skip_qpx_export true.")
+                    }
+                    [[id: 'diann', matrix_qvalue: matrix_qvalue], dataset, pg_matrix]
+                },
             ch_sdrf
         )
     }

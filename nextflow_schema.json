@@ -563,15 +563,6 @@
                     "fa_icon": "fas fa-forward",
                     "help_text": "The export is on by default and a failed conversion fails the run. FragPipe LFQ needs IonQuant MaxLFQ intensities, which IonQuant writes only with at least 3 experiment+bioreplicate combinations; the TMT label check has no export."
                 },
-                "qpx_qvalue_threshold": {
-                    "type": "number",
-                    "default": 0.01,
-                    "minimum": 0,
-                    "maximum": 1,
-                    "description": "Q-value threshold of the DIA-NN qpx export: qpxc convert diann --qvalue-threshold and the pr_matrix filter of the precursors modality.",
-                    "fa_icon": "fas fa-filter",
-                    "help_text": "The default 0.01 is the 1% precursor and protein-group FDR at which DIA-NN writes pg_matrix, so the proteins .h5ad matches pg_matrix."
-                },
                 "enable_diann_mztab": {
                     "type": "boolean",
                     "default": false,

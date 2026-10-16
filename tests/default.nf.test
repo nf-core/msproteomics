@@ -78,10 +78,9 @@ nextflow_pipeline {
                 // pipeline params; tests/lib/test_data_base_path.nf.test checks this URL follows the base path)
                 database = 'https://raw.githubusercontent.com/an-altosian/test-datasets/refs/heads/msproteomics/databases/human_sp_subset.fasta'
                 organism = 'homo_sapiens'
-                // as conf/tests/test_dia.config: no matrix q-value filter, so the qpx export has proteins
+                // as conf/tests/test_dia.config: DIA-NN's relaxed matrix filter, so the qpx export has proteins
                 skip_qpx_export                = false
                 diann_additional_analysis_args = '--matrix-qvalue 1'
-                qpx_qvalue_threshold           = 1.0
                 outdir   = "$outputDir"
             }
         }
