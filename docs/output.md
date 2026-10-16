@@ -19,6 +19,7 @@ Placeholders used below:
 Outputs common to all modes:
 
 - [Samplesheet SDRF](#samplesheet-sdrf) - the samplesheet as an SDRF file
+- [qpx export](#qpx-export) - DIA-NN, FragPipe LFQ and TMT-Integrator results as `.h5mu`, `.h5ad` and QPX Parquet
 - [MultiQC](#multiqc) - software versions, parameters and methods description
 - [Pipeline information](#pipeline-information) - report metrics generated during the workflow execution
 
@@ -66,6 +67,27 @@ Each FragPipe step is published only when the `.workflow` file runs that tool.
   - `<samplesheet>.sdrf.tsv`: the input samplesheet converted to SDRF, with the organism from `--organism`, the iProteome entry or the searched FASTA.
 
 </details>
+
+### qpx export
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `qpx/`
+  - `diann.h5mu`, `diann.proteins.h5ad`, `diann.*.parquet`, `diann.summary.tsv`: the DIA-NN final quantification (`--mode diann`).
+  - `fragpipe.h5mu`, `fragpipe.proteins.h5ad`, `fragpipe.*.parquet`, `fragpipe.summary.tsv`: label-free IonQuant results (`--mode fragpipe` with IonQuant and without TMT-Integrator).
+  - `fragpipe.tmt_<norm>.h5mu`, `fragpipe.tmt_<level>_<norm>.h5ad`, `fragpipe.tmt.summary.tsv`: TMT-Integrator abundance reports, one `.h5mu` per normalization with one modality per level (gene, protein, peptide, single-site, multi-site) and one `.h5ad` per level and normalization.
+
+</details>
+
+[qpx](https://github.com/bigbio/qpx) 1.1.4 (`qpxc convert diann|fragpipe`) writes the QPX Parquet dataset, and `bin/qpx_export.py` / `bin/tmt_to_anndata.py` build the [MuData](https://mudata.readthedocs.io/) and [AnnData](https://anndata.readthedocs.io/) files from it.
+Observations are runs (DIA-NN, FragPipe LFQ; fractions of one experiment are merged after an identity check) or TMT samples, with the SDRF and annotation columns as `obs` metadata.
+The `.h5mu` holds the `precursors` and `proteins` modalities; the `.h5ad` is the `proteins` modality.
+DIA-NN: `proteins.X` = `PG.MaxLFQ` (pg_matrix), `precursors.X` = `Precursor.Normalised`, with `PG.Quantity` / `Precursor.Quantity` in `layers['raw']`.
+FragPipe: `proteins.X` = `<experiment> MaxLFQ Intensity`, `precursors.X` = `<experiment> Intensity` of combined_ion.tsv.
+Missing values are NaN, never 0, in a dense float32 matrix; `uns` records the quantity source and the missing-value convention, and `*.summary.tsv` the counts.
+The export is on by default and a failed conversion fails the run; `--skip_qpx_export` turns it off.
+A FragPipe LFQ export needs at least 3 experiment+bioreplicate combinations (IonQuant writes MaxLFQ intensities only then), so a run with fewer stops before the search; the TMT label check has no export.
 
 ### MultiQC
 

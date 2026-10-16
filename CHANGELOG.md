@@ -20,9 +20,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `--mode fragpipe` publishes `fragpipe/fragpipe-files.fp-manifest`, `fragpipe/fragpipe.workflow` (`FRAGPIPESAVEWORKFLOW`) and, with `workflow.misc.save-sdrf=true`, `fragpipe/sdrf.tsv` (`FRAGPIPESDRF`).
 - `--fragpipe_threads` sets the FragPipe thread count; `--metaproteomics_names_dmp` and `--metaproteomics_nodes_dmp` give the NCBI taxonomy files for FP-Meta.
 - `test_full` profile (`conf/test_full.config`): the six-run PXD024427 FragPipe LFQ tutorial dataset.
+- qpx export to `<outdir>/qpx/` (on by default, `--skip_qpx_export` turns it off): `QPXDIANN` (DIA-NN final quantification), `QPXFRAGPIPE` (label-free IonQuant) and `TMTANNDATA` (TMT-Integrator) write `.h5mu`, `.h5ad` and, for DIA-NN and FragPipe LFQ, the QPX Parquet dataset with [qpx](https://github.com/bigbio/qpx) 1.1.4; `--qpx_qvalue_threshold` sets the DIA-NN precursor q-value filter.
 
 ### Changed
 
+- The DIA workflow names the mzML converted from a `.raw` file after the file (was the sample name), so DIA-NN's run names match the SDRF `comment[data file]` the qpx export checks.
 - Tasks never write their inputs: FragPipe tasks copy only the staged inputs a tool misreads or writes through, and the docker tests mount inputs read-only (`docker.writableInputMounts = false` in `tests/nextflow.config`).
 - nf-core template 3.5.2 -> 4.1.0.
 - `manifest.nextflowVersion` `!>=25.04.0` -> `!>=25.10.4`.
