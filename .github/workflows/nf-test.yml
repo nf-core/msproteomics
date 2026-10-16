@@ -222,7 +222,7 @@ jobs:
             exit 1
           fi
 
-  # Real qpx export modules (QPXDIANN, QPXFRAGPIPE, TMTANNDATA) in the public qpx image on the
+  # Real qpx export modules (bigbio QPX_DIANN with QPXEXPORT, QPXFRAGPIPE, TMTANNDATA) in the public qpx image on the
   # synthetic tables in tests/fixtures/qpx; no other job selects the qpx tag
   qpx-module-tests:
     name: "qpx module tests"

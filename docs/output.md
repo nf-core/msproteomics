@@ -80,7 +80,7 @@ Each FragPipe step is published only when the `.workflow` file runs that tool.
 
 </details>
 
-[qpx](https://github.com/bigbio/qpx) 1.1.4 (`qpxc convert diann|fragpipe`) writes the QPX Parquet dataset, and `bin/qpx_export.py` / `bin/tmt_to_anndata.py` build the [MuData](https://mudata.readthedocs.io/) and [AnnData](https://anndata.readthedocs.io/) files from it.
+[qpx](https://github.com/bigbio/qpx) 1.1.5 (`qpxc convert diann|fragpipe`; DIA-NN through bigbio's `qpx/diann` module) writes the QPX Parquet dataset, and `bin/qpx_export.py` / `bin/tmt_to_anndata.py` build the [MuData](https://mudata.readthedocs.io/) and [AnnData](https://anndata.readthedocs.io/) files from it.
 Observations are runs (DIA-NN, FragPipe LFQ; fractions of one experiment are merged after an identity check) or TMT samples, with the SDRF and annotation columns as `obs` metadata.
 The `.h5mu` holds the `precursors` and `proteins` modalities; the `.h5ad` is the `proteins` modality.
 DIA-NN: `proteins.X` = `PG.MaxLFQ` (pg_matrix), `precursors.X` = `Precursor.Normalised`, with `PG.Quantity` / `Precursor.Quantity` in `layers['raw']`.

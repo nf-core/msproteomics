@@ -1,0 +1,210 @@
+// QPXEXPORT on the QPX Parquet dataset bigbio's QPX_DIANN writes from the synthetic DIA-NN outputs in
+// tests/fixtures/qpx/diann_{multi,single}. Real tests (tag qpx) run both in the qpx image: the summary
+// TSV is snapshotted (its count.* rows are the obs x var shapes of the written matrices), the .h5mu /
+// .h5ad only checked for content (their bytes carry timestamps).
+
+nextflow_process {
+
+    name "Test Process QPXEXPORT"
+    script "../main.nf"
+    process "QPXEXPORT"
+
+    tag "modules"
+    tag "modules_local"
+    tag "qpxexport"
+    tag "qpx/diann"
+
+    test("qpxexport - stub") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            process {
+                """
+                def d = "\${projectDir}/tests/fixtures/qpx/diann_multi"
+                def dataset = file("\${workDir}/diann.pg.parquet")
+                dataset.text = ''
+                input[0] = [[id: 'diann'], [dataset], file("\${d}/pg_matrix.tsv", checkIfExists: true)]
+                input[1] = file("\${d}/sdrf.tsv", checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+
+    test("qpxexport - multi-run, after QPX_DIANN") {
+        tag "qpx"
+        tag "integration"
+
+        setup {
+            run("QPX_DIANN") {
+                script "../../../bigbio/qpx/diann/main.nf"
+                process {
+                    """
+                    def d = "\${projectDir}/tests/fixtures/qpx/diann_multi"
+                    input[0] = file("\${d}/report.tsv", checkIfExists: true)
+                    input[1] = file("\${d}/pg_matrix.tsv", checkIfExists: true)
+                    input[2] = file("\${d}/sdrf.tsv", checkIfExists: true)
+                    input[3] = file("\${d}/diann.log.txt", checkIfExists: true)
+                    input[4] = ''
+                    input[5] = []
+                    """
+                }
+            }
+        }
+
+        when {
+            process {
+                """
+                def d = "\${projectDir}/tests/fixtures/qpx/diann_multi"
+                input[0] = QPX_DIANN.out.qpx_dataset.map { dataset -> [[id: 'diann'], dataset, file("\${d}/pg_matrix.tsv", checkIfExists: true)] }
+                input[1] = file("\${d}/sdrf.tsv", checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            def summary = path(process.out.summary[0][1]).readLines()
+            assertAll(
+                { assert process.success },
+                // 3 runs x 4 pg_matrix protein groups, 3 runs x 5 precursors (fixture design, test_qpx_export_cli.py)
+                { assert summary.containsAll(['count.proteins.n_obs\t3', 'count.proteins.n_vars\t4', 'count.precursors.n_obs\t3', 'count.precursors.n_vars\t5']) : summary },
+                { assert path(process.out.h5mu[0][1]).toFile().length() > 0 },
+                { assert path(process.out.h5ad[0][1]).toFile().length() > 0 },
+                { assert snapshot(summary, process.out.findAll { key, _value -> key.startsWith('versions_') }).match() }
+            )
+        }
+    }
+
+    test("qpxexport - single run, after QPX_DIANN") {
+        tag "qpx"
+        tag "integration"
+
+        setup {
+            run("QPX_DIANN") {
+                script "../../../bigbio/qpx/diann/main.nf"
+                process {
+                    """
+                    def d = "\${projectDir}/tests/fixtures/qpx/diann_single"
+                    input[0] = file("\${d}/report.tsv", checkIfExists: true)
+                    input[1] = file("\${d}/pg_matrix.tsv", checkIfExists: true)
+                    input[2] = file("\${d}/sdrf.tsv", checkIfExists: true)
+                    input[3] = file("\${d}/diann.log.txt", checkIfExists: true)
+                    input[4] = ''
+                    input[5] = []
+                    """
+                }
+            }
+        }
+
+        when {
+            process {
+                """
+                def d = "\${projectDir}/tests/fixtures/qpx/diann_single"
+                input[0] = QPX_DIANN.out.qpx_dataset.map { dataset -> [[id: 'diann'], dataset, file("\${d}/pg_matrix.tsv", checkIfExists: true)] }
+                input[1] = file("\${d}/sdrf.tsv", checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            def summary = path(process.out.summary[0][1]).readLines()
+            assertAll(
+                { assert process.success },
+                { assert summary.contains('count.proteins.n_obs\t1') : summary },
+                { assert snapshot(summary).match() }
+            )
+        }
+    }
+
+    // Guard G2: an empty pg_matrix (no protein group passed DIA-NN's matrix FDR) leaves no proteins modality
+    test("qpxexport - empty pg_matrix fails") {
+        tag "qpx"
+        tag "integration"
+
+        setup {
+            run("QPX_DIANN") {
+                script "../../../bigbio/qpx/diann/main.nf"
+                process {
+                    """
+                    def d = "\${projectDir}/tests/fixtures/qpx/diann_single"
+                    def pg_matrix = file("\${workDir}/empty_pg_matrix.tsv")
+                    pg_matrix.text = file("\${d}/pg_matrix.tsv").readLines()[0] + "\\n"
+                    input[0] = file("\${d}/report.tsv", checkIfExists: true)
+                    input[1] = pg_matrix
+                    input[2] = file("\${d}/sdrf.tsv", checkIfExists: true)
+                    input[3] = file("\${d}/diann.log.txt", checkIfExists: true)
+                    input[4] = ''
+                    input[5] = []
+                    """
+                }
+            }
+        }
+
+        when {
+            process {
+                """
+                def d = "\${projectDir}/tests/fixtures/qpx/diann_single"
+                def pg_matrix = file("\${workDir}/empty_pg_matrix.tsv")
+                input[0] = QPX_DIANN.out.qpx_dataset.map { dataset -> [[id: 'diann'], dataset, pg_matrix] }
+                input[1] = file("\${d}/sdrf.tsv", checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.failed },
+                { assert process.exitStatus == 3 },
+                { assert process.stderr.any { line -> line.contains("ERROR: G2: no 'proteins' modality") } : process.stderr }
+            )
+        }
+    }
+
+    // Guard G6: the dataset's runs must be the SDRF's runs
+    test("qpxexport - SDRF runs that DIA-NN did not quantify fail") {
+        tag "qpx"
+        tag "integration"
+
+        setup {
+            run("QPX_DIANN") {
+                script "../../../bigbio/qpx/diann/main.nf"
+                process {
+                    """
+                    def d = "\${projectDir}/tests/fixtures/qpx/diann_single"
+                    input[0] = file("\${d}/report.tsv", checkIfExists: true)
+                    input[1] = file("\${d}/pg_matrix.tsv", checkIfExists: true)
+                    input[2] = file("\${d}/sdrf.tsv", checkIfExists: true)
+                    input[3] = file("\${d}/diann.log.txt", checkIfExists: true)
+                    input[4] = ''
+                    input[5] = []
+                    """
+                }
+            }
+        }
+
+        when {
+            process {
+                """
+                def d = "\${projectDir}/tests/fixtures/qpx/diann_single"
+                input[0] = QPX_DIANN.out.qpx_dataset.map { dataset -> [[id: 'diann'], dataset, file("\${d}/pg_matrix.tsv", checkIfExists: true)] }
+                input[1] = file("\${projectDir}/tests/fixtures/qpx/diann_multi/sdrf.tsv", checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.failed },
+                { assert process.exitStatus == 3 },
+                { assert process.stderr.any { line -> line.contains('ERROR: G') } : process.stderr }
+            )
+        }
+    }
+}

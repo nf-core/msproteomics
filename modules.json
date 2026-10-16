@@ -2,6 +2,18 @@
     "name": "nf-core/msproteomics",
     "homePage": "https://github.com/nf-core/msproteomics",
     "repos": {
+        "https://github.com/bigbio/nf-modules.git": {
+            "modules": {
+                "bigbio": {
+                    "qpx/diann": {
+                        "branch": "main",
+                        "git_sha": "e197717252c5b807089d9a4b45de9751563b72c8",
+                        "installed_by": ["modules"],
+                        "patch": "modules/bigbio/qpx/diann/qpx-diann.diff"
+                    }
+                }
+            }
+        },
         "https://github.com/nf-core/modules.git": {
             "modules": {
                 "nf-core": {

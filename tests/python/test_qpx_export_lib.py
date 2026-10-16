@@ -42,10 +42,20 @@ class TestRunFileStem:
             ("x.mzML.gz", "x"),
             ("C:\\data\\A.RAW", "A"),
             ("no_suffix", "no_suffix"),
+            ("run.d.zip", "run"),
+            ("run.d.tar.gz", "run"),
         ],
     )
     def test_run_file_stem_matches_qpx_rule(self, value, stem):
         assert lib.run_file_stem(value) == stem
+
+    @pytest.mark.parametrize(
+        "value", ["S1.raw", "/w/R1.mzML", "x.mzML.gz", "run.d", "run.d.zip", "run.d.tar", "run.d.tgz", "a.wiff", "b.dia", "c.mgf", "no_suffix"]
+    )
+    def test_run_file_stem_is_the_installed_qpx_rule(self, value):
+        from qpx.core.files import run_file_stem
+
+        assert lib.run_file_stem(value) == run_file_stem(value)
 
 
 class TestDensifyWithNan:

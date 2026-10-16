@@ -15,7 +15,8 @@ include { DIA_PROTEOMICS_ANALYSIS } from '../subworkflows/nf-core/dia_proteomics
 include { MSSTATSLFQ as MSSTATS } from '../modules/local/msstatslfq/main'
 include { IQ                     } from '../modules/local/iq/main'
 include { PMULTIQC               } from '../modules/local/pmultiqc/main'
-include { QPXDIANN               } from '../modules/local/qpxdiann/main'
+include { QPX_DIANN              } from '../modules/bigbio/qpx/diann/main'
+include { QPXEXPORT              } from '../modules/local/qpxexport/main'
 
 // Samplesheet parsing (shared with the FragPipe workflows)
 include { parseSamplesheet       } from '../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils'
@@ -137,14 +138,28 @@ workflow MSPROTEOMICS_DIANN {
         )
     }
 
-    // qpx export (.h5mu / .h5ad / QPX Parquet under <outdir>/qpx) of the final quantification:
-    // its report, pg_matrix and log, with the samplesheet's SDRF (run set and sample metadata)
+    // qpx export (.h5mu / .h5ad / QPX Parquet under <outdir>/qpx) of the final quantification: QPX_DIANN
+    // (bigbio) converts its report, pg_matrix and log with the samplesheet's SDRF and the searched FASTA,
+    // QPXEXPORT checks the dataset and writes the MuData / AnnData
     if (!params.skip_qpx_export) {
-        QPXDIANN(
-            DIA_PROTEOMICS_ANALYSIS.out.diann_report
-                .join(DIA_PROTEOMICS_ANALYSIS.out.pg_matrix, failOnMismatch: true, failOnDuplicate: true)
-                .join(DIA_PROTEOMICS_ANALYSIS.out.diann_log, failOnMismatch: true, failOnDuplicate: true),
-            GENERATESDRFFROMSAMPLESHEET.out.sdrf.first()
+        def ch_qpx_diann = DIA_PROTEOMICS_ANALYSIS.out.diann_report
+            .join(DIA_PROTEOMICS_ANALYSIS.out.pg_matrix, failOnMismatch: true, failOnDuplicate: true)
+            .join(DIA_PROTEOMICS_ANALYSIS.out.diann_log, failOnMismatch: true, failOnDuplicate: true)
+        def ch_sdrf = GENERATESDRFFROMSAMPLESHEET.out.sdrf.first()
+        QPX_DIANN(
+            ch_qpx_diann.map { _meta, report, _pg_matrix, _log -> report },
+            ch_qpx_diann.map { _meta, _report, pg_matrix, _log -> pg_matrix },
+            ch_sdrf,
+            ch_qpx_diann.map { _meta, _report, _pg_matrix, log -> log },
+            '',
+            file(database, glob: false, checkIfExists: true)
+        )
+        QPXEXPORT(
+            QPX_DIANN.out.qpx_dataset
+                .map { dataset -> [dataset] }  // one list of Parquet files, kept as one element by combine
+                .combine(DIA_PROTEOMICS_ANALYSIS.out.pg_matrix.map { _meta, pg_matrix -> pg_matrix })
+                .map { dataset, pg_matrix -> [[id: 'diann'], dataset, pg_matrix] },
+            ch_sdrf
         )
     }
 

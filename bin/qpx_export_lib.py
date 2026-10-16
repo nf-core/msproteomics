@@ -31,8 +31,8 @@ LINEAR_CONVENTION = (
 )
 LOG2_CONVENTION = "NaN = not quantified (source NA or empty; log2 scale, 0 is a valid value); dense float32"
 
-# Same suffix rule as qpx.core.files.run_file_stem (qpx 1.1.4), so run names match qpx obs_names.
-_RUN_FILE_SUFFIX = re.compile(r"(?i)\.(?:mzml(?:\.gz)?|mzxml|raw|d|wiff|mgf|dia)$")
+# Same suffix rule as qpx.core.files.run_file_stem (qpx 1.1.5), so run names match qpx obs_names.
+_RUN_FILE_SUFFIX = re.compile(r"(?i)\.(?:mzml(?:\.gz)?|mzxml|raw|d(?:\.(?:zip|tar(?:\.gz)?|tgz))?|wiff|mgf|dia)$")
 
 GUARD_EXIT_CODE = 3
 

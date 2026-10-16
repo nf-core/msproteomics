@@ -29,8 +29,8 @@ process QPXFRAGPIPE {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/qpx:1.1.4--pyhdfd78af_0' :
-        'quay.io/biocontainers/qpx:1.1.4--pyhdfd78af_0' }"
+        'https://depot.galaxyproject.org/singularity/qpx:1.1.5--pyhdfd78af_0' :
+        'quay.io/biocontainers/qpx:1.1.5--pyhdfd78af_0' }"
 
     input:
     tuple val(meta), path(combined_protein), path(combined_ion), path(experiment_annotation)

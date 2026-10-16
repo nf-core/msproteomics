@@ -1,5 +1,5 @@
-name: qpxdiann
-description: Convert DIA-NN results to the QPX Parquet dataset, a MuData (.h5mu) and a proteins AnnData (.h5ad)
+name: qpxexport
+description: Build the MuData (.h5mu, missing values as NaN) and the proteins AnnData (.h5ad) of a DIA-NN QPX Parquet dataset, with silent-failure guards
 keywords:
   - proteomics
   - DIA-NN
@@ -17,21 +17,16 @@ tools:
 input:
   - - meta:
         type: map
-        description: Experiment x search-database metadata map (meta.id is the output prefix)
-    - report:
+        description: Metadata map (meta.id is the dataset prefix, the qpxc --output-prefix)
+    - qpx_dataset:
         type: file
-        description: DIA-NN main report
-        pattern: "*.{tsv,parquet}"
+        description: QPX Parquet files written by qpxc convert diann (QPX_DIANN)
+        pattern: "*.parquet"
         ontologies: []
     - pg_matrix:
         type: file
         description: DIA-NN protein-group matrix
         pattern: "*.pg_matrix.tsv"
-        ontologies: []
-    - diann_log:
-        type: file
-        description: DIA-NN log of the final quantification
-        pattern: "*.log.txt"
         ontologies: []
   - sdrf:
       type: file
@@ -39,15 +34,6 @@ input:
       pattern: "*.sdrf.tsv"
       ontologies: []
 output:
-  qpx_dataset:
-    - - meta:
-          type: map
-          description: Metadata map (meta.id is the output prefix)
-      - "qpx_output/*":
-          type: file
-          description: QPX Parquet dataset written by qpxc
-          pattern: "qpx_output/*"
-          ontologies: []
   h5mu:
     - - meta:
           type: map

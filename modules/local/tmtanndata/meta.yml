@@ -9,7 +9,7 @@ keywords:
 tools:
   - anndata:
       description: |
-        Annotated data matrices in memory and on disk (the image is bigbio qpx 1.1.4, which ships anndata and mudata).
+        Annotated data matrices in memory and on disk (the image is bigbio qpx 1.1.5, which ships anndata and mudata).
       homepage: https://github.com/scverse/anndata
       documentation: https://anndata.readthedocs.io
       licence: ["BSD-3-Clause"]

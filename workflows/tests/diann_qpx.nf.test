@@ -1,5 +1,5 @@
-// qpx export of MSPROTEOMICS_DIANN (stub): QPXDIANN gets the final quantification's report,
-// pg_matrix and log with the samplesheet SDRF, and publishes diann.* to <outdir>/qpx.
+// qpx export of MSPROTEOMICS_DIANN (stub): bigbio's QPX_DIANN gets the final quantification's report,
+// pg_matrix and log with the samplesheet SDRF, QPXEXPORT its dataset; diann.* go to <outdir>/qpx.
 // conf/test.config (nf-test's profile) skips the export, so these tests turn it on.
 
 nextflow_workflow {
@@ -10,7 +10,8 @@ nextflow_workflow {
 
     tag "workflows"
     tag "msproteomics_diann"
-    tag "qpxdiann"
+    tag "qpxexport"
+    tag "qpx/diann"
 
     // .command.sh of the single task of a process in this test run (via the trace file)
     def taskScript = { String output_dir, String process ->
@@ -19,7 +20,7 @@ nextflow_workflow {
         new File(new File("${output_dir}/../work", prefix).listFiles().find { d -> d.name.startsWith(suffix) }, '.command.sh').text
     }
 
-    test("qpx export - QPXDIANN converts the final quantification") {
+    test("qpx export - QPX_DIANN and QPXEXPORT convert the final quantification") {
         options "-stub"
         tag "stub"
 
@@ -38,7 +39,8 @@ nextflow_workflow {
         }
 
         then {
-            def script = taskScript(outputDir, 'QPXDIANN')
+            def script = taskScript(outputDir, 'QPX_DIANN')
+            def export = taskScript(outputDir, 'QPXEXPORT')
             def qpx = new File("${outputDir}/qpx").list().sort()
             assertAll(
                 { assert workflow.success },
@@ -47,12 +49,14 @@ nextflow_workflow {
                 { assert script.contains('--sdrf-file samplesheet.sdrf.tsv') : script },
                 { assert script.contains('--output-prefix diann') : script },
                 { assert script.contains('--qvalue-threshold 0.01') : script },
+                { assert script.contains('--fasta test.fasta') : script },
+                { assert export.contains('--pg-matrix-file diann_report.pg_matrix.tsv') && export.contains('--prefix diann') && export.contains('--matrix-qvalue 0.01') : export },
                 { assert snapshot(qpx, workflow.trace.succeeded()*.name.collect { name -> name.replaceAll(/ \(.*\)$/, '') }.unique().sort()).match() }
             )
         }
     }
 
-    test("qpx export - --skip_qpx_export runs no QPXDIANN") {
+    test("qpx export - --skip_qpx_export runs no qpx export") {
         options "-stub"
         tag "stub"
 
