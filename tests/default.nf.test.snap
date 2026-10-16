@@ -721,7 +721,6 @@
                 "pmultiqc",
                 "pmultiqc/multiqc_report.html",
                 "pmultiqc/multiqc_report_data",
-                "pmultiqc/multiqc_report_data/multiqc.log",
                 "quantmsutils",
                 "quantmsutils/config",
                 "quantmsutils/config/GENERATE_DIANN_CFG.log",
