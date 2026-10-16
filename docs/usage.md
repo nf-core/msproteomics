@@ -268,6 +268,22 @@ With fewer controls than `saintexpress.virtual-controls` (`-L`, 100 by default) 
 With no controls and only one or two IPs it can abort (exit 134, `terminate called after throwing an instance of 'char const*'` or `nlopt::roundoff_limited`): FragPipe 24.0's `SAINTexpress-int` and `SAINTexpress-spc` do this on such input, and FragPipe's Downstream Run fails the same way.
 The task then fails with SAINTexpress's output and names the step; add control experiments (names starting with `CONTROL`) or set `saintexpress.run-saint-express=false`.
 
+## qpx export (AnnData / MuData)
+
+Every DIA-NN, FragPipe label-free (IonQuant) and TMT-Integrator run also writes its results as `.h5mu` (MuData), `.h5ad` (AnnData) and, for DIA-NN and FragPipe LFQ, the [QPX](https://github.com/bigbio/qpx) Parquet dataset to `<outdir>/qpx/` ([output docs](output.md#qpx-export)).
+The export is on by default and a failed conversion fails the run; `--skip_qpx_export` turns it off.
+
+| Run                                                             | Export                                                                      |
+| --------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `--mode diann`                                                  | `QPX_DIANN` (bigbio/nf-modules `qpx/diann`), then `QPXEXPORT`               |
+| `--mode fragpipe`, IonQuant label-free, no TMT-Integrator       | `QPXFRAGPIPE` (IonQuant tables with FragPipe's `experiment_annotation.tsv`) |
+| `--mode fragpipe`, TMT-Integrator                               | `TMTANNDATA` (every `abundance_<level>_<norm>.tsv`)                         |
+| `--tmt_mode labelcheck`, or neither IonQuant nor TMT-Integrator | none                                                                        |
+
+A FragPipe label-free export needs IonQuant's MaxLFQ intensities, which IonQuant writes only with at least 3 experiment+bioreplicate combinations; with fewer the run stops before any task and names `--skip_qpx_export`.
+`--qpx_qvalue_threshold` (default 0.01, DIA-NN's matrix FDR) filters the DIA-NN export.
+The `test` and `test_dda_lfq` profiles (2 experiments) skip the export; `test_dia` runs it with DIA-NN's `--matrix-qvalue 1` and `--qpx_qvalue_threshold 1.0`, because no protein group of its subset passes a 1% protein-group FDR.
+
 ## Key Parameters
 
 | Parameter             | Description                                                | Default                                  |
@@ -280,6 +296,7 @@ The task then fails with SAINTexpress's output and names the step; add control e
 | `--fragpipe_workflow` | FragPipe `.workflow` file or workflow name (FragPipe mode) | `assets/LFQ-MBR.workflow`                |
 | `--tmt_mode`          | TMT analysis mode: `labelcheck` or `quant` (FragPipe mode) | None                                     |
 | `--fragpipe_mode`     | FragPipe execution mode: `pipeline` or `headless`          | `pipeline`                               |
+| `--skip_qpx_export`   | Skip the [qpx export](#qpx-export-anndata--mudata)         | `false`                                  |
 
 ## Container Requirements
 
