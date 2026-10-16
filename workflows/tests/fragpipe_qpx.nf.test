@@ -14,11 +14,12 @@ nextflow_workflow {
     tag "qpxfragpipe"
     tag "tmtanndata"
 
-    // .command.sh of the single task of a process in this test run (via the trace file)
-    def taskScript = { String output_dir, String process ->
+    // Files staged into the single task of a process in this test run (via the trace file); the stubs run
+    // no tool, so the inputs show what the export was given
+    def staged = { String output_dir, String process ->
         def line = new File("${output_dir}/../meta/trace.csv").readLines().drop(1).find { l -> l.split('\t')[3].endsWith(":${process}") || l.split('\t')[3].contains(":${process} ") }
         def (prefix, suffix) = line.split('\t')[1].tokenize('/')
-        new File(new File("${output_dir}/../work", prefix).listFiles().find { d -> d.name.startsWith(suffix) }, '.command.sh').text
+        new File("${output_dir}/../work", prefix).listFiles().find { d -> d.name.startsWith(suffix) }.list().findAll { name -> !name.startsWith('.') }.sort()
     }
     def succeeded = { trace -> trace.succeeded()*.name.collect { name -> name.replaceAll(/ \(.*\)$/, '') }.unique().sort() }
 
@@ -42,13 +43,10 @@ nextflow_workflow {
         }
 
         then {
-            def script = taskScript(outputDir, 'QPXFRAGPIPE')
+            def inputs = staged(outputDir, 'QPXFRAGPIPE')
             assertAll(
                 { assert workflow.success },
-                { assert script.contains('--pg-file combined_protein.tsv') : script },
-                { assert script.contains('--ion-file combined_ion.tsv') : script },
-                { assert script.contains('--experiment-annotation-file experiment_annotation.tsv') : script },
-                { assert script.contains('--sdrf-file samplesheet.sdrf.tsv') : script },
+                { assert inputs.containsAll(['combined_protein.tsv', 'combined_ion.tsv', 'experiment_annotation.tsv', 'samplesheet.sdrf.tsv']) : inputs },
                 { assert snapshot(new File("${outputDir}/qpx").list().sort(), succeeded(workflow.trace)).match() }
             )
         }
@@ -76,7 +74,7 @@ nextflow_workflow {
         then {
             assertAll(
                 { assert workflow.success },
-                { assert taskScript(outputDir, 'QPXFRAGPIPE').contains('--experiment-annotation-file experiment_annotation.tsv') },
+                { assert staged(outputDir, 'QPXFRAGPIPE').containsAll(['combined_protein.tsv', 'combined_ion.tsv', 'experiment_annotation.tsv', 'samplesheet.sdrf.tsv']) },
                 { assert snapshot(new File("${outputDir}/qpx").list().sort(), succeeded(workflow.trace)).match() }
             )
         }
@@ -103,11 +101,13 @@ nextflow_workflow {
         }
 
         then {
-            def script = taskScript(outputDir, 'TMTANNDATA')
+            def inputs = staged(outputDir, 'TMTANNDATA')
+            def summary = new File("${outputDir}/qpx/fragpipe.tmt.summary.tsv").readLines()
             assertAll(
                 { assert workflow.success },
-                { assert script.contains('--annotation tmt_annotation.tsv') : script },
-                { assert script.contains('--log2transformed true') : script },
+                { assert inputs.containsAll(['tmt_annotation.tsv', 'abundance_gene_None.tsv', 'abundance_protein_None.tsv']) : inputs },
+                // the stub summary records the log2transformed value TMTANNDATA got (tool configs: tmtintegrator args)
+                { assert summary.contains('log2transformed\ttrue') : summary },
                 { assert !succeeded(workflow.trace).any { name -> name.endsWith(':QPXFRAGPIPE') } },
                 { assert snapshot(new File("${outputDir}/qpx").list().sort(), succeeded(workflow.trace)).match() }
             )
@@ -137,7 +137,9 @@ nextflow_workflow {
         then {
             assertAll(
                 { assert workflow.success },
-                { assert taskScript(outputDir, 'TMTANNDATA').contains('--abundance abundance_protein_None.tsv') },
+                { assert staged(outputDir, 'TMTANNDATA').containsAll(['tmt_annotation.tsv', 'abundance_protein_None.tsv']) },
+                // log2transformed from FragPipe's results/tmt-integrator-conf.yml
+                { assert new File("${outputDir}/qpx/fragpipe.tmt.summary.tsv").readLines().contains('log2transformed\ttrue') },
                 { assert snapshot(new File("${outputDir}/qpx").list().sort(), succeeded(workflow.trace)).match() }
             )
         }

@@ -143,7 +143,7 @@ workflow MSPROTEOMICS_FRAGPIPE {
         // qpx inputs in FragPipe's results/: IonQuant's combined tables and experiment_annotation.tsv,
         // TMT-Integrator's tmt-report/abundance_*.tsv and tmt-integrator-conf.yml; the export's missing input stops the run.
         def ch_headless_files = ch_headless_results.collect()
-        ch_qpx_lfq = ch_headless_files.map { results ->
+        ch_qpx_lfq = qpx_export != 'lfq' ? channel.empty() : ch_headless_files.map { results ->
             def top = results.findAll { result -> result.parent.name == 'results' }.collectEntries { result -> [result.name, result] }
             def names = ['combined_protein.tsv', 'combined_ion.tsv', 'experiment_annotation.tsv']
             def missing = names.findAll { name -> !top[name] }
@@ -152,7 +152,7 @@ workflow MSPROTEOMICS_FRAGPIPE {
             }
             [[id: 'fragpipe']] + names.collect { name -> top[name] }
         }
-        ch_qpx_tmt = ch_headless_files.map { results ->
+        ch_qpx_tmt = qpx_export != 'tmt' ? channel.empty() : ch_headless_files.map { results ->
             def abundance = results.findAll { result -> result.name.startsWith('abundance_') && result.parent.name == 'tmt-report' }
             def config = results.find { result -> result.name == 'tmt-integrator-conf.yml' && result.parent.name == 'results' }
             def log2transformed = config ? tmtLog2Transformed(config.text) : null
@@ -207,9 +207,9 @@ workflow MSPROTEOMICS_FRAGPIPE {
             .map { dirs -> dirs.sort(false) { dir -> dir.name }.collect { dir -> dir.resolve('psm.tsv') } }
         ch_combined_modified_peptide = FRAGPIPE_PIPELINE.out.combined_modified_peptide
 
-        // qpx inputs: IonQuant's (and TMT-Integrator's) outputs are optional, so they are joined to the
-        // task's results directory and a task that wrote none of them stops the run
-        ch_qpx_lfq = FRAGPIPE_PIPELINE.out.ionquant_dir
+        // qpx inputs (only the run's export, qpxFragpipeExport): IonQuant's (and TMT-Integrator's) outputs are
+        // optional, so they are joined to the task's results directory and a task that wrote none of them stops the run
+        ch_qpx_lfq = qpx_export != 'lfq' ? channel.empty() : FRAGPIPE_PIPELINE.out.ionquant_dir
             .join(FRAGPIPE_PIPELINE.out.combined_protein, remainder: true, failOnDuplicate: true)
             .join(FRAGPIPE_PIPELINE.out.combined_ion, remainder: true, failOnDuplicate: true)
             .join(FRAGPIPE_PIPELINE.out.experiment_annotation, remainder: true, failOnDuplicate: true)
@@ -220,7 +220,7 @@ workflow MSPROTEOMICS_FRAGPIPE {
                 }
                 [[id: 'fragpipe'], protein, ion, annotation]
             }
-        ch_qpx_tmt = FRAGPIPE_PIPELINE.out.tmt_dir
+        ch_qpx_tmt = qpx_export != 'tmt' ? channel.empty() : FRAGPIPE_PIPELINE.out.tmt_dir
             .join(FRAGPIPE_PIPELINE.out.tmt_abundance, remainder: true, failOnDuplicate: true)
             .combine(FRAGPIPE_PIPELINE.out.tool_configs)
             .map { _meta, _dir, abundance, configs ->

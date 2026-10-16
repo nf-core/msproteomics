@@ -335,7 +335,7 @@ nextflow_function {
         when {
             function {
                 """
-                input[0] = 'tmtintegrator:\n  groupby: -1\n  log2transformed: false\n  ms1_int: true\n'
+                input[0] = 'tmtintegrator:\\n  groupby: -1\\n  log2transformed: false\\n  ms1_int: true\\n'
                 """
             }
         }
@@ -352,7 +352,7 @@ nextflow_function {
         when {
             function {
                 """
-                input[0] = 'tmtintegrator:\n  log2transformed: true\n'
+                input[0] = 'tmtintegrator:\\n  log2transformed: true\\n'
                 """
             }
         }
@@ -369,7 +369,7 @@ nextflow_function {
         when {
             function {
                 """
-                input[0] = 'tmtintegrator:\n  groupby: -1\n'
+                input[0] = 'tmtintegrator:\\n  groupby: -1\\n'
                 """
             }
         }

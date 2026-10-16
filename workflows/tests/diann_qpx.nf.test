@@ -13,11 +13,11 @@ nextflow_workflow {
     tag "qpxexport"
     tag "qpx/diann"
 
-    // .command.sh of the single task of a process in this test run (via the trace file)
-    def taskScript = { String output_dir, String process ->
+    // Work directory of the single task of a process in this test run (via the trace file)
+    def taskDir = { String output_dir, String process ->
         def line = new File("${output_dir}/../meta/trace.csv").readLines().drop(1).find { l -> l.split('\t')[3].endsWith(":${process}") || l.split('\t')[3].contains(":${process} ") }
         def (prefix, suffix) = line.split('\t')[1].tokenize('/')
-        new File(new File("${output_dir}/../work", prefix).listFiles().find { d -> d.name.startsWith(suffix) }, '.command.sh').text
+        new File("${output_dir}/../work", prefix).listFiles().find { d -> d.name.startsWith(suffix) }
     }
 
     test("qpx export - QPX_DIANN and QPXEXPORT convert the final quantification") {
@@ -39,18 +39,15 @@ nextflow_workflow {
         }
 
         then {
-            def script = taskScript(outputDir, 'QPX_DIANN')
-            def export = taskScript(outputDir, 'QPXEXPORT')
+            // bigbio's QPX_DIANN stub runs no qpxc (its argv is checked by the module and DIA integration tests): check what it was given
+            def staged = taskDir(outputDir, 'QPX_DIANN').list().sort()
+            def export = new File(taskDir(outputDir, 'QPXEXPORT'), '.command.sh').text
             def qpx = new File("${outputDir}/qpx").list().sort()
             assertAll(
                 { assert workflow.success },
-                { assert script.contains('--report-path diann_report.tsv') : script },
-                { assert script.contains('--pg-matrix-path diann_report.pg_matrix.tsv') : script },
-                { assert script.contains('--sdrf-file samplesheet.sdrf.tsv') : script },
-                { assert script.contains('--output-prefix diann') : script },
-                { assert script.contains('--qvalue-threshold 0.01') : script },
-                { assert script.contains('--fasta test.fasta') && script.contains('--no-mudata') : script },
-                { assert export.contains('--pg-matrix-file diann_report.pg_matrix.tsv') && export.contains('--prefix diann') && export.contains('--matrix-qvalue 0.01') : export },
+                { assert staged.containsAll(['diann_report.tsv', 'diann_report.pg_matrix.tsv', 'diann_report.log.txt', 'samplesheet.sdrf.tsv', 'test.fasta']) : staged },
+                { assert export.contains('--pg-matrix-file diann_report.pg_matrix.tsv') && export.contains('--sdrf-file samplesheet.sdrf.tsv') : export },
+                { assert export.contains('--prefix diann') && export.contains('--matrix-qvalue 0.01') : export },
                 { assert snapshot(qpx, workflow.trace.succeeded()*.name.collect { name -> name.replaceAll(/ \(.*\)$/, '') }.unique().sort()).match() }
             )
         }
