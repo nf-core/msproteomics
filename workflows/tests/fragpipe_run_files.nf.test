@@ -132,6 +132,37 @@ nextflow_workflow {
         }
     }
 
+    // FP/FragpipeRun.java:582-587: no sdrf.tsv when workflow.misc.save-sdrf=false
+    test("save-sdrf=false - no sdrf.tsv and no FRAGPIPESDRF task") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                def wf = new File("${outputDir}/no_sdrf.workflow")
+                wf.text = new File("${fixtures}/fragpipe_workflows/LFQ-MBR.workflow").text.replace('workflow.misc.save-sdrf=true', 'workflow.misc.save-sdrf=false')
+                input             = ss.toString()
+                database          = "${fixtures}/test.fasta"
+                fragpipe_workflow = wf.toString()
+                fragpipe_mode     = 'pipeline'
+                outdir            = "$outputDir"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert !new File("${outputDir}/fragpipe/sdrf.tsv").exists() },
+                { assert workflow.trace.tasks().findAll { task -> task.name.contains('FRAGPIPESDRF') }.isEmpty() },
+                { assert snapshot(workflow.trace.succeeded().collect { task -> task.name }.sort()).match() }
+            )
+        }
+    }
+
     // TabMsfragger.java:2388 keys instruments by the file MSFragger read. MSFragger reads .raw
     // natively, so the searched name is the .raw itself, not its _uncalibrated.mzML.
     test("EX-02 - sdrf.tsv maps a .raw input to the file MSFragger searched") {

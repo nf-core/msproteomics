@@ -34,7 +34,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   The DIA-NN workflow now passes these parameters and their units to `QUANTMSUTILS_DIANNCFG`; before, it passed `--diann_library_ms1_acc` (5) and `--diann_library_mass_acc` (18) with a fixed `ppm`, so the values DIA-NN gets by default are unchanged.
   They are Orbitrap values and equal `conf/instruments/thermo_ascend.config`; `conf/instruments/bruker_flex.config` sets 15 / 15.
 - `--organism` has no default (was `Homo sapiens`): the SDRF organism comes from the `--proteome` entry, else it is guessed from the searched FASTA (UniProt `OS=` headers).
-- `--fragpipe_workflow` may be omitted: `--mode fragpipe` then uses `assets/LFQ-MBR.workflow`; `--tmt_mode quant` needs one.
+- `--fragpipe_workflow` has no default: `--mode fragpipe` without it stops with an error (breaking: it used `assets/LFQ-MBR.workflow`); `--tmt_mode labelcheck` is its own defined workflow, the shipped label check workflow of `--tmt_type`, and stops when `--fragpipe_workflow` is also given (before, `--fragpipe_workflow` overrode it).
+  Pass `--fragpipe_workflow assets/LFQ-MBR.workflow` for the old behaviour.
 - `--tmt_mode` is validated against `labelcheck` and `quant`.
 - FragPipe tool parameters come only from the `.workflow` file, as FragPipe reads them; the split-database slice count is `msfragger.misc.slice-db` (was `--msfragger_num_slices`).
 - FragPipe groups files by the samplesheet `experiment` and `bioreplicate` columns; `condition` no longer drives grouping and only fills the TMT annotation and MSstats condition fields.

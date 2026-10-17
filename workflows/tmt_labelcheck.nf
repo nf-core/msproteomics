@@ -28,7 +28,7 @@ workflow MSPROTEOMICS_TMT_LABELCHECK {
 
     main:
     // --tmt_type names the label TMTLABELCHECKANALYZE counts, and selects the shipped label check workflow
-    // when --fragpipe_workflow is not given (MSPROTEOMICS_FRAGPIPE)
+    // (MSPROTEOMICS_FRAGPIPE; the label check takes no --fragpipe_workflow)
     if (!params.tmt_type) {
         error("--tmt_mode labelcheck requires --tmt_type (e.g. --tmt_type TMT16): the label the label check counts")
     }
