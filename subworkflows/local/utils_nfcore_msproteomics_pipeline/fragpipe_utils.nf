@@ -1549,4 +1549,3 @@ def qpxFragpipeExport(skip, tmt_mode, workflow_props, spectra_files) {
     }
     return 'lfq'
 }
-
