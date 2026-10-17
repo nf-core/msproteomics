@@ -157,7 +157,8 @@ nextflow_workflow {
             assertAll(
                 { assert workflow.success },
                 { assert !new File("${outputDir}/fragpipe/sdrf.tsv").exists() },
-                { assert workflow.trace.tasks().findAll { task -> task.name.contains('FRAGPIPESDRF') }.isEmpty() }
+                { assert workflow.trace.tasks().findAll { task -> task.name.contains('FRAGPIPESDRF') }.isEmpty() },
+                { assert snapshot(workflow.trace.succeeded().collect { task -> task.name }.sort()).match() }
             )
         }
     }
