@@ -67,7 +67,7 @@ nextflow run nf-core/msproteomics \
     --input samplesheet.csv \
     --database /path/to/database.fasta \
     --fragpipe_container docker.io/<your-org>/fragpipe:24.0 \
-    --fragpipe_workflow LFQ-MBR.workflow \
+    --fragpipe_workflow assets/LFQ-MBR.workflow \
     --outdir results \
     -profile docker
 ```

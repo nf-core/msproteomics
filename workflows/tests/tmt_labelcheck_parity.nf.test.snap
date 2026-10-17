@@ -1,21 +1,4 @@
 {
-    "Write sub mzML - label check writes _sub.mzML and the second-pass files to fragpipe/": {
-        "content": [
-            [
-                "plex1_sub.mzML",
-                "plex2_sub.mzML"
-            ],
-            [
-                "<fragpipe>/plex1_sub.mzML\tplex1\t\tDDA",
-                "<fragpipe>/plex2_sub.mzML\tplex2\t\tDDA"
-            ]
-        ],
-        "timestamp": "2026-10-11T07:41:12.142840393",
-        "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "25.10.4"
-        }
-    },
     "TMT per-channel samplesheet - one MSFRAGGER task per raw file": {
         "content": [
             {

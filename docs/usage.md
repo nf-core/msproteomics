@@ -136,12 +136,13 @@ FragPipe mode supports DDA LFQ, TMT label check, TMT quantification, and generic
 The specific workflow is controlled by the `--fragpipe_workflow` and `--tmt_mode` parameters.
 A workflow that runs MSBooster (the shipped `LFQ-MBR.workflow` and `TMT6.workflow` do) needs `--fragpipe_threads` unless the workflow file sets `workflow.threads`: MSBooster's RT fit depends on the thread count, so the pipeline does not pick one from the host as FragPipe does.
 
-**DDA LFQ** -- uses MSFragger, MSBooster, Percolator, ProteinProphet, Philosopher, and IonQuant; without `--fragpipe_workflow` the shipped `assets/LFQ-MBR.workflow` runs:
+**DDA LFQ** -- uses MSFragger, MSBooster, Percolator, ProteinProphet, Philosopher, and IonQuant; pass the shipped `assets/LFQ-MBR.workflow` with `--fragpipe_workflow`:
 
 ```bash
 nextflow run nf-core/msproteomics \
   --mode fragpipe \
   --fragpipe_container docker.io/<your-org>/fragpipe:24.0 \
+  --fragpipe_workflow assets/LFQ-MBR.workflow \
   --fragpipe_threads 16 \
   --input samplesheet.csv \
   --database /path/to/uniprot_human.fasta \
@@ -149,7 +150,7 @@ nextflow run nf-core/msproteomics \
   -profile docker
 ```
 
-**TMT Label Check** -- assess TMT labeling efficiency; `--tmt_type` selects the shipped `assets/TMT-labelcheck-229.workflow` (TMT6/10/11) or `assets/TMT-labelcheck-304.workflow` (TMT16/18/35/TMTpro):
+**TMT Label Check** -- assess TMT labeling efficiency; `--fragpipe_workflow` is not allowed here; `--tmt_type` selects the shipped `assets/TMT-labelcheck-229.workflow` (TMT6/10/11) or `assets/TMT-labelcheck-304.workflow` (TMT16/18/35/TMTpro):
 
 ```bash
 nextflow run nf-core/msproteomics \
@@ -279,17 +280,17 @@ Percolator's `*_psms.tsv`, which a group directory keeps with `percolator.keep-t
 
 ## Key Parameters
 
-| Parameter             | Description                                                | Default                                  |
-| --------------------- | ---------------------------------------------------------- | ---------------------------------------- |
-| `--input`             | Path to CSV samplesheet                                    | Required                                 |
-| `--mode`              | Analysis mode: `diann` or `fragpipe`                       | Required                                 |
-| `--outdir`            | Output directory                                           | Required                                 |
-| `--database`          | FASTA protein database                                     | `--database` or `--proteome` is required |
-| `--proteome`          | iProteome key ([iProteomes](#iproteomes))                  | None                                     |
-| `--fragpipe_workflow` | FragPipe `.workflow` file or workflow name (FragPipe mode) | `assets/LFQ-MBR.workflow`                |
-| `--tmt_mode`          | TMT analysis mode: `labelcheck` or `quant` (FragPipe mode) | None                                     |
-| `--fragpipe_mode`     | FragPipe execution mode: `pipeline` or `headless`          | `pipeline`                               |
-| `--enable_pmultiqc`   | pmultiqc QC report ([QC report](#qc-report-pmultiqc))      | `true`                                   |
+| Parameter             | Description                                                | Default                                     |
+| --------------------- | ---------------------------------------------------------- | ------------------------------------------- |
+| `--input`             | Path to CSV samplesheet                                    | Required                                    |
+| `--mode`              | Analysis mode: `diann` or `fragpipe`                       | Required                                    |
+| `--outdir`            | Output directory                                           | Required                                    |
+| `--database`          | FASTA protein database                                     | `--database` or `--proteome` is required    |
+| `--proteome`          | iProteome key ([iProteomes](#iproteomes))                  | None                                        |
+| `--fragpipe_workflow` | FragPipe `.workflow` file (FragPipe mode)                  | Required; none with `--tmt_mode labelcheck` |
+| `--tmt_mode`          | TMT analysis mode: `labelcheck` or `quant` (FragPipe mode) | None                                        |
+| `--fragpipe_mode`     | FragPipe execution mode: `pipeline` or `headless`          | `pipeline`                                  |
+| `--enable_pmultiqc`   | pmultiqc QC report ([QC report](#qc-report-pmultiqc))      | `true`                                      |
 
 ## Container Requirements
 
@@ -351,7 +352,7 @@ nextflow run nf-core/msproteomics -profile docker -params-file params.yaml
 input: "samplesheet.csv"
 mode: "fragpipe"
 fragpipe_container: "docker.io/<your-org>/fragpipe:24.0"
-fragpipe_workflow: "LFQ-MBR.workflow"
+fragpipe_workflow: "assets/LFQ-MBR.workflow"
 database: "/path/to/uniprot_human.fasta"
 outdir: "results"
 ```
