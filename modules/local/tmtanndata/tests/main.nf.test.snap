@@ -1,0 +1,243 @@
+{
+    "tmtanndata - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        "fragpipe.tmt_None.h5mu:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        "fragpipe.tmt_protein_None.h5ad:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        "fragpipe.tmt.summary.tsv:md5,1b39a7a5445dca899e26eb55fbef99b0"
+                    ]
+                ],
+                "3": [
+                    [
+                        "TMTANNDATA",
+                        "anndata",
+                        "0.13.4"
+                    ]
+                ],
+                "4": [
+                    [
+                        "TMTANNDATA",
+                        "mudata",
+                        "0.4.1"
+                    ]
+                ],
+                "h5ad": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        "fragpipe.tmt_protein_None.h5ad:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "h5mu": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        "fragpipe.tmt_None.h5mu:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "summary": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        "fragpipe.tmt.summary.tsv:md5,1b39a7a5445dca899e26eb55fbef99b0"
+                    ]
+                ],
+                "versions_anndata": [
+                    [
+                        "TMTANNDATA",
+                        "anndata",
+                        "0.13.4"
+                    ]
+                ],
+                "versions_mudata": [
+                    [
+                        "TMTANNDATA",
+                        "mudata",
+                        "0.4.1"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-10-17T01:31:04.036866337",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "tmtanndata - log2, every level and normalization": {
+        "content": [
+            [
+                "fragpipe.tmt_MD.h5mu",
+                "fragpipe.tmt_None.h5mu"
+            ],
+            [
+                "fragpipe.tmt_gene_MD.h5ad",
+                "fragpipe.tmt_gene_None.h5ad",
+                "fragpipe.tmt_multi_site_None.h5ad",
+                "fragpipe.tmt_peptide_None.h5ad",
+                "fragpipe.tmt_protein_MD.h5ad",
+                "fragpipe.tmt_protein_None.h5ad",
+                "fragpipe.tmt_single_site_None.h5ad"
+            ],
+            [
+                "count.tmt_MD.gene.n_nan\t3",
+                "count.tmt_MD.gene.n_non_nan\t9",
+                "count.tmt_MD.gene.n_obs\t4",
+                "count.tmt_MD.gene.n_source_zero_to_nan\t0",
+                "count.tmt_MD.gene.n_unstored_to_nan\t3",
+                "count.tmt_MD.gene.n_vars\t3",
+                "count.tmt_MD.protein.n_nan\t3",
+                "count.tmt_MD.protein.n_non_nan\t9",
+                "count.tmt_MD.protein.n_obs\t4",
+                "count.tmt_MD.protein.n_source_zero_to_nan\t0",
+                "count.tmt_MD.protein.n_unstored_to_nan\t3",
+                "count.tmt_MD.protein.n_vars\t3",
+                "count.tmt_None.gene.n_nan\t3",
+                "count.tmt_None.gene.n_non_nan\t9",
+                "count.tmt_None.gene.n_obs\t4",
+                "count.tmt_None.gene.n_source_zero_to_nan\t0",
+                "count.tmt_None.gene.n_unstored_to_nan\t3",
+                "count.tmt_None.gene.n_vars\t3",
+                "count.tmt_None.multi_site.n_nan\t3",
+                "count.tmt_None.multi_site.n_non_nan\t9",
+                "count.tmt_None.multi_site.n_obs\t4",
+                "count.tmt_None.multi_site.n_source_zero_to_nan\t0",
+                "count.tmt_None.multi_site.n_unstored_to_nan\t3",
+                "count.tmt_None.multi_site.n_vars\t3",
+                "count.tmt_None.peptide.n_nan\t3",
+                "count.tmt_None.peptide.n_non_nan\t9",
+                "count.tmt_None.peptide.n_obs\t4",
+                "count.tmt_None.peptide.n_source_zero_to_nan\t0",
+                "count.tmt_None.peptide.n_unstored_to_nan\t3",
+                "count.tmt_None.peptide.n_vars\t3",
+                "count.tmt_None.protein.n_nan\t3",
+                "count.tmt_None.protein.n_non_nan\t9",
+                "count.tmt_None.protein.n_obs\t4",
+                "count.tmt_None.protein.n_source_zero_to_nan\t0",
+                "count.tmt_None.protein.n_unstored_to_nan\t3",
+                "count.tmt_None.protein.n_vars\t3",
+                "count.tmt_None.single_site.n_nan\t3",
+                "count.tmt_None.single_site.n_non_nan\t9",
+                "count.tmt_None.single_site.n_obs\t4",
+                "count.tmt_None.single_site.n_source_zero_to_nan\t0",
+                "count.tmt_None.single_site.n_unstored_to_nan\t3",
+                "count.tmt_None.single_site.n_vars\t3",
+                "engine\ttmt",
+                "guards_passed\tG4,G8,G9,G12,G13,G14,G15,G19",
+                "log2transformed\ttrue",
+                "norms\tMD,None",
+                "prefix\tfragpipe",
+                "tmt_MD.gene.missing_value_convention\tNaN = not quantified (source NA or empty; log2 scale, 0 is a valid value); dense float32",
+                "tmt_MD.gene.quantity_source\tabundance_gene_MD.tsv",
+                "tmt_MD.gene.scale\tlog2",
+                "tmt_MD.gene.scale_rule\tMD: follows log2transformed=true (ReportGenerator.writeRatioAbnValues)",
+                "tmt_MD.modalities\tgene,protein",
+                "tmt_MD.protein.missing_value_convention\tNaN = not quantified (source NA or empty; log2 scale, 0 is a valid value); dense float32",
+                "tmt_MD.protein.quantity_source\tabundance_protein_MD.tsv",
+                "tmt_MD.protein.scale\tlog2",
+                "tmt_MD.protein.scale_rule\tMD: follows log2transformed=true (ReportGenerator.writeRatioAbnValues)",
+                "tmt_None.gene.missing_value_convention\tNaN = not quantified (source NA or empty; log2 scale, 0 is a valid value); dense float32",
+                "tmt_None.gene.quantity_source\tabundance_gene_None.tsv",
+                "tmt_None.gene.scale\tlog2",
+                "tmt_None.gene.scale_rule\tNone: follows log2transformed=true (ReportGenerator.writeRatioAbnValues)",
+                "tmt_None.modalities\tgene,protein,peptide,single_site,multi_site",
+                "tmt_None.multi_site.missing_value_convention\tNaN = not quantified (source NA or empty; log2 scale, 0 is a valid value); dense float32",
+                "tmt_None.multi_site.quantity_source\tabundance_multi-site_None.tsv",
+                "tmt_None.multi_site.scale\tlog2",
+                "tmt_None.multi_site.scale_rule\tNone: follows log2transformed=true (ReportGenerator.writeRatioAbnValues)",
+                "tmt_None.peptide.missing_value_convention\tNaN = not quantified (source NA or empty; log2 scale, 0 is a valid value); dense float32",
+                "tmt_None.peptide.quantity_source\tabundance_peptide_None.tsv",
+                "tmt_None.peptide.scale\tlog2",
+                "tmt_None.peptide.scale_rule\tNone: follows log2transformed=true (ReportGenerator.writeRatioAbnValues)",
+                "tmt_None.protein.missing_value_convention\tNaN = not quantified (source NA or empty; log2 scale, 0 is a valid value); dense float32",
+                "tmt_None.protein.quantity_source\tabundance_protein_None.tsv",
+                "tmt_None.protein.scale\tlog2",
+                "tmt_None.protein.scale_rule\tNone: follows log2transformed=true (ReportGenerator.writeRatioAbnValues)",
+                "tmt_None.single_site.missing_value_convention\tNaN = not quantified (source NA or empty; log2 scale, 0 is a valid value); dense float32",
+                "tmt_None.single_site.quantity_source\tabundance_single-site_None.tsv",
+                "tmt_None.single_site.scale\tlog2",
+                "tmt_None.single_site.scale_rule\tNone: follows log2transformed=true (ReportGenerator.writeRatioAbnValues)"
+            ],
+            {
+                "versions_anndata": [
+                    [
+                        "TMTANNDATA",
+                        "anndata",
+                        "0.13.4"
+                    ]
+                ],
+                "versions_mudata": [
+                    [
+                        "TMTANNDATA",
+                        "mudata",
+                        "0.4.1"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-10-17T01:31:12.596020016",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "tmtanndata - linear": {
+        "content": [
+            [
+                "count.tmt_None.gene.n_nan\t4",
+                "count.tmt_None.gene.n_non_nan\t8",
+                "count.tmt_None.gene.n_obs\t4",
+                "count.tmt_None.gene.n_source_zero_to_nan\t2",
+                "count.tmt_None.gene.n_unstored_to_nan\t2",
+                "count.tmt_None.gene.n_vars\t3",
+                "count.tmt_None.protein.n_nan\t4",
+                "count.tmt_None.protein.n_non_nan\t8",
+                "count.tmt_None.protein.n_obs\t4",
+                "count.tmt_None.protein.n_source_zero_to_nan\t2",
+                "count.tmt_None.protein.n_unstored_to_nan\t2",
+                "count.tmt_None.protein.n_vars\t3",
+                "engine\ttmt",
+                "guards_passed\tG4,G8,G9,G12,G13,G14,G15,G19",
+                "log2transformed\tfalse",
+                "norms\tNone",
+                "prefix\tfragpipe",
+                "tmt_None.gene.missing_value_convention\tNaN = not quantified (unstored cell, NA/empty, or source value <= 0; linear scale); dense float32",
+                "tmt_None.gene.quantity_source\tabundance_gene_None.tsv",
+                "tmt_None.gene.scale\tlinear",
+                "tmt_None.gene.scale_rule\tNone: follows log2transformed=false (ReportGenerator.writeRatioAbnValues)",
+                "tmt_None.modalities\tgene,protein",
+                "tmt_None.protein.missing_value_convention\tNaN = not quantified (unstored cell, NA/empty, or source value <= 0; linear scale); dense float32",
+                "tmt_None.protein.quantity_source\tabundance_protein_None.tsv",
+                "tmt_None.protein.scale\tlinear",
+                "tmt_None.protein.scale_rule\tNone: follows log2transformed=false (ReportGenerator.writeRatioAbnValues)"
+            ]
+        ],
+        "timestamp": "2026-10-17T01:31:20.526840966",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

@@ -15,12 +15,17 @@ import argparse
 import csv
 import json
 import os
+import re
 import sys
 from collections import defaultdict
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import fragpipe_sdrf  # noqa: E402  (one organism guess shared with the FragPipe sdrf.tsv writer)
+
+# Archive suffixes DECOMPRESS unpacks (modules/local/decompress: X.d.tar.gz -> X.d, X.raw.gz -> X.raw):
+# comment[data file] names the run file the search engines report, comment[file uri] the input as given
+ARCHIVE_SUFFIX = re.compile(r"\.(tar\.gz|tar|gz|zip)$")
 
 
 # ---------------------------------------------------------------------------
@@ -203,7 +208,7 @@ def generate_sdrf(input_csv, params, output_path, database):
                 sample,                                         # assay name
                 "proteomic profiling by mass spectrometry",     # technology type
                 label_str,                                      # comment[label]
-                os.path.basename(filepath),                     # comment[data file]
+                ARCHIVE_SUFFIX.sub("", os.path.basename(filepath)),  # comment[data file]
                 filepath,                                       # comment[file uri]
                 "1",                                            # comment[technical replicate]
                 fraction,                                       # comment[fraction identifier]

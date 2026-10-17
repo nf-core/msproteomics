@@ -278,6 +278,22 @@ In pipeline mode these are the tables after the last IonQuant pass, or each grou
 Percolator's `*_psms.tsv`, which a group directory keeps with `percolator.keep-tsv-files=true`, are not read: the plugin's table search is set to `psm.tsv`, `ion.tsv` and `combined_{protein,peptide,ion}.tsv`, and the task fails when pmultiqc reports a plugin error or finds nothing to report.
 `--contaminant_string` (default `CONT`) marks contaminant proteins in both modes, matched anywhere in the protein name (the FragPipe plugin ignores case); `--skip_table_plots`, `--pmultiqc_idxml_skip` and `--quantification_method` apply to DIA mode only, as the FragPipe plugin reads none of them.
 
+## qpx export (AnnData / MuData)
+
+Every DIA-NN, FragPipe label-free (IonQuant) and TMT-Integrator run also writes its results as `.h5mu` (MuData), `.h5ad` (AnnData) and, for DIA-NN and FragPipe LFQ, the [QPX](https://github.com/bigbio/qpx) Parquet dataset to `<outdir>/qpx/` ([output docs](output.md#qpx-export)).
+The export is on by default and a failed conversion fails the run; `--skip_qpx_export` turns it off.
+
+| Run                                                             | Export                                                                      |
+| --------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `--mode diann`                                                  | `QPX_DIANN` (bigbio/nf-modules `qpx/diann`), then `QPXEXPORT`               |
+| `--mode fragpipe`, IonQuant label-free, no TMT-Integrator       | `QPXFRAGPIPE` (IonQuant tables with FragPipe's `experiment_annotation.tsv`) |
+| `--mode fragpipe`, TMT-Integrator                               | `TMTANNDATA` (every `abundance_<level>_<norm>.tsv`)                         |
+| `--tmt_mode labelcheck`, or neither IonQuant nor TMT-Integrator | none                                                                        |
+
+A FragPipe label-free export needs IonQuant's MaxLFQ intensities, which IonQuant writes only with at least 3 experiment+bioreplicate combinations; with fewer the run stops before any task and names `--skip_qpx_export`.
+The DIA-NN export follows DIA-NN's own filters: the main report as DIA-NN filtered it (`--qvalue`), and the precursors at the matrix q-value the DIA-NN log states (1% by default, `--matrix-qvalue` in `--diann_additional_analysis_args`).
+The `test` and `test_dda_lfq` profiles (2 experiments) skip the export; `test_dia` runs it with DIA-NN's `--matrix-qvalue 1` (capped at 0.05 by DIA-NN 1.8.1), because no protein group of its subset passes a 1% protein-group FDR.
+
 ## Key Parameters
 
 | Parameter             | Description                                                | Default                                     |
@@ -290,6 +306,7 @@ Percolator's `*_psms.tsv`, which a group directory keeps with `percolator.keep-t
 | `--fragpipe_workflow` | FragPipe `.workflow` file (FragPipe mode)                  | Required; none with `--tmt_mode labelcheck` |
 | `--tmt_mode`          | TMT analysis mode: `labelcheck` or `quant` (FragPipe mode) | None                                        |
 | `--fragpipe_mode`     | FragPipe execution mode: `pipeline` or `headless`          | `pipeline`                                  |
+| `--skip_qpx_export`   | Skip the [qpx export](#qpx-export-anndata--mudata)         | `false`                                     |
 | `--enable_pmultiqc`   | pmultiqc QC report ([QC report](#qc-report-pmultiqc))      | `true`                                      |
 
 ## Container Requirements

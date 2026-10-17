@@ -1,0 +1,133 @@
+name: qpxexport
+description: Build the MuData (.h5mu, missing values as NaN) and the proteins AnnData (.h5ad) of a DIA-NN QPX Parquet dataset, with silent-failure guards
+keywords:
+  - proteomics
+  - DIA-NN
+  - anndata
+  - mudata
+  - qpx
+tools:
+  - qpx:
+      description: |
+        bigbio QPX: converts proteomics search engine results to the QPX Parquet format and AnnData/MuData.
+      homepage: https://github.com/bigbio/qpx
+      documentation: https://github.com/bigbio/qpx
+      licence: ["Apache-2.0"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: Metadata map (meta.id is the dataset prefix, the qpxc --output-prefix)
+    - qpx_dataset:
+        type: file
+        description: QPX Parquet files written by qpxc convert diann (QPX_DIANN)
+        pattern: "*.parquet"
+        ontologies: []
+    - pg_matrix:
+        type: file
+        description: DIA-NN protein-group matrix
+        pattern: "*.pg_matrix.tsv"
+        ontologies: []
+    - diann_log:
+        type: file
+        description: DIA-NN log of the final quantification (the matrix FDR it applied)
+        pattern: "*.log.txt"
+        ontologies: []
+  - sdrf:
+      type: file
+      description: SDRF of the run (run set and obs metadata)
+      pattern: "*.sdrf.tsv"
+      ontologies: []
+output:
+  h5mu:
+    - - meta:
+          type: map
+          description: Metadata map (meta.id is the output prefix)
+      - "${prefix}.h5mu":
+          type: file
+          description: MuData with the precursors and proteins modalities
+          pattern: "${prefix}.h5mu"
+          ontologies: []
+  h5ad:
+    - - meta:
+          type: map
+          description: Metadata map (meta.id is the output prefix)
+      - "${prefix}.proteins.h5ad":
+          type: file
+          description: AnnData of the proteins modality
+          pattern: "${prefix}.proteins.h5ad"
+          ontologies: []
+  summary:
+    - - meta:
+          type: map
+          description: Metadata map (meta.id is the output prefix)
+      - "${prefix}.summary.tsv":
+          type: file
+          description: Sorted key<TAB>value summary of the export
+          pattern: "${prefix}.summary.tsv"
+          ontologies: []
+  versions_qpx:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - qpx:
+          type: string
+          description: The name of the tool
+      - "qpxc --version | sed 's/^qpx //'":
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_anndata:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - anndata:
+          type: string
+          description: The name of the tool
+      - 'python3 -c "import importlib.metadata as m; print(m.version(''anndata''))"':
+          type: eval
+          description: The expression to obtain the version of the tool
+  versions_mudata:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - mudata:
+          type: string
+          description: The name of the tool
+      - 'python3 -c "import importlib.metadata as m; print(m.version(''mudata''))"':
+          type: eval
+          description: The expression to obtain the version of the tool
+
+topics:
+  versions:
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - qpx:
+          type: string
+          description: The name of the tool
+      - "qpxc --version | sed 's/^qpx //'":
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - anndata:
+          type: string
+          description: The name of the tool
+      - 'python3 -c "import importlib.metadata as m; print(m.version(''anndata''))"':
+          type: eval
+          description: The expression to obtain the version of the tool
+    - - ${task.process}:
+          type: string
+          description: The name of the process
+      - mudata:
+          type: string
+          description: The name of the tool
+      - 'python3 -c "import importlib.metadata as m; print(m.version(''mudata''))"':
+          type: eval
+          description: The expression to obtain the version of the tool
+
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

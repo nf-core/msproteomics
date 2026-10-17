@@ -1,0 +1,4 @@
+Protein.Group	Protein.Ids	Protein.Names	Genes	First.Protein.Description	S1.mzML
+P11111	P11111	GENEA_HUMAN	GENEA	Synthetic protein GENEA	1000.0
+P22222	P22222	GENEB_HUMAN	GENEB	Synthetic protein GENEB	2000.0
+P44444	P44444	GENED_HUMAN	GENED	Synthetic protein GENED	4000.0

@@ -1,0 +1,218 @@
+{
+    "qpxexport - multi-run, after QPX_DIANN": {
+        "content": [
+            [
+                "count.precursors.layers.raw.n_nan\t6",
+                "count.precursors.layers.raw.n_non_nan\t9",
+                "count.precursors.layers.raw.n_obs\t3",
+                "count.precursors.layers.raw.n_vars\t5",
+                "count.precursors.n_nan\t6",
+                "count.precursors.n_non_nan\t9",
+                "count.precursors.n_obs\t3",
+                "count.precursors.n_precursors_outside_pr_matrix\t0",
+                "count.precursors.n_raw_cells_outside_pr_matrix\t1",
+                "count.precursors.n_source_zero_to_nan\t2",
+                "count.precursors.n_unstored_to_nan\t4",
+                "count.precursors.n_vars\t5",
+                "count.proteins.layers.raw.n_nan\t3",
+                "count.proteins.layers.raw.n_non_nan\t9",
+                "count.proteins.layers.raw.n_obs\t3",
+                "count.proteins.layers.raw.n_vars\t4",
+                "count.proteins.n_nan\t3",
+                "count.proteins.n_non_nan\t9",
+                "count.proteins.n_obs\t3",
+                "count.proteins.n_raw_cells_outside_pg_matrix\t1",
+                "count.proteins.n_report_only_groups_dropped\t1",
+                "count.proteins.n_source_zero_to_nan\t0",
+                "count.proteins.n_unstored_to_nan\t3",
+                "count.proteins.n_vars\t4",
+                "engine\tdiann",
+                "guards_passed\tG1,G2,G4,G5,G6,G7,G8,G9,G10,G16,G17,G20",
+                "modalities\tprecursors,proteins",
+                "obs_key\trun_stem",
+                "precursors.layers.raw.quantity_source\tPrecursor.Quantity (DIA-NN report via qpx; not normalised; pr_matrix cells only)",
+                "precursors.missing_value_convention\tNaN = not quantified (unstored cell, NA/empty, or source value <= 0; linear scale); dense float32",
+                "precursors.quantity_source\tPrecursor.Normalised (DIA-NN report via qpx, pr_matrix filter Global.Q.Value & Global.PG.Q.Value <= 0.01; normalised)",
+                "prefix\tdiann",
+                "proteins.layers.raw.quantity_source\tPG.Quantity (DIA-NN report via qpx; not normalised; pg_matrix cells only)",
+                "proteins.missing_value_convention\tNaN = not quantified (unstored cell, NA/empty, or source value <= 0; linear scale); dense float32",
+                "proteins.quantity_source\tPG.MaxLFQ (DIA-NN pg_matrix; normalised)"
+            ],
+            {
+                "versions_anndata": [
+                    [
+                        "QPXEXPORT",
+                        "anndata",
+                        "0.13.4"
+                    ]
+                ],
+                "versions_mudata": [
+                    [
+                        "QPXEXPORT",
+                        "mudata",
+                        "0.4.1"
+                    ]
+                ],
+                "versions_qpx": [
+                    [
+                        "QPXEXPORT",
+                        "qpx",
+                        "1.1.5"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-10-17T01:30:18.198673201",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "qpxexport - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "diann"
+                        },
+                        "diann.h5mu:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "diann"
+                        },
+                        "diann.proteins.h5ad:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "diann"
+                        },
+                        "diann.summary.tsv:md5,cac5fc2e6c128581689d921f89096270"
+                    ]
+                ],
+                "3": [
+                    [
+                        "QPXEXPORT",
+                        "qpx",
+                        "1.1.5"
+                    ]
+                ],
+                "4": [
+                    [
+                        "QPXEXPORT",
+                        "anndata",
+                        "0.13.4"
+                    ]
+                ],
+                "5": [
+                    [
+                        "QPXEXPORT",
+                        "mudata",
+                        "0.4.1"
+                    ]
+                ],
+                "h5ad": [
+                    [
+                        {
+                            "id": "diann"
+                        },
+                        "diann.proteins.h5ad:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "h5mu": [
+                    [
+                        {
+                            "id": "diann"
+                        },
+                        "diann.h5mu:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "summary": [
+                    [
+                        {
+                            "id": "diann"
+                        },
+                        "diann.summary.tsv:md5,cac5fc2e6c128581689d921f89096270"
+                    ]
+                ],
+                "versions_anndata": [
+                    [
+                        "QPXEXPORT",
+                        "anndata",
+                        "0.13.4"
+                    ]
+                ],
+                "versions_mudata": [
+                    [
+                        "QPXEXPORT",
+                        "mudata",
+                        "0.4.1"
+                    ]
+                ],
+                "versions_qpx": [
+                    [
+                        "QPXEXPORT",
+                        "qpx",
+                        "1.1.5"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-10-16T13:59:08.995541317",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "qpxexport - single run, after QPX_DIANN": {
+        "content": [
+            [
+                "count.precursors.layers.raw.n_nan\t1",
+                "count.precursors.layers.raw.n_non_nan\t3",
+                "count.precursors.layers.raw.n_obs\t1",
+                "count.precursors.layers.raw.n_vars\t4",
+                "count.precursors.n_nan\t1",
+                "count.precursors.n_non_nan\t3",
+                "count.precursors.n_obs\t1",
+                "count.precursors.n_precursors_outside_pr_matrix\t0",
+                "count.precursors.n_raw_cells_outside_pr_matrix\t0",
+                "count.precursors.n_source_zero_to_nan\t1",
+                "count.precursors.n_unstored_to_nan\t0",
+                "count.precursors.n_vars\t4",
+                "count.proteins.layers.raw.n_nan\t0",
+                "count.proteins.layers.raw.n_non_nan\t3",
+                "count.proteins.layers.raw.n_obs\t1",
+                "count.proteins.layers.raw.n_vars\t3",
+                "count.proteins.n_nan\t0",
+                "count.proteins.n_non_nan\t3",
+                "count.proteins.n_obs\t1",
+                "count.proteins.n_raw_cells_outside_pg_matrix\t0",
+                "count.proteins.n_report_only_groups_dropped\t1",
+                "count.proteins.n_source_zero_to_nan\t0",
+                "count.proteins.n_unstored_to_nan\t0",
+                "count.proteins.n_vars\t3",
+                "engine\tdiann",
+                "guards_passed\tG1,G2,G4,G5,G6,G7,G8,G9,G10,G16,G17,G20",
+                "modalities\tprecursors,proteins",
+                "obs_key\trun_stem",
+                "precursors.layers.raw.quantity_source\tPrecursor.Quantity (DIA-NN report via qpx; not normalised; pr_matrix cells only)",
+                "precursors.missing_value_convention\tNaN = not quantified (unstored cell, NA/empty, or source value <= 0; linear scale); dense float32",
+                "precursors.quantity_source\tPrecursor.Normalised (DIA-NN report via qpx, pr_matrix filter Global.Q.Value & Global.PG.Q.Value <= 0.01; normalised)",
+                "prefix\tdiann",
+                "proteins.layers.raw.quantity_source\tPG.Quantity (DIA-NN report via qpx; not normalised; pg_matrix cells only)",
+                "proteins.missing_value_convention\tNaN = not quantified (unstored cell, NA/empty, or source value <= 0; linear scale); dense float32",
+                "proteins.quantity_source\tPG.MaxLFQ (DIA-NN pg_matrix; normalised)"
+            ]
+        ],
+        "timestamp": "2026-10-17T01:30:32.286795377",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

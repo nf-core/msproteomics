@@ -1,0 +1,4 @@
+Index	NumberPSM	Gene	MaxPepProb	Protein	Protein ID	Entry Name	Protein Description	Organism	Indistinguishable Proteins	ReferenceIntensity	P1_126	P1_127N	P1_127C	P1_128N
+P11111	3	GENE1	0.99	sp|P11111|G1_HUMAN	P11111	G1_HUMAN	Synthetic protein 1	Homo sapiens		185363.8	120000.5	NA	98000.0	0
+P21111	3	GENE2	0.99	sp|P21111|G2_HUMAN	P21111	G2_HUMAN	Synthetic protein 2	Homo sapiens		185363.8	5000.0	5100.0		4900.0
+P31111	3	GENE3	0.99	sp|P31111|G3_HUMAN	P31111	G3_HUMAN	Synthetic protein 3	Homo sapiens		185363.8	300.0	310.0	0.0	320.0

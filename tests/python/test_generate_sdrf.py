@@ -40,3 +40,33 @@ class TestOrganism(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestDataFile(unittest.TestCase):
+    """comment[data file] is the decompressed run file (what DIA-NN / FragPipe and qpx name the run)."""
+
+    # assets/schema_input.json spectra pattern: format and optional archive suffix
+    FORMATS = ["raw", "RAW", "mzML", "mzXML", "mgf", "mzBIN", "d", "dia"]
+    ARCHIVES = ["", ".gz", ".tar", ".tar.gz", ".zip"]
+
+    def columns(self, spectra: str) -> dict:
+        with tempfile.TemporaryDirectory() as tmp:
+            sheet = Path(tmp) / "s.csv"
+            sheet.write_text(f"sample,spectra,condition\nA,{spectra},c1\n")
+            out = Path(tmp) / "out.sdrf.tsv"
+            gs.generate_sdrf(str(sheet), {"organism": "Homo sapiens"}, str(out), str(FIXTURES / "test.fasta"))
+            with open(out, newline="") as fh:
+                return next(csv.DictReader(fh, delimiter="\t"))
+
+    def test_every_schema_combination_names_the_decompressed_file(self):
+        import qpx_export_lib
+
+        for fmt in self.FORMATS:
+            for archive in self.ARCHIVES:
+                with self.subTest(fmt=fmt, archive=archive):
+                    row = self.columns(f"s3://bucket/run/sample.{fmt}{archive}")
+                    self.assertEqual(row["comment[data file]"], f"sample.{fmt}")
+                    self.assertEqual(row["comment[file uri]"], f"s3://bucket/run/sample.{fmt}{archive}")
+                    # the qpx export's run of the SDRF row is the run the search engine reports
+                    expected = "sample" if fmt.lower() in ("raw", "mzml", "mzxml", "mgf", "d", "dia") else f"sample.{fmt}"
+                    self.assertEqual(qpx_export_lib.run_file_stem(row["comment[data file]"]), expected)

@@ -1,0 +1,6 @@
+plex	channel	sample	sample_name	condition	replicate
+P1	126	P1_126	P1_126	ctrl	1
+P1	127N	P1_127N	P1_127N	ctrl	2
+P1	127C	P1_127C	P1_127C	treat	1
+P1	128N	P1_128N	P1_128N	treat	2
+P1	128C	Bridge	Bridge	ref	1

@@ -110,7 +110,9 @@ process DIANN {
     touch ${prefix}.gg_matrix.tsv
     touch ${prefix}.unique_genes_matrix.tsv
 
-    # Common outputs: the log carries the settings line that DIA_PROTEOMICS_ANALYSIS parses
+    # Common outputs: the log carries the settings line that DIA_PROTEOMICS_ANALYSIS parses and the matrix
+    # FDR line the qpx export reads (qpx_export.py --diann-log)
     echo "[0:00] Averaged recommended settings for this experiment: Mass accuracy = 20ppm, MS1 accuracy = 10ppm, Scan window = 8" > ${prefix}.log.txt
+    echo "[0:00] Precursor levels matrix (1% precursor and protein group FDR) saved to ${prefix}.pr_matrix.tsv." >> ${prefix}.log.txt
     """
 }

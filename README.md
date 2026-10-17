@@ -81,6 +81,7 @@ nextflow run nf-core/msproteomics \
 nextflow run nf-core/msproteomics \
   --mode fragpipe \
   --fragpipe_container docker.io/<your-org>/fragpipe:24.0 \
+  --fragpipe_workflow assets/LFQ-MBR.workflow \
   --fragpipe_threads 16 \
   --input samplesheet.csv \
   --database /path/to/uniprot_human.fasta \
@@ -121,6 +122,7 @@ For more details and further functionality, please refer to the [usage documenta
 
 To see the results of an example test run with a full size dataset refer to the [results](https://nf-co.re/msproteomics/results) tab on the nf-core website pipeline page.
 For more details about the output files and reports, please refer to the [output documentation](docs/output.md).
+DIA-NN, FragPipe label-free and TMT-Integrator results are also exported to `.h5mu` / `.h5ad` (MuData / AnnData) and the QPX Parquet format under `<outdir>/qpx/` with [qpx](https://github.com/bigbio/qpx) (`--skip_qpx_export` turns it off).
 
 ## FragPipe License
 
@@ -170,6 +172,7 @@ See the key publications at [DIA-NN GitHub](https://github.com/vdemichev/diann#k
 - FragPipe quantification and downstream: IonQuant, TMT-Integrator, PTM-Shepherd, O-Pair, MBG, SAINTexpress, FPOP coADAPTr, FP-Meta, FragReporter
 - FragPipe DIA: DIA-Umpire, diaTracer, EasyPQP, DIA-NN
 - Reporting: [MultiQC](https://multiqc.info/), [pmultiqc](https://github.com/bigbio/pmultiqc) (DIA and FragPipe modes)
+- Export: [qpx](https://github.com/bigbio/qpx), [AnnData](https://github.com/scverse/anndata), [MuData](https://github.com/scverse/mudata)
 
 An extensive list of references for all tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.
 

@@ -1,0 +1,82 @@
+// qpx export of MSPROTEOMICS_DIANN (stub): bigbio's QPX_DIANN gets the final quantification's report,
+// pg_matrix and log with the samplesheet SDRF, QPXEXPORT its dataset; diann.* go to <outdir>/qpx.
+// conf/test.config (nf-test's profile) skips the export, so these tests turn it on.
+
+nextflow_workflow {
+
+    name "Test Workflow MSPROTEOMICS_DIANN - qpx export"
+    script "../diann.nf"
+    workflow "MSPROTEOMICS_DIANN"
+
+    tag "workflows"
+    tag "msproteomics_diann"
+    tag "qpxexport"
+    tag "qpx/diann"
+
+    // Work directory of the single task of a process in this test run (via the trace file)
+    def taskDir = { String output_dir, String process ->
+        def line = new File("${output_dir}/../meta/trace.csv").readLines().drop(1).find { l -> l.split('\t')[3].endsWith(":${process}") || l.split('\t')[3].contains(":${process} ") }
+        def (prefix, suffix) = line.split('\t')[1].tokenize('/')
+        new File("${output_dir}/../work", prefix).listFiles().find { d -> d.name.startsWith(suffix) }
+    }
+
+    test("qpx export - QPX_DIANN and QPXEXPORT convert the final quantification") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                mode            = 'diann'
+                input           = ss.toString()
+                database        = "${fixtures}/test.fasta"
+                skip_qpx_export = false
+                outdir          = "$outputDir"
+            }
+        }
+
+        then {
+            // the stubs run no tool (their argv is checked by the module and DIA integration tests): check what they were given
+            def staged = (taskDir(outputDir, 'QPX_DIANN').list() as List).sort()
+            def export = (taskDir(outputDir, 'QPXEXPORT').list() as List).sort()
+            def qpx = new File("${outputDir}/qpx").list().sort()
+            assertAll(
+                { assert workflow.success },
+                { assert staged.containsAll(['diann_report.tsv', 'diann_report.pg_matrix.tsv', 'diann_report.log.txt', 'samplesheet.sdrf.tsv', 'test.fasta']) : staged },
+                { assert export.containsAll(['qpx_output', 'diann_report.pg_matrix.tsv', 'samplesheet.sdrf.tsv']) : export },
+                { assert new File(taskDir(outputDir, 'QPXEXPORT'), 'qpx_output').list() as List == ['stub.parquet'] },
+                { assert snapshot(qpx, workflow.trace.succeeded()*.name.collect { name -> name.replaceAll(/ \(.*\)$/, '') }.unique().sort()).match() }
+            )
+        }
+    }
+
+    test("qpx export - --skip_qpx_export runs no qpx export") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                mode            = 'diann'
+                input           = ss.toString()
+                database        = "${fixtures}/test.fasta"
+                skip_qpx_export = true
+                outdir          = "$outputDir"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert !new File("${outputDir}/qpx").exists() },
+                { assert snapshot(workflow.trace.succeeded()*.name.collect { name -> name.replaceAll(/ \(.*\)$/, '') }.unique().sort()).match() }
+            )
+        }
+    }
+}

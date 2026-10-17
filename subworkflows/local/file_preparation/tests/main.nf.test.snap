@@ -6,15 +6,15 @@
                     {
                         "id": "sample1"
                     },
-                    "sample1.mzML:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    "sample.mzML:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
             ]
         ],
+        "timestamp": "2026-10-16T19:59:06.47682452",
         "meta": {
-            "nf-test": "0.9.3",
+            "nf-test": "0.9.5",
             "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-10-06T00:23:24.94333971"
+        }
     },
     "file_preparation - stub peak picking keeps .d and .dia, decompresses .mzML.gz": {
         "content": [
@@ -37,11 +37,11 @@
                 ]
             ]
         ],
+        "timestamp": "2026-10-05T14:25:24.712287495",
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-10-05T14:25:24.712287495"
+        }
     },
     "file_preparation - stub with mzML input": {
         "content": [
@@ -54,10 +54,10 @@
                 ]
             ]
         ],
+        "timestamp": "2026-10-05T14:23:48.186447395",
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-10-05T14:23:48.186447395"
+        }
     }
 }

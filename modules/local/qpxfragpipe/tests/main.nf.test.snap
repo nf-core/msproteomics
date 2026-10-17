@@ -1,0 +1,193 @@
+{
+    "qpxfragpipe - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        [
+                            "fragpipe.dataset.parquet:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "fragpipe.feature.parquet:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "fragpipe.ontology.parquet:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "fragpipe.pg.parquet:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "fragpipe.provenance.parquet:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "fragpipe.run.parquet:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "fragpipe.sample.parquet:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        "fragpipe.h5mu:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        "fragpipe.proteins.h5ad:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "3": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        "fragpipe.summary.tsv:md5,523563b3d0137a2e1af62ad94569639d"
+                    ]
+                ],
+                "4": [
+                    [
+                        "QPXFRAGPIPE",
+                        "qpx",
+                        "1.1.5"
+                    ]
+                ],
+                "5": [
+                    [
+                        "QPXFRAGPIPE",
+                        "anndata",
+                        "0.13.4"
+                    ]
+                ],
+                "6": [
+                    [
+                        "QPXFRAGPIPE",
+                        "mudata",
+                        "0.4.1"
+                    ]
+                ],
+                "h5ad": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        "fragpipe.proteins.h5ad:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "h5mu": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        "fragpipe.h5mu:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "qpx_dataset": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        [
+                            "fragpipe.dataset.parquet:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "fragpipe.feature.parquet:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "fragpipe.ontology.parquet:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "fragpipe.pg.parquet:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "fragpipe.provenance.parquet:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "fragpipe.run.parquet:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "fragpipe.sample.parquet:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ],
+                "summary": [
+                    [
+                        {
+                            "id": "fragpipe"
+                        },
+                        "fragpipe.summary.tsv:md5,523563b3d0137a2e1af62ad94569639d"
+                    ]
+                ],
+                "versions_anndata": [
+                    [
+                        "QPXFRAGPIPE",
+                        "anndata",
+                        "0.13.4"
+                    ]
+                ],
+                "versions_mudata": [
+                    [
+                        "QPXFRAGPIPE",
+                        "mudata",
+                        "0.4.1"
+                    ]
+                ],
+                "versions_qpx": [
+                    [
+                        "QPXFRAGPIPE",
+                        "qpx",
+                        "1.1.5"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-10-16T13:59:35.774820937",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "qpxfragpipe - experiment annotation": {
+        "content": [
+            [
+                "count.precursors.n_nan\t3",
+                "count.precursors.n_non_nan\t9",
+                "count.precursors.n_obs\t3",
+                "count.precursors.n_source_zero_to_nan\t0",
+                "count.precursors.n_unstored_to_nan\t3",
+                "count.precursors.n_vars\t4",
+                "count.proteins.n_dropped_with_intensity\t1",
+                "count.proteins.n_nan\t3",
+                "count.proteins.n_nan_with_intensity\t1",
+                "count.proteins.n_non_nan\t9",
+                "count.proteins.n_obs\t3",
+                "count.proteins.n_proteins_all_missing_dropped\t1",
+                "count.proteins.n_source_zero_to_nan\t3",
+                "count.proteins.n_unstored_to_nan\t0",
+                "count.proteins.n_vars\t4",
+                "engine\tfragpipe",
+                "guards_passed\tG1,G2,G3,G4,G5,G6,G7,G8,G9,G10,G11,G16",
+                "modalities\tprecursors,proteins",
+                "obs_key\trun_stem",
+                "precursors.missing_value_convention\tNaN = not quantified (unstored cell, NA/empty, or source value <= 0; linear scale); dense float32",
+                "precursors.quantity_source\t<exp> Intensity (combined_ion.tsv)",
+                "prefix\tfragpipe",
+                "proteins.missing_value_convention\tNaN = not quantified (unstored cell, NA/empty, or source value <= 0; linear scale); dense float32",
+                "proteins.quantity_source\t<exp> MaxLFQ Intensity (combined_protein.tsv)"
+            ],
+            {
+                "versions_anndata": [
+                    [
+                        "QPXFRAGPIPE",
+                        "anndata",
+                        "0.13.4"
+                    ]
+                ],
+                "versions_mudata": [
+                    [
+                        "QPXFRAGPIPE",
+                        "mudata",
+                        "0.4.1"
+                    ]
+                ],
+                "versions_qpx": [
+                    [
+                        "QPXFRAGPIPE",
+                        "qpx",
+                        "1.1.5"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-10-16T13:59:47.002180638",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

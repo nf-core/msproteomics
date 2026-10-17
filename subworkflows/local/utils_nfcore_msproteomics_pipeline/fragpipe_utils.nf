@@ -1531,3 +1531,43 @@ def parseFragpipeWorkflowTemplates(project_dir) {
         file("${project_dir}/modules/local/parsefragpipeworkflow/assets/${name}", checkIfExists: true)
     }
 }
+
+/**
+ * The qpx export (.h5mu / .h5ad / QPX Parquet) a FragPipe run gets, checked before any task runs.
+ *
+ * - 'tmt': TMT-Integrator runs; its abundance_*.tsv reports go to TMTANNDATA.
+ * - 'lfq': label-free IonQuant runs (ionquant.run-ionquant=true, no TMT-Integrator); its
+ *   combined_protein.tsv / combined_ion.tsv go to QPXFRAGPIPE, which needs the MaxLFQ intensities.
+ *   IonQuant writes them only with --maxlfq 1, which FragPipe passes from the "Add MaxLFQ" check box
+ *   ionquant.maxlfq (on when absent; QuantPanelLabelfree.java:316, CmdIonquant.java:256-258), and only with
+ *   at least 3 experiment+bioreplicate combinations (the check box's tooltip), i.e. FragPipe groups. Either
+ *   unmet stops the run here instead of after the search.
+ * - '': no export (--skip_qpx_export, the TMT label check, or a workflow without IonQuant or TMT-Integrator).
+ *
+ * @param skip           params.skip_qpx_export
+ * @param tmt_mode       params.tmt_mode ('labelcheck' has no export)
+ * @param workflow_props FragPipe workflow properties (fragpipeWorkflowProperties)
+ * @param spectra_files  List of [meta, spectra] of every LC-MS file (meta.group = FragPipe group)
+ * @return 'lfq', 'tmt' or ''
+ */
+def qpxFragpipeExport(skip, tmt_mode, workflow_props, spectra_files) {
+    if (skip || tmt_mode == 'labelcheck') {
+        return ''
+    }
+    if (workflow_props.getProperty('tmtintegrator.run-tmtintegrator') == 'true') {
+        return 'tmt'
+    }
+    if (workflow_props.getProperty('ionquant.run-ionquant') != 'true') {
+        return ''
+    }
+    def maxlfq = workflow_props.getProperty('ionquant.maxlfq', '1').trim()
+    if (!(maxlfq in ['1', 'true'])) {
+        error("qpx export: the .workflow file sets ionquant.maxlfq=${maxlfq}, so IonQuant writes no MaxLFQ intensities for QPXFRAGPIPE to convert. Set ionquant.maxlfq=1, or rerun with --skip_qpx_export true.")
+    }
+    def min_groups = 3
+    def groups = spectra_files.collect { item -> item[0].group }.unique().sort()
+    if (groups.size() < min_groups) {
+        error("qpx export: the samplesheet has ${groups.size()} experiment+bioreplicate combination(s) ${groups}, fewer than the ${min_groups} IonQuant needs to write the MaxLFQ intensities QPXFRAGPIPE converts. Add experiments, or rerun with --skip_qpx_export true.")
+    }
+    return 'lfq'
+}
