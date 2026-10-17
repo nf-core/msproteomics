@@ -1,4 +1,0 @@
-flag	value
---psm	plex1/psm.tsv
---psm	plex2/psm.tsv
---specdir	/plan/raw_files

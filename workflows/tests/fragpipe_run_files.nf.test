@@ -134,13 +134,15 @@ nextflow_workflow {
         }
     }
 
-    // FP/FragpipeRun.java:582-587: no sdrf.tsv when workflow.misc.save-sdrf=false
+    // FP/FragpipeRun.java:582-587: no sdrf.tsv when workflow.misc.save-sdrf=false. FragPipe applies it after the
+    // run, so the dry run is LFQ-MBR's (the recorded label check plans with and without it differ only in that line)
     test("save-sdrf=false - no sdrf.tsv and no FRAGPIPESDRF task") {
         options "-stub"
         tag "stub"
 
         when {
             params {
+                fragpipe_plan = "${baseDir}/tests/fixtures/fragpipe_plans/stub/fragpipe_parity__lfq_mbr_experiment_bioreplicate"
                 def fixtures = "${baseDir}/tests/fixtures"
                 def ss = new File("${outputDir}/samplesheet.csv")
                 ss.parentFile.mkdirs()

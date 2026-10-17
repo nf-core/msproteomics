@@ -218,6 +218,8 @@ add(F, 'EX-02 - sdrf.tsv maps a .raw input to the file MSFragger searched', 'lfq
     pipeline_spec(f'sample,spectra,data_type\nthermo,{FIX}/spectra/thermo.raw,DDA\nctrl_1,{FIX}/spectra/ctrl_1.mzML,DDA\n', wf_fix('LFQ-noMBR.workflow'), *TEST_FASTA))
 add(F, 'EX-02 - split-database search writes sdrf.tsv from the calibration log', 'lfq_mbr_slice_db2',
     pipeline_spec(EB, wf_fix('LFQ-MBR.workflow').replace('msfragger.misc.slice-db=1', 'msfragger.misc.slice-db=2'), *TEST_FASTA))
+# 'save-sdrf=false - no sdrf.tsv and no FRAGPIPESDRF task' plans from LFQ-MBR's dry run (lfq_mbr): FragPipe applies
+# workflow.misc.save-sdrf after the run (FragpipeRun.java:582-587), and the pipeline reads it from the run's workflow
 
 # workflows/tests/fragpipe_database_parity.nf.test (one test block, four iterations)
 F = 'workflows/tests/fragpipe_database_parity.nf.test'
@@ -243,10 +245,6 @@ add(F, '--database wins over the iProteome', 'lfq_mbr_database_wins', pipeline_s
 # workflows/tests/tmt_labelcheck_parity.nf.test
 F = 'workflows/tests/tmt_labelcheck_parity.nf.test'
 add(F, 'RC-03 TMT per-channel samplesheet - one MSFRAGGER task per raw file', 'labelcheck229_two_plex', pipeline_spec(TMT2, LC229, *TEST_FASTA))
-add(F, 'save-sdrf=false - the label check writes no sdrf.tsv', 'labelcheck229_no_sdrf',
-    pipeline_spec(TMT2, LC229 + '\nworkflow.misc.save-sdrf=false\n', *TEST_FASTA))
-add(F, 'Write sub mzML - label check writes _sub.mzML and the second-pass files to fragpipe/', 'labelcheck229_write_sub_mzml',
-    pipeline_spec(TMT2, LC229 + 'tab-run.write_sub_mzml=true\n', *TEST_FASTA))
 
 # workflows/tests/tmt_labelcheck_iproteomes.nf.test: the label check's TMT-labelcheck-229 workflow (tmt_type TMT10)
 F = 'workflows/tests/tmt_labelcheck_iproteomes.nf.test'
