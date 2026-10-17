@@ -23,7 +23,7 @@
                         {
                             "id": "fragpipe"
                         },
-                        "fragpipe.tmt.summary.tsv:md5,e4f03a08ffb9fe647039c63a28707fd6"
+                        "fragpipe.tmt.summary.tsv:md5,1b39a7a5445dca899e26eb55fbef99b0"
                     ]
                 ],
                 "3": [
@@ -61,7 +61,7 @@
                         {
                             "id": "fragpipe"
                         },
-                        "fragpipe.tmt.summary.tsv:md5,e4f03a08ffb9fe647039c63a28707fd6"
+                        "fragpipe.tmt.summary.tsv:md5,1b39a7a5445dca899e26eb55fbef99b0"
                     ]
                 ],
                 "versions_anndata": [
@@ -80,7 +80,7 @@
                 ]
             }
         ],
-        "timestamp": "2026-10-16T14:00:00.771278873",
+        "timestamp": "2026-10-17T01:31:04.036866337",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"
@@ -145,7 +145,7 @@
                 "count.tmt_None.single_site.n_unstored_to_nan\t3",
                 "count.tmt_None.single_site.n_vars\t3",
                 "engine\ttmt",
-                "guards_passed\tG4,G8,G9,G12,G13,G14,G15",
+                "guards_passed\tG4,G8,G9,G12,G13,G14,G15,G19",
                 "log2transformed\ttrue",
                 "norms\tMD,None",
                 "prefix\tfragpipe",
@@ -197,7 +197,7 @@
                 ]
             }
         ],
-        "timestamp": "2026-10-16T14:00:08.905009431",
+        "timestamp": "2026-10-17T01:31:12.596020016",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"
@@ -219,7 +219,7 @@
                 "count.tmt_None.protein.n_unstored_to_nan\t2",
                 "count.tmt_None.protein.n_vars\t3",
                 "engine\ttmt",
-                "guards_passed\tG4,G8,G9,G12,G13,G14,G15",
+                "guards_passed\tG4,G8,G9,G12,G13,G14,G15,G19",
                 "log2transformed\tfalse",
                 "norms\tNone",
                 "prefix\tfragpipe",
@@ -234,7 +234,7 @@
                 "tmt_None.protein.scale_rule\tNone: follows log2transformed=false (ReportGenerator.writeRatioAbnValues)"
             ]
         ],
-        "timestamp": "2026-10-16T14:00:16.879498221",
+        "timestamp": "2026-10-17T01:31:20.526840966",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"

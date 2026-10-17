@@ -33,7 +33,8 @@ G4 non-empty, G8 NaN count equals the source missing count, G9 no inf / no
 value <= 0 on linear scale (final X), G12 header layout, numeric columns and
 sample columns map to the annotation, G13 obs identical across levels of one
 normalization, G14 at least one recognised abundance file, G15 the values and
-``ReferenceIntensity`` agree with the scale rule (both directions).
+``ReferenceIntensity`` agree with the scale rule (both directions), G19 the
+TMT-Integrator config states ``log2transformed: true|false``.
 """
 
 from __future__ import annotations
@@ -102,8 +103,8 @@ def parse_args(argv=None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--abundance", nargs="+", required=True, help="abundance_<level>_<norm>.tsv files")
     parser.add_argument("--annotation", required=True, help="TMT annotation TSV (plex channel sample sample_name ...)")
-    parser.add_argument("--log2transformed", required=True, choices=["true", "false"],
-                        help="TMT-Integrator log2transformed setting the reports were written with")
+    parser.add_argument("--tmt-config", required=True,
+                        help="tmt-integrator-conf.yml the reports were written with (its log2transformed setting)")
     parser.add_argument("--prefix", required=True, help="output file prefix")
     parser.add_argument("--outdir", default=".", help="output directory (default: .)")
     return parser.parse_args(argv)
@@ -276,15 +277,24 @@ def check_same_obs(norm: str, modalities: dict) -> None:
             )
 
 
+def read_log2transformed(path) -> bool:
+    """G19: the ``log2transformed`` setting of a tmt-integrator-conf.yml (``  log2transformed: <bool>``)."""
+    pattern = re.compile(r"^\s*log2transformed:\s*(\S+)\s*$")
+    values = [m.group(1).lower() for m in map(pattern.match, Path(path).read_text().splitlines()) if m]
+    if len(values) != 1 or values[0] not in ("true", "false"):
+        raise GuardError("G19", f"{Path(path).name} does not state log2transformed: true|false once (found {values})")
+    return values[0] == "true"
+
+
 def convert(args) -> None:
     import mudata as mu
 
-    log2transformed = args.log2transformed == "true"
+    log2transformed = read_log2transformed(args.tmt_config)
     groups = classify_files(args.abundance)
     annotation = read_annotation(args.annotation)
     outputs = {}
-    summary = {"engine": "tmt", "prefix": args.prefix, "log2transformed": args.log2transformed,
-               "norms": ",".join(sorted(groups)), "guards_passed": "G4,G8,G9,G12,G13,G14,G15"}
+    summary = {"engine": "tmt", "prefix": args.prefix, "log2transformed": "true" if log2transformed else "false",
+               "norms": ",".join(sorted(groups)), "guards_passed": "G4,G8,G9,G12,G13,G14,G15,G19"}
     for norm in sorted(groups):
         levels = [lvl for lvl in LEVEL_HEADERS if lvl in groups[norm]]
         modalities = {

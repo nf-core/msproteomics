@@ -1550,18 +1550,3 @@ def qpxFragpipeExport(skip, tmt_mode, workflow_props, spectra_files) {
     return 'lfq'
 }
 
-/**
- * TMT-Integrator's log2transformed setting from the tmt-integrator-conf.yml text TMT-Integrator reads
- * ("  log2transformed: <value>" under "tmtintegrator:", TmtiConfig.java:332-338): the tool configs'
- * tmtintegrator args in pipeline mode, FragPipe's <workdir>/tmt-integrator-conf.yml in headless mode
- * (CmdTmtIntegrator.java:160).
- * Returns null when the text has no log2transformed line; the caller raises the error (an error raised in
- * an included function called from an operator closure reaches the console as InvocationTargetException).
- *
- * @param config_text tmt-integrator-conf.yml text
- * @return 'true', 'false', or null when the setting is absent
- */
-def tmtLog2Transformed(config_text) {
-    def line = config_text.toString().readLines().find { l -> l ==~ /\s*log2transformed:.*/ }
-    return line == null ? null : (line.split(':', 2)[1].trim().toLowerCase() == 'true' ? 'true' : 'false')
-}

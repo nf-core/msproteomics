@@ -250,6 +250,7 @@ workflow FRAGPIPE_QUANT {
     experiment_annotation = IONQUANT.out.experiment_annotation
         .mix(IONQUANT_ISOBARIC.out.experiment_annotation)    // channel: [ val(meta), path(experiment_annotation.tsv) ]
     tmt_abundance    = TMTINTEGRATOR.out.abundance             // channel: [ val(meta), path(abundance_*.tsv) ]
+    tmt_config       = TMTINTEGRATOR.out.config                // channel: [ val(meta), path(tmt-integrator-conf.yml) ]
     ionquant_dir     = IONQUANT.out.results_dir                // channel: [ val(meta), path(results_dir) ]
     reprint          = ch_reprint                              // channel: [ val(mode), path(reprint.<mode>.tsv) ] - REPRINT tables IonQuant leaves in the work dir
     ionquant_ms1_dir = IONQUANT_MS1.out.results_dir            // channel: [ val(meta), path(results_dir) ]

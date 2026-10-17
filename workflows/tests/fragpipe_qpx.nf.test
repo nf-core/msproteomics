@@ -102,12 +102,10 @@ nextflow_workflow {
 
         then {
             def inputs = staged(outputDir, 'TMTANNDATA')
-            def summary = new File("${outputDir}/qpx/fragpipe.tmt.summary.tsv").readLines()
             assertAll(
                 { assert workflow.success },
-                { assert inputs.containsAll(['tmt_annotation.tsv', 'abundance_gene_None.tsv', 'abundance_protein_None.tsv']) : inputs },
-                // the stub summary records the log2transformed value TMTANNDATA got (tool configs: tmtintegrator args)
-                { assert summary.contains('log2transformed\ttrue') : summary },
+                // TMT-Integrator's own tmt-integrator-conf.yml (its log2transformed setting)
+                { assert inputs.containsAll(['tmt_annotation.tsv', 'abundance_gene_None.tsv', 'abundance_protein_None.tsv', 'tmt-integrator-conf.yml']) : inputs },
                 { assert !succeeded(workflow.trace).any { name -> name.endsWith(':QPXFRAGPIPE') } },
                 { assert snapshot(new File("${outputDir}/qpx").list().sort(), succeeded(workflow.trace)).match() }
             )
@@ -137,9 +135,8 @@ nextflow_workflow {
         then {
             assertAll(
                 { assert workflow.success },
-                { assert staged(outputDir, 'TMTANNDATA').containsAll(['tmt_annotation.tsv', 'abundance_protein_None.tsv']) },
-                // log2transformed from FragPipe's results/tmt-integrator-conf.yml
-                { assert new File("${outputDir}/qpx/fragpipe.tmt.summary.tsv").readLines().contains('log2transformed\ttrue') },
+                // FragPipe's results/tmt-integrator-conf.yml (its log2transformed setting)
+                { assert staged(outputDir, 'TMTANNDATA').containsAll(['tmt_annotation.tsv', 'abundance_protein_None.tsv', 'tmt-integrator-conf.yml']) },
                 { assert snapshot(new File("${outputDir}/qpx").list().sort(), succeeded(workflow.trace)).match() }
             )
         }

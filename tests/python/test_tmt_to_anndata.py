@@ -27,10 +27,17 @@ LEVELS = {"gene": "gene", "protein": "protein", "peptide": "peptide",
           "single-site": "single_site", "multi-site": "multi_site"}
 
 
+def tmt_config(tmp_path, log2):
+    """tmt-integrator-conf.yml as TmtiConfig.write prints it (excerpt)."""
+    path = tmp_path / "tmt-integrator-conf.yml"
+    path.write_text(f"tmtintegrator:\n  groupby: -1\n  log2transformed: {log2}\n  ms1_int: true\n")
+    return path
+
+
 def run(tmp_path, files, log2="true", annotation=ANNOTATION):
     outdir = tmp_path / "out"
     code = tmt.main(["--abundance", *map(str, files), "--annotation", str(annotation),
-                     "--log2transformed", log2, "--prefix", "T", "--outdir", str(outdir)])
+                     "--tmt-config", str(tmt_config(tmp_path, log2)), "--prefix", "T", "--outdir", str(outdir)])
     return code, outdir
 
 
@@ -112,7 +119,7 @@ class TestLog2Conversion:
         stable, counts = read_summary(log2_out)
         assert stable["engine"] == "tmt"
         assert stable["norms"] == "MD,None"
-        assert stable["guards_passed"] == "G4,G8,G9,G12,G13,G14,G15"
+        assert stable["guards_passed"] == "G4,G8,G9,G12,G13,G14,G15,G19"
         assert stable["tmt_None.modalities"] == "gene,protein,peptide,single_site,multi_site"
         assert stable["tmt_MD.protein.quantity_source"] == "abundance_protein_MD.tsv"
         for modality in LEVELS.values():
@@ -310,3 +317,25 @@ class TestVarColumns:
         expect_error(tmp_path, capsys, [path],
                      "ERROR: G12: abundance_gene_None.tsv: column 'MaxPepProb' has 1 values that are neither "
                      "numeric nor NA/empty")
+
+
+class TestTmtConfig:
+    @pytest.mark.parametrize("value, expected", [("true", True), ("false", False), ("True", True)])
+    def test_reads_log2transformed(self, tmp_path, value, expected):
+        assert tmt.read_log2transformed(tmt_config(tmp_path, value)) is expected
+
+    def test_g19_missing_setting(self, tmp_path):
+        path = tmp_path / "tmt-integrator-conf.yml"
+        path.write_text("tmtintegrator:\n  groupby: -1\n")
+        with pytest.raises(tmt.GuardError, match="G19: tmt-integrator-conf.yml does not state log2transformed"):
+            tmt.read_log2transformed(path)
+
+    def test_g19_fails_the_run_before_writing(self, tmp_path, capsys):
+        path = tmp_path / "tmt-integrator-conf.yml"
+        path.write_text("tmtintegrator:\n  log2transformed: maybe\n")
+        outdir = tmp_path / "out"
+        code = tmt.main(["--abundance", *map(str, sorted((DATA / "tmt_log2").glob("abundance_*.tsv"))),
+                         "--annotation", str(ANNOTATION), "--tmt-config", str(path), "--prefix", "T", "--outdir", str(outdir)])
+        assert code == 3
+        assert "ERROR: G19:" in capsys.readouterr().err
+        assert not outdir.exists() or not any(outdir.iterdir())

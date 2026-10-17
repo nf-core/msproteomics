@@ -19,8 +19,10 @@ nextflow_process {
         when {
             process {
                 """
+                def tmt_config = file("\${workDir}/tmt-integrator-conf.yml")
+                tmt_config.text = "tmtintegrator:\\n  log2transformed: true\\n"
                 def d = "\${projectDir}/tests/fixtures/qpx"
-                input[0] = [[id: 'fragpipe'], files("\${d}/tmt_log2/abundance_*.tsv", checkIfExists: true), file("\${d}/tmt_annotation.tsv", checkIfExists: true), 'true']
+                input[0] = [[id: 'fragpipe'], files("\${d}/tmt_log2/abundance_*.tsv", checkIfExists: true), file("\${d}/tmt_annotation.tsv", checkIfExists: true), tmt_config]
                 """
             }
         }
@@ -40,8 +42,10 @@ nextflow_process {
         when {
             process {
                 """
+                def tmt_config = file("\${workDir}/tmt-integrator-conf.yml")
+                tmt_config.text = "tmtintegrator:\\n  log2transformed: true\\n"
                 def d = "\${projectDir}/tests/fixtures/qpx"
-                input[0] = [[id: 'fragpipe'], files("\${d}/tmt_log2/abundance_*.tsv", checkIfExists: true), file("\${d}/tmt_annotation.tsv", checkIfExists: true), 'true']
+                input[0] = [[id: 'fragpipe'], files("\${d}/tmt_log2/abundance_*.tsv", checkIfExists: true), file("\${d}/tmt_annotation.tsv", checkIfExists: true), tmt_config]
                 """
             }
         }
@@ -67,8 +71,10 @@ nextflow_process {
         when {
             process {
                 """
+                def tmt_config = file("\${workDir}/tmt-integrator-conf.yml")
+                tmt_config.text = "tmtintegrator:\\n  log2transformed: false\\n"
                 def d = "\${projectDir}/tests/fixtures/qpx"
-                input[0] = [[id: 'fragpipe'], files("\${d}/tmt_linear/abundance_*.tsv", checkIfExists: true), file("\${d}/tmt_annotation.tsv", checkIfExists: true), 'false']
+                input[0] = [[id: 'fragpipe'], files("\${d}/tmt_linear/abundance_*.tsv", checkIfExists: true), file("\${d}/tmt_annotation.tsv", checkIfExists: true), tmt_config]
                 """
             }
         }
@@ -90,10 +96,12 @@ nextflow_process {
         when {
             process {
                 """
+                def tmt_config = file("\${workDir}/tmt-integrator-conf.yml")
+                tmt_config.text = "tmtintegrator:\\n  log2transformed: true\\n"
                 def d = "\${projectDir}/tests/fixtures/qpx"
                 def annotation = file("\${workDir}/tmt_annotation.tsv")
                 annotation.text = file("\${d}/tmt_annotation.tsv").readLines().findAll { line -> !line.contains('P1_126') }.join('\\n') + '\\n'
-                input[0] = [[id: 'fragpipe'], files("\${d}/tmt_log2/abundance_*.tsv", checkIfExists: true), annotation, 'true']
+                input[0] = [[id: 'fragpipe'], files("\${d}/tmt_log2/abundance_*.tsv", checkIfExists: true), annotation, tmt_config]
                 """
             }
         }

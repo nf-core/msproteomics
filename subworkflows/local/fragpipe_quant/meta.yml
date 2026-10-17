@@ -82,6 +82,11 @@ output:
       description: |
         TMT abundance tables from TMTIntegrator.
         Structure: [ val(meta), path(abundance_*.tsv) ]
+  - tmt_config:
+      type: channel
+      description: |
+        tmt-integrator-conf.yml TMT-Integrator ran with.
+        Structure: [ val(meta), path(tmt-integrator-conf.yml) ]
   - ionquant_dir:
       type: channel
       description: |

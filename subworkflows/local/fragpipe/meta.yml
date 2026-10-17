@@ -148,11 +148,6 @@ output:
       description: |
         FragPipe's experiment_annotation.tsv of the IonQuant run (label-free or isobaric pass).
         Structure: [ val(meta), path(experiment_annotation.tsv) ]
-  - tool_configs:
-      type: channel
-      description: |
-        The run's tool configs JSON (shouldRunTool / getToolArgs read it).
-        Structure: val(tool_configs JSON)
   - ionquant_dir:
       type: channel
       description: |
@@ -163,6 +158,11 @@ output:
       description: |
         TMT abundance tables from TMTIntegrator.
         Structure: [ val(meta), path(abundance_*.tsv) ]
+  - tmt_config:
+      type: channel
+      description: |
+        tmt-integrator-conf.yml TMT-Integrator ran with.
+        Structure: [ val(meta), path(tmt-integrator-conf.yml) ]
   - tmt_dir:
       type: channel
       description: |

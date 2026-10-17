@@ -27,7 +27,7 @@ include { QPXFRAGPIPE } from '../modules/local/qpxfragpipe/main'
 include { TMTANNDATA  } from '../modules/local/tmtanndata/main'
 
 // FragPipe utilities
-include { msfraggerConsoleLogs; subMzmlWeights; generateFragpipeManifest; fragpipeManifestEntries; parseSamplesheet; speclibOrDiannRuns; checkDiaPreprocessing; uniqueSpectraFiles; requireFragpipeLcmsFiles; tmtAnnotationLines; fragpipeWorkflowProperties; qpxFragpipeExport; tmtLog2Transformed; getToolArgs } from '../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils'
+include { msfraggerConsoleLogs; subMzmlWeights; generateFragpipeManifest; fragpipeManifestEntries; parseSamplesheet; speclibOrDiannRuns; checkDiaPreprocessing; uniqueSpectraFiles; requireFragpipeLcmsFiles; tmtAnnotationLines; fragpipeWorkflowProperties; qpxFragpipeExport } from '../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -155,11 +155,10 @@ workflow MSPROTEOMICS_FRAGPIPE {
         ch_qpx_tmt = qpx_export != 'tmt' ? channel.empty() : ch_headless_files.map { results ->
             def abundance = results.findAll { result -> result.name.startsWith('abundance_') && result.parent.name == 'tmt-report' }
             def config = results.find { result -> result.name == 'tmt-integrator-conf.yml' && result.parent.name == 'results' }
-            def log2transformed = config ? tmtLog2Transformed(config.text) : null
-            if (!abundance || log2transformed == null) {
-                error("qpx export: FragPipe headless wrote no tmt-report/abundance_*.tsv or no log2transformed in tmt-integrator-conf.yml, so TMTANNDATA cannot run. Rerun with --skip_qpx_export true.")
+            if (!abundance || !config) {
+                error("qpx export: FragPipe headless wrote no tmt-report/abundance_*.tsv or no tmt-integrator-conf.yml, so TMTANNDATA cannot run. Rerun with --skip_qpx_export true.")
             }
-            [[id: 'fragpipe'], abundance, log2transformed]
+            [[id: 'fragpipe'], abundance, config]
         }
     } else {
         //
@@ -222,13 +221,12 @@ workflow MSPROTEOMICS_FRAGPIPE {
             }
         ch_qpx_tmt = qpx_export != 'tmt' ? channel.empty() : FRAGPIPE_PIPELINE.out.tmt_dir
             .join(FRAGPIPE_PIPELINE.out.tmt_abundance, remainder: true, failOnDuplicate: true)
-            .combine(FRAGPIPE_PIPELINE.out.tool_configs)
-            .map { _meta, _dir, abundance, configs ->
-                def log2transformed = tmtLog2Transformed(getToolArgs(configs, 'tmtintegrator'))
-                if (!abundance || log2transformed == null) {
-                    error("qpx export: TMT-Integrator wrote no abundance_*.tsv, or its config has no log2transformed, so TMTANNDATA cannot run. Rerun with --skip_qpx_export true.")
+            .join(FRAGPIPE_PIPELINE.out.tmt_config, remainder: true, failOnDuplicate: true)
+            .map { _meta, _dir, abundance, config ->
+                if (!abundance || !config) {
+                    error("qpx export: TMT-Integrator wrote no abundance_*.tsv or tmt-integrator-conf.yml, so TMTANNDATA cannot run. Rerun with --skip_qpx_export true.")
                 }
-                [[id: 'fragpipe'], abundance, log2transformed]
+                [[id: 'fragpipe'], abundance, config]
             }
 
         // MSFragger console text in the order FragPipe runs MSFragger (FRAGPIPESDRF, FRAGPIPESECONDPASS)
@@ -288,7 +286,7 @@ workflow MSPROTEOMICS_FRAGPIPE {
             ch_qpx_tmt
                 .ifEmpty { error("qpx export: no TMT-Integrator results reached TMTANNDATA (TMT-Integrator or FragPipe headless emitted none). Rerun with --skip_qpx_export true.") }
                 .combine(ch_annotation)
-                .map { meta, abundance, log2transformed, annotation -> [meta, abundance, annotation, log2transformed] }
+                .map { meta, abundance, config, annotation -> [meta, abundance, annotation, config] }
         )
     }
 

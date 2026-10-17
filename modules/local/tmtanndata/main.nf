@@ -8,7 +8,7 @@
  *   - meta: Aggregate metadata map (meta.id is the output prefix)
  *   - abundance: TMT-Integrator abundance_<level>_<norm>.tsv files
  *   - annotation: multi-plex TMT annotation (plex channel sample sample_name condition replicate)
- *   - log2transformed: TMT-Integrator log2transformed setting ('true' / 'false')
+ *   - tmt_config: the tmt-integrator-conf.yml TMT-Integrator ran with (its log2transformed setting)
  *
  * Output:
  *   - h5mu: one MuData per normalization, one modality per level
@@ -26,7 +26,7 @@ process TMTANNDATA {
         'quay.io/biocontainers/qpx:1.1.5--pyhdfd78af_0' }"
 
     input:
-    tuple val(meta), path(abundance), path(annotation), val(log2transformed)
+    tuple val(meta), path(abundance), path(annotation), path(tmt_config)
 
     output:
     tuple val(meta), path("${prefix}.tmt_*.h5mu")     , emit: h5mu
@@ -45,7 +45,7 @@ process TMTANNDATA {
     tmt_to_anndata.py \\
         --abundance ${abundance} \\
         --annotation ${annotation} \\
-        --log2transformed ${log2transformed} \\
+        --tmt-config ${tmt_config} \\
         --prefix ${prefix} \\
         ${args}
     """
@@ -55,6 +55,6 @@ process TMTANNDATA {
     """
     touch ${prefix}.tmt_None.h5mu
     touch ${prefix}.tmt_protein_None.h5ad
-    printf 'log2transformed\\t${log2transformed}\\nprefix\\t${prefix}\\n' > ${prefix}.tmt.summary.tsv
+    printf 'prefix\\t${prefix}\\ntmt_config\\t${tmt_config}\\n' > ${prefix}.tmt.summary.tsv
     """
 }

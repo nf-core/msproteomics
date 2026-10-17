@@ -28,9 +28,11 @@ input:
         description: Multi-plex TMT annotation (plex channel sample sample_name condition replicate)
         pattern: "*.tsv"
         ontologies: []
-    - log2transformed:
-        type: string
-        description: TMT-Integrator log2transformed setting ('true' or 'false')
+    - tmt_config:
+        type: file
+        description: tmt-integrator-conf.yml TMT-Integrator ran with (its log2transformed setting)
+        pattern: "*.yml"
+        ontologies: []
 output:
   h5mu:
     - - meta:
