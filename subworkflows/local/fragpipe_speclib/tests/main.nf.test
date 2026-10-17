@@ -1,5 +1,5 @@
 // FRAGPIPE_SPECLIB: SpecLibGen (CmdSpecLibGen) then DIA-NN (CmdDiann) on FragPipe's single group.
-// Tool settings are PARSEFRAGPIPEWORKFLOW's output for the bundled DIA_SpecLib_Quant workflow
+// Tool settings are FragPipe's plan (bin/plan_to_tool_configs.py) for the DIA_SpecLib_Quant workflow
 // (modules/local/speclibgen/tests/convert_pepxml.json, diann entry as in modules/local/diannfragpipe/tests).
 
 nextflow_workflow {

@@ -1,4 +1,4 @@
-# Python unit tests (make test-python): tests/python and modules/local/parsefragpipeworkflow/tests/python
+# Python unit tests (make test-python): tests/python
 # numpy: merge_split_search.py; pyyaml: test_subworkflow_meta.py; matplotlib: tmt_qc.py / tmt_qc_ionquant.py
 # qpx (qpxc, with anndata, mudata, pandas, scipy): qpx_export.py / tmt_to_anndata.py, the version of the
 # QPX_DIANN / QPXEXPORT / QPXFRAGPIPE / TMTANNDATA image (quay.io/biocontainers/qpx:1.1.5--pyhdfd78af_0)

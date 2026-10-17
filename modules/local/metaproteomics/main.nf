@@ -25,7 +25,7 @@ process METAPROTEOMICS {
     // project_files: every MSFragger <run>.pin and Percolator <run>_percolator_{target,decoy}_psms.tsv,
     //                staged flat like FragPipe's work dir (FP-Meta walks it 2 levels deep)
     // config_cli:    DbOptimizer values (qvalue, deltaHyperscore, minPeptCntPerProt, minUniqPeptCntPerProt,
-    //                minUniqPeptCnt, hostName, iterations, cmdLineOpts) from parse_fragpipe_workflow.py
+    //                minUniqPeptCnt, hostName, iterations, cmdLineOpts) from FragPipe's plan (bin/plan_to_tool_configs.py)
     tuple val(meta), path(project_files, stageAs: 'project/*'), val(config_cli)
     path(fasta)            // database FASTA file (shared resource)
     path(taxon_name_file)  // NCBI names.dmp; [] = FragPipe's tools/metaproteomics/names.dmp

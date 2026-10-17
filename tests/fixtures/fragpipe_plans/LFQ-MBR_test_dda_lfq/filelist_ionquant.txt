@@ -1,0 +1,4 @@
+flag	value
+--psm	control_1/psm.tsv
+--psm	treatment_1/psm.tsv
+--specdir	/plan/raw_files

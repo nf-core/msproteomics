@@ -17,7 +17,7 @@ process IONQUANT {
     //   (CmdIonquant.java:330-338), its work dir in a FragPipe run whose inputs sit there
     tuple val(meta), path(psm_dirs), path(spec_files)
     val(annotation_lines) // multi-plex TMT annotation lines (plex, channel, sample, sample_name, ...), [] when none
-    val(config_cli)  // IonQuant options from the workflow parser, in CmdIonquant order (ionquantRun)
+    val(config_cli)  // IonQuant options from FragPipe's plan, in CmdIonquant order (ionquantRun)
     val(modmasses)   // modmasses_ionquant.txt lines (list, may be empty), or false: no --modlist (O-Pair runs)
     val(root_group_dir) // psm_dirs entry holding FragPipe's blank group "" ('' when there is none)
     val(experiment_annotation) // experiment_annotation.tsv lines FragPipe writes for this pass ([] = none)

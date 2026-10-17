@@ -70,7 +70,7 @@ nextflow run main.nf --mode diann --database database_with_contaminants.fasta --
 Decoy sequences (typically reversed protein sequences) are required for target-decoy FDR estimation.
 
 - **FragPipe mode**: the FASTA is searched as given, so it must already hold decoys whose protein IDs start with the workflow's `database.decoy-tag` (usually `rev_`).
-  Like FragPipe headless (`FragpipeRun.checkDbConfig`), the run stops when the decoys are 0 %, 100 % or outside 40-60 % of the entries.
+  FragPipe's own decoy check (`FragpipeRun.checkDbConfig`, in FRAGPIPEPLAN's `--write-plan` run, or FragPipe headless) stops the run when the decoys are 0 %, 100 % or outside 40-60 % of the entries.
   To add decoys and contaminants first, set `--add_philosopher_decoy` / `--add_philosopher_contaminants`: the pipeline then runs FragPipe's database update, `philosopher database --custom <fasta> [--nodecoys] [--contam --contamprefix]`, which writes `rev_` decoys.
 - **DIA-NN mode**: Decoy sequences are generated internally by DIA-NN during analysis.
 

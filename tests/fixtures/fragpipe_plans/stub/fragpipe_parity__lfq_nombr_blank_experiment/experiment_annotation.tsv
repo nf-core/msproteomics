@@ -1,0 +1,5 @@
+file	sample	sample_name	condition	replicate
+/plan/raw_files/ctrl_1.mzML	/plan/raw_files/ctrl_1.mzML	ctrl_1	ctrl	1
+/plan/raw_files/ctrl_2.mzML	/plan/raw_files/ctrl_2.mzML	ctrl_2	ctrl	2
+/plan/raw_files/trt_1.mzML	/plan/raw_files/trt_1.mzML	trt_1	trt	1
+/plan/raw_files/trt_2.mzML	/plan/raw_files/trt_2.mzML	trt_2	trt	2

@@ -1,0 +1,383 @@
+System OS: Linux, Architecture: amd64
+Java Info: 17.0.18, OpenJDK 64-Bit Server VM, Ubuntu
+.NET Core Info: 6.0.36
+22:57:34 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineRunner.exe
+
+22:57:34 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineRunner.exe
+
+22:57:34 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineDailyRunner.exe
+Version info:
+FragPipe version 24.0
+DIA-Umpire version 2.3.3
+diaTracer version 2.2.1
+MSFragger version 4.4.1
+Crystal-C version 1.5.10
+MSBooster version 1.4.14
+Percolator version 3.7.1
+PTMProphet version 6.3.2
+Metaproteomics version 1.0.1
+Philosopher version 5.1.3-RC9
+PTM-Shepherd version 3.0.11
+IonQuant version 1.11.20
+TMT-Integrator version 6.1.3
+FragPipe-SpecLib version 0.1.58
+DIA-NN version 1.8.2 beta 8
+Skyline version N/A
+Pandas version 2.3.3
+Numpy version 1.26.4
+22:57:34 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineDailyRunner.exe
+
+
+LCMS files:
+  Experiment/Group: 
+  (if "spectral library generation" is enabled, all files will be analyzed together)
+  - /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_NAT.mzML	DIA
+  - /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_T.mzML	DIA
+  - /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_NAT.mzML	DIA
+  - /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_T.mzML	DIA
+  - /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_NAT.mzML	DIA
+  - /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_T.mzML	DIA
+  - /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_NAT.mzML	DIA
+  - /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_T.mzML	DIA
+  - /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_NAT.mzML	DIA
+  - /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_T.mzML	DIA
+
+
+22:57:34 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineRunner.exe
+22:57:34 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineRunner.exe
+22:57:34 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineDailyRunner.exe
+22:57:34 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineDailyRunner.exe
+135 commands to execute:
+CheckCentroid
+java -Xmx64G -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/tools/batmass-io-1.36.5.jar org.nesvilab.fragpipe.util.CheckCentroid /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_NAT.mzML 48
+WorkspaceCleanInit [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --clean --nocheck
+WorkspaceCleanInit [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --init --nocheck --temp /tmp/a3eaa302-5c18-4c7e-a0d0-97d3e81c5384
+MSFragger [Work dir: /plan/fp_work]
+java -jar -Dfile.encoding=UTF-8 -Xmx64G @ROOT@/fragpipe-24.0/tools/MSFragger-4.4.1/MSFragger-4.4.1.jar /plan/fp_work/fragger_dia.params --license {LICENSE} /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_NAT.mzML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_NAT_rank1.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_NAT_rank1.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_NAT_rank2.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_NAT_rank2.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_NAT_rank3.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_NAT_rank3.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_NAT_rank4.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_NAT_rank4.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_NAT_rank5.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_NAT_rank5.pepXML
+MSFragger move pin
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_NAT.pin /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_NAT.pin
+MSFragger [Work dir: /plan/fp_work]
+java -jar -Dfile.encoding=UTF-8 -Xmx64G @ROOT@/fragpipe-24.0/tools/MSFragger-4.4.1/MSFragger-4.4.1.jar /plan/fp_work/fragger_dia.params --license {LICENSE} /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_T.mzML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_T_rank1.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_T_rank1.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_T_rank2.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_T_rank2.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_T_rank3.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_T_rank3.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_T_rank4.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_T_rank4.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_T_rank5.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_T_rank5.pepXML
+MSFragger move pin
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_T.pin /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_T.pin
+MSFragger [Work dir: /plan/fp_work]
+java -jar -Dfile.encoding=UTF-8 -Xmx64G @ROOT@/fragpipe-24.0/tools/MSFragger-4.4.1/MSFragger-4.4.1.jar /plan/fp_work/fragger_dia.params --license {LICENSE} /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_NAT.mzML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_NAT_rank1.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_NAT_rank1.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_NAT_rank2.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_NAT_rank2.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_NAT_rank3.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_NAT_rank3.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_NAT_rank4.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_NAT_rank4.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_NAT_rank5.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_NAT_rank5.pepXML
+MSFragger move pin
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_NAT.pin /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_NAT.pin
+MSFragger [Work dir: /plan/fp_work]
+java -jar -Dfile.encoding=UTF-8 -Xmx64G @ROOT@/fragpipe-24.0/tools/MSFragger-4.4.1/MSFragger-4.4.1.jar /plan/fp_work/fragger_dia.params --license {LICENSE} /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_T.mzML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_T_rank1.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_T_rank1.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_T_rank2.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_T_rank2.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_T_rank3.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_T_rank3.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_T_rank4.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_T_rank4.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_T_rank5.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_T_rank5.pepXML
+MSFragger move pin
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_T.pin /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_T.pin
+MSFragger [Work dir: /plan/fp_work]
+java -jar -Dfile.encoding=UTF-8 -Xmx64G @ROOT@/fragpipe-24.0/tools/MSFragger-4.4.1/MSFragger-4.4.1.jar /plan/fp_work/fragger_dia.params --license {LICENSE} /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_NAT.mzML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_NAT_rank1.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_NAT_rank1.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_NAT_rank2.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_NAT_rank2.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_NAT_rank3.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_NAT_rank3.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_NAT_rank4.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_NAT_rank4.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_NAT_rank5.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_NAT_rank5.pepXML
+MSFragger move pin
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_NAT.pin /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_NAT.pin
+MSFragger [Work dir: /plan/fp_work]
+java -jar -Dfile.encoding=UTF-8 -Xmx64G @ROOT@/fragpipe-24.0/tools/MSFragger-4.4.1/MSFragger-4.4.1.jar /plan/fp_work/fragger_dia.params --license {LICENSE} /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_T.mzML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_T_rank1.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_T_rank1.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_T_rank2.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_T_rank2.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_T_rank3.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_T_rank3.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_T_rank4.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_T_rank4.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_T_rank5.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_T_rank5.pepXML
+MSFragger move pin
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_T.pin /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_T.pin
+MSFragger [Work dir: /plan/fp_work]
+java -jar -Dfile.encoding=UTF-8 -Xmx64G @ROOT@/fragpipe-24.0/tools/MSFragger-4.4.1/MSFragger-4.4.1.jar /plan/fp_work/fragger_dia.params --license {LICENSE} /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_NAT.mzML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_NAT_rank1.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_NAT_rank1.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_NAT_rank2.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_NAT_rank2.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_NAT_rank3.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_NAT_rank3.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_NAT_rank4.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_NAT_rank4.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_NAT_rank5.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_NAT_rank5.pepXML
+MSFragger move pin
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_NAT.pin /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_NAT.pin
+MSFragger [Work dir: /plan/fp_work]
+java -jar -Dfile.encoding=UTF-8 -Xmx64G @ROOT@/fragpipe-24.0/tools/MSFragger-4.4.1/MSFragger-4.4.1.jar /plan/fp_work/fragger_dia.params --license {LICENSE} /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_T.mzML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_T_rank1.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_T_rank1.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_T_rank2.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_T_rank2.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_T_rank3.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_T_rank3.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_T_rank4.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_T_rank4.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_T_rank5.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_T_rank5.pepXML
+MSFragger move pin
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_T.pin /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_T.pin
+MSFragger [Work dir: /plan/fp_work]
+java -jar -Dfile.encoding=UTF-8 -Xmx64G @ROOT@/fragpipe-24.0/tools/MSFragger-4.4.1/MSFragger-4.4.1.jar /plan/fp_work/fragger_dia.params --license {LICENSE} /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_NAT.mzML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_NAT_rank1.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_NAT_rank1.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_NAT_rank2.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_NAT_rank2.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_NAT_rank3.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_NAT_rank3.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_NAT_rank4.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_NAT_rank4.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_NAT_rank5.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_NAT_rank5.pepXML
+MSFragger move pin
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_NAT.pin /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_NAT.pin
+MSFragger [Work dir: /plan/fp_work]
+java -jar -Dfile.encoding=UTF-8 -Xmx64G @ROOT@/fragpipe-24.0/tools/MSFragger-4.4.1/MSFragger-4.4.1.jar /plan/fp_work/fragger_dia.params --license {LICENSE} /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_T.mzML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_T_rank1.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_T_rank1.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_T_rank2.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_T_rank2.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_T_rank3.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_T_rank3.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_T_rank4.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_T_rank4.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_T_rank5.pepXML /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_T_rank5.pepXML
+MSFragger move pin
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_T.pin /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_T.pin
+MSBooster [Work dir: /plan/fp_work]
+java -Djava.awt.headless=true -Xmx64G -cp @ROOT@/fragpipe-24.0/tools/MSBooster-1.4.14.jar:@ROOT@/fragpipe-24.0/tools/batmass-io-1.36.5.jar mainsteps.MainClass --paramsList /plan/fp_work/msbooster_params.txt
+Percolator [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/percolator_3_7_1/linux/percolator --no-terminate --post-processing-tdc --subset-max-train 500000 --num-threads 48 --results-peptides CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_T_percolator_target_psms.tsv --decoy-results-peptides CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_T_percolator_decoy_psms.tsv --protein-decoy-pattern rev_ CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_T_edited.pin
+Percolator [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/percolator_3_7_1/linux/percolator --no-terminate --post-processing-tdc --subset-max-train 500000 --num-threads 48 --results-peptides CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_T_percolator_target_psms.tsv --decoy-results-peptides CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_T_percolator_decoy_psms.tsv --protein-decoy-pattern rev_ CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_T_edited.pin
+Percolator [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/percolator_3_7_1/linux/percolator --no-terminate --post-processing-tdc --subset-max-train 500000 --num-threads 48 --results-peptides CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_NAT_percolator_target_psms.tsv --decoy-results-peptides CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_NAT_percolator_decoy_psms.tsv --protein-decoy-pattern rev_ CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_NAT_edited.pin
+Percolator [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/percolator_3_7_1/linux/percolator --no-terminate --post-processing-tdc --subset-max-train 500000 --num-threads 48 --results-peptides CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_T_percolator_target_psms.tsv --decoy-results-peptides CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_T_percolator_decoy_psms.tsv --protein-decoy-pattern rev_ CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_T_edited.pin
+Percolator [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/percolator_3_7_1/linux/percolator --no-terminate --post-processing-tdc --subset-max-train 500000 --num-threads 48 --results-peptides CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_NAT_percolator_target_psms.tsv --decoy-results-peptides CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_NAT_percolator_decoy_psms.tsv --protein-decoy-pattern rev_ CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_NAT_edited.pin
+Percolator [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/percolator_3_7_1/linux/percolator --no-terminate --post-processing-tdc --subset-max-train 500000 --num-threads 48 --results-peptides CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_T_percolator_target_psms.tsv --decoy-results-peptides CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_T_percolator_decoy_psms.tsv --protein-decoy-pattern rev_ CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_T_edited.pin
+Percolator [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/percolator_3_7_1/linux/percolator --no-terminate --post-processing-tdc --subset-max-train 500000 --num-threads 48 --results-peptides CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_NAT_percolator_target_psms.tsv --decoy-results-peptides CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_NAT_percolator_decoy_psms.tsv --protein-decoy-pattern rev_ CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_NAT_edited.pin
+Percolator [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/percolator_3_7_1/linux/percolator --no-terminate --post-processing-tdc --subset-max-train 500000 --num-threads 48 --results-peptides CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_NAT_percolator_target_psms.tsv --decoy-results-peptides CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_NAT_percolator_decoy_psms.tsv --protein-decoy-pattern rev_ CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_NAT_edited.pin
+Percolator [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/percolator_3_7_1/linux/percolator --no-terminate --post-processing-tdc --subset-max-train 500000 --num-threads 48 --results-peptides CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_T_percolator_target_psms.tsv --decoy-results-peptides CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_T_percolator_decoy_psms.tsv --protein-decoy-pattern rev_ CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_T_edited.pin
+Percolator [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/percolator_3_7_1/linux/percolator --no-terminate --post-processing-tdc --subset-max-train 500000 --num-threads 48 --results-peptides CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_NAT_percolator_target_psms.tsv --decoy-results-peptides CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_NAT_percolator_decoy_psms.tsv --protein-decoy-pattern rev_ CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_NAT_edited.pin
+Percolator: Convert to pepxml [Work dir: /plan/fp_work]
+java -cp @ROOT@/fragpipe-24.0/lib/* org.nesvilab.fragpipe.tools.percolator.PercolatorOutputToPepXML CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_T.pin CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_T CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_T_percolator_target_psms.tsv CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_T_percolator_decoy_psms.tsv interact-CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_T DIA 0.7 /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_T.mzML
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_T_percolator_target_psms.tsv
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_T_percolator_decoy_psms.tsv
+Percolator: Convert to pepxml [Work dir: /plan/fp_work]
+java -cp @ROOT@/fragpipe-24.0/lib/* org.nesvilab.fragpipe.tools.percolator.PercolatorOutputToPepXML CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_T.pin CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_T CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_T_percolator_target_psms.tsv CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_T_percolator_decoy_psms.tsv interact-CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_T DIA 0.7 /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_T.mzML
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_T_percolator_target_psms.tsv
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_T_percolator_decoy_psms.tsv
+Percolator: Convert to pepxml [Work dir: /plan/fp_work]
+java -cp @ROOT@/fragpipe-24.0/lib/* org.nesvilab.fragpipe.tools.percolator.PercolatorOutputToPepXML CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_NAT.pin CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_NAT CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_NAT_percolator_target_psms.tsv CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_NAT_percolator_decoy_psms.tsv interact-CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_NAT DIA 0.7 /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_NAT.mzML
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_NAT_percolator_target_psms.tsv
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_NAT_percolator_decoy_psms.tsv
+Percolator: Convert to pepxml [Work dir: /plan/fp_work]
+java -cp @ROOT@/fragpipe-24.0/lib/* org.nesvilab.fragpipe.tools.percolator.PercolatorOutputToPepXML CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_T.pin CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_T CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_T_percolator_target_psms.tsv CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_T_percolator_decoy_psms.tsv interact-CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_T DIA 0.7 /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_T.mzML
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_T_percolator_target_psms.tsv
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_T_percolator_decoy_psms.tsv
+Percolator: Convert to pepxml [Work dir: /plan/fp_work]
+java -cp @ROOT@/fragpipe-24.0/lib/* org.nesvilab.fragpipe.tools.percolator.PercolatorOutputToPepXML CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_NAT.pin CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_NAT CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_NAT_percolator_target_psms.tsv CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_NAT_percolator_decoy_psms.tsv interact-CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_NAT DIA 0.7 /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_NAT.mzML
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_NAT_percolator_target_psms.tsv
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_NAT_percolator_decoy_psms.tsv
+Percolator: Convert to pepxml [Work dir: /plan/fp_work]
+java -cp @ROOT@/fragpipe-24.0/lib/* org.nesvilab.fragpipe.tools.percolator.PercolatorOutputToPepXML CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_T.pin CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_T CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_T_percolator_target_psms.tsv CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_T_percolator_decoy_psms.tsv interact-CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_T DIA 0.7 /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_T.mzML
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_T_percolator_target_psms.tsv
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_T_percolator_decoy_psms.tsv
+Percolator: Convert to pepxml [Work dir: /plan/fp_work]
+java -cp @ROOT@/fragpipe-24.0/lib/* org.nesvilab.fragpipe.tools.percolator.PercolatorOutputToPepXML CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_NAT.pin CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_NAT CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_NAT_percolator_target_psms.tsv CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_NAT_percolator_decoy_psms.tsv interact-CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_NAT DIA 0.7 /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_NAT.mzML
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_NAT_percolator_target_psms.tsv
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_NAT_percolator_decoy_psms.tsv
+Percolator: Convert to pepxml [Work dir: /plan/fp_work]
+java -cp @ROOT@/fragpipe-24.0/lib/* org.nesvilab.fragpipe.tools.percolator.PercolatorOutputToPepXML CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_NAT.pin CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_NAT CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_NAT_percolator_target_psms.tsv CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_NAT_percolator_decoy_psms.tsv interact-CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_NAT DIA 0.7 /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_NAT.mzML
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_NAT_percolator_target_psms.tsv
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_NAT_percolator_decoy_psms.tsv
+Percolator: Convert to pepxml [Work dir: /plan/fp_work]
+java -cp @ROOT@/fragpipe-24.0/lib/* org.nesvilab.fragpipe.tools.percolator.PercolatorOutputToPepXML CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_T.pin CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_T CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_T_percolator_target_psms.tsv CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_T_percolator_decoy_psms.tsv interact-CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_T DIA 0.7 /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_T.mzML
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_T_percolator_target_psms.tsv
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_T_percolator_decoy_psms.tsv
+Percolator: Convert to pepxml [Work dir: /plan/fp_work]
+java -cp @ROOT@/fragpipe-24.0/lib/* org.nesvilab.fragpipe.tools.percolator.PercolatorOutputToPepXML CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_NAT.pin CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_NAT CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_NAT_percolator_target_psms.tsv CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_NAT_percolator_decoy_psms.tsv interact-CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_NAT DIA 0.7 /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_NAT.mzML
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_NAT_percolator_target_psms.tsv
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_NAT_percolator_decoy_psms.tsv
+ProteinProphet [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 proteinprophet --maxppmdiff 2000000 --minprob 0.5 --output combined /plan/fp_work/filelist_proteinprophet.txt
+PhilosopherDbAnnotate [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 database --annotate /plan/2023-10-03-decoys-reviewed-contam-UP000005640.fas --prefix rev_
+PhilosopherFilter [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 filter --picked --prot 0.01 --minPepLen 8 --tag rev_ --pepxml /plan/fp_work --protxml /plan/fp_work/combined.prot.xml --razor
+PhilosopherReport [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 report
+WorkspaceClean [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --clean --nocheck
+SpecLibGen [Work dir: /plan/fp_work]
+python3 -u @ROOT@/fragpipe-24.0/tools/speclib/gen_con_spec_lib.py /plan/2023-10-03-decoys-reviewed-contam-UP000005640.fas /plan/fp_work unused /plan/fp_work True unused use_easypqp noiRT:noIM 48 "--max_delta_unimod 0.02 --max_delta_ppm 15.0 --fragment_types [\'b\',\'y\',]" "--rt_lowess_fraction 0.0" delete_intermediate_files /plan/fp_work/filelist_speclibgen.txt
+DIA-Quant run DIA-NN [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/diann/1.8.2_beta_8/linux/diann-1.8.1.8 --lib library.tsv --threads 48 --verbose 1 --out dia-quant-output/report.tsv --qvalue 0.01 --matrix-qvalue 0.01 --matrices --no-prot-inf --smart-profiling --peak-center --no-ifs-removal --report-lib-info --cfg /plan/fp_work/filelist_diann.txt--
+DIA-Quant delete .quant file
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_NAT.mzML.quant
+DIA-Quant delete .quant file
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_T.mzML.quant
+DIA-Quant delete .quant file
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_T.mzML.quant
+DIA-Quant delete .quant file
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_NAT.mzML.quant
+DIA-Quant delete .quant file
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00606_NAT.mzML.quant
+DIA-Quant delete .quant file
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-00418_NAT.mzML.quant
+DIA-Quant delete .quant file
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3L-01882_T.mzML.quant
+DIA-Quant delete .quant file
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_T.mzML.quant
+DIA-Quant delete .quant file
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00733_NAT.mzML.quant
+DIA-Quant delete .quant file
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete --no-err /plan/raw_files/CPTAC_CCRCC_W_JHU_20190112_LUMOS_C3N-00577_T.mzML.quant
+DIA-Quant move and rename speclib for skyline
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileMoveWithExtension /plan/fp_work .speclib /plan/fp_work/dia-quant-output/report-tsv.speclib
+DIA-Quant propagate information [Work dir: /plan/fp_work/dia-quant-output]
+java -cp @ROOT@/fragpipe-24.0/lib/*:@ROOT@/fragpipe-24.0/tools/batmass-io-1.36.5.jar org.nesvilab.fragpipe.tools.diann.Propagation /plan/fp_work - - -
+DIA-Quant convert DIA-NN output to MSstats.csv [Work dir: /plan/fp_work/dia-quant-output]
+java -cp @ROOT@/fragpipe-24.0/lib/* org.nesvilab.fragpipe.tools.diann.DiannToMsstats report.tsv ./ /plan/fp_work/psm.tsv 0.01 1 0.01 0.01 /plan/fp_work/fragpipe-files.fp-manifest
+DIA-Quant generate site reports [Work dir: /plan/fp_work/dia-quant-output]
+java -Xmx64G -jar @ROOT@/fragpipe-24.0/tools/FragReporter-1.1.2.jar --pr /plan/fp_work/dia-quant-output/report.tsv --exp-ann /plan/fp_work/fragpipe-files.fp-manifest --out-dir /plan/fp_work/dia-quant-output --mod-tag  --min-site-prob 0.75 --level peptide;modified-peptide
+~~~~~~~~~~~~~~~~~~~~~~
+
+Execution order:
+
+    Cmd: [START], Work dir: [/plan/fp_work]
+    Cmd: [CheckCentroid], Work dir: [/plan/fp_work]
+    Cmd: [WorkspaceCleanInit], Work dir: [/plan/fp_work]
+    Cmd: [MSFragger], Work dir: [/plan/fp_work]
+    Cmd: [MSBooster], Work dir: [/plan/fp_work]
+    Cmd: [Percolator], Work dir: [/plan/fp_work]
+    Cmd: [ProteinProphet], Work dir: [/plan/fp_work]
+    Cmd: [PhilosopherDbAnnotate], Work dir: [/plan/fp_work]
+    Cmd: [PhilosopherFilter], Work dir: [/plan/fp_work]
+    Cmd: [PhilosopherReport], Work dir: [/plan/fp_work]
+    Cmd: [WorkspaceClean], Work dir: [/plan/fp_work]
+    Cmd: [SpecLibGen], Work dir: [/plan/fp_work]
+    Cmd: [DIA-Quant], Work dir: [/plan/fp_work]
+
+~~~~~~~~~~~~~~~~~~~~~~
+
+~~~~~~Sample of /plan/2023-10-03-decoys-reviewed-contam-UP000005640.fas~~~~~~~
+>contam_sp|O77727|K1C15_SHEEP Keratin, type I cytoskeletal 15 OS=Ovis aries OX=9940 GN=KRT15 PE=2 SV=1
+>rev_sp|O43520|AT8B1_HUMAN Phospholipid-transporting ATPase IC OS=Homo sapiens OX=9606 GN=ATP8B1 PE=1 SV=3
+>rev_sp|P0DMP1|HMN12_HUMAN Humanin-like 12 OS=Homo sapiens OX=9606 GN=MTRNR2L12 PE=3 SV=2
+>rev_sp|P49711|CTCF_HUMAN Transcriptional repressor CTCF OS=Homo sapiens OX=9606 GN=CTCF PE=1 SV=1
+>rev_sp|Q14153|FA53B_HUMAN Protein FAM53B OS=Homo sapiens OX=9606 GN=FAM53B PE=1 SV=2
+>rev_sp|Q68DQ2|CRBG3_HUMAN Very large A-kinase anchor protein OS=Homo sapiens OX=9606 GN=CRYBG3 PE=1 SV=3
+>rev_sp|Q8IWD5|MFS6L_HUMAN Major facilitator superfamily domain-containing protein 6-like OS=Homo sapiens OX=9606 GN=MFSD6L PE=2 SV=2
+>rev_sp|Q8WVJ2|NUDC2_HUMAN NudC domain-containing protein 2 OS=Homo sapiens OX=9606 GN=NUDCD2 PE=1 SV=1
+>rev_sp|Q9BRC7|PLCD4_HUMAN 1-phosphatidylinositol 4,5-bisphosphate phosphodiesterase delta-4 OS=Homo sapiens OX=9606 GN=PLCD4 PE=1 SV=1
+>rev_sp|Q9NUP1|BL1S4_HUMAN Biogenesis of lysosome-related organelles complex 1 subunit 4 OS=Homo sapiens OX=9606 GN=BLOC1S4 PE=1 SV=1
+>rev_sp|Q9Y6M7|S4A7_HUMAN Sodium bicarbonate cotransporter 3 OS=Homo sapiens OX=9606 GN=SLC4A7 PE=1 SV=2
+>sp|O43653|PSCA_HUMAN Prostate stem cell antigen OS=Homo sapiens OX=9606 GN=PSCA PE=1 SV=2
+>sp|P0DOY5|HD101_HUMAN Immunoglobulin heavy diversity 1-1 OS=Homo sapiens OX=9606 GN=IGHD1-1 PE=4 SV=1
+>sp|P49842|STK19_HUMAN Inactive serine/threonine-protein kinase 19 OS=Homo sapiens OX=9606 GN=STK19 PE=2 SV=3
+>sp|Q14244|MAP7_HUMAN Ensconsin OS=Homo sapiens OX=9606 GN=MAP7 PE=1 SV=1
+>sp|Q6AWC8|YK026_HUMAN Putative uncharacterized protein LOC100129027 OS=Homo sapiens OX=9606 PE=5 SV=1
+>sp|Q8IWX7|UN45B_HUMAN Protein unc-45 homolog B OS=Homo sapiens OX=9606 GN=UNC45B PE=1 SV=1
+>sp|Q8WW52|F151A_HUMAN Protein FAM151A OS=Homo sapiens OX=9606 GN=FAM151A PE=2 SV=2
+>sp|Q9BRT6|LLPH_HUMAN Protein LLP homolog OS=Homo sapiens OX=9606 GN=LLPH PE=1 SV=1
+>sp|Q9NVA4|T184C_HUMAN Transmembrane protein 184C OS=Homo sapiens OX=9606 GN=TMEM184C PE=1 SV=2
+>sp|Q9Y6X8|ZHX2_HUMAN Zinc fingers and homeoboxes protein 2 OS=Homo sapiens OX=9606 GN=ZHX2 PE=1 SV=1
+~~~~~~~~~~~~~~~~~~~~~~
+
+
+It's a dry-run, not running the commands.
+
+
+Please cite:
+(Any searches) MSFragger: ultrafast and comprehensive peptide identification in mass spectrometry–based proteomics. Nat Methods. 14:513 (2017)
+(Any searches) Fast deisotoping algorithm and its implementation in the MSFragger search engine. J Proteome Res. 20:498 (2021)
+(timsTOF ddaPASEF) Fast quantitative analysis of timsTOF PASEF data with MSFragger and IonQuant. Mol Cell Proteomics. 19:1575 (2020)
+(Open search) Identification of modified peptides using localization-aware open search. Nat Commun. 11:4065 (2020)
+(Glyco search) Fast and comprehensive N- and O-glycoproteomics analysis with MSFragger-Glyco. Nat Methods. 17:1125 (2020)
+(Labile search) MSFragger-Labile: A Flexible Method to Improve Labile PTM Analysis in Proteomics. Mol Cell Proteomics. 22:100538 (2023)
+(DDA+ search) MSFragger-DDA+ enhances peptide identification sensitivity with full isolation window search. Nat Commun. 16:3329 (2025)
+(MSBooster) MSBooster: improving peptide identification rates using deep learning-based features. Nat Commun. 14:4539 (2023)
+(PSM validation with Percolator) Semi-supervised learning for peptide identification from shotgun proteomics datasets. Nat Methods. 4:923 (2007)
+(Protein inference with ProteinProphet)A statistical model for identifying proteins by tandem mass spectrometry. Anal Chem. 75:4646 (2003)
+(FDR filtering and reporting) Philosopher: a versatile toolkit for shotgun proteomics data analysis. Nat Methods. 17:869 (2020)
+(Spectral library generation and DIA analysis) Analysis of DIA proteomics data using MSFragger-DIA and FragPipe computational platform. Nat Commun. 14:4154 (2023)
+(DIA quantification with DIA-NN) dia-PASEF data analysis using FragPipe and DIA-NN for deep proteomics of low sample amounts. Nat Commun. 13:3944 (2022)
+(Visualization with FragPipe-PDV) PDV: an integrative proteomics data viewer. Bioinformatics. 35(7):1249 (2019)

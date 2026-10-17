@@ -138,7 +138,7 @@ nextflow_workflow {
                 def tool_configs = [
                     // label-free IonQuant too: it reads the tables Report wrote after LabelQuant (FragpipeRun.java:2477)
                     ionquant: [run: true, args: '--perform-ms1quant 1 --perform-isoquant 0 --isotol 20.0 --isolevel 2 --isotype tmt10 --ionmobility 0 --site-reports 1 --msstats 1 --minexps 1 --mbr 0', modmasses: []],
-                    tmtintegrator: [run: true, args: file("\${baseDir}/subworkflows/local/fragpipe_quant/tests/tmt10_tmtintegrator_conf.txt", checkIfExists: true).text  /* parser's tmt-integrator-conf.yml text */, extraction_tool: 1, philosopher_msstats: true],
+                    tmtintegrator: [run: true, args: file("\${baseDir}/subworkflows/local/fragpipe_quant/tests/tmt10_tmtintegrator_conf.txt", checkIfExists: true).text  /* the plan's tmt-integrator-conf.yml text */, extraction_tool: 1, philosopher_msstats: true],
                     freequant: [run: false, args: '--ptw 0.4 --tol 10'],
                     labelquant: [run: true, args: '--tol 20 --level 2 --minprob 0.900 --purity 0.500 --removelow 0.050 --plex 10', brand: 'tmt'],
                     filter: [run: true, args: '', report_args: '']

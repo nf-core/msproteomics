@@ -3,7 +3,7 @@
 //
 // FragPipe source root (FP): FragPipe-GUI/src/main/java/org/nesvilab/fragpipe/
 //
-// Stub runs execute PARSEFRAGPIPEWORKFLOW for real and build IonQuant's filelist,
+// Stub runs take the tool configs from a recorded FragPipe dry run (--fragpipe_plan) and build IonQuant's filelist,
 // annotations and command line exactly as the real run does, so the snapshots record
 // the files FragPipe's tools would read.
 
@@ -29,6 +29,7 @@ nextflow_workflow {
 
         when {
             params {
+                fragpipe_plan = "${baseDir}/tests/fixtures/fragpipe_plans/stub/fragpipe_parity__lfq_mbr_experiment_bioreplicate"
                 def fixtures = "${baseDir}/tests/fixtures"
                 def ss = new File("${outputDir}/samplesheet.csv")
                 ss.parentFile.mkdirs()
@@ -69,6 +70,7 @@ nextflow_workflow {
 
         when {
             params {
+                fragpipe_plan = "${baseDir}/tests/fixtures/fragpipe_plans/stub/fragpipe_parity__dia_speclib_quant_single_group"
                 def fixtures = "${baseDir}/tests/fixtures"
                 def ss = new File("${outputDir}/samplesheet.csv")
                 ss.parentFile.mkdirs()
@@ -94,40 +96,6 @@ nextflow_workflow {
         }
     }
 
-    // blank experiment and blank bioreplicate -> getGroup() returns "" for every file
-    // -> ONE group (user-confirmed default). FragPipe refuses IonQuant MBR without named
-    // experiments (FP/cmd/CmdIonquant.java:288-294), so LFQ-MBR must fail with its message.
-    test("grouping - blank experiment and bioreplicate with MBR fails like FragPipe") {
-        options "-stub"
-        tag "stub"
-
-        when {
-            params {
-                def fixtures = "${baseDir}/tests/fixtures"
-                def ss = new File("${outputDir}/samplesheet.csv")
-                ss.parentFile.mkdirs()
-                ss.text = new File("${fixtures}/samplesheets/dda_experiment_blank.csv").text.replace('${FIXTURES}', fixtures)
-                input             = ss.toString()
-                database          = "${fixtures}/test.fasta"
-                fragpipe_workflow = "${fixtures}/fragpipe_workflows/LFQ-MBR.workflow"
-                fragpipe_mode     = 'pipeline'
-                outdir            = "$outputDir"
-            }
-        }
-
-        then {
-            def filter_tasks = workflow.trace.tasks().findAll { it.name.contains(':PHILOSOPHERFILTER') }.collect { it.name }
-            def message = "IonQuant with MBR requires designating LCMS runs to experiments. Please assign the experiment groups in the 'Workflow' tab, and make sure that the 'Spec Lib' tab is disabled."
-            assertAll(
-                { assert workflow.failed },
-                { assert filter_tasks.size() == 1 : "expected exactly 1 PHILOSOPHERFILTER task (single FragPipe group \"\"), got ${filter_tasks.size()}: ${filter_tasks}" },
-                { assert (workflow.stdout + workflow.stderr).any { line -> line.contains(message) } : "IonQuant must refuse MBR like FragPipe" },
-                // the refusal is raised by ionquantRun (Groovy), so Nextflow appends ' -- Check script ...' to the line
-                { assert snapshot((workflow.stdout + workflow.stderr).findAll { line -> line.contains(message) }.collect { line -> line.trim().replaceFirst(/ -- Check script .*$/, '') }.unique()).match() }
-            )
-        }
-    }
-
     // blank groups without MBR: FragPipe runs IonQuant without --multidir on the
     // work-dir root psm.tsv (CmdIonquant.java:221-222, 316-327; LcmsFileGroup.outputDir("") == wd).
     // The Nextflow-internal staging name of the blank group must not reach tools or published paths.
@@ -137,6 +105,7 @@ nextflow_workflow {
 
         when {
             params {
+                fragpipe_plan = "${baseDir}/tests/fixtures/fragpipe_plans/stub/fragpipe_parity__lfq_nombr_blank_experiment"
                 def fixtures = "${baseDir}/tests/fixtures"
                 def ss = new File("${outputDir}/samplesheet.csv")
                 ss.parentFile.mkdirs()
@@ -178,6 +147,7 @@ nextflow_workflow {
 
         when {
             params {
+                fragpipe_plan = "${baseDir}/tests/fixtures/fragpipe_plans/stub/fragpipe_parity__tmt10_per_channel_two_plex"
                 def fixtures = "${baseDir}/tests/fixtures"
                 def ss = new File("${outputDir}/samplesheet.csv")
                 ss.parentFile.mkdirs()
@@ -240,6 +210,7 @@ nextflow_workflow {
 
         when {
             params {
+                fragpipe_plan = "${baseDir}/tests/fixtures/fragpipe_plans/stub/fragpipe_parity__tmt10_blank_experiment"
                 def fixtures = "${baseDir}/tests/fixtures"
                 def ss = new File("${outputDir}/samplesheet.csv")
                 ss.parentFile.mkdirs()

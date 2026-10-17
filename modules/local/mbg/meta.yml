@@ -34,7 +34,7 @@ input:
         description: "[file name, experiment, bioreplicate, data type] per LC-MS file, in fragpipe-files.fp-manifest order (TabWorkflow.manifestSave)"
     - "argv":
         type: list
-        description: "MBG argv from PARSEFRAGPIPEWORKFLOW (@TOKENS@ filled by the module, @NOPASEF@ by the workflow)"
+        description: "MBG argv from FragPipe's plan (bin/plan_to_tool_configs.py) (@TOKENS@ filled by the module, @NOPASEF@ by the workflow)"
 output:
   psm_dir:
     - - "meta":

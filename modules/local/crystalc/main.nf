@@ -11,7 +11,7 @@
  *   - meta: Sample metadata map (crystalc_index: index of the pepXML among all Crystal-C runs of the run, names the params file)
  *   - pepxml_file: MSFragger pepXML
  *   - lcms_file: The LC-MS file the pepXML was searched from (.mzML, .mzXML or .raw)
- *   - config_file: Crystal-C algorithm settings (parse_fragpipe_workflow.py generate_crystalc_config)
+ *   - config_file: Crystal-C algorithm settings (FragPipe's plan, bin/plan_to_tool_configs.py)
  *   - fasta: Protein database
  *
  * Output:

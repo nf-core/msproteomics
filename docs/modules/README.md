@@ -19,7 +19,6 @@ Each page is named after the module directory under `modules/local` (the process
 
 | Module                                        | Description                                                                                                              |
 | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| [checkdbconfig](checkdbconfig.md)             | Check the database decoys the way FragPipe headless does                                                                 |
 | [philosopherdatabase](philosopherdatabase.md) | FragPipe database update (decoys + contaminants), only with `--add_philosopher_decoy` / `--add_philosopher_contaminants` |
 | [splitfasta](splitfasta.md)                   | Split a FASTA database into chunks for parallel MSFragger search                                                         |
 | [sortfasta](sortfasta.md)                     | Sort the proteins of a FASTA file for the calibration search of a split-database run                                     |
@@ -99,13 +98,14 @@ Each page is named after the module directory under `modules/local` (the process
 
 ## Workflow Orchestration
 
-| Module                                            | Description                                                             |
-| ------------------------------------------------- | ----------------------------------------------------------------------- |
-| [fragpipeheadless](fragpipeheadless.md)           | Run FragPipe in headless mode as a single all-in-one process            |
-| [parsefragpipeworkflow](parsefragpipeworkflow.md) | Parse FragPipe workflow files into per-tool configuration files         |
-| [fragpipesaveworkflow](fragpipesaveworkflow.md)   | Write FragPipe's saved UI state (`fragpipe.workflow`) for a run         |
-| [fragpipesecondpass](fragpipesecondpass.md)       | FragPipe's second-pass workflow and manifest after a Write sub mzML run |
-| [writesubmzml](writesubmzml.md)                   | FragPipe "Write sub mzML": the scans no confident PSM explains          |
+| Module                                          | Description                                                             |
+| ----------------------------------------------- | ----------------------------------------------------------------------- |
+| [fragpipeheadless](fragpipeheadless.md)         | Run FragPipe in headless mode as a single all-in-one process            |
+| [fragpipeplan](fragpipeplan.md)                 | FragPipe's configured run (headless --write-plan)                       |
+| [plantotoolconfigs](plantotoolconfigs.md)       | Tool configs from FragPipe's plan                                       |
+| [fragpipesaveworkflow](fragpipesaveworkflow.md) | Write FragPipe's saved UI state (`fragpipe.workflow`) for a run         |
+| [fragpipesecondpass](fragpipesecondpass.md)     | FragPipe's second-pass workflow and manifest after a Write sub mzML run |
+| [writesubmzml](writesubmzml.md)                 | FragPipe "Write sub mzML": the scans no confident PSM explains          |
 
 ## Utility
 

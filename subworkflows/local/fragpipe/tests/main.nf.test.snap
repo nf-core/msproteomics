@@ -39,20 +39,19 @@
         "content": [
             [
                 "CHECKCENTROID",
-                "CHECKDBCONFIG",
                 "FREEQUANT",
                 "MSFRAGGER",
-                "PARSEFRAGPIPEWORKFLOW",
                 "PHILOSOPHERDATABASE",
                 "PHILOSOPHERFILTER",
                 "PHILOSOPHERPEPTIDEPROPHET",
                 "PHILOSOPHERPROTEINPROPHET",
                 "PHILOSOPHERREPORT",
+                "PLANTOTOOLCONFIGS",
                 "PTMSHEPHERD",
                 "WRITE_FRAGGER_PARAMS"
             ]
         ],
-        "timestamp": "2026-10-14T19:09:32.265691056",
+        "timestamp": "2026-10-15T14:09:26.239794805",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"
@@ -62,28 +61,26 @@
         "content": [
             {
                 "CHECKCENTROID": 1,
-                "CHECKDBCONFIG": 1,
                 "IONQUANT": 1,
                 "MSFRAGGER": 2,
-                "PARSEFRAGPIPEWORKFLOW": 1,
                 "PHILOSOPHERDATABASE": 1,
                 "PHILOSOPHERFILTER": 1,
                 "PHILOSOPHERFILTER_LATER": 1,
                 "PHILOSOPHERPEPTIDEPROPHET": 2,
                 "PHILOSOPHERPROTEINPROPHET": 1,
                 "PHILOSOPHERWORKSPACECLEAN": 2,
+                "PLANTOTOOLCONFIGS": 1,
                 "PTMSHEPHERD": 1,
                 "REPRINTTOSAINTINPUT": 2,
                 "SAINTEXPRESS": 2,
                 "WRITE_FRAGGER_PARAMS": 1
             },
-            [
-                
-            ],
+            [],
             [
                 [
                     {
                         "id": "A",
+                        "experiment": "A",
                         "group": "A",
                         "data_type": "DDA",
                         "spectra_name": "glyco_a.mzML",
@@ -96,6 +93,7 @@
                 [
                     {
                         "id": "B",
+                        "experiment": "B",
                         "group": "B",
                         "data_type": "DDA",
                         "spectra_name": "glyco_b.mzML",
@@ -107,7 +105,7 @@
                 ]
             ]
         ],
-        "timestamp": "2026-10-15T14:36:00.286147088",
+        "timestamp": "2026-10-16T02:23:08.053038112",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"
@@ -117,21 +115,20 @@
         "content": [
             [
                 "CHECKCENTROID",
-                "CHECKDBCONFIG",
                 "IONQUANT",
                 "MBG",
                 "MSFRAGGER",
-                "PARSEFRAGPIPEWORKFLOW",
                 "PHILOSOPHERDATABASE",
                 "PHILOSOPHERFILTER",
                 "PHILOSOPHERPEPTIDEPROPHET",
                 "PHILOSOPHERPROTEINPROPHET",
                 "PHILOSOPHERWORKSPACECLEAN",
+                "PLANTOTOOLCONFIGS",
                 "PTMSHEPHERD",
                 "WRITE_FRAGGER_PARAMS"
             ]
         ],
-        "timestamp": "2026-10-15T14:34:48.260744903",
+        "timestamp": "2026-10-16T02:24:47.143614825",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"
@@ -143,6 +140,7 @@
                 [
                     {
                         "id": "test_sample",
+                        "experiment": "test_sample",
                         "group": "test_sample",
                         "data_type": "DDA"
                     },
@@ -153,6 +151,7 @@
                 [
                     {
                         "id": "test_sample",
+                        "experiment": "test_sample",
                         "group": "test_sample",
                         "data_type": "DDA"
                     },
@@ -163,6 +162,7 @@
                 [
                     {
                         "id": "test_sample",
+                        "experiment": "test_sample",
                         "group": "test_sample",
                         "data_type": "DDA"
                     },
@@ -173,6 +173,7 @@
                 [
                     {
                         "id": "test_sample",
+                        "experiment": "test_sample",
                         "group": "test_sample",
                         "data_type": "DDA",
                         "spectra_name": "test_sample.mzML"
@@ -285,11 +286,9 @@
                     ]
                 ]
             ],
-            [
-                
-            ]
+            []
         ],
-        "timestamp": "2026-10-15T14:33:35.883971862",
+        "timestamp": "2026-10-16T02:23:18.743875931",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"
@@ -301,6 +300,7 @@
                 [
                     {
                         "id": "test_sample",
+                        "experiment": "test_sample",
                         "group": "test_sample",
                         "data_type": "DDA"
                     },
@@ -311,6 +311,7 @@
                 [
                     {
                         "id": "test_sample",
+                        "experiment": "test_sample",
                         "group": "test_sample",
                         "data_type": "DDA"
                     },
@@ -321,6 +322,7 @@
                 [
                     {
                         "id": "test_sample",
+                        "experiment": "test_sample",
                         "group": "test_sample",
                         "data_type": "DDA"
                     },
@@ -331,6 +333,7 @@
                 [
                     {
                         "id": "test_sample",
+                        "experiment": "test_sample",
                         "group": "test_sample",
                         "data_type": "DDA",
                         "spectra_name": "test_sample.mzML"
@@ -443,11 +446,9 @@
                     ]
                 ]
             ],
-            [
-                
-            ]
+            []
         ],
-        "timestamp": "2026-10-15T14:32:04.225369471",
+        "timestamp": "2026-10-16T02:24:05.937269185",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"
@@ -457,26 +458,24 @@
         "content": [
             {
                 "CHECKCENTROID": 1,
-                "CHECKDBCONFIG": 1,
                 "MSFRAGGER": 2,
                 "OPAIR": 2,
                 "PAIRSCANS": 2,
-                "PARSEFRAGPIPEWORKFLOW": 1,
                 "PHILOSOPHERDATABASE": 1,
                 "PHILOSOPHERFILTER": 1,
                 "PHILOSOPHERFILTER_LATER": 1,
                 "PHILOSOPHERPEPTIDEPROPHET": 2,
                 "PHILOSOPHERPROTEINPROPHET": 1,
                 "PHILOSOPHERWORKSPACECLEAN": 2,
+                "PLANTOTOOLCONFIGS": 1,
                 "WRITE_FRAGGER_PARAMS": 1
             },
-            [
-                
-            ],
+            [],
             [
                 [
                     {
                         "id": "A",
+                        "experiment": "A",
                         "group": "A",
                         "data_type": "DDA",
                         "spectra_name": "glyco_a.mzML",
@@ -489,6 +488,7 @@
                 [
                     {
                         "id": "B",
+                        "experiment": "B",
                         "group": "B",
                         "data_type": "DDA",
                         "spectra_name": "glyco_b.mzML",
@@ -500,7 +500,7 @@
                 ]
             ]
         ],
-        "timestamp": "2026-10-15T14:35:34.377489049",
+        "timestamp": "2026-10-16T02:23:07.104763418",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"
@@ -512,6 +512,7 @@
                 [
                     {
                         "id": "test_sample",
+                        "experiment": "test_sample",
                         "group": "test_sample",
                         "data_type": "DDA"
                     },
@@ -522,6 +523,7 @@
                 [
                     {
                         "id": "test_sample",
+                        "experiment": "test_sample",
                         "group": "test_sample",
                         "data_type": "DDA"
                     },
@@ -532,6 +534,7 @@
                 [
                     {
                         "id": "test_sample",
+                        "experiment": "test_sample",
                         "group": "test_sample",
                         "data_type": "DDA"
                     },
@@ -542,6 +545,7 @@
                 [
                     {
                         "id": "test_sample",
+                        "experiment": "test_sample",
                         "group": "test_sample",
                         "data_type": "DDA",
                         "spectra_name": "test_sample.mzML"
@@ -610,18 +614,10 @@
                     ]
                 ]
             ],
-            [
-                
-            ],
-            [
-                
-            ],
-            [
-                
-            ],
-            [
-                
-            ],
+            [],
+            [],
+            [],
+            [],
             [
                 [
                     {
@@ -634,7 +630,7 @@
                 ]
             ]
         ],
-        "timestamp": "2026-10-15T14:33:12.968575283",
+        "timestamp": "2026-10-16T02:22:23.490063367",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"
@@ -747,17 +743,16 @@
         "content": [
             [
                 "CHECKCENTROID",
-                "CHECKDBCONFIG",
                 "MSBOOSTER",
                 "MSFRAGGER",
-                "PARSEFRAGPIPEWORKFLOW",
                 "PERCOLATOR",
                 "PHILOSOPHERDATABASE",
                 "PHILOSOPHERPROTEINPROPHET",
+                "PLANTOTOOLCONFIGS",
                 "WRITE_FRAGGER_PARAMS"
             ]
         ],
-        "timestamp": "2026-10-14T00:24:23.742093888",
+        "timestamp": "2026-10-15T14:03:17.551076111",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"

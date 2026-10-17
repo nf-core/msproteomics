@@ -818,7 +818,7 @@ nextflow_function {
         then {
             assertAll(
                 { assert !function.success },
-                { assert (function.stdout + function.stderr).any { l -> l.contains("is not the parser's tmt-integrator-conf.yml") } }
+                { assert (function.stdout + function.stderr).any { l -> l.contains("is not FragPipe's planned tmt-integrator-conf.yml") } }
             )
         }
     }

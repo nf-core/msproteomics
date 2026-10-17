@@ -63,7 +63,7 @@ input:
   - ch_tool_configs:
       type: channel
       description: |
-        PARSEFRAGPIPEWORKFLOW tool_configs JSON (value channel); speclibgen and diann entries.
+        tool_configs JSON of FragPipe's plan (bin/plan_to_tool_configs.py) (value channel); speclibgen and diann entries.
         Structure: val(tool_configs_json)
   - aggregate_meta:
       type: value

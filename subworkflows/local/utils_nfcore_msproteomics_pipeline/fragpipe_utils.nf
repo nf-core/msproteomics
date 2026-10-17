@@ -16,7 +16,7 @@ include { samplesheetToList } from 'plugin/nf-schema'
 /**
  * Check if a tool should run based on the tool_configs JSON string.
  *
- * @param json_text JSON string from PARSEFRAGPIPEWORKFLOW tool_configs channel
+ * @param json_text JSON string from the tool_configs channel (PLANTOTOOLCONFIGS)
  * @param tool_name Name of the tool to check (e.g., 'msfragger', 'msbooster')
  * @return true if the tool should run, false otherwise
  */
@@ -30,7 +30,7 @@ def shouldRunTool(json_text, tool_name) {
 /**
  * Get the args string for a tool from the tool_configs JSON string.
  *
- * @param json_text JSON string from PARSEFRAGPIPEWORKFLOW tool_configs channel
+ * @param json_text JSON string from the tool_configs channel (PLANTOTOOLCONFIGS)
  * @param tool_name Name of the tool
  * @return Args string for the tool, or empty string if not found
  */
@@ -45,9 +45,9 @@ def getToolArgs(json_text, tool_name) {
  * Get the IonQuant mod masses (modmasses_ionquant.txt lines) of a tool entry.
  *
  * FragPipe writes modmasses_ionquant.txt and passes --modlist for every IonQuant run, even
- * with no masses, except when O-Pair runs (FragpipeRun.java:1885; the parser then emits null).
+ * with no masses, except when O-Pair runs (FragpipeRun.java:1885; the plan then has null).
  *
- * @param json_text JSON string from PARSEFRAGPIPEWORKFLOW tool_configs channel
+ * @param json_text JSON string from the tool_configs channel (PLANTOTOOLCONFIGS)
  * @param tool_name Name of the tool ('ionquant', 'ionquant_ms1', 'ionquant_isobaric')
  * @return List of mass strings (possibly empty), or false when IonQuant gets no --modlist
  */
@@ -62,10 +62,10 @@ def getToolModmasses(json_text, tool_name) {
 /**
  * Get an arbitrary field value for a tool from the tool_configs JSON string.
  *
- * Used to extract individual algorithm parameters that the parser emits as
+ * Used to extract individual algorithm parameters that FragPipe's plan gives as
  * separate JSON fields (e.g., FPOP's region_size, control_label).
  *
- * @param json_text JSON string from PARSEFRAGPIPEWORKFLOW tool_configs channel
+ * @param json_text JSON string from the tool_configs channel (PLANTOTOOLCONFIGS)
  * @param tool_name Name of the tool (e.g., 'fpop')
  * @param field_name Name of the field to retrieve (e.g., 'region_size')
  * @param default_val Default value if the field is not found
@@ -81,13 +81,13 @@ def getToolField(json_text, tool_name, field_name, default_val = '') {
 /**
  * DIA-Umpire Q tiers FragPipe adds to the LC-MS list (UmpirePanel.generateQ1/2/3, CmdUmpireSe.java:170-184).
  *
- * @param json_text JSON string from PARSEFRAGPIPEWORKFLOW tool_configs channel
+ * @param json_text JSON string from the tool_configs channel (PLANTOTOOLCONFIGS)
  * @return List of enabled tiers, e.g. ['Q1', 'Q2', 'Q3']
  */
 def umpireQTiers(json_text) {
     def tiers = new groovy.json.JsonSlurper().parseText(json_text)?.diaumpire?.q_tiers
     if (tiers == null) {
-        error("tool_configs.json has no diaumpire.q_tiers - PARSEFRAGPIPEWORKFLOW must emit DIA-Umpire's Q1/Q2/Q3 settings")
+        error("tool_configs.json has no diaumpire.q_tiers - plan_to_tool_configs.py must emit DIA-Umpire's Q1/Q2/Q3 settings")
     }
     return tiers
 }
@@ -97,10 +97,10 @@ def umpireQTiers(json_text) {
  *
  * Single source of the decoy prefix for every FragPipe tool, replicating
  * FragpipeRun.java:1442 (one decoyTag passed to all Cmd*.configure calls).
- * The parser resolves FragPipe's own default and rejects an empty tag, so a
+ * FragPipe's plan resolves its own default and rejects an empty tag, so a
  * missing field here means a malformed tool_configs.json and is a hard error.
  *
- * @param json_text JSON string from PARSEFRAGPIPEWORKFLOW tool_configs channel
+ * @param json_text JSON string from the tool_configs channel (PLANTOTOOLCONFIGS)
  * @return Decoy tag string (e.g., 'rev_')
  */
 def getDecoyTag(json_text) {
@@ -118,7 +118,7 @@ def getDecoyTag(json_text) {
  * Used by philosopher filter to pass report flags (--decoys, --removecontam)
  * to the `philosopher report` command.
  *
- * @param json_text JSON string from PARSEFRAGPIPEWORKFLOW tool_configs channel
+ * @param json_text JSON string from the tool_configs channel (PLANTOTOOLCONFIGS)
  * @param tool_name Name of the tool
  * @return Report args string, or empty string if not found
  */
@@ -127,6 +127,49 @@ def getToolReportArgs(json_text, tool_name) {
         .setType(groovy.json.JsonParserType.CHARACTER_SOURCE)
         .parseText(json_text)
     return configs?.get(tool_name)?.report_args ?: ''
+}
+
+/**
+ * A given FragPipe dry-run work dir (--fragpipe_plan) planned this run: its manifest
+ * (fragpipe-files.fp-manifest, TabWorkflow.manifestSave) lists the run's LC-MS files with the same
+ * experiment, bioreplicate and data type as the manifest FragPipe saves for this run
+ * (fragpipeManifestEntries), and its run log puts each file in the run's FragPipe group
+ * ("Experiment/Group: <group>" then "  - <path>\t<data type>", FragpipeRun.java:368 createLcmsFilesString). Stops otherwise.
+ *
+ * @param plan_dir FragPipe's work dir after headless --write-plan (FRAGPIPEPLAN fp_work)
+ * @param spectra_files List of [meta, spectra] of the run's LC-MS files (meta.group)
+ * @return plan_dir
+ */
+def checkFragpipePlanManifest(plan_dir, spectra_files) {
+    def entries = { String text ->
+        text.readLines().findAll { line -> line }.collect { line ->
+            def cols = line.split('\t', -1)
+            [cols[0].tokenize('/')[-1]] + cols[1..3]
+        }.sort()
+    }
+    def planned = entries.call(plan_dir.resolve('fragpipe-files.fp-manifest').text)
+    def run = entries.call(generateFragpipeManifest(fragpipeManifestEntries(spectra_files, 'run')))
+    if (planned != run) {
+        error("--fragpipe_plan ${plan_dir} plans other LC-MS files than this run (file, experiment, bioreplicate, data type):\n  plan: ${planned}\n  run:  ${run}")
+    }
+    def logs = plan_dir.listFiles().findAll { f -> f.name ==~ /log_.*\.txt/ }
+    if (logs.size() != 1) {
+        error("--fragpipe_plan ${plan_dir} needs one FragPipe run log log_*.txt, found ${logs*.name}")
+    }
+    def planned_groups = [:]
+    def group = null
+    logs[0].text.readLines().takeWhile { line -> !(line ==~ /\d+ commands to execute:/) }.each { line ->
+        if (line.startsWith('  Experiment/Group:')) {
+            group = line.substring('  Experiment/Group:'.length()).trim()
+        } else if (line.startsWith('  - ') && group != null) {
+            planned_groups[line.substring(4).split('\t')[0].tokenize('/')[-1]] = group
+        }
+    }
+    def run_groups = spectra_files.collectEntries { item -> [item[1].name, item[0].group] }
+    if (planned_groups != run_groups) {
+        error("--fragpipe_plan ${plan_dir} plans other FragPipe groups than this run (file: group):\n  plan: ${planned_groups}\n  run:  ${run_groups}")
+    }
+    return plan_dir
 }
 
 /**
@@ -288,9 +331,9 @@ def percolatorInitWeights(meta) {
 
 /**
  * Number of MSFragger database slices of the workflow (msfragger.misc.slice-db, written to the
- * tool_configs JSON by parse_fragpipe_workflow.py).
+ * tool_configs JSON by bin/plan_to_tool_configs.py).
  *
- * @param json_text JSON string from PARSEFRAGPIPEWORKFLOW tool_configs channel
+ * @param json_text JSON string from the tool_configs channel (PLANTOTOOLCONFIGS)
  * @return Slice count (1 = no split)
  */
 def getMsfraggerNumSlices(json_text) {
@@ -305,9 +348,9 @@ def getMsfraggerNumSlices(json_text) {
 }
 
 /**
- * calibrate_mass of one MSFragger params set, as PARSEFRAGPIPEWORKFLOW wrote it.
+ * calibrate_mass of one MSFragger params set, as FragPipe's plan gives it.
  *
- * @param json_text JSON string from PARSEFRAGPIPEWORKFLOW tool_configs channel
+ * @param json_text JSON string from the tool_configs channel (PLANTOTOOLCONFIGS)
  * @param params_type MSFragger params set ('DDA', 'DIA', 'GPF-DIA', 'DDA+')
  * @return calibrate_mass as an int
  */
@@ -377,7 +420,7 @@ def checkDiaPreprocessing(spectra_files, umpire_runs, diatracer_runs) {
  * FreeQuant (CmdFreequant.java:43; also the TMT FreeQuant that LabelQuant needs,
  * FragpipeRun.java:2470) and Quant (Isobaric) (CmdLabelquant.java:50).
  *
- * @param json_text JSON string from PARSEFRAGPIPEWORKFLOW tool_configs channel
+ * @param json_text JSON string from the tool_configs channel (PLANTOTOOLCONFIGS)
  * @param file_names Names of the LC-MS input files
  * @param im_ms true when the workflow sets workflow.input.data-type.im-ms=true
  * @return json_text unchanged
@@ -902,15 +945,15 @@ def tmtAnnotationLines(rows, spectra_files, workflow_props) {
 /**
  * A tool field of tool_configs.json that must be present (false and '' are valid values).
  *
- * @param json_text JSON string from PARSEFRAGPIPEWORKFLOW tool_configs channel
+ * @param json_text JSON string from the tool_configs channel (PLANTOTOOLCONFIGS)
  * @param tool_name Name of the tool
- * @param field_name Field the parser emits for that tool
+ * @param field_name Field FragPipe's plan gives for that tool
  * @return The field value
  */
 def requireToolField(json_text, tool_name, field_name) {
     def entry = new groovy.json.JsonSlurper().parseText(json_text)?.get(tool_name)
     if (entry == null || !entry.containsKey(field_name)) {
-        error("tool_configs.json has no ${tool_name}.${field_name} - PARSEFRAGPIPEWORKFLOW must emit it")
+        error("tool_configs.json has no ${tool_name}.${field_name} - plan_to_tool_configs.py must emit it")
     }
     return entry[field_name]
 }
@@ -974,7 +1017,7 @@ def sortByRank(files) {
 /**
  * One tool's entry of the tool_configs JSON (run flag, args and the tool's extra fields).
  *
- * @param json_text JSON string from PARSEFRAGPIPEWORKFLOW tool_configs channel
+ * @param json_text JSON string from the tool_configs channel (PLANTOTOOLCONFIGS)
  * @param tool_name Name of the tool
  * @return Map of the tool's entry
  */
@@ -1173,9 +1216,9 @@ def isobaricExperimentAnnotationLines(annotation_lines) {
 /**
  * Apply FragPipe's input data type to an IonQuant option string: --ionmobility is 1 when any
  * LC-MS input is a Bruker .d, 0 when any is .raw, else the workflow's IM-MS button value the
- * parser emitted (TabWorkflow.getInputDataType, TabWorkflow.java:521-538; CmdIonquant.java:197-198).
+ * FragPipe's plan gave (TabWorkflow.getInputDataType, TabWorkflow.java:521-538; CmdIonquant.java:197-198).
  *
- * @param args IonQuant options from the parser
+ * @param args IonQuant options from FragPipe's plan
  * @param spectra_files List of [meta, spectra] of every samplesheet LC-MS file
  * @return args with the --ionmobility value FragPipe uses
  */
@@ -1399,7 +1442,7 @@ def diannSpectraFiles(files, uncalibrated, umpire_runs) {
  * pass, or Philosopher report after FreeQuant/Labelquant; without quantification, the
  * Philosopher filter tables (CmdFPOPcoadaptr.java:429-433).
  *
- * @param json_text JSON string from PARSEFRAGPIPEWORKFLOW tool_configs channel
+ * @param json_text JSON string from the tool_configs channel (PLANTOTOOLCONFIGS)
  * @return 'diann', 'ionquant', 'isobaric', 'report' or 'filter'
  */
 def fpopCoadaptrSource(json_text) {
@@ -1425,7 +1468,7 @@ def fpopCoadaptrSource(json_text) {
  * FragPipe edits them in place, so only the edited version exists.
  *
  * @param meta Meta map of the task
- * @param json_text JSON string from PARSEFRAGPIPEWORKFLOW tool_configs channel
+ * @param json_text JSON string from the tool_configs channel (PLANTOTOOLCONFIGS)
  * @param sources The fpopCoadaptrSource values whose tables this task writes
  * @return meta, plus fpop_coadaptr: <source> when FPOP coADAPTr edits this task's tables
  */
@@ -1442,7 +1485,7 @@ def fpopCoadaptrMeta(meta, json_text, sources) {
  *   FragPipe does not check this up front; its FPOP script then stops with "mod peptide file ...
  *   does not exist" (FragPipe_FPOP_Analysis.py:99-101). This pipeline check fails earlier.
  *
- * @param json_text JSON string from PARSEFRAGPIPEWORKFLOW tool_configs channel
+ * @param json_text JSON string from the tool_configs channel (PLANTOTOOLCONFIGS)
  * @param data_types FragPipe data types of all LC-MS files (meta.data_type)
  * @return json_text unchanged
  */
@@ -1517,19 +1560,6 @@ def opairSpectraSource(spectra_kind, original_name) {
     }
     def name = original_name.toString().toLowerCase()
     return (name.endsWith('.raw') || name.endsWith('.d')) ? 'uncalibrated' : 'input'
-}
-
-/**
- * FragPipe 24.0's templates PARSEFRAGPIPEWORKFLOW stages: fragger_closed.params (the MSFragger tab's
- * closed-search defaults) and diaumpire_se.params (the DIA-Umpire template), kept in the module's assets/.
- *
- * @param project_dir Nextflow projectDir path
- * @return [fragger_closed.params, diaumpire_se.params] files; a missing file stops the run
- */
-def parseFragpipeWorkflowTemplates(project_dir) {
-    return ['fragger_closed.params', 'diaumpire_se.params'].collect { name ->
-        file("${project_dir}/modules/local/parsefragpipeworkflow/assets/${name}", checkIfExists: true)
-    }
 }
 
 /**

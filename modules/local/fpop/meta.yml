@@ -37,7 +37,7 @@ input:
     - config_cli:
         type: list
         description: |
-          FragPipe_FPOP_Analysis.py arguments from parse_fragpipe_workflow.py (CmdFpopQuant.java:90-99):
+          FragPipe_FPOP_Analysis.py arguments from FragPipe's plan (bin/plan_to_tool_configs.py) (CmdFpopQuant.java:90-99):
           input table, region size, control label, FPOP label, subtract control, TMT flag[, unmodified peptide table]
 
 output:

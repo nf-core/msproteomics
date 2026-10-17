@@ -1,0 +1,3 @@
+file	sample	sample_name	condition	replicate
+/plan/raw_files/glyco_a.mzML	A	A	A	1
+/plan/raw_files/glyco_b.mzML	B	B	B	1

@@ -32,10 +32,10 @@ nextflow_workflow {
     }
 
 
-    // FragPipe's run-level MSFragger params (CmdMsfragger.java:441-447, :541-552): the parser's set with database_name = the run's FASTA
+    // FragPipe's run-level MSFragger params (CmdMsfragger.java:441-447, :541-552): the plan's set with database_name = the run's FASTA
     def runFraggerParams = { String output_dir ->
         def files = new File("${output_dir}/msfragger").listFiles().findAll { f -> f.isFile() && f.name ==~ /fragger.*\.params/ }
-        def set = new File(taskDir(output_dir, 'PARSEFRAGPIPEWORKFLOW'), 'configs/fragger.params').readLines()
+        def set = new File(taskDir(output_dir, 'PLANTOTOOLCONFIGS'), 'configs/fragger.params').readLines()
         def run = files ? files[0].readLines() : []
         [names: files*.name, database: run ? run[0] : '', rest_equal: run.drop(1) == set.drop(1)]
     }
@@ -46,6 +46,7 @@ nextflow_workflow {
 
         when {
             params {
+                fragpipe_plan = "${baseDir}/tests/fixtures/fragpipe_plans/stub/fragpipe_parity__lfq_mbr_experiment_bioreplicate"
                 def fixtures = "${baseDir}/tests/fixtures"
                 def ss = new File("${outputDir}/samplesheet.csv")
                 ss.parentFile.mkdirs()
@@ -93,6 +94,7 @@ nextflow_workflow {
 
         when {
             params {
+                fragpipe_plan = "${baseDir}/tests/fixtures/fragpipe_plans/stub/fragpipe_run_files__lfq_mbr_write_sub_mzml"
                 def fixtures = "${baseDir}/tests/fixtures"
                 def ss = new File("${outputDir}/samplesheet.csv")
                 ss.parentFile.mkdirs()
@@ -132,13 +134,15 @@ nextflow_workflow {
         }
     }
 
-    // FP/FragpipeRun.java:582-587: no sdrf.tsv when workflow.misc.save-sdrf=false
+    // FP/FragpipeRun.java:582-587: no sdrf.tsv when workflow.misc.save-sdrf=false. FragPipe applies it after the
+    // run, so the dry run is LFQ-MBR's (the recorded label check plans with and without it differ only in that line)
     test("save-sdrf=false - no sdrf.tsv and no FRAGPIPESDRF task") {
         options "-stub"
         tag "stub"
 
         when {
             params {
+                fragpipe_plan = "${baseDir}/tests/fixtures/fragpipe_plans/stub/fragpipe_parity__lfq_mbr_experiment_bioreplicate"
                 def fixtures = "${baseDir}/tests/fixtures"
                 def ss = new File("${outputDir}/samplesheet.csv")
                 ss.parentFile.mkdirs()
@@ -171,6 +175,7 @@ nextflow_workflow {
 
         when {
             params {
+                fragpipe_plan = "${baseDir}/tests/fixtures/fragpipe_plans/stub/fragpipe_run_files__lfq_nombr_raw_and_mzml"
                 def fixtures = "${baseDir}/tests/fixtures"
                 def ss = new File("${outputDir}/samplesheet.csv")
                 ss.parentFile.mkdirs()
@@ -205,6 +210,7 @@ nextflow_workflow {
 
         when {
             params {
+                fragpipe_plan = "${baseDir}/tests/fixtures/fragpipe_plans/stub/fragpipe_run_files__lfq_mbr_slice_db2"
                 def fixtures = "${baseDir}/tests/fixtures"
                 def ss = new File("${outputDir}/samplesheet.csv")
                 ss.parentFile.mkdirs()
@@ -271,7 +277,9 @@ nextflow_workflow {
         }
     }
 
-    // Pipeline mode without IonQuant: each group's final Report directory, fragpipe.workflow and the manifest
+    // Pipeline mode without IonQuant: each group's final Report directory, fragpipe.workflow and the manifest.
+    // Inputs of the recorded plan fragpipe_wf__glyco_n_lfq_ptms_freequant (FreeQuant in place of IonQuant, one
+    // DDA group "cancer" with test_sample.mzML), as in the FRAGPIPE subworkflow's glyco-chain FreeQuant test
     test("pmultiqc - pipeline mode without IonQuant stages the Report group directories") {
         options "-stub"
         tag "stub"
@@ -279,14 +287,21 @@ nextflow_workflow {
         when {
             params {
                 def fixtures = "${baseDir}/tests/fixtures"
+                def spectra = new File("${outputDir}/spectra/test_sample.mzML")
+                spectra.parentFile.mkdirs()
+                spectra.bytes = new File("${fixtures}/spectra/ctrl_1.mzML").bytes
                 def ss = new File("${outputDir}/samplesheet.csv")
-                ss.parentFile.mkdirs()
-                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
-                def wf = new File("${outputDir}/LFQ-no-IonQuant.workflow")
-                wf.text = new File("${fixtures}/fragpipe_workflows/LFQ-MBR.workflow").text.replace('ionquant.run-ionquant=true', 'ionquant.run-ionquant=false')
+                ss.text = "sample,spectra,experiment,data_type\ntest_sample,${spectra},cancer,DDA\n"
+                def wf = new File("${outputDir}/glyco-N-LFQ-FreeQuant.workflow")
+                wf.text = new File("${fixtures}/fragpipe_workflows/glyco-N-LFQ.workflow").text
+                    .replace('ptmshepherd.run-shepherd=false', 'ptmshepherd.run-shepherd=true')
+                    .replace('freequant.run-freequant=false', 'freequant.run-freequant=true')
+                    .replace('ionquant.run-ionquant=true', 'ionquant.run-ionquant=false')
+                    .replace('saintexpress.run-saint-express=true', 'saintexpress.run-saint-express=false')
                 input             = ss.toString()
                 database          = "${fixtures}/test.fasta"
                 fragpipe_workflow = wf.toString()
+                fragpipe_plan     = "${baseDir}/tests/fixtures/fragpipe_plans/stub/fragpipe_wf__glyco_n_lfq_ptms_freequant"
                 fragpipe_mode     = 'pipeline'
                 outdir            = "$outputDir"
             }
@@ -298,6 +313,7 @@ nextflow_workflow {
                 { assert !workflow.trace.tasks().any { task -> task.name.contains('IONQUANT') } },
                 { assert pmultiqcStaged(outputDir).containsAll(['fragpipe.workflow', 'fragpipe-files.fp-manifest']) : pmultiqcStaged(outputDir) },
                 { assert !pmultiqcStaged(outputDir).any { name -> name.startsWith('combined_') } : pmultiqcStaged(outputDir) },
+                { assert pmultiqcStaged(outputDir).contains('cancer/psm.tsv') : pmultiqcStaged(outputDir) },
                 { assert snapshot(pmultiqcStaged(outputDir), workflow.trace.succeeded()*.name.sort()).match() }
             )
         }
