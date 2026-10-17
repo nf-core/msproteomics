@@ -81,6 +81,7 @@ nextflow run nf-core/msproteomics \
 nextflow run nf-core/msproteomics \
   --mode fragpipe \
   --fragpipe_container docker.io/<your-org>/fragpipe:24.0 \
+  --fragpipe_workflow assets/LFQ-MBR.workflow \
   --fragpipe_threads 16 \
   --input samplesheet.csv \
   --database /path/to/uniprot_human.fasta \
