@@ -39,16 +39,12 @@ workflow MSPROTEOMICS_FRAGPIPE {
     if (workflow.containerEngine && !workflow.stubRun && !params.fragpipe_container) {
         error("--mode fragpipe with ${workflow.containerEngine} needs --fragpipe_container: the licensed FragPipe image that runs every FragPipe tool")
     }
-    // Workflow file when none is given (docs/usage.md): the shipped DDA LFQ workflow, or for the label check the
-    // shipped label check workflow of --tmt_type; TMT quantification has no shipped default, so it needs
-    // --fragpipe_workflow (nf-core/msproteomics#2)
-    if (!params.fragpipe_workflow && params.tmt_mode == 'quant') {
-        error("--tmt_mode ${params.tmt_mode} requires --fragpipe_workflow (a FragPipe .workflow file, see docs/usage.md)")
+    // No default workflow file (nf-core/msproteomics#2, user decision 2026-10-16): --fragpipe_workflow is required,
+    // except for the label check, which takes the shipped label check workflow of --tmt_type
+    if (!params.fragpipe_workflow && params.tmt_mode != 'labelcheck') {
+        error("--mode fragpipe requires --fragpipe_workflow (a FragPipe .workflow file, e.g. the shipped assets/LFQ-MBR.workflow or assets/TMT6.workflow, see docs/usage.md)")
     }
-    def default_workflow = params.tmt_mode == 'labelcheck'
-        ? getTmtLabelcheckWorkflow(params.tmt_type, projectDir)
-        : "${projectDir}/assets/LFQ-MBR.workflow"
-    def fragpipe_workflow_file = file(params.fragpipe_workflow ?: default_workflow, checkIfExists: true)
+    def fragpipe_workflow_file = file(params.fragpipe_workflow ?: getTmtLabelcheckWorkflow(params.tmt_type, projectDir), checkIfExists: true)
     def workflow_props = fragpipeWorkflowProperties(fragpipe_workflow_file)
 
     // One row per samplesheet line (TMT: one per channel); one item per spectra file.

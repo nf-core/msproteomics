@@ -1,5 +1,5 @@
-// --fragpipe_workflow is optional (nextflow_schema.json help_text): without it a FragPipe run uses the
-// shipped DDA LFQ workflow, and --tmt_mode, which has no shipped workflow, stops with an error (nf-core/msproteomics#2)
+// --fragpipe_workflow has no default: a FragPipe run without it stops with an error, --tmt_mode quant included;
+// only --tmt_mode labelcheck selects a shipped workflow, from --tmt_type (nf-core/msproteomics#2)
 nextflow_workflow {
 
     name "Test Workflow MSPROTEOMICS_FRAGPIPE - default --fragpipe_workflow"
@@ -10,7 +10,7 @@ nextflow_workflow {
     tag "msproteomics_fragpipe"
     tag "fragpipe_default_workflow"
 
-    test("no --fragpipe_workflow runs the shipped LFQ-MBR workflow") {
+    test("no --fragpipe_workflow fails") {
         tag "stub"
         options "-stub"
 
@@ -29,13 +29,10 @@ nextflow_workflow {
         }
 
         then {
-            def names = workflow.trace.tasks().collect { t -> t.name }
             assertAll(
-                { assert workflow.success },
-                { assert snapshot(workflow.trace.succeeded().collect { task -> task.name }.sort()).match() },
-                // LFQ-MBR: label-free IonQuant with match-between-runs, no TMT-Integrator
-                { assert names.any { n -> n.contains('IONQUANT') } : names },
-                { assert !names.any { n -> n.contains('TMTINTEGRATOR') } : names }
+                { assert workflow.failed },
+                { assert workflow.trace.tasks().size() == 0 },
+                { assert (workflow.stdout + workflow.stderr).any { line -> line.contains('--mode fragpipe requires --fragpipe_workflow') } : workflow.stdout }
             )
         }
     }
@@ -62,7 +59,7 @@ nextflow_workflow {
             assertAll(
                 { assert workflow.failed },
                 { assert workflow.trace.tasks().size() == 0 },
-                { assert (workflow.stdout + workflow.stderr).any { line -> line.contains('--tmt_mode quant requires --fragpipe_workflow') } : workflow.stdout }
+                { assert (workflow.stdout + workflow.stderr).any { line -> line.contains('--mode fragpipe requires --fragpipe_workflow') } : workflow.stdout }
             )
         }
     }

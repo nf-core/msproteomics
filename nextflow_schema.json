@@ -437,7 +437,7 @@
                     "format": "file-path",
                     "description": "Path to a custom FragPipe .workflow file.",
                     "fa_icon": "fas fa-file-code",
-                    "help_text": "A FragPipe workflow file (.workflow) containing all tool parameters. Without it, --mode fragpipe runs the shipped assets/LFQ-MBR.workflow and --tmt_mode labelcheck runs the shipped label check workflow selected by --tmt_type; --tmt_mode quant requires it (e.g. FragPipe's TMT10.workflow, or the shipped assets/TMT6.workflow)."
+                    "help_text": "A FragPipe workflow file (.workflow) containing all tool parameters. Required for --mode fragpipe (no default), e.g. the shipped assets/LFQ-MBR.workflow or assets/TMT6.workflow, or one exported from FragPipe; only --tmt_mode labelcheck may omit it and then runs the shipped label check workflow selected by --tmt_type."
                 },
                 "fragpipe_container": {
                     "type": "string",
