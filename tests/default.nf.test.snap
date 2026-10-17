@@ -1140,18 +1140,18 @@
     "dia_diann_tables__AMD_EPYC_9V74_80-Core_Processor__avx512": {
         "content": [
             [
-                "diann_report.gg_matrix.tsv:md5,80177d30df4e02aad452d76e2cb4bbea",
-                "diann_report.pg_matrix.tsv:md5,d64a389538e4e6e1ed362e78cd657a7d",
-                "diann_report.pr_matrix.tsv:md5,1589dea5d8ca3c24cc12d75c73ea201d",
+                "diann_report.gg_matrix.tsv:md5,5c1e0a86da7339b2057758b529ac73c3",
+                "diann_report.pg_matrix.tsv:md5,39d7b66d37b225e332eefdcecf0d442a",
+                "diann_report.pr_matrix.tsv:md5,bafd5f8c3b1f04d302f99e9bf4dfd40b",
                 "diann_report.stats.tsv:md5,ff7ea103f2a0192cef1907023e80ffcf",
                 "diann_report.tsv:md5,26bd1e5dca4f4442424aad66856090e1",
-                "diann_report.unique_genes_matrix.tsv:md5,80177d30df4e02aad452d76e2cb4bbea",
-                "empirical_library.gg_matrix.tsv:md5,80177d30df4e02aad452d76e2cb4bbea",
-                "empirical_library.pg_matrix.tsv:md5,d64a389538e4e6e1ed362e78cd657a7d",
-                "empirical_library.pr_matrix.tsv:md5,1589dea5d8ca3c24cc12d75c73ea201d",
+                "diann_report.unique_genes_matrix.tsv:md5,eb0b62e600ac30cf63bc178f38e36603",
+                "empirical_library.gg_matrix.tsv:md5,0a3eb64ce814539667bc2c92be085afe",
+                "empirical_library.pg_matrix.tsv:md5,be7cdc17f855fc599a6e2694072f1075",
+                "empirical_library.pr_matrix.tsv:md5,a2a51916863cd78399b858b15e5835be",
                 "empirical_library.stats.tsv:md5,713e31809648b667ed0ed80597380848",
                 "empirical_library.tsv:md5,5428642ab5964aeeb30f0547e0efc8dd",
-                "empirical_library.unique_genes_matrix.tsv:md5,80177d30df4e02aad452d76e2cb4bbea",
+                "empirical_library.unique_genes_matrix.tsv:md5,d7fcdec08b04b236dabff0ffb7bb3878",
                 "dia_sample1_human_sp_subset.stats.tsv:md5,ff7ea103f2a0192cef1907023e80ffcf",
                 "dia_sample1_human_sp_subset.stats.tsv:md5,713e31809648b667ed0ed80597380848",
                 "dia_sample1_human_sp_subset.tsv:md5,5428642ab5964aeeb30f0547e0efc8dd",
@@ -1161,10 +1161,10 @@
                 "experimental_design_triqler_in.tsv:md5,47723f5660af654be018365667108d25"
             ]
         ],
-        "timestamp": "2026-10-09T19:06:48.060131",
+        "timestamp": "2026-10-17T06:21:54.178020",
         "meta": {
             "nf-test": "0.9.5",
-            "nextflow": "25.04.0"
+            "nextflow": "25.10.4"
         }
     },
     "dia_precursor_set__AMD_EPYC_7763_64-Core_Processor__noavx512": {
@@ -1326,6 +1326,41 @@
             ]
         ],
         "timestamp": "2026-10-17T02:37:34.965036",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "dia_qpx_counts__AMD_EPYC_9V74_80-Core_Processor__avx512": {
+        "content": [
+            [
+                "count.precursors.layers.raw.n_nan\t0",
+                "count.precursors.layers.raw.n_non_nan\t118",
+                "count.precursors.layers.raw.n_obs\t1",
+                "count.precursors.layers.raw.n_vars\t118",
+                "count.precursors.n_nan\t0",
+                "count.precursors.n_non_nan\t118",
+                "count.precursors.n_obs\t1",
+                "count.precursors.n_precursors_outside_pr_matrix\t0",
+                "count.precursors.n_raw_cells_outside_pr_matrix\t0",
+                "count.precursors.n_source_zero_to_nan\t0",
+                "count.precursors.n_unstored_to_nan\t0",
+                "count.precursors.n_vars\t118",
+                "count.proteins.layers.raw.n_nan\t0",
+                "count.proteins.layers.raw.n_non_nan\t79",
+                "count.proteins.layers.raw.n_obs\t1",
+                "count.proteins.layers.raw.n_vars\t79",
+                "count.proteins.n_nan\t0",
+                "count.proteins.n_non_nan\t79",
+                "count.proteins.n_obs\t1",
+                "count.proteins.n_raw_cells_outside_pg_matrix\t0",
+                "count.proteins.n_report_only_groups_dropped\t0",
+                "count.proteins.n_source_zero_to_nan\t0",
+                "count.proteins.n_unstored_to_nan\t0",
+                "count.proteins.n_vars\t79"
+            ]
+        ],
+        "timestamp": "2026-10-17T06:21:54.178020",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"
