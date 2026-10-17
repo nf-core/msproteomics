@@ -79,7 +79,7 @@ Every test asserts a snapshot of its deterministic output, except where the test
 Some modules have stub tests only, because real inputs are private data or need the licensed image:
 `opair`, `pairscans`, `philosopherabacus`, `philosopherfilter`, `philosopheriprophet`, `philosopherlabelquant`, `philosopherproteinprophet`, `philosopherreport`, `ptmprophet`, `ptmshepherd`, `tmtintegrator` and `writesubmzml`.
 Their real-data coverage is the golden tests (`modules/local/<module>/tests/golden*.nf.test`, compared with FragPipe 24.0 runs on the same data) and the Tower parity runs of the whole pipeline.
-`pmultiqc` runs for real in the DIA pipeline test (`tests/default.nf.test`, tag `dia_integration`).
+`pmultiqc` runs for real in the DIA pipeline test (`tests/default.nf.test`, tag `dia_integration`) and, with its FragPipe plugin on recorded FragPipe tables, in `tests/modules/pmultiqc_fragpipe.nf.test` (tag `integration`); CI runs both in the DIA integration job.
 `openmspeakpicker` (`--openms_peakpicking`) and `tdf2mzml` (`--convert_dotd`) are off by default and have no real-data test yet.
 Update the snapshots with the following command:
 

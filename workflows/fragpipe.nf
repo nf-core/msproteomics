@@ -21,13 +21,14 @@ include { FRAGPIPESDRF } from '../modules/local/fragpipesdrf/main'
 include { FRAGPIPESAVEWORKFLOW } from '../modules/local/fragpipesaveworkflow/main'
 include { WRITETEXTFILE as WRITE_FRAGPIPE_MANIFEST } from '../modules/local/writetextfile/main'
 include { FRAGPIPESECONDPASS } from '../modules/local/fragpipesecondpass/main'
+include { PMULTIQC as PMULTIQC_FRAGPIPE } from '../modules/bigbio/pmultiqc/main'
 
 // qpx export: FragPipe LFQ -> QPX Parquet + .h5mu/.h5ad; TMT-Integrator reports -> .h5mu/.h5ad
 include { QPXFRAGPIPE } from '../modules/local/qpxfragpipe/main'
 include { TMTANNDATA  } from '../modules/local/tmtanndata/main'
 
 // FragPipe utilities
-include { msfraggerConsoleLogs; subMzmlWeights; generateFragpipeManifest; fragpipeManifestEntries; parseSamplesheet; speclibOrDiannRuns; checkDiaPreprocessing; uniqueSpectraFiles; requireFragpipeLcmsFiles; tmtAnnotationLines; fragpipeWorkflowProperties; qpxFragpipeExport } from '../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils'
+include { msfraggerConsoleLogs; subMzmlWeights; generateFragpipeManifest; fragpipeManifestEntries; parseSamplesheet; speclibOrDiannRuns; checkDiaPreprocessing; uniqueSpectraFiles; requireFragpipeLcmsFiles; tmtAnnotationLines; fragpipeWorkflowProperties; qpxFragpipeExport; pmultiqcFragpipeInputs } from '../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -160,6 +161,14 @@ workflow MSPROTEOMICS_FRAGPIPE {
             }
             [[id: 'fragpipe'], abundance, config]
         }
+        // pmultiqc: FragPipe's work dir root files and each group's directory
+        ch_pmultiqc_files = FRAGPIPE_HEADLESS_WF.out.all_results.map { results ->
+            def files = [results].flatten()
+            pmultiqcFragpipeInputs(
+                files.findAll { result -> result.parent.name == 'results' },
+                files.findAll { result -> result.name == 'psm.tsv' && result.parent.name != 'results' }.collect { psm -> psm.parent }
+            )
+        }
     } else {
         //
         // PIPELINE MODE: Modular FragPipe subworkflows with Nextflow orchestration
@@ -228,6 +237,16 @@ workflow MSPROTEOMICS_FRAGPIPE {
                 }
                 [[id: 'fragpipe'], abundance, config]
             }
+        // pmultiqc: the whole work dir of the last IonQuant pass (its combined_*.tsv, the blank group's tables and each
+        // group's rewritten psm.tsv and ion.tsv, in FragPipe's layout), else each group's final Report directory;
+        // with fragpipe.workflow and the manifest
+        ch_pmultiqc_files = FRAGPIPE_PIPELINE.out.quant_dir.map { dir -> [1, [dir]] }
+            .mix(FRAGPIPE_PIPELINE.out.results_dir.map { _meta, dir -> dir }.collect(sort: true).map { dirs -> [0, dirs] })
+            .toList()
+            .map { sources -> sources.max { source -> source[0] } }
+            .combine(FRAGPIPESAVEWORKFLOW.out.workflow.map { _meta, saved_workflow -> saved_workflow })
+            .combine(ch_fragpipe_manifest)
+            .map { _source, dirs, saved_workflow, manifest -> pmultiqcFragpipeInputs([saved_workflow, manifest], dirs) }
 
         // MSFragger console text in the order FragPipe runs MSFragger (FRAGPIPESDRF, FRAGPIPESECONDPASS)
         def ch_msfragger_logs = FRAGPIPE_PIPELINE.out.msfragger_logs
@@ -288,6 +307,11 @@ workflow MSPROTEOMICS_FRAGPIPE {
                 .combine(ch_annotation)
                 .map { meta, abundance, config, annotation -> [meta, abundance, annotation, config] }
         )
+    }
+    // Proteomics QC report (pmultiqc FragPipe plugin); multiqc_config.yml is staged with the results (ext.args --config)
+    if (params.enable_pmultiqc) {
+        def pmultiqc_config = file("${projectDir}/assets/multiqc_config.yml", checkIfExists: true)
+        PMULTIQC_FRAGPIPE(ch_pmultiqc_files.map { inputs -> inputs + [pmultiqc_config] })
     }
 
     emit:

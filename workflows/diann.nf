@@ -14,7 +14,7 @@ include { FILE_PREPARATION       } from '../subworkflows/local/file_preparation/
 include { DIA_PROTEOMICS_ANALYSIS } from '../subworkflows/nf-core/dia_proteomics_analysis/main'
 include { MSSTATSLFQ as MSSTATS } from '../modules/local/msstatslfq/main'
 include { IQ                     } from '../modules/local/iq/main'
-include { PMULTIQC               } from '../modules/local/pmultiqc/main'
+include { PMULTIQC               } from '../modules/bigbio/pmultiqc/main'
 include { QPX_DIANN              } from '../modules/bigbio/qpx/diann/main'
 include { QPXEXPORT              } from '../modules/local/qpxexport/main'
 
@@ -164,7 +164,8 @@ workflow MSPROTEOMICS_DIANN {
         )
     }
 
-    // Proteomics QC report (pmultiqc) over the mzTab, experimental design, mzML statistics and DIA-NN report
+    // Proteomics QC report (pmultiqc) over the mzTab, experimental design, mzML statistics and DIA-NN report;
+    // multiqc_config.yml is staged with them (ext.args --config), as in bigbio/quantmsdiann
     if (params.enable_pmultiqc) {
         def pmultiqc_config = file("${projectDir}/assets/multiqc_config.yml", checkIfExists: true)
         PMULTIQC(
@@ -172,10 +173,10 @@ workflow MSPROTEOMICS_DIANN {
                 .mix(
                     ch_expdesign.map { _meta, expdesign -> expdesign },
                     DIA_PROTEOMICS_ANALYSIS.out.mzml_statistics.map { _meta, stats -> stats },
-                    ch_diann_report
+                    ch_diann_report,
+                    channel.of(pmultiqc_config)
                 )
-                .collect()
-                .map { files -> [[id: 'experiment'], files, pmultiqc_config] }
+                .collect(sort: true)
         )
     }
 

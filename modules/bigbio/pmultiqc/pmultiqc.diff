@@ -1,0 +1,58 @@
+Changes in component 'bigbio/pmultiqc'
+'modules/bigbio/pmultiqc/meta.yml' is unchanged
+Changes in 'pmultiqc/main.nf':
+--- modules/bigbio/pmultiqc/main.nf
++++ modules/bigbio/pmultiqc/main.nf
+@@ -17,7 +17,7 @@
+     output:
+     path "*.html",       emit: ch_pmultiqc_report
+     path "*.db",         optional: true, emit: ch_pmultiqc_db
+-    path "versions.yml", emit: versions
++    path "versions.yml", emit: versions, topic: versions
+     path "*_data",       emit: data
+ 
+     when:
+@@ -30,11 +30,24 @@
+         -f \\
+         ${args} \\
+         ./results \\
+-        -o .
++        -o . 2>&1 | tee pmultiqc.log
++    # pmultiqc 0.0.48 logs these and exits 0 with an empty report: a plugin error (pmultiqc/modules/core/core.py:107),
++    # no plugin (core.py:113), and a plugin that found nothing to report (fragpipe/fragpipe.py:135,155; diann/diann.py:102
++    # for --diann-plugin). The quantms plugin has no such exit: its get_data() always returns True (quantms/quantms.py:191)
++    if grep -F \\
++        -e "encountered an error and was skipped" \\
++        -e "No pmultiqc plugin selected; skipping." \\
++        -e "No FragPipe files found." \\
++        -e "Required input not found: psm.tsv" \\
++        -e "DIANN report not found. Please check your data!" \\
++        pmultiqc.log; then
++        echo "pmultiqc: the plugin failed or found nothing to report (see the line above)" >&2
++        exit 1
++    fi
+ 
+     cat <<-END_VERSIONS > versions.yml
+     "${task.process}":
+-        pmultiqc: \$(multiqc --pmultiqc_version | sed -e "s/pmultiqc, version //g")
++        pmultiqc: \$(multiqc --pmultiqc-version | sed -e "s/pmultiqc, version //g")
+     END_VERSIONS
+     """
+ 
+@@ -45,7 +58,7 @@
+ 
+     cat <<-END_VERSIONS > versions.yml
+     "${task.process}":
+-        pmultiqc: \$(multiqc --pmultiqc_version | sed -e "s/pmultiqc, version //g" 2>/dev/null || echo "0.0.48")
++        pmultiqc: \$(multiqc --pmultiqc-version | sed -e "s/pmultiqc, version //g" 2>/dev/null || echo "0.0.48")
+     END_VERSIONS
+     """
+ }
+
+'modules/bigbio/pmultiqc/environment.yml' is unchanged
+'modules/bigbio/pmultiqc/tests/nextflow.config' is unchanged
+'modules/bigbio/pmultiqc/tests/multiqc_config.yml' is unchanged
+'modules/bigbio/pmultiqc/tests/nextflow.config.diann' is unchanged
+'modules/bigbio/pmultiqc/tests/nextflow.config.quantms' is unchanged
+'modules/bigbio/pmultiqc/tests/main.nf.test' is unchanged
+************************************************************

@@ -194,6 +194,17 @@ jobs:
             --ci \
             --verbose
 
+      # pmultiqc's FragPipe plugin on recorded FragPipe 24.0 tables (public BioContainers image, no FragPipe image)
+      - name: Run pmultiqc FragPipe test
+        env:
+          NFT_WORKDIR: ${{ env.NFT_WORKDIR }}
+        run: |
+          nf-test test tests/modules/pmultiqc_fragpipe.nf.test \
+            --profile=+docker \
+            --tag integration \
+            --ci \
+            --verbose
+
       # A new CPU model has no dia_*__<model> snapshots (--ci writes none): its tables, its qpx export and the snapshot file record them.
       # upload-artifact skips hidden paths and NFT_WORKDIR is the literal "~" dir, so stage them first.
       - name: Stage DIA results

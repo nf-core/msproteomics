@@ -17,6 +17,20 @@ nextflow_workflow {
         new File("${output_dir}/../work", prefix).listFiles().find { d -> d.name.startsWith(suffix) }
     }
 
+    // pmultiqc's inputs, staged flat in results/ (bigbio/pmultiqc): the FragPipe work dir root files and each group's
+    // directory, listed below results/ (a group directory is a symlink; its files are listed through it)
+    def pmultiqcStaged = { String output_dir ->
+        def results = new File(taskDir(output_dir, 'PMULTIQC_FRAGPIPE'), 'results')
+        def names = []
+        results.listFiles().each { f ->
+            names << f.name
+            if (f.isDirectory()) {
+                f.listFiles().each { g -> names << "${f.name}/${g.name}".toString() }
+            }
+        }
+        names.sort()
+    }
+
 
     // FragPipe's run-level MSFragger params (CmdMsfragger.java:441-447, :541-552): the parser's set with database_name = the run's FASTA
     def runFraggerParams = { String output_dir ->
@@ -64,7 +78,8 @@ nextflow_workflow {
                 // FRAGPIPESAVEWORKFLOW writes FragPipe's UI state from the run's workflow and manifest
                 { assert new File("${outputDir}/fragpipe/fragpipe.workflow").readLines()[0] == '# Version info:' },
                 { assert new File(taskDir(outputDir, 'FRAGPIPESAVEWORKFLOW'), 'input/LFQ-MBR.workflow').text == new File("${fixtures}/fragpipe_workflows/LFQ-MBR.workflow").text },
-                { assert snapshot(manifest.readLines().collect { line -> line.replace(fixtures, '<fixtures>') }).match() }
+                // pmultiqc: the last IonQuant pass's work dir, fragpipe.workflow and the manifest
+                { assert snapshot(manifest.readLines().collect { line -> line.replace(fixtures, '<fixtures>') }, pmultiqcStaged(outputDir)).match() }
             )
         }
     }
@@ -192,6 +207,67 @@ nextflow_workflow {
                 { assert runFraggerParams(outputDir).rest_equal },
                 { assert logs.size() == 4 && logs.every { name -> name == 'msfragger_calibrate.log' } : logs },
                 { assert snapshot(logs).match() }
+            )
+        }
+    }
+
+    // Headless mode: FragPipe's work dir as FRAGPIPEHEADLESS leaves it, with the manifest and workflow FragPipe saves
+    // there (FragpipeRun.java:371-373, :890-893)
+    test("pmultiqc - headless mode stages FragPipe's work dir root files and group directories") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                input             = ss.toString()
+                database          = "${fixtures}/test.fasta"
+                fragpipe_workflow = "${fixtures}/fragpipe_workflows/LFQ-MBR.workflow"
+                fragpipe_mode     = 'headless'
+                outdir            = "$outputDir"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert pmultiqcStaged(outputDir).containsAll(['fragpipe.workflow', 'fragpipe-files.fp-manifest', 'sample1/psm.tsv']) : pmultiqcStaged(outputDir) },
+                { assert snapshot(pmultiqcStaged(outputDir), workflow.trace.succeeded()*.name.sort()).match() }
+            )
+        }
+    }
+
+    // Pipeline mode without IonQuant: each group's final Report directory, fragpipe.workflow and the manifest
+    test("pmultiqc - pipeline mode without IonQuant stages the Report group directories") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                def wf = new File("${outputDir}/LFQ-no-IonQuant.workflow")
+                wf.text = new File("${fixtures}/fragpipe_workflows/LFQ-MBR.workflow").text.replace('ionquant.run-ionquant=true', 'ionquant.run-ionquant=false')
+                input             = ss.toString()
+                database          = "${fixtures}/test.fasta"
+                fragpipe_workflow = wf.toString()
+                fragpipe_mode     = 'pipeline'
+                outdir            = "$outputDir"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert !workflow.trace.tasks().any { task -> task.name.contains('IONQUANT') } },
+                { assert pmultiqcStaged(outputDir).containsAll(['fragpipe.workflow', 'fragpipe-files.fp-manifest']) : pmultiqcStaged(outputDir) },
+                { assert !pmultiqcStaged(outputDir).any { name -> name.startsWith('combined_') } : pmultiqcStaged(outputDir) },
+                { assert snapshot(pmultiqcStaged(outputDir), workflow.trace.succeeded()*.name.sort()).match() }
             )
         }
     }

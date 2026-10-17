@@ -242,6 +242,17 @@ workflow FRAGPIPE_QUANT {
             rows.groupBy { row -> row[0] }.collect { mode, mode_rows -> [mode, mode_rows.max { row -> row[1] }[2]] }
         }
 
+    // FragPipe's work dir after the last IonQuant pass (label-free, TMT MS1, isobaric): each pass rewrites
+    // the groups' psm.tsv and ion.tsv in place (FragpipeRun.java:2477-2479); empty when IonQuant does not run
+    ch_quant_dir = IONQUANT.out.results_dir.map { _meta, dir -> [0, dir] }
+        .mix(
+            IONQUANT_MS1.out.results_dir.map { _meta, dir -> [1, dir] },
+            IONQUANT_ISOBARIC.out.results_dir.map { _meta, dir -> [2, dir] }
+        )
+        .toList()
+        .filter { passes -> !passes.isEmpty() }
+        .map { passes -> passes.max { pass -> pass[0] }[1] }
+
     emit:
     combined_protein = IONQUANT.out.combined_protein           // channel: [ val(meta), path(combined_protein.tsv) ]
     combined_peptide = IONQUANT.out.combined_peptide           // channel: [ val(meta), path(combined_peptide.tsv) ]
@@ -257,4 +268,5 @@ workflow FRAGPIPE_QUANT {
     tmt_dir          = TMTINTEGRATOR.out.results_dir           // channel: [ val(meta), path(tmt-report) ]
     tmt_unmod_dir    = TMTINTEGRATOR_UNMOD.out.results_dir     // channel: [ val(meta), path(tmt-report-unmod) ]
     isobaric_dir     = IONQUANT_ISOBARIC.out.results_dir       // channel: [ val(meta), path(results_dir) ]
+    quant_dir        = ch_quant_dir                            // channel: path(results_dir) - the last IonQuant pass's work dir
 }

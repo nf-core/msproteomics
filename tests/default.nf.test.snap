@@ -186,7 +186,7 @@
                     "FileConverter": "3.6.0"
                 },
                 "PMULTIQC": {
-                    "pmultiqc": "0.0.39"
+                    "pmultiqc": "0.0.48"
                 },
                 "QPXEXPORT": {
                     "anndata": "0.13.4",
@@ -262,40 +262,13 @@
                 "pipeline_info/nf_core_msproteomics_software_mqc_versions.yml",
                 "pmultiqc",
                 "pmultiqc/multiqc_data",
-                "pmultiqc/multiqc_data/IDs_over_RT.txt",
-                "pmultiqc/multiqc_data/charge_state_of_per_file.txt",
-                "pmultiqc/multiqc_data/distribution_of_precursor_charges.txt",
-                "pmultiqc/multiqc_data/experimental_design.txt",
-                "pmultiqc/multiqc_data/heatmap.txt",
-                "pmultiqc/multiqc_data/identification_summary_table.txt",
-                "pmultiqc/multiqc_data/intensity_distribution_box.txt",
                 "pmultiqc/multiqc_data/llms-full.txt",
-                "pmultiqc/multiqc_data/loess_rt_irt.txt",
-                "pmultiqc/multiqc_data/modifications_per_raw_file.txt",
-                "pmultiqc/multiqc_data/ms1_area_distribution_box.txt",
-                "pmultiqc/multiqc_data/ms1_bpc.txt",
-                "pmultiqc/multiqc_data/ms1_peaks.txt",
-                "pmultiqc/multiqc_data/ms1_tic.txt",
-                "pmultiqc/multiqc_data/ms_general_stats.txt",
                 "pmultiqc/multiqc_data/multiqc.log",
                 "pmultiqc/multiqc_data/multiqc.parquet",
                 "pmultiqc/multiqc_data/multiqc_citations.txt",
                 "pmultiqc/multiqc_data/multiqc_data.json",
                 "pmultiqc/multiqc_data/multiqc_sources.txt",
-                "pmultiqc/multiqc_data/normalisation_factor_over_rt.txt",
-                "pmultiqc/multiqc_data/number_of_peptides_per_proteins_Frequency.txt",
-                "pmultiqc/multiqc_data/number_of_peptides_per_proteins_Percentage.txt",
-                "pmultiqc/multiqc_data/peak_intensity_distribution.txt",
-                "pmultiqc/multiqc_data/peak_width_over_rt.txt",
-                "pmultiqc/multiqc_data/peaks_per_ms2.txt",
-                "pmultiqc/multiqc_data/peptide_id_count.txt",
-                "pmultiqc/multiqc_data/peptides_quantification_table.txt",
-                "pmultiqc/multiqc_data/pipeline_result_statistics.txt",
-                "pmultiqc/multiqc_data/protein_group_count.txt",
-                "pmultiqc/multiqc_data/protein_quant_result.txt",
-                "pmultiqc/multiqc_data/rt_error_over_rt.txt",
                 "pmultiqc/multiqc_report.html",
-                "pmultiqc/quantms.db",
                 "qpx",
                 "qpx/diann.dataset.parquet",
                 "qpx/diann.feature.parquet",
@@ -343,7 +316,7 @@
                 "samplesheet.sdrf.tsv:md5,d60f765ead52d1f6caf3b72d4f5c5ff7"
             ]
         ],
-        "timestamp": "2026-10-17T01:40:06.852404769",
+        "timestamp": "2026-10-17T02:09:00.097475689",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"
@@ -1038,7 +1011,6 @@
                 "pmultiqc",
                 "pmultiqc/multiqc_report.html",
                 "pmultiqc/multiqc_report_data",
-                "pmultiqc/multiqc_report_data/multiqc.log",
                 "quantmsutils",
                 "quantmsutils/config",
                 "quantmsutils/config/GENERATE_DIANN_CFG.log",

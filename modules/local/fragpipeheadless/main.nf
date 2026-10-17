@@ -112,6 +112,8 @@ ${headlessStagingLines(raw_files, layout)}
     ${annotation_rows ? "mkdir -p results/tmt-report && touch results/tmt-report/abundance_protein_None.tsv && printf 'tmtintegrator:\\n  log2transformed: true\\n' > results/tmt-integrator-conf.yml" : ''}
     touch results/sample1/psm.tsv
     touch results/sample1/protein.tsv
+    # FragPipe saves the manifest and the workflow in its work dir (FragpipeRun.java:371-373, :890-893)
+    touch results/fragpipe-files.fp-manifest results/fragpipe.workflow
 
     printf '"%s":\\n    fragpipe: "24.0"\\n' "${task.process}" > versions.yml
     """

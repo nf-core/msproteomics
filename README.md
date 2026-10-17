@@ -170,7 +170,7 @@ See the key publications at [DIA-NN GitHub](https://github.com/vdemichev/diann#k
 - FragPipe search and validation: MSFragger, MSBooster, Crystal-C, Percolator, PeptideProphet, PTMProphet, ProteinProphet, iProphet, Philosopher
 - FragPipe quantification and downstream: IonQuant, TMT-Integrator, PTM-Shepherd, O-Pair, MBG, SAINTexpress, FPOP coADAPTr, FP-Meta, FragReporter
 - FragPipe DIA: DIA-Umpire, diaTracer, EasyPQP, DIA-NN
-- Reporting: [MultiQC](https://multiqc.info/)
+- Reporting: [MultiQC](https://multiqc.info/), [pmultiqc](https://github.com/bigbio/pmultiqc) (DIA and FragPipe modes)
 - Export: [qpx](https://github.com/bigbio/qpx), [AnnData](https://github.com/scverse/anndata), [MuData](https://github.com/scverse/mudata)
 
 An extensive list of references for all tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.

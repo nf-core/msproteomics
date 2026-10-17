@@ -81,10 +81,9 @@ Each page is named after the module directory under `modules/local` (the process
 
 ## QC and Reporting
 
-| Module                                          | Description                                                                |
-| ----------------------------------------------- | -------------------------------------------------------------------------- |
-| [tmtlabelcheckanalyze](tmtlabelcheckanalyze.md) | Analyze TMT labeling efficiency from PSM data                              |
-| [pmultiqc](pmultiqc.md)                         | Proteomics-specific QC report generation using the pmultiqc MultiQC plugin |
+| Module                                          | Description                                   |
+| ----------------------------------------------- | --------------------------------------------- |
+| [tmtlabelcheckanalyze](tmtlabelcheckanalyze.md) | Analyze TMT labeling efficiency from PSM data |
 
 ## Export
 
