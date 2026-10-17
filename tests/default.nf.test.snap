@@ -323,12 +323,12 @@
             ],
             [
                 "engine\tdiann",
-                "guards_passed\tG1,G2,G4,G5,G6,G7,G8,G9,G10,G16,G17",
+                "guards_passed\tG1,G2,G4,G5,G6,G7,G8,G9,G10,G16,G17,G20",
                 "modalities\tprecursors,proteins",
                 "obs_key\trun_stem",
                 "precursors.layers.raw.quantity_source\tPrecursor.Quantity (DIA-NN report via qpx; not normalised; pr_matrix cells only)",
                 "precursors.missing_value_convention\tNaN = not quantified (unstored cell, NA/empty, or source value <= 0; linear scale); dense float32",
-                "precursors.quantity_source\tPrecursor.Normalised (DIA-NN report via qpx, pr_matrix filter Global.Q.Value & Global.PG.Q.Value <= 1.0; normalised)",
+                "precursors.quantity_source\tPrecursor.Normalised (DIA-NN report via qpx, pr_matrix filter Global.Q.Value & Global.PG.Q.Value <= 0.05; normalised)",
                 "prefix\tdiann",
                 "proteins.layers.raw.quantity_source\tPG.Quantity (DIA-NN report via qpx; not normalised; pg_matrix cells only)",
                 "proteins.missing_value_convention\tNaN = not quantified (unstored cell, NA/empty, or source value <= 0; linear scale); dense float32",
@@ -343,7 +343,7 @@
                 "samplesheet.sdrf.tsv:md5,d60f765ead52d1f6caf3b72d4f5c5ff7"
             ]
         ],
-        "timestamp": "2026-10-16T18:01:49.506129005",
+        "timestamp": "2026-10-17T01:40:06.852404769",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"
@@ -353,17 +353,17 @@
         "content": [
             [
                 "count.precursors.layers.raw.n_nan\t0",
-                "count.precursors.layers.raw.n_non_nan\t113",
+                "count.precursors.layers.raw.n_non_nan\t57",
                 "count.precursors.layers.raw.n_obs\t1",
-                "count.precursors.layers.raw.n_vars\t113",
+                "count.precursors.layers.raw.n_vars\t57",
                 "count.precursors.n_nan\t0",
-                "count.precursors.n_non_nan\t113",
+                "count.precursors.n_non_nan\t57",
                 "count.precursors.n_obs\t1",
-                "count.precursors.n_precursors_outside_pr_matrix\t0",
+                "count.precursors.n_precursors_outside_pr_matrix\t56",
                 "count.precursors.n_raw_cells_outside_pr_matrix\t0",
                 "count.precursors.n_source_zero_to_nan\t0",
                 "count.precursors.n_unstored_to_nan\t0",
-                "count.precursors.n_vars\t113",
+                "count.precursors.n_vars\t57",
                 "count.proteins.layers.raw.n_nan\t0",
                 "count.proteins.layers.raw.n_non_nan\t23",
                 "count.proteins.layers.raw.n_obs\t1",
@@ -378,7 +378,7 @@
                 "count.proteins.n_vars\t23"
             ]
         ],
-        "timestamp": "2026-10-16T17:57:51.30240745",
+        "timestamp": "2026-10-17T01:40:05.717875554",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"
