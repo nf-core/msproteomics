@@ -98,6 +98,9 @@ nextflow_pipeline {
             // Key suffix: /proc/cpuinfo "model name", trimmed, with every run of characters outside [A-Za-z0-9.-]
             // replaced by "_", then "__avx512" if the flags hold avx512f, else "__noavx512". A new class fails under
             // --ci with a missing snapshot.
+            // DIA-NN's predicted library depends on the CPU instruction set (vdemichev/DiaNN#778, #1179); with ~79 protein groups
+            // one decoy group moves the protein-group q-value by ~1.3%, so DIA-NN's 0.05 matrix filter is a cliff here and the
+            // pg/pr matrices and qpx counts differ per CPU model (Xeon 6975P-C: 57 precursors / 23 groups, EPYC 7763: 118 / 79).
             def cpuinfo = new File('/proc/cpuinfo').readLines()
             def cpu_model = cpuinfo.find { line -> line.startsWith('model name') }.split(':', 2)[1].trim()
             def cpu_flags = cpuinfo.find { line -> line.startsWith('flags') }.split(':', 2)[1].trim().split(/\s+/) as List
