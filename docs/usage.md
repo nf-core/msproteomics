@@ -150,7 +150,7 @@ nextflow run nf-core/msproteomics \
   -profile docker
 ```
 
-**TMT Label Check** -- assess TMT labeling efficiency; `--tmt_type` selects the shipped `assets/TMT-labelcheck-229.workflow` (TMT6/10/11) or `assets/TMT-labelcheck-304.workflow` (TMT16/18/35/TMTpro):
+**TMT Label Check** -- assess TMT labeling efficiency; `--fragpipe_workflow` is not allowed here; `--tmt_type` selects the shipped `assets/TMT-labelcheck-229.workflow` (TMT6/10/11) or `assets/TMT-labelcheck-304.workflow` (TMT16/18/35/TMTpro):
 
 ```bash
 nextflow run nf-core/msproteomics \
@@ -280,17 +280,17 @@ Percolator's `*_psms.tsv`, which a group directory keeps with `percolator.keep-t
 
 ## Key Parameters
 
-| Parameter             | Description                                                | Default                                  |
-| --------------------- | ---------------------------------------------------------- | ---------------------------------------- |
-| `--input`             | Path to CSV samplesheet                                    | Required                                 |
-| `--mode`              | Analysis mode: `diann` or `fragpipe`                       | Required                                 |
-| `--outdir`            | Output directory                                           | Required                                 |
-| `--database`          | FASTA protein database                                     | `--database` or `--proteome` is required |
-| `--proteome`          | iProteome key ([iProteomes](#iproteomes))                  | None                                     |
-| `--fragpipe_workflow` | FragPipe `.workflow` file (FragPipe mode)                  | Required, except `--tmt_mode labelcheck` |
-| `--tmt_mode`          | TMT analysis mode: `labelcheck` or `quant` (FragPipe mode) | None                                     |
-| `--fragpipe_mode`     | FragPipe execution mode: `pipeline` or `headless`          | `pipeline`                               |
-| `--enable_pmultiqc`   | pmultiqc QC report ([QC report](#qc-report-pmultiqc))      | `true`                                   |
+| Parameter             | Description                                                | Default                                     |
+| --------------------- | ---------------------------------------------------------- | ------------------------------------------- |
+| `--input`             | Path to CSV samplesheet                                    | Required                                    |
+| `--mode`              | Analysis mode: `diann` or `fragpipe`                       | Required                                    |
+| `--outdir`            | Output directory                                           | Required                                    |
+| `--database`          | FASTA protein database                                     | `--database` or `--proteome` is required    |
+| `--proteome`          | iProteome key ([iProteomes](#iproteomes))                  | None                                        |
+| `--fragpipe_workflow` | FragPipe `.workflow` file (FragPipe mode)                  | Required; none with `--tmt_mode labelcheck` |
+| `--tmt_mode`          | TMT analysis mode: `labelcheck` or `quant` (FragPipe mode) | None                                        |
+| `--fragpipe_mode`     | FragPipe execution mode: `pipeline` or `headless`          | `pipeline`                                  |
+| `--enable_pmultiqc`   | pmultiqc QC report ([QC report](#qc-report-pmultiqc))      | `true`                                      |
 
 ## Container Requirements
 

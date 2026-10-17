@@ -437,7 +437,7 @@
                     "format": "file-path",
                     "description": "Path to a custom FragPipe .workflow file.",
                     "fa_icon": "fas fa-file-code",
-                    "help_text": "A FragPipe workflow file (.workflow) containing all tool parameters. Required for --mode fragpipe (no default), e.g. the shipped assets/LFQ-MBR.workflow or assets/TMT6.workflow, or one exported from FragPipe; only --tmt_mode labelcheck may omit it and then runs the shipped label check workflow selected by --tmt_type."
+                    "help_text": "A FragPipe workflow file (.workflow) containing all tool parameters. Required for --mode fragpipe (no default), e.g. the shipped assets/LFQ-MBR.workflow or assets/TMT6.workflow, or one exported from FragPipe; --tmt_mode labelcheck runs its own shipped label check workflow selected by --tmt_type and stops when this is also given."
                 },
                 "fragpipe_container": {
                     "type": "string",
@@ -464,7 +464,7 @@
                     "description": "TMT plex type: TMT6, TMT10, TMT11, TMT16, TMT18, TMT35, TMTPRO.",
                     "enum": ["TMT6", "TMT10", "TMT11", "TMT16", "TMT18", "TMT35", "TMTPRO"],
                     "fa_icon": "fas fa-tags",
-                    "help_text": "Required for --tmt_mode labelcheck: the label the label check analysis counts, and, without --fragpipe_workflow, the shipped label check workflow (229 Da for TMT6/10/11, 304 Da for TMT16/18/35/TMTPRO). Not used by --tmt_mode quant, where the workflow file sets the label (tmtintegrator.channel_num)."
+                    "help_text": "Required for --tmt_mode labelcheck: the label the label check analysis counts, and the shipped label check workflow it runs (no --fragpipe_workflow allowed) (229 Da for TMT6/10/11, 304 Da for TMT16/18/35/TMTPRO). Not used by --tmt_mode quant, where the workflow file sets the label (tmtintegrator.channel_num)."
                 }
             }
         },
