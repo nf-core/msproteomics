@@ -244,7 +244,9 @@ nextflow_workflow {
         }
     }
 
-    // Pipeline mode without IonQuant: each group's final Report directory, fragpipe.workflow and the manifest
+    // Pipeline mode without IonQuant: each group's final Report directory, fragpipe.workflow and the manifest.
+    // Inputs of the recorded plan fragpipe_wf__glyco_n_lfq_ptms_freequant (FreeQuant in place of IonQuant, one
+    // DDA group "cancer" with test_sample.mzML), as in the FRAGPIPE subworkflow's glyco-chain FreeQuant test
     test("pmultiqc - pipeline mode without IonQuant stages the Report group directories") {
         options "-stub"
         tag "stub"
@@ -252,14 +254,21 @@ nextflow_workflow {
         when {
             params {
                 def fixtures = "${baseDir}/tests/fixtures"
+                def spectra = new File("${outputDir}/spectra/test_sample.mzML")
+                spectra.parentFile.mkdirs()
+                spectra.bytes = new File("${fixtures}/spectra/ctrl_1.mzML").bytes
                 def ss = new File("${outputDir}/samplesheet.csv")
-                ss.parentFile.mkdirs()
-                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
-                def wf = new File("${outputDir}/LFQ-no-IonQuant.workflow")
-                wf.text = new File("${fixtures}/fragpipe_workflows/LFQ-MBR.workflow").text.replace('ionquant.run-ionquant=true', 'ionquant.run-ionquant=false')
+                ss.text = "sample,spectra,experiment,data_type\ntest_sample,${spectra},cancer,DDA\n"
+                def wf = new File("${outputDir}/glyco-N-LFQ-FreeQuant.workflow")
+                wf.text = new File("${fixtures}/fragpipe_workflows/glyco-N-LFQ.workflow").text
+                    .replace('ptmshepherd.run-shepherd=false', 'ptmshepherd.run-shepherd=true')
+                    .replace('freequant.run-freequant=false', 'freequant.run-freequant=true')
+                    .replace('ionquant.run-ionquant=true', 'ionquant.run-ionquant=false')
+                    .replace('saintexpress.run-saint-express=true', 'saintexpress.run-saint-express=false')
                 input             = ss.toString()
                 database          = "${fixtures}/test.fasta"
                 fragpipe_workflow = wf.toString()
+                fragpipe_plan     = "${baseDir}/tests/fixtures/fragpipe_plans/stub/fragpipe_wf__glyco_n_lfq_ptms_freequant"
                 fragpipe_mode     = 'pipeline'
                 outdir            = "$outputDir"
             }
@@ -271,6 +280,7 @@ nextflow_workflow {
                 { assert !workflow.trace.tasks().any { task -> task.name.contains('IONQUANT') } },
                 { assert pmultiqcStaged(outputDir).containsAll(['fragpipe.workflow', 'fragpipe-files.fp-manifest']) : pmultiqcStaged(outputDir) },
                 { assert !pmultiqcStaged(outputDir).any { name -> name.startsWith('combined_') } : pmultiqcStaged(outputDir) },
+                { assert pmultiqcStaged(outputDir).contains('cancer/psm.tsv') : pmultiqcStaged(outputDir) },
                 { assert snapshot(pmultiqcStaged(outputDir), workflow.trace.succeeded()*.name.sort()).match() }
             )
         }
