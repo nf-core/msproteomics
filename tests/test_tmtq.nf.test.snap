@@ -57,6 +57,9 @@
                 "PLANTOTOOLCONFIGS": [
                     "python"
                 ],
+                "PMULTIQC_FRAGPIPE": [
+                    "pmultiqc"
+                ],
                 "TMTINTEGRATOR": [
                     "fragpipe",
                     "tmtintegrator"
@@ -86,11 +89,12 @@
                 "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_TOOL_CONFIGS:PLANTOTOOLCONFIGS",
                 "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_VALIDATE:PERCOLATOR",
                 "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:GENERATESDRFFROMSAMPLESHEET",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:PMULTIQC_FRAGPIPE",
                 "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:WRITE_FRAGPIPE_MANIFEST",
                 "NFCORE_MSPROTEOMICS:MULTIQC"
             ]
         ],
-        "timestamp": "2026-10-16T02:38:34.487454588",
+        "timestamp": "2026-10-16T17:48:38.905484079",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"

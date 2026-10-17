@@ -432,6 +432,7 @@ workflow FRAGPIPE {
     combined_peptide      = FRAGPIPE_QUANT.out.combined_peptide                // channel: [ val(meta), path(combined_peptide.tsv) ]
     combined_ion          = FRAGPIPE_QUANT.out.combined_ion                    // channel: [ val(meta), path(combined_ion.tsv) ]
     ionquant_dir          = FRAGPIPE_QUANT.out.ionquant_dir                    // channel: [ val(meta), path(results_dir) ]
+    quant_dir             = FRAGPIPE_QUANT.out.quant_dir                       // channel: path(results_dir) - work dir after the last IonQuant pass
     tmt_abundance         = FRAGPIPE_QUANT.out.tmt_abundance                   // channel: [ val(meta), path(abundance_*.tsv) ]
     tmt_dir               = FRAGPIPE_QUANT.out.tmt_dir                         // channel: [ val(meta), path(tmt-report) ]
     combined_modified_peptide = FRAGPIPE_QUANT.out.combined_modified_peptide   // channel: [ val(meta), path(combined_modified_peptide.tsv) ]

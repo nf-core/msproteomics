@@ -1632,4 +1632,50 @@ nextflow_function {
             )
         }
     }
+    // pmultiqc 0.0.48 fragpipe_io.py:50-124: of FragPipe's root files only the names the plugin reads, sorted, then
+    // the directories, each once; nothing is read or listed (the paths need not exist)
+    test("pmultiqcFragpipeInputs - root files by name, then directories") {
+        function "pmultiqcFragpipeInputs"
+        when {
+            function {
+                """
+                def results = file('/fragpipe/results')
+                input[0] = ['psm.tsv', 'fragpipe.workflow', 'combined_protein.tsv', 'combined_modified_peptide.tsv', 'fragger.params',
+                            'a_percolator_target_psms.tsv', 'fragpipe-files.fp-manifest', 'ion.tsv', 'combined_ion.tsv',
+                            'combined_peptide.tsv', 'reprint.spc.tsv'].collect { n -> results.resolve(n) }
+                input[1] = [results.resolve('treated'), results.resolve('control'), results.resolve('control')]
+                """
+            }
+        }
+        then {
+            def names = function.result.collect { f -> f.toString().tokenize("/")[-1] }
+            assertAll(
+                { assert function.success },
+                { assert names == ['combined_ion.tsv', 'combined_peptide.tsv', 'combined_protein.tsv', 'fragpipe-files.fp-manifest',
+                                   'fragpipe.workflow', 'ion.tsv', 'psm.tsv', 'control', 'treated'] },
+                { assert snapshot(names).match() }
+            )
+        }
+    }
+
+    // Pipeline mode: the IonQuant work dir or the Report group directories, with fragpipe.workflow and the manifest
+    test("pmultiqcFragpipeInputs - a work dir with fragpipe.workflow and the manifest") {
+        function "pmultiqcFragpipeInputs"
+        when {
+            function {
+                """
+                input[0] = [file('/work/ab/fragpipe.workflow'), file('/work/cd/fragpipe-files.fp-manifest')]
+                input[1] = [file('/work/ef/fragpipe')]
+                """
+            }
+        }
+        then {
+            def paths = function.result.collect { f -> f.toString() }
+            assertAll(
+                { assert function.success },
+                { assert paths == ['/work/cd/fragpipe-files.fp-manifest', '/work/ab/fragpipe.workflow', '/work/ef/fragpipe'] },
+                { assert snapshot(paths).match() }
+            )
+        }
+    }
 }

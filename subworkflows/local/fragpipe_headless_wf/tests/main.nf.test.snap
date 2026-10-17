@@ -36,6 +36,8 @@
                     "combined_ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
                     "combined_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
                     "combined_protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "fragpipe-files.fp-manifest:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "fragpipe.workflow:md5,d41d8cd98f00b204e9800998ecf8427e",
                     "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
                     "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
@@ -50,10 +52,10 @@
                 "combined_ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
             ]
         ],
-        "timestamp": "2026-03-31T18:32:04.260052282",
+        "timestamp": "2026-10-17T01:52:47.849349128",
         "meta": {
             "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
+            "nextflow": "25.10.4"
         }
     }
 }

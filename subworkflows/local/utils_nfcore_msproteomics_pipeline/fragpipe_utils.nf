@@ -557,6 +557,28 @@ def psmGroupDirs(dir) {
 }
 
 /**
+ * pmultiqc's inputs for its FragPipe plugin, laid out as FragPipe's work dir: the root files it reads and the
+ * directories holding the groups' tables. The plugin finds psm.tsv, ion.tsv, combined_{protein,peptide,ion}.tsv,
+ * fragpipe.workflow, the manifest and fragger.params by name anywhere below its input folder (pmultiqc 0.0.48
+ * fragpipe_io.py:50-124); PMULTIQC stages its inputs flat (results/*), so each group's same-named psm.tsv and
+ * ion.tsv come in a directory, and of the root files only those names are passed (the plugin's PSM rule takes
+ * every *.tsv whose name contains "psm", fragpipe_io.py:88-89; PMULTIQC_FRAGPIPE limits that search to those names in the
+ * directories). fragger.params is not passed, so both modes give the plugin the same files: pipeline mode has no
+ * work dir copy, and the parameters table takes its search, tolerance and modification rows from
+ * fragpipe.workflow (fragpipe_io.py:403-416); only the rows fragger.params alone has (threads, decoy prefix,
+ * isotope error, fragpipe_io.py:428-432) are left out. Path operations only: no file is read or listed.
+ *
+ * @param root_files Files of FragPipe's work dir root (only the names the plugin reads are kept)
+ * @param dirs       Directories with the groups' tables: each group's directory, or a whole FragPipe work dir
+ * @return The root files, by name, then the directories, by name
+ */
+def pmultiqcFragpipeInputs(root_files, dirs) {
+    def names = ['psm.tsv', 'ion.tsv', 'combined_protein.tsv', 'combined_peptide.tsv', 'combined_ion.tsv',
+        'fragpipe.workflow', 'fragpipe-files.fp-manifest']
+    return root_files.findAll { f -> f.name in names }.unique().sort { f -> f.name } + dirs.unique().sort { d -> d.name }
+}
+
+/**
  * Results directory of a Philosopher filter/report task, from its result files.
  * The modules emit the files (not the directory) so publishDir sees each file under its
  * task-relative path and can put the blank group's files at the top (conf/modules.config);

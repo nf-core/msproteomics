@@ -8,11 +8,11 @@
                 [
                     "OPENMSPEAKPICKER",
                     "openms",
-                    "3.5.0-pre-exported-20251212"
+                    "3.6.0"
                 ]
             ]
         ],
-        "timestamp": "2026-10-14T19:49:26.113112475",
+        "timestamp": "2026-10-16T01:04:42.314320896",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"

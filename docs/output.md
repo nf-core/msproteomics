@@ -176,7 +176,8 @@ It is skipped with `--skip_post_msstats`.
 
 </details>
 
-[pmultiqc](https://github.com/bigbio/pmultiqc) is published with `--enable_pmultiqc`.
+[pmultiqc](https://github.com/bigbio/pmultiqc) is published with `--enable_pmultiqc` (the default).
+In DIA mode the report comes from its quantms plugin (experimental design, mzML statistics, DIA-NN report), in FragPipe mode from its FragPipe plugin (each group's `psm.tsv` and `ion.tsv`, IonQuant's `combined_*.tsv`, `fragpipe.workflow` and the manifest).
 
 ### Reference files
 
