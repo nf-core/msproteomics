@@ -4,13 +4,13 @@
  * Runs bin/qpx_export.py on the dataset qpxc convert diann wrote: silent-failure guards
  * (G1, G2, G4-G10, G16, G17: modalities, obs = the SDRF runs, values against pg_matrix), then the
  * MuData with missing values as NaN in a dense float32 matrix (qpx's own MuData view stores them as
- * sparse zeros) and the proteins AnnData. The pr_matrix filter (--matrix-qvalue) comes from ext.args.
+ * sparse zeros) and the proteins AnnData. Precursors are filtered at the matrix FDR the DIA-NN log states.
  *
  * Input:
- *   - meta: Metadata map (meta.id is the dataset prefix, the qpxc --output-prefix; meta.matrix_qvalue the
- *     matrix FDR DIA-NN applied, which conf/modules.config passes as --matrix-qvalue)
+ *   - meta: Metadata map (meta.id is the dataset prefix, the qpxc --output-prefix)
  *   - qpx_dataset: QPX Parquet files of the dataset
  *   - pg_matrix: DIA-NN protein-group matrix (pg_matrix.tsv)
+ *   - diann_log: DIA-NN log of the final quantification (the matrix FDR it applied)
  *   - sdrf: SDRF of the run (run set and obs metadata)
  *
  * Output:
@@ -29,7 +29,7 @@ process QPXEXPORT {
         'quay.io/biocontainers/qpx:1.1.5--pyhdfd78af_0' }"
 
     input:
-    tuple val(meta), path(qpx_dataset, stageAs: 'qpx_output/*'), path(pg_matrix)
+    tuple val(meta), path(qpx_dataset, stageAs: 'qpx_output/*'), path(pg_matrix), path(diann_log)
     path(sdrf)
 
     output:
@@ -51,6 +51,7 @@ process QPXEXPORT {
         --engine diann \\
         --sdrf-file ${sdrf} \\
         --pg-matrix-file ${pg_matrix} \\
+        --diann-log ${diann_log} \\
         --qpx-folder qpx_output \\
         --prefix ${prefix} \\
         ${args}

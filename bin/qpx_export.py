@@ -15,7 +15,7 @@ DIA-NN values:
 DIA-NN applies its precursor ``Global.Q.Value`` and protein-group FDR filter there),
 ``layers['raw']`` = PG.Quantity from qpx on the same cells; ``precursors.X`` =
 Precursor.Normalised on DIA-NN's pr_matrix cells (Global.Q.Value and Global.PG.Q.Value
-<= ``--matrix-qvalue``), ``layers['raw']`` =
+<= the matrix FDR the ``--diann-log`` states), ``layers['raw']`` =
 Precursor.Quantity on the same cells.
 obs carries every SDRF column (sanitized names) and, for FragPipe, the
 experiment annotation's ``condition`` / ``replicate``.
@@ -30,6 +30,7 @@ Any guard failure prints ``ERROR: G<n>: ...`` and exits 3 without writing.
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 from pathlib import Path
 
@@ -73,7 +74,7 @@ from qpx_export_lib import (
 
 MODALITIES = ("precursors", "proteins")
 GUARDS_RUN = {
-    "diann": "G1,G2,G4,G5,G6,G7,G8,G9,G10,G16,G17",
+    "diann": "G1,G2,G4,G5,G6,G7,G8,G9,G10,G16,G17,G20",
     "fragpipe": "G1,G2,G3,G4,G5,G6,G7,G8,G9,G10,G11,G16",
 }
 
@@ -138,8 +139,8 @@ def parse_args(argv=None) -> argparse.Namespace:
     parser.add_argument("--qpx-folder", help="qpxc --output-folder")
     parser.add_argument("--prefix", help="qpxc --output-prefix; also the output file prefix")
     parser.add_argument("--pg-matrix-file", help="DIA-NN pg_matrix.tsv (required for --engine diann)")
-    parser.add_argument("--matrix-qvalue", type=float, default=0.01,
-                        help="the matrix FDR the DIA-NN run applied (its log; default 0.01) for the precursor filter")
+    parser.add_argument("--diann-log", help="DIA-NN log of the final quantification (required for --engine diann): "
+                        "the matrix FDR it applied filters the precursors")
     parser.add_argument("--pg-file", help="FragPipe combined_protein.tsv (required for --engine fragpipe)")
     parser.add_argument("--experiment-annotation-file", help="FragPipe experiment_annotation.tsv (file -> IonQuant experiment)")
     parser.add_argument("--outdir", default=".", help="output directory (default: .)")
@@ -151,8 +152,8 @@ def parse_args(argv=None) -> argparse.Namespace:
         parser.error("--precheck is only defined for --engine fragpipe")
     if not args.precheck and not (args.qpx_folder and args.prefix):
         parser.error("--qpx-folder and --prefix are required unless --precheck is given")
-    if args.engine == "diann" and not args.pg_matrix_file:
-        parser.error("--engine diann requires --pg-matrix-file")
+    if args.engine == "diann" and not (args.pg_matrix_file and args.diann_log):
+        parser.error("--engine diann requires --pg-matrix-file and --diann-log")
     return args
 
 
@@ -417,9 +418,28 @@ def export(args) -> None:
     print(f"wrote {args.prefix}.h5mu: " + ", ".join(f"{n} {out.mod[n].shape}" for n in out.mod))
 
 
+def diann_matrix_qvalue(path) -> float:
+    """G20: the q-value at which DIA-NN filtered its precursor and protein-group matrices, from its log.
+
+    "Precursor/protein x sample matrices will be filtered at <q> ..." when --matrix-qvalue is given (DIA-NN
+    1.8.1 applies at most 0.05: --matrix-qvalue 0.1 or 1 logs 0.05), else the saved matrix line
+    "Precursor levels matrix (<n>% precursor and protein group FDR)" (1% by default).
+    """
+    text = Path(path).read_text()
+    given = re.search(r"matrices will be filtered at (\S+) precursor", text)
+    if given:
+        return float(given.group(1))
+    saved = re.search(r"Precursor levels matrix \((\d+(?:\.\d+)?)% precursor", text)
+    if saved:
+        return float(saved.group(1)) / 100
+    raise GuardError("G20", f"{Path(path).name} states no matrix FDR (no 'matrices will be filtered at' or 'Precursor levels matrix' line)")
+
+
 def main(argv=None) -> int:
     args = parse_args(argv)
     try:
+        if args.engine == "diann":
+            args.matrix_qvalue = diann_matrix_qvalue(args.diann_log)
         if args.precheck:
             print(f"precheck OK: protein quantity source {run_precheck(args)}")
         else:

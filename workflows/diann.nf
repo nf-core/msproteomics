@@ -4,7 +4,7 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { generateSdrfBookkeeping; resolveProteome; resolveOrganism; resolveDatabase; resolveDiannSpeclib; diannMatrixQvalue } from '../subworkflows/local/utils_nfcore_msproteomics_pipeline'
+include { generateSdrfBookkeeping; resolveProteome; resolveOrganism; resolveDatabase; resolveDiannSpeclib } from '../subworkflows/local/utils_nfcore_msproteomics_pipeline'
 
 // SDRF generation (bookkeeping only)
 include { GENERATESDRFFROMSAMPLESHEET } from '../modules/local/generatesdrffromsamplesheet/main'
@@ -159,13 +159,7 @@ workflow MSPROTEOMICS_DIANN {
                 .map { dataset -> [dataset] }  // one list of Parquet files, kept as one element by combine
                 .combine(DIA_PROTEOMICS_ANALYSIS.out.pg_matrix.map { _meta, pg_matrix -> pg_matrix })
                 .combine(DIA_PROTEOMICS_ANALYSIS.out.diann_log.map { _meta, log -> log })
-                .map { dataset, pg_matrix, log ->
-                    def matrix_qvalue = diannMatrixQvalue(log.text)
-                    if (matrix_qvalue == null) {
-                        error("qpx export: the DIA-NN log ${log.name} states no matrix q-value, so QPXEXPORT cannot filter the precursors. Rerun with --skip_qpx_export true.")
-                    }
-                    [[id: 'diann', matrix_qvalue: matrix_qvalue], dataset, pg_matrix]
-                },
+                .map { dataset, pg_matrix, log -> [[id: 'diann'], dataset, pg_matrix, log] },
             ch_sdrf
         )
     }

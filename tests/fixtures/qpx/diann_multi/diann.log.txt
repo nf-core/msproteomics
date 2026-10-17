@@ -1,1 +1,2 @@
 DIA-NN 1.8.1 (Data-Independent Acquisition by Neural Networks)
+[0:00] Precursor levels matrix (1% precursor and protein group FDR) saved to report.pr_matrix.tsv.

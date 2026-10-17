@@ -27,7 +27,7 @@
                 "count.proteins.n_unstored_to_nan\t3",
                 "count.proteins.n_vars\t4",
                 "engine\tdiann",
-                "guards_passed\tG1,G2,G4,G5,G6,G7,G8,G9,G10,G16,G17",
+                "guards_passed\tG1,G2,G4,G5,G6,G7,G8,G9,G10,G16,G17,G20",
                 "modalities\tprecursors,proteins",
                 "obs_key\trun_stem",
                 "precursors.layers.raw.quantity_source\tPrecursor.Quantity (DIA-NN report via qpx; not normalised; pr_matrix cells only)",
@@ -62,7 +62,7 @@
                 ]
             }
         ],
-        "timestamp": "2026-10-16T14:01:32.672744059",
+        "timestamp": "2026-10-17T01:30:18.198673201",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"
@@ -197,7 +197,7 @@
                 "count.proteins.n_unstored_to_nan\t0",
                 "count.proteins.n_vars\t3",
                 "engine\tdiann",
-                "guards_passed\tG1,G2,G4,G5,G6,G7,G8,G9,G10,G16,G17",
+                "guards_passed\tG1,G2,G4,G5,G6,G7,G8,G9,G10,G16,G17,G20",
                 "modalities\tprecursors,proteins",
                 "obs_key\trun_stem",
                 "precursors.layers.raw.quantity_source\tPrecursor.Quantity (DIA-NN report via qpx; not normalised; pr_matrix cells only)",
@@ -209,7 +209,7 @@
                 "proteins.quantity_source\tPG.MaxLFQ (DIA-NN pg_matrix; normalised)"
             ]
         ],
-        "timestamp": "2026-10-16T14:01:47.231174103",
+        "timestamp": "2026-10-17T01:30:32.286795377",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"

@@ -59,7 +59,7 @@ def export(engine, case: Path, qpx_folder: Path, outdir: Path, sdrf=None, extra=
     cmd = [sys.executable, EXPORT, "--engine", engine, "--sdrf-file", sdrf or case / "sdrf.tsv",
            "--qpx-folder", qpx_folder, "--prefix", PREFIX, "--outdir", outdir, *extra]
     if engine == "diann":
-        cmd += ["--pg-matrix-file", pg_matrix or case / "pg_matrix.tsv"]
+        cmd += ["--pg-matrix-file", pg_matrix or case / "pg_matrix.tsv", "--diann-log", case / "diann.log.txt"]
     if engine == "fragpipe":
         cmd += ["--pg-file", case / "combined_protein.tsv"] + (annotation_args(case) if annotation else [])
     return subprocess.run(list(map(str, cmd)), capture_output=True, text=True)
@@ -78,7 +78,7 @@ def read_summary(outdir):
 
 def stable_summary(engine, obs_key, sources):
     rows = {"engine": engine, "prefix": PREFIX, "obs_key": obs_key, "modalities": "precursors,proteins",
-            "guards_passed": "G1,G2,G4,G5,G6,G7,G8,G9,G10,G16,G17" if engine == "diann"
+            "guards_passed": "G1,G2,G4,G5,G6,G7,G8,G9,G10,G16,G17,G20" if engine == "diann"
             else "G1,G2,G3,G4,G5,G6,G7,G8,G9,G10,G11,G16"}
     for name, source in sources.items():
         if "." in name:
@@ -342,3 +342,30 @@ class TestCli:
     def test_help(self):
         result = subprocess.run([sys.executable, str(EXPORT), "--help"], capture_output=True, text=True)
         assert result.returncode == 0 and "--precheck" in result.stdout
+
+
+class TestDiannMatrixQvalue:
+    """G20: the precursor filter is the matrix FDR the DIA-NN log states (DIA-NN 1.8.1 test_dia logs)."""
+
+    sys.path.insert(0, str(REPO / "bin"))
+    import qpx_export as qe
+
+    def log(self, tmp_path, text):
+        path = tmp_path / "diann_report.log.txt"
+        path.write_text("DIA-NN 1.8.1 (Data-Independent Acquisition by Neural Networks)\n" + text)
+        return path
+
+    def test_default_one_percent(self, tmp_path):
+        path = self.log(tmp_path, "[0:00] Precursor levels matrix (1% precursor and protein group FDR) saved to x.pr_matrix.tsv.\n")
+        assert self.qe.diann_matrix_qvalue(path) == 0.01
+
+    def test_given_matrix_qvalue_as_applied(self, tmp_path):
+        # --matrix-qvalue 1: DIA-NN 1.8.1 applies 0.05
+        path = self.log(tmp_path, "Precursor/protein x sample matrices will be filtered at 0.05 precursor & protein-level FDR\n"
+                        "[0:00] Precursor levels matrix (5% precursor and protein group FDR) saved to x.pr_matrix.tsv.\n")
+        assert self.qe.diann_matrix_qvalue(path) == 0.05
+
+    def test_g20_log_without_matrices(self, tmp_path):
+        path = self.log(tmp_path, "Output will be filtered at 0.01 FDR\n")
+        with pytest.raises(self.qe.GuardError, match="G20: diann_report.log.txt states no matrix FDR"):
+            self.qe.diann_matrix_qvalue(path)
