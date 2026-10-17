@@ -268,6 +268,15 @@ With fewer controls than `saintexpress.virtual-controls` (`-L`, 100 by default) 
 With no controls and only one or two IPs it can abort (exit 134, `terminate called after throwing an instance of 'char const*'` or `nlopt::roundoff_limited`): FragPipe 24.0's `SAINTexpress-int` and `SAINTexpress-spc` do this on such input, and FragPipe's Downstream Run fails the same way.
 The task then fails with SAINTexpress's output and names the step; add control experiments (names starting with `CONTROL`) or set `saintexpress.run-saint-express=false`.
 
+### QC report (pmultiqc)
+
+`--enable_pmultiqc` (on by default) writes a [pmultiqc](https://github.com/bigbio/pmultiqc) 0.0.48 report to `pmultiqc/` in every mode, with the `pmultiqc` module of [bigbio/nf-modules](https://github.com/bigbio/nf-modules) that quantms uses.
+DIA mode runs its quantms plugin (`--quantms-plugin`) on the experimental design, the mzML statistics and the DIA-NN report.
+FragPipe mode (both `--fragpipe_mode` values, and the TMT label check) runs its FragPipe plugin (`--fragpipe-plugin`) on FragPipe's work dir layout: each group's directory (its `psm.tsv` and `ion.tsv`), and of the work dir root the `psm.tsv` and `ion.tsv` of the blank group, IonQuant's `combined_protein.tsv`, `combined_peptide.tsv` and `combined_ion.tsv`, `fragpipe.workflow` and the manifest.
+In pipeline mode these are the tables after the last IonQuant pass, or each group's final Philosopher Report directory when IonQuant does not run.
+Percolator's `*_psms.tsv`, which a group directory keeps with `percolator.keep-tsv-files=true`, are not read: the plugin's table search is set to `psm.tsv`, `ion.tsv` and `combined_{protein,peptide,ion}.tsv`, and the task fails when pmultiqc reports a plugin error or finds nothing to report.
+`--contaminant_string` (default `CONT`) marks contaminant proteins in both modes, matched anywhere in the protein name (the FragPipe plugin ignores case); `--skip_table_plots`, `--pmultiqc_idxml_skip` and `--quantification_method` apply to DIA mode only, as the FragPipe plugin reads none of them.
+
 ## Key Parameters
 
 | Parameter             | Description                                                | Default                                  |
@@ -280,6 +289,7 @@ The task then fails with SAINTexpress's output and names the step; add control e
 | `--fragpipe_workflow` | FragPipe `.workflow` file or workflow name (FragPipe mode) | `assets/LFQ-MBR.workflow`                |
 | `--tmt_mode`          | TMT analysis mode: `labelcheck` or `quant` (FragPipe mode) | None                                     |
 | `--fragpipe_mode`     | FragPipe execution mode: `pipeline` or `headless`          | `pipeline`                               |
+| `--enable_pmultiqc`   | pmultiqc QC report ([QC report](#qc-report-pmultiqc))      | `true`                                   |
 
 ## Container Requirements
 

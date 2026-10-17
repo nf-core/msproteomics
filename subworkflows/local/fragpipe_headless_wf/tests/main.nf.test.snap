@@ -11,11 +11,11 @@
                 "combined_ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
             ]
         ],
+        "timestamp": "2026-10-05T14:45:11.652359216",
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-10-05T14:45:11.652359216"
+        }
     },
     "fragpipe_headless_wf - stub workflow decoy tag reaches database preparation": {
         "content": [
@@ -29,11 +29,11 @@
                 "combined_ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
             ]
         ],
+        "timestamp": "2026-10-04T23:03:47.593888173",
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-10-04T23:03:47.593888173"
+        }
     },
     "erwinia_headless_result_names": {
         "content": [
@@ -41,11 +41,11 @@
                 
             ]
         ],
+        "timestamp": "2026-03-25T18:36:10.868197652",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.2"
-        },
-        "timestamp": "2026-03-25T18:36:10.868197652"
+        }
     },
     "fragpipe_headless_wf - stub with RAW input": {
         "content": [
@@ -54,6 +54,8 @@
                     "combined_ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
                     "combined_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
                     "combined_protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "fragpipe-files.fp-manifest:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "fragpipe.workflow:md5,d41d8cd98f00b204e9800998ecf8427e",
                     "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
                     "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
@@ -68,10 +70,10 @@
                 "combined_ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
             ]
         ],
+        "timestamp": "2026-10-16T20:31:33.989495344",
         "meta": {
             "nf-test": "0.9.5",
-            "nextflow": "25.10.2"
-        },
-        "timestamp": "2026-03-31T18:32:04.260052282"
+            "nextflow": "25.10.4"
+        }
     }
 }

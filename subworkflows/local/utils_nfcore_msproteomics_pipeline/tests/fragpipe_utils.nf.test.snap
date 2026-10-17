@@ -19,6 +19,26 @@
             "nextflow": "25.10.4"
         }
     },
+    "pmultiqcFragpipeInputs - root files by name, then directories": {
+        "content": [
+            [
+                "combined_ion.tsv",
+                "combined_peptide.tsv",
+                "combined_protein.tsv",
+                "fragpipe-files.fp-manifest",
+                "fragpipe.workflow",
+                "ion.tsv",
+                "psm.tsv",
+                "control",
+                "treated"
+            ]
+        ],
+        "timestamp": "2026-10-16T20:41:16.201826076",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
     "fpopCoadaptrSource - Philosopher filter tables when nothing quantifies": {
         "content": [
             "filter"
@@ -306,6 +326,20 @@
         "timestamp": "2026-10-06T00:40:38.593860606",
         "meta": {
             "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        }
+    },
+    "pmultiqcFragpipeInputs - a work dir with fragpipe.workflow and the manifest": {
+        "content": [
+            [
+                "/work/cd/fragpipe-files.fp-manifest",
+                "/work/ab/fragpipe.workflow",
+                "/work/ef/fragpipe"
+            ]
+        ],
+        "timestamp": "2026-10-16T20:41:21.579461626",
+        "meta": {
+            "nf-test": "0.9.5",
             "nextflow": "25.10.4"
         }
     },

@@ -112,6 +112,11 @@ output:
       description: |
         Isobaric dir.
         Structure: [ val(meta), path(results_dir) ]
+  - quant_dir:
+      type: channel
+      description: |
+        FragPipe's work dir after the last IonQuant pass (label-free, TMT MS1, isobaric); empty when IonQuant does not run.
+        Structure: path(results_dir)
 authors:
   - "@dongzehe"
 maintainers:

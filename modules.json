@@ -2,6 +2,18 @@
     "name": "nf-core/msproteomics",
     "homePage": "https://github.com/nf-core/msproteomics",
     "repos": {
+        "https://github.com/bigbio/nf-modules.git": {
+            "modules": {
+                "bigbio": {
+                    "pmultiqc": {
+                        "branch": "main",
+                        "git_sha": "837f1ac9eb34dc68fbcb39cc80575f7acc101c5a",
+                        "installed_by": ["modules"],
+                        "patch": "modules/bigbio/pmultiqc/pmultiqc.diff"
+                    }
+                }
+            }
+        },
         "https://github.com/nf-core/modules.git": {
             "modules": {
                 "nf-core": {

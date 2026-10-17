@@ -52,6 +52,9 @@
                     "fragpipe",
                     "philosopher"
                 ],
+                "PMULTIQC_FRAGPIPE": [
+                    "pmultiqc"
+                ],
                 "WRITE_FRAGGER_PARAMS": [
                     "coreutils"
                 ],
@@ -75,11 +78,12 @@
                 "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:FRAGPIPE_VALIDATE:PERCOLATOR\tquay.io/nf-core/ubuntu:20.04",
                 "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:FRAGPIPE_PIPELINE:PARSEFRAGPIPEWORKFLOW\tcommunity.wave.seqera.io/library/python:3.12.13--27a817c2c0890658",
                 "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:GENERATESDRFFROMSAMPLESHEET\tcommunity.wave.seqera.io/library/python:3.12.13--27a817c2c0890658",
+                "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:PMULTIQC_FRAGPIPE\tquay.io/biocontainers/pmultiqc:0.0.48--pyhdfd78af_0",
                 "NFCORE_MSPROTEOMICS:MSPROTEOMICS_FRAGPIPE:WRITE_FRAGPIPE_MANIFEST\tcommunity.wave.seqera.io/library/coreutils_grep_gzip_lbzip2_pruned:838ba80435a629f8",
                 "NFCORE_MSPROTEOMICS:MULTIQC\tcommunity.wave.seqera.io/library/multiqc:1.35--c17fb751507e9dfc"
             ]
         ],
-        "timestamp": "2026-10-15T20:36:12.832200619",
+        "timestamp": "2026-10-16T17:45:51.88474159",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"
