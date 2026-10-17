@@ -1,0 +1,117 @@
+// TMTANNDATA on the synthetic TMT-Integrator reports in tests/fixtures/qpx/tmt_*.
+// Real tests (tag qpx) run the qpx image: the summary TSV is snapshotted, the .h5mu / .h5ad
+// only checked by name (their bytes carry timestamps).
+
+nextflow_process {
+
+    name "Test Process TMTANNDATA"
+    script "../main.nf"
+    process "TMTANNDATA"
+
+    tag "modules"
+    tag "modules_local"
+    tag "tmtanndata"
+
+    test("tmtanndata - stub") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            process {
+                """
+                def tmt_config = file("\${workDir}/tmt-integrator-conf.yml")
+                tmt_config.text = "tmtintegrator:\\n  log2transformed: true\\n"
+                def d = "\${projectDir}/tests/fixtures/qpx"
+                input[0] = [[id: 'fragpipe'], files("\${d}/tmt_log2/abundance_*.tsv", checkIfExists: true), file("\${d}/tmt_annotation.tsv", checkIfExists: true), tmt_config]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+
+    test("tmtanndata - log2, every level and normalization") {
+        tag "qpx"
+        tag "integration"
+
+        when {
+            process {
+                """
+                def tmt_config = file("\${workDir}/tmt-integrator-conf.yml")
+                tmt_config.text = "tmtintegrator:\\n  log2transformed: true\\n"
+                def d = "\${projectDir}/tests/fixtures/qpx"
+                input[0] = [[id: 'fragpipe'], files("\${d}/tmt_log2/abundance_*.tsv", checkIfExists: true), file("\${d}/tmt_annotation.tsv", checkIfExists: true), tmt_config]
+                """
+            }
+        }
+
+        then {
+            def summary = path(process.out.summary[0][1]).readLines()
+            assertAll(
+                { assert process.success },
+                { assert snapshot(
+                    process.out.h5mu[0][1].collect { f -> file(f).name }.sort(),
+                    process.out.h5ad[0][1].collect { f -> file(f).name }.sort(),
+                    summary,
+                    process.out.findAll { key, _value -> key.startsWith('versions_') }
+                ).match() }
+            )
+        }
+    }
+
+    test("tmtanndata - linear") {
+        tag "qpx"
+        tag "integration"
+
+        when {
+            process {
+                """
+                def tmt_config = file("\${workDir}/tmt-integrator-conf.yml")
+                tmt_config.text = "tmtintegrator:\\n  log2transformed: false\\n"
+                def d = "\${projectDir}/tests/fixtures/qpx"
+                input[0] = [[id: 'fragpipe'], files("\${d}/tmt_linear/abundance_*.tsv", checkIfExists: true), file("\${d}/tmt_annotation.tsv", checkIfExists: true), tmt_config]
+                """
+            }
+        }
+
+        then {
+            def summary = path(process.out.summary[0][1]).readLines()
+            assertAll(
+                { assert process.success },
+                { assert snapshot(summary).match() }
+            )
+        }
+    }
+
+    // Guard G12: every report sample column must be an annotation sample_name
+    test("tmtanndata - samples missing from the annotation fail") {
+        tag "qpx"
+        tag "integration"
+
+        when {
+            process {
+                """
+                def tmt_config = file("\${workDir}/tmt-integrator-conf.yml")
+                tmt_config.text = "tmtintegrator:\\n  log2transformed: true\\n"
+                def d = "\${projectDir}/tests/fixtures/qpx"
+                def annotation = file("\${workDir}/tmt_annotation.tsv")
+                annotation.text = file("\${d}/tmt_annotation.tsv").readLines().findAll { line -> !line.contains('P1_126') }.join('\\n') + '\\n'
+                input[0] = [[id: 'fragpipe'], files("\${d}/tmt_log2/abundance_*.tsv", checkIfExists: true), annotation, tmt_config]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.failed },
+                { assert process.stdout.any { line -> line.contains('terminated with an error exit status (3)') } : process.stdout },
+                { assert process.stdout.any { line -> line.contains('ERROR: G12:') && line.contains('P1_126') } : process.stdout }
+            )
+        }
+    }
+}

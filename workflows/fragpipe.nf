@@ -23,8 +23,12 @@ include { WRITETEXTFILE as WRITE_FRAGPIPE_MANIFEST } from '../modules/local/writ
 include { FRAGPIPESECONDPASS } from '../modules/local/fragpipesecondpass/main'
 include { PMULTIQC as PMULTIQC_FRAGPIPE } from '../modules/bigbio/pmultiqc/main'
 
+// qpx export: FragPipe LFQ -> QPX Parquet + .h5mu/.h5ad; TMT-Integrator reports -> .h5mu/.h5ad
+include { QPXFRAGPIPE } from '../modules/local/qpxfragpipe/main'
+include { TMTANNDATA  } from '../modules/local/tmtanndata/main'
+
 // FragPipe utilities
-include { msfraggerConsoleLogs; subMzmlWeights; generateFragpipeManifest; fragpipeManifestEntries; parseSamplesheet; speclibOrDiannRuns; checkDiaPreprocessing; uniqueSpectraFiles; requireFragpipeLcmsFiles; tmtAnnotationLines; fragpipeWorkflowProperties; pmultiqcFragpipeInputs } from '../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils'
+include { msfraggerConsoleLogs; subMzmlWeights; generateFragpipeManifest; fragpipeManifestEntries; parseSamplesheet; speclibOrDiannRuns; checkDiaPreprocessing; uniqueSpectraFiles; requireFragpipeLcmsFiles; tmtAnnotationLines; fragpipeWorkflowProperties; qpxFragpipeExport; pmultiqcFragpipeInputs } from '../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -65,6 +69,8 @@ workflow MSPROTEOMICS_FRAGPIPE {
     // the database FragPipe searches, resolved once (--database > iProteome)
     def fragpipe_database = resolveFragPipeDatabase(proteome, params)
     checkWorkflowDatabase(workflow_props, [resolveDatabase(proteome, params), fragpipe_database])
+    // qpx export of this run: 'lfq' (QPXFRAGPIPE), 'tmt' (TMTANNDATA) or '' (none)
+    def qpx_export = qpxFragpipeExport(params.skip_qpx_export, params.tmt_mode, workflow_props, spectra_files)
     // checks that can stop the run come before the first channel operator (see workflows/diann.nf)
     def db_channels = resolveFragPipeDatabaseChannels(proteome, params)
 
@@ -133,6 +139,27 @@ workflow MSPROTEOMICS_FRAGPIPE {
         ch_combined_modified_peptide = ch_headless_results
             .filter { result -> result.name == 'combined_modified_peptide.tsv' && result.parent.name == 'results' }
             .map { result -> [[id: 'fragpipe'], result] }
+
+        // qpx inputs in FragPipe's results/: IonQuant's combined tables and experiment_annotation.tsv,
+        // TMT-Integrator's tmt-report/abundance_*.tsv and tmt-integrator-conf.yml; the export's missing input stops the run.
+        def ch_headless_files = ch_headless_results.collect()
+        ch_qpx_lfq = qpx_export != 'lfq' ? channel.empty() : ch_headless_files.map { results ->
+            def top = results.findAll { result -> result.parent.name == 'results' }.collectEntries { result -> [result.name, result] }
+            def names = ['combined_protein.tsv', 'combined_ion.tsv', 'experiment_annotation.tsv']
+            def missing = names.findAll { name -> !top[name] }
+            if (missing) {
+                error("qpx export: FragPipe headless wrote no ${missing.join(', ')} in its results/, so QPXFRAGPIPE cannot run. Rerun with --skip_qpx_export true.")
+            }
+            [[id: 'fragpipe']] + names.collect { name -> top[name] }
+        }
+        ch_qpx_tmt = qpx_export != 'tmt' ? channel.empty() : ch_headless_files.map { results ->
+            def abundance = results.findAll { result -> result.name.startsWith('abundance_') && result.parent.name == 'tmt-report' }
+            def config = results.find { result -> result.name == 'tmt-integrator-conf.yml' && result.parent.name == 'results' }
+            if (!abundance || !config) {
+                error("qpx export: FragPipe headless wrote no tmt-report/abundance_*.tsv or no tmt-integrator-conf.yml, so TMTANNDATA cannot run. Rerun with --skip_qpx_export true.")
+            }
+            [[id: 'fragpipe'], abundance, config]
+        }
         // pmultiqc: FragPipe's work dir root files and each group's directory
         ch_pmultiqc_files = FRAGPIPE_HEADLESS_WF.out.all_results.map { results ->
             def files = [results].flatten()
@@ -187,6 +214,28 @@ workflow MSPROTEOMICS_FRAGPIPE {
             .map { dirs -> dirs.sort(false) { dir -> dir.name }.collect { dir -> dir.resolve('psm.tsv') } }
         ch_combined_modified_peptide = FRAGPIPE_PIPELINE.out.combined_modified_peptide
 
+        // qpx inputs (only the run's export, qpxFragpipeExport): IonQuant's (and TMT-Integrator's) outputs are
+        // optional, so they are joined to the task's results directory and a task that wrote none of them stops the run
+        ch_qpx_lfq = qpx_export != 'lfq' ? channel.empty() : FRAGPIPE_PIPELINE.out.ionquant_dir
+            .join(FRAGPIPE_PIPELINE.out.combined_protein, remainder: true, failOnDuplicate: true)
+            .join(FRAGPIPE_PIPELINE.out.combined_ion, remainder: true, failOnDuplicate: true)
+            .join(FRAGPIPE_PIPELINE.out.experiment_annotation, remainder: true, failOnDuplicate: true)
+            .map { _meta, _dir, protein, ion, annotation ->
+                def missing = ['combined_protein.tsv': protein, 'combined_ion.tsv': ion, 'experiment_annotation.tsv': annotation].findAll { _name, output -> !output }.keySet()
+                if (missing) {
+                    error("qpx export: IonQuant wrote no ${missing.join(', ')}, so QPXFRAGPIPE cannot run. Rerun with --skip_qpx_export true.")
+                }
+                [[id: 'fragpipe'], protein, ion, annotation]
+            }
+        ch_qpx_tmt = qpx_export != 'tmt' ? channel.empty() : FRAGPIPE_PIPELINE.out.tmt_dir
+            .join(FRAGPIPE_PIPELINE.out.tmt_abundance, remainder: true, failOnDuplicate: true)
+            .join(FRAGPIPE_PIPELINE.out.tmt_config, remainder: true, failOnDuplicate: true)
+            .map { _meta, _dir, abundance, config ->
+                if (!abundance || !config) {
+                    error("qpx export: TMT-Integrator wrote no abundance_*.tsv or tmt-integrator-conf.yml, so TMTANNDATA cannot run. Rerun with --skip_qpx_export true.")
+                }
+                [[id: 'fragpipe'], abundance, config]
+            }
         // pmultiqc: the whole work dir of the last IonQuant pass (its combined_*.tsv, the blank group's tables and each
         // group's rewritten psm.tsv and ion.tsv, in FragPipe's layout), else each group's final Report directory;
         // with fragpipe.workflow and the manifest
@@ -242,6 +291,22 @@ workflow MSPROTEOMICS_FRAGPIPE {
         }
     }
 
+    // qpx export (.h5mu / .h5ad / QPX Parquet under <outdir>/qpx), see qpxFragpipeExport
+    // A due export whose IonQuant / TMT-Integrator (or FragPipe headless) task emitted nothing stops the run
+    if (qpx_export == 'lfq') {
+        QPXFRAGPIPE(
+            ch_qpx_lfq.ifEmpty { error("qpx export: no IonQuant results reached QPXFRAGPIPE (IonQuant or FragPipe headless emitted none). Rerun with --skip_qpx_export true.") },
+            GENERATESDRFFROMSAMPLESHEET.out.sdrf.first()
+        )
+    }
+    if (qpx_export == 'tmt') {
+        TMTANNDATA(
+            ch_qpx_tmt
+                .ifEmpty { error("qpx export: no TMT-Integrator results reached TMTANNDATA (TMT-Integrator or FragPipe headless emitted none). Rerun with --skip_qpx_export true.") }
+                .combine(ch_annotation)
+                .map { meta, abundance, config, annotation -> [meta, abundance, annotation, config] }
+        )
+    }
     // Proteomics QC report (pmultiqc FragPipe plugin); multiqc_config.yml is staged with the results (ext.args --config)
     if (params.enable_pmultiqc) {
         def pmultiqc_config = file("${projectDir}/assets/multiqc_config.yml", checkIfExists: true)

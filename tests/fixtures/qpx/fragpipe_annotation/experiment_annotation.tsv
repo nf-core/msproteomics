@@ -1,0 +1,4 @@
+file	sample	sample_name	condition	replicate
+/work/raw_files/R1_DDA_S1.mzML	DDA_S1_1	DDA_S1_1	EXP	1
+/work/raw_files/R2_DDA_S2.mzML	DDA_S2_1	DDA_S2_1	EXP	1
+/work/raw_files/R3_DDA_S3.mzML	DDA_S3_1	DDA_S3_1	EXP	1

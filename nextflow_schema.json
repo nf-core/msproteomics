@@ -558,6 +558,13 @@
                     "description": "Skip table plot generation in pmultiqc (DIA mode).",
                     "fa_icon": "fas fa-table"
                 },
+                "skip_qpx_export": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Skip the qpx export of DIA-NN, FragPipe LFQ and TMT-Integrator results to .h5mu, .h5ad and the QPX Parquet dataset (<outdir>/qpx).",
+                    "fa_icon": "fas fa-forward",
+                    "help_text": "The export is on by default and a failed conversion fails the run. FragPipe LFQ needs IonQuant MaxLFQ intensities, which IonQuant writes only with at least 3 experiment+bioreplicate combinations; the TMT label check has no export."
+                },
                 "enable_diann_mztab": {
                     "type": "boolean",
                     "default": false,

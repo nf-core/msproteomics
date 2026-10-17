@@ -194,6 +194,18 @@
 
   > No dedicated publication; see the repository.
 
+- [qpx](https://github.com/bigbio/qpx)
+
+  > No dedicated publication; see the repository.
+
+- [AnnData](https://doi.org/10.21105/joss.04371)
+
+  > Virshup I, Rybakov S, Theis FJ, Angerer P, Wolf FA. anndata: Access and store annotated data matrices. Journal of Open Source Software. 2024;9(101):4371. doi: 10.21105/joss.04371.
+
+- [MuData](https://doi.org/10.1186/s13059-021-02577-8)
+
+  > Bredikhin D, Kats I, Stegle O. MUON: multimodal omics analysis framework. Genome Biology. 2022;23(1):42. doi: 10.1186/s13059-021-02577-8.
+
 - [MultiQC](https://pubmed.ncbi.nlm.nih.gov/27312411/)
 
   > Ewels P, Magnusson M, Lundin S, Kaller M. MultiQC: summarize analysis results for multiple tools and samples in a single report. Bioinformatics. 2016 Oct 1;32(19):3047-8. doi: 10.1093/bioinformatics/btw354. PubMed PMID: 27312411.

@@ -18,7 +18,7 @@ repos:
               tests/fixtures/fragger_params/.*|
               tests/fixtures/fragpipe_plans/.*|
               tests/fixtures/ptmshepherd_parity/plans/.*|
-              tests/fixtures/(fpop|metaproteomics|pmultiqc)/.*\.(tsv|pin)$|
+              tests/fixtures/(fpop|metaproteomics|pmultiqc|qpx)/.*\.(tsv|pin)$|
               .*\.snap$
           )$
       - id: end-of-file-fixer

@@ -36,6 +36,7 @@
                     "combined_ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
                     "combined_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
                     "combined_protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "experiment_annotation.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
                     "fragpipe-files.fp-manifest:md5,d41d8cd98f00b204e9800998ecf8427e",
                     "fragpipe.workflow:md5,d41d8cd98f00b204e9800998ecf8427e",
                     "protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",

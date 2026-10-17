@@ -20,3 +20,4 @@ quantmsutils/**/*.log
 diann/*/*.tsv
 iq/*.tsv
 quantmsutils/mztab/experimental_design_*
+qpx/**

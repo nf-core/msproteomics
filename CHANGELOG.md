@@ -22,9 +22,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `--mode fragpipe` publishes `fragpipe/fragpipe-files.fp-manifest`, `fragpipe/fragpipe.workflow` (`FRAGPIPESAVEWORKFLOW`) and, with `workflow.misc.save-sdrf=true`, `fragpipe/sdrf.tsv` (`FRAGPIPESDRF`).
 - `--fragpipe_threads` sets the FragPipe thread count; `--metaproteomics_names_dmp` and `--metaproteomics_nodes_dmp` give the NCBI taxonomy files for FP-Meta.
 - `test_full` profile (`conf/test_full.config`): the six-run PXD024427 FragPipe LFQ tutorial dataset.
+- qpx export to `<outdir>/qpx/` (on by default, `--skip_qpx_export` turns it off): bigbio's `QPX_DIANN` ([bigbio/nf-modules](https://github.com/bigbio/nf-modules) `qpx/diann`, patched) with `QPXEXPORT` (DIA-NN final quantification), `QPXFRAGPIPE` (label-free IonQuant) and `TMTANNDATA` (TMT-Integrator) write `.h5mu`, `.h5ad` and, for DIA-NN and FragPipe LFQ, the QPX Parquet dataset with [qpx](https://github.com/bigbio/qpx) 1.1.5; the DIA-NN export follows DIA-NN's report and matrix q-value filters.
 
 ### Changed
 
+- The DIA workflow names the mzML converted from a `.raw` file after the file (was the sample name), so DIA-NN's run names match the SDRF `comment[data file]` the qpx export checks.
 - `PMULTIQC` is the `pmultiqc` module of bigbio/nf-modules (`modules/bigbio/pmultiqc`, as in quantms), pmultiqc 0.0.39 -> 0.0.48, instead of a local module; its options are hyphenated since 0.0.39 (`--quantms-plugin`, `--disable-table`, `--ignored-idxml`, `--contaminant-affix`, `--quantification-method`), and the module patch fixes its version query (`--pmultiqc-version`; `--pmultiqc_version` exits with `No such option`), sends `versions.yml` to the `versions` topic and fails the task when pmultiqc logs a plugin error, no plugin, or a plugin that found nothing to report (it exits 0 then, `pmultiqc/modules/core/core.py:107,113`, `fragpipe/fragpipe.py:135,155`, `diann/diann.py:102`).
 - Tasks never write their inputs: FragPipe tasks copy only the staged inputs a tool misreads or writes through, and the docker tests mount inputs read-only (`docker.writableInputMounts = false` in `tests/nextflow.config`).
 - nf-core template 3.5.2 -> 4.1.0.

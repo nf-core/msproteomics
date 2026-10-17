@@ -1,0 +1,173 @@
+// qpx export of MSPROTEOMICS_FRAGPIPE (stub), see qpxFragpipeExport:
+// label-free IonQuant -> QPXFRAGPIPE (combined_protein/combined_ion with FragPipe's
+// experiment_annotation.tsv), TMT-Integrator -> TMTANNDATA, in pipeline and headless mode.
+// conf/test.config (nf-test's profile) skips the export, so these tests turn it on.
+
+nextflow_workflow {
+
+    name "Test Workflow MSPROTEOMICS_FRAGPIPE - qpx export"
+    script "../fragpipe.nf"
+    workflow "MSPROTEOMICS_FRAGPIPE"
+
+    tag "workflows"
+    tag "msproteomics_fragpipe"
+    tag "qpxfragpipe"
+    tag "tmtanndata"
+
+    // Files staged into the single task of a process in this test run (via the trace file); the stubs run
+    // no tool, so the inputs show what the export was given
+    def staged = { String output_dir, String process ->
+        def line = new File("${output_dir}/../meta/trace.csv").readLines().drop(1).find { l -> l.split('\t')[3].endsWith(":${process}") || l.split('\t')[3].contains(":${process} ") }
+        def (prefix, suffix) = line.split('\t')[1].tokenize('/')
+        new File("${output_dir}/../work", prefix).listFiles().find { d -> d.name.startsWith(suffix) }.list().findAll { name -> !name.startsWith('.') }.sort()
+    }
+    def succeeded = { trace -> trace.succeeded()*.name.collect { name -> name.replaceAll(/ \(.*\)$/, '') }.unique().sort() }
+
+    test("qpx export - pipeline mode LFQ converts IonQuant's tables") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                input             = ss.toString()
+                database          = "${fixtures}/test.fasta"
+                fragpipe_workflow = "${fixtures}/fragpipe_workflows/LFQ-MBR.workflow"
+                fragpipe_mode     = 'pipeline'
+                skip_qpx_export   = false
+                outdir            = "$outputDir"
+            }
+        }
+
+        then {
+            def inputs = staged(outputDir, 'QPXFRAGPIPE')
+            assertAll(
+                { assert workflow.success },
+                { assert inputs.containsAll(['combined_protein.tsv', 'combined_ion.tsv', 'experiment_annotation.tsv', 'samplesheet.sdrf.tsv']) : inputs },
+                { assert snapshot(new File("${outputDir}/qpx").list().sort(), succeeded(workflow.trace)).match() }
+            )
+        }
+    }
+
+    test("qpx export - headless mode LFQ converts FragPipe's results") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                input             = ss.toString()
+                database          = "${fixtures}/test.fasta"
+                fragpipe_workflow = "${fixtures}/fragpipe_workflows/LFQ-MBR.workflow"
+                fragpipe_mode     = 'headless'
+                skip_qpx_export   = false
+                outdir            = "$outputDir"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert staged(outputDir, 'QPXFRAGPIPE').containsAll(['combined_protein.tsv', 'combined_ion.tsv', 'experiment_annotation.tsv', 'samplesheet.sdrf.tsv']) },
+                { assert snapshot(new File("${outputDir}/qpx").list().sort(), succeeded(workflow.trace)).match() }
+            )
+        }
+    }
+
+    test("qpx export - pipeline mode TMT converts TMT-Integrator's reports") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/tmt6_two_plex.csv").text.replace('${FIXTURES}', fixtures)
+                input             = ss.toString()
+                database          = "${fixtures}/test.fasta"
+                fragpipe_workflow = "${baseDir}/assets/TMT6.workflow"
+                tmt_mode          = 'quant'
+                fragpipe_mode     = 'pipeline'
+                skip_qpx_export   = false
+                outdir            = "$outputDir"
+            }
+        }
+
+        then {
+            def inputs = staged(outputDir, 'TMTANNDATA')
+            assertAll(
+                { assert workflow.success },
+                // TMT-Integrator's own tmt-integrator-conf.yml (its log2transformed setting)
+                { assert inputs.containsAll(['tmt_annotation.tsv', 'abundance_gene_None.tsv', 'abundance_protein_None.tsv', 'tmt-integrator-conf.yml']) : inputs },
+                { assert !succeeded(workflow.trace).any { name -> name.endsWith(':QPXFRAGPIPE') } },
+                { assert snapshot(new File("${outputDir}/qpx").list().sort(), succeeded(workflow.trace)).match() }
+            )
+        }
+    }
+
+    test("qpx export - headless mode TMT converts FragPipe's tmt-report") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/tmt6_two_plex.csv").text.replace('${FIXTURES}', fixtures)
+                input             = ss.toString()
+                database          = "${fixtures}/test.fasta"
+                fragpipe_workflow = "${baseDir}/assets/TMT6.workflow"
+                tmt_mode          = 'quant'
+                fragpipe_mode     = 'headless'
+                skip_qpx_export   = false
+                outdir            = "$outputDir"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                // FragPipe's results/tmt-integrator-conf.yml (its log2transformed setting)
+                { assert staged(outputDir, 'TMTANNDATA').containsAll(['tmt_annotation.tsv', 'abundance_protein_None.tsv', 'tmt-integrator-conf.yml']) },
+                { assert snapshot(new File("${outputDir}/qpx").list().sort(), succeeded(workflow.trace)).match() }
+            )
+        }
+    }
+
+    // IonQuant writes MaxLFQ intensities only with >= 3 experiment+bioreplicate combinations
+    test("qpx export - LFQ with 2 experiments fails before any task") {
+        options "-stub"
+        tag "stub"
+
+        when {
+            params {
+                def fixtures = "${baseDir}/tests/fixtures"
+                def ss = new File("${outputDir}/samplesheet.csv")
+                ss.parentFile.mkdirs()
+                ss.text = new File("${fixtures}/samplesheets/dda_experiment_bioreplicate.csv").text.replace('${FIXTURES}', fixtures)
+                    .readLines().findAll { line -> !line.contains(',2,DDA') }.join('\n') + '\n'
+                input             = ss.toString()
+                database          = "${fixtures}/test.fasta"
+                fragpipe_workflow = "${fixtures}/fragpipe_workflows/LFQ-MBR.workflow"
+                skip_qpx_export   = false
+                outdir            = "$outputDir"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.failed },
+                { assert workflow.trace.tasks().size() == 0 },
+                { assert workflow.stdout.any { line -> line.contains('qpx export: the samplesheet has 2 experiment+bioreplicate combination(s) [control_1, treated_1]') } : workflow.stdout }
+            )
+        }
+    }
+}
