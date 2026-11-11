@@ -45,6 +45,12 @@ input:
         fragment_tolerance, precursor_tolerance_unit, fragment_tolerance_unit]
         e.g. `[[id:'sample1'], file('sample1.mzML'), 'Trypsin', 'Carbamidomethyl (C)',
         'Oxidation (M)', 10, 20, 'ppm', 'ppm']`
+        Optional meta key `library_run` (Boolean): runs with `library_run: false` (e.g. blanks)
+        are not used for preliminary analysis, random preanalysis sampling and empirical library
+        assembly, but are still used for individual analysis and final quantification. Runs without
+        the key are library runs. Only the Boolean `false` excludes a run: the String `'false'` is
+        not `false`, so callers must pass a Boolean. If no run is a library run and no empirical
+        library is supplied, the subworkflow stops with an error.
         Note: For Thermo RAW file conversion to mzML, the ThermoRawFileParser module is available
         in nf-core/modules and can be used upstream of this subworkflow.
       pattern: "*.{mzML,mzml}"
