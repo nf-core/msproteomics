@@ -1,4 +1,56 @@
 {
+    "proteomics - all runs library_run false with external empirical library - stub": {
+        "content": [
+            [
+                "DIANN_FINALQUANTIFICATION (RD139_Narrow_UPS1_design_ecoli)",
+                "DIANN_INDIVIDUALANALYSIS (run_a_ecoli)",
+                "DIANN_INDIVIDUALANALYSIS (run_b_ecoli)",
+                "DIANN_INDIVIDUALANALYSIS (run_c_ecoli)"
+            ]
+        ],
+        "timestamp": "2026-11-11T03:30:13.068404169",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "proteomics - library_run false skips library steps - stub": {
+        "content": [
+            [
+                "DIANN_ASSEMBLEEMPIRICALLIBRARY (RD139_Narrow_UPS1_design_ecoli)",
+                "DIANN_FINALQUANTIFICATION (RD139_Narrow_UPS1_design_ecoli)",
+                "DIANN_INDIVIDUALANALYSIS (run_a_ecoli)",
+                "DIANN_INDIVIDUALANALYSIS (run_b_ecoli)",
+                "DIANN_INDIVIDUALANALYSIS (run_c_ecoli)",
+                "DIANN_PRELIMINARYANALYSIS (run_a_ecoli)",
+                "DIANN_PRELIMINARYANALYSIS (run_b_ecoli)"
+            ]
+        ],
+        "timestamp": "2026-11-11T01:10:29.686545054",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "proteomics - no library_run key uses all runs - stub": {
+        "content": [
+            [
+                "DIANN_ASSEMBLEEMPIRICALLIBRARY (RD139_Narrow_UPS1_design_ecoli)",
+                "DIANN_FINALQUANTIFICATION (RD139_Narrow_UPS1_design_ecoli)",
+                "DIANN_INDIVIDUALANALYSIS (run_a_ecoli)",
+                "DIANN_INDIVIDUALANALYSIS (run_b_ecoli)",
+                "DIANN_INDIVIDUALANALYSIS (run_c_ecoli)",
+                "DIANN_PRELIMINARYANALYSIS (run_a_ecoli)",
+                "DIANN_PRELIMINARYANALYSIS (run_b_ecoli)",
+                "DIANN_PRELIMINARYANALYSIS (run_c_ecoli)"
+            ]
+        ],
+        "timestamp": "2026-11-11T01:03:04.445513938",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
     "proteomics - complete DIA analysis pipeline": {
         "content": [
             {

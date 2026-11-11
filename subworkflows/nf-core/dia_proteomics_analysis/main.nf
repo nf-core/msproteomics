@@ -294,12 +294,31 @@ workflow DIA_PROTEOMICS_ANALYSIS {
     // The provided library applies to every input, so count it: inputs pass only when none was given.
     // (A join keyed on meta_input_fasta never matches the experiment-keyed ch_empirical.)
 
-    preliminary_branches = ch_fasta_input_with_speclib
+    ch_preliminary_candidates = ch_fasta_input_with_speclib
         .combine(ch_empirical_library_in.count())
         .filter { _meta_input_fasta, _ms_file, _speclib, n_empirical -> n_empirical == 0 }
         .map { meta_input_fasta, ms_file, speclib, _n_empirical ->
             [meta_input_fasta, ms_file, speclib]
         }
+
+    // Library runs: only runs with meta.library_run != false go into preliminary analysis and
+    // empirical library assembly. Runs with library_run == false (e.g. blanks) still go into
+    // individual analysis and final quantification (input.mass_tolerance_settings, all runs).
+    // A run without the key is a library run, so callers that do not set it see no change.
+    ch_library_runs = ch_preliminary_candidates
+        .filter { meta_input_fasta, _ms_file, _speclib -> meta_input_fasta.library_run != false }
+
+    // Without a library run there is no empirical library and no run is quantified: stop.
+    // The channel from this map has no consumer: the operator runs only for the error check.
+    ch_preliminary_candidates.count()
+        .combine(ch_library_runs.count())
+        .map { n_candidates, n_library_runs ->
+            if (n_candidates > 0 && n_library_runs == 0) {
+                error("DIA_PROTEOMICS_ANALYSIS: no run with meta.library_run != false. At least one run must be a library run to build the empirical library.")
+            }
+        }
+
+    preliminary_branches = ch_library_runs
         .branch {
             random_preanalysis: random_preanalysis
             no_random_preanalysis: true
