@@ -5,3 +5,5 @@ channels:
   - bioconda
 dependencies:
   - bioconda::qpx=1.1.5
+  # qpx asks only duckdb>=1.3.0; duckdb 2.0.0 breaks qpxc convert (lambda arrow). Version in quay.io/biocontainers/qpx:1.1.5--pyhdfd78af_0.
+  - conda-forge::duckdb=1.5.6
