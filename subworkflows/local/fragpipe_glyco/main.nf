@@ -13,7 +13,7 @@
         addToGraph(graphOrder, cmdIonquant, DIRECTION.IN, cmdPhilosopherReport, cmdPhilosopherAbacus, cmdPtmshepherd, cmdMBGMatch);
 
     PTM-Shepherd does not depend on O-Pair, but FragPipe never runs both (FragpipeRun.java:2099-2111,
-    `if (oPairPanel.isRun() && isRunShepherd) ... return false;`; the parser stops such a workflow).
+    `if (oPairPanel.isRun() && isRunShepherd) ... return false;`, so FragPipe's plan stops such a workflow).
     So at most one of them rewrites the Report psm.tsv, and the chain below gives every tool the
     psm.tsv it reads in FragPipe:
 

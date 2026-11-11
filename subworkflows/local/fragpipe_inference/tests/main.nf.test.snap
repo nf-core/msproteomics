@@ -46,11 +46,37 @@
                 ]
             ]
         ],
+        "timestamp": "2026-10-07T00:14:35.84857804",
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-10-07T00:14:35.84857804"
+        }
+    },
+    "fragpipe_inference - stub single group: no Abacus or iProphet although the workflow turns them on": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "A01",
+                        "group": "A01",
+                        "report_after_quant": false,
+                        "export_matched_fragments": false
+                    },
+                    "psm.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                
+            ],
+            [
+                
+            ]
+        ],
+        "timestamp": "2026-10-12T13:33:06.742565421",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
     },
     "fragpipe_inference - stub single group without ProteinProphet": {
         "content": [
@@ -66,10 +92,10 @@
                 ]
             ]
         ],
+        "timestamp": "2026-10-07T00:14:44.342261182",
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-10-07T00:14:44.342261182"
+        }
     }
 }

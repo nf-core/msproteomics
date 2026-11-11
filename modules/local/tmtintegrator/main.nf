@@ -9,7 +9,7 @@ process TMTINTEGRATOR {
     // group_dirs: one directory per FragPipe group holding its psm.tsv/protein.tsv (IonQuant
     //             isobaric pass or Philosopher report), staged under input_results/
     // root_group_dir: the group_dirs entry holding FragPipe's blank group "" ('' when none)
-    // config_text: tmt-integrator-conf.yml text from the workflow parser (output placeholder line)
+    // config_text: tmt-integrator-conf.yml text from FragPipe's plan (output placeholder line)
     // msstats_annotation: MSstatsTMT_annotation.csv (msstatsTmtAnnotationLines, WRITETEXTFILE), [] when
     //                     Philosopher MSstats is off; copied into the work dir (CmdTmtIntegrator.java:105-140)
     tuple val(meta), path(group_dirs, stageAs: 'input_results/*'), val(root_group_dir), path(msstats_annotation, stageAs: 'msstats_input/*')

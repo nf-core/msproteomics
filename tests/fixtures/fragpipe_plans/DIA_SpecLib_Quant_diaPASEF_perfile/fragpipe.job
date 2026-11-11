@@ -1,0 +1,2 @@
+# Job name (optional)	Workflow file path	Manifest file path	Output directory	Tools folder path (optional)	Fasta path (optional)	RAM (optional)	Threads (optional)
+runtime-save	/plan/fp_work/fragpipe-workflow.workflow	/plan/fp_work/fragpipe-files.fp-manifest	/plan/fp_work	@ROOT@/fragpipe-24.0/tools	/plan/human_uniprot_reviewed_2026_03_decoys_contam.fasta	64	64

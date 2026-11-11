@@ -1,0 +1,41 @@
+{
+    "plan_to_tool_configs - TMT6 test_tmtq work dir": {
+        "content": [
+            [
+                "fragger.params"
+            ],
+            [],
+            [
+                [
+                    "PLANTOTOOLCONFIGS",
+                    "python",
+                    "3.12.13"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-13T08:10:00.000000000",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "plan_to_tool_configs - DIA golden work dir writes fragger_dia.params and the MSBooster params": {
+        "content": [
+            [
+                "fragger_dia.params"
+            ],
+            [
+                [
+                    "PLANTOTOOLCONFIGS",
+                    "python",
+                    "3.12.13"
+                ]
+            ]
+        ],
+        "timestamp": "2026-10-13T08:10:00.000000000",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

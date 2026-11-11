@@ -12,3 +12,6 @@ bin/
 ro-crate-metadata.json
 modules/nf-core/
 subworkflows/nf-core/
+# FragPipe work dirs: byte-exact fixtures
+tests/fixtures/fragpipe_plans/
+tests/fixtures/ptmshepherd_parity/plans/

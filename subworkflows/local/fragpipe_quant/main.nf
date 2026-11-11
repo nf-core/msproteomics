@@ -209,7 +209,7 @@ workflow FRAGPIPE_QUANT {
 
     TMTINTEGRATOR(
         ch_tmti_runs,
-        // tmt-integrator-conf.yml text: the parser's tmtintegrator.args (tool_configs JSON, a channel value)
+        // tmt-integrator-conf.yml text: FragPipe's plan tmtintegrator.args (tool_configs JSON, a channel value)
         ch_tool_configs.map { configs -> getToolArgs(configs, 'tmtintegrator') }
     )
 

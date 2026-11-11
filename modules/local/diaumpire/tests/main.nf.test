@@ -49,10 +49,9 @@ nextflow_process {
                 """
                 // mzML is a large binary file — keep remote
                 def mzml_file = file("\${params.pipelines_testdata_base_path}/spectra/dia_cptac_subset.mzML", checkIfExists: true)
-                // diaumpire_se.params as PARSEFRAGPIPEWORKFLOW emits it: FragPipe 24.0's template with
-                // the thread count left as the THREADS placeholder that DIAUMPIRE fills with task.cpus
-                // (parse_fragpipe_workflow.py generate_diaumpire_config, default panel values)
-                def template = file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)
+                // umpire-se.params as FragPipe wrote it for the DIA-Umpire plan, with the thread count
+                // left as the THREADS placeholder that DIAUMPIRE fills with task.cpus
+                def template = file("\${projectDir}/tests/fixtures/fragpipe_plans/DIA_DIA-Umpire_SpecLib_Quant_perfile/umpire-se.params", checkIfExists: true)
                 def umpire_params = template.text.readLines().collect { line -> line ==~ /^Thread *=.*/ ? 'Thread = THREADS' : line }.join('\\n')
 
                 input[0] = channel.of([[ id: 'diaumpire_test' ], mzml_file, umpire_params])

@@ -31,7 +31,7 @@ input:
     - umpire_params:
         type: string
         description: |
-          umpire-se.params text from PARSEFRAGPIPEWORKFLOW (FragPipe's diaumpire_se.params template
+          umpire-se.params text from FragPipe's plan (bin/plan_to_tool_configs.py) (FragPipe's diaumpire_se.params template
           with the workflow values) with the line "Thread = THREADS"; Thread is set to task.cpus.
 
 output:

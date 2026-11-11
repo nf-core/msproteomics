@@ -3,20 +3,17 @@
     FRAGPIPE_HEADLESS_WF SUBWORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     Runs FragPipe in headless mode (all-in-one process) on the LC-MS files as given
-    (FragPipe reads .raw natively), after FragPipe's database decoy check.
+    (FragPipe reads .raw natively).
 
     Modules:
-    - PARSEFRAGPIPEWORKFLOW (workflow decoy tag and tool run flags)
-    - FRAGPIPE_DATABASE (CHECKDBCONFIG, plus PHILOSOPHERDATABASE with --add_philosopher_decoy / --add_philosopher_contaminants;
-      FragPipe headless hard-fails if the FASTA decoys do not match the workflow decoy tag)
+    - FRAGPIPE_DATABASE (PHILOSOPHERDATABASE with --add_philosopher_decoy / --add_philosopher_contaminants;
+      FragPipe headless checks the FASTA decoys itself, FragpipeRun.checkDbConfig)
     - FRAGPIPEHEADLESS (all-in-one FragPipe headless execution)
 
     Execution: a single aggregate process
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { PARSEFRAGPIPEWORKFLOW } from '../../../modules/local/parsefragpipeworkflow/main'
-include { parseFragpipeWorkflowTemplates } from '../utils_nfcore_msproteomics_pipeline/fragpipe_utils'
 include { FRAGPIPE_DATABASE   } from '../fragpipe_database/main'
 include { FRAGPIPEHEADLESS } from '../../../modules/local/fragpipeheadless/main'
 
@@ -31,29 +28,10 @@ workflow FRAGPIPE_HEADLESS_WF {
     main:
 
     //
-    // STEP 1: FragPipe's database decoy check (FragpipeRun.checkDbConfig) so the run stops here, before the
-    // headless process, wherever FragPipe headless would stop.
-    // Must run as a separate process (not inside headless script) to avoid Fusion mount corruption.
-    // The decoy tag and run flags come from the same .workflow FragPipe headless reads.
+    // STEP 1: the searched FASTA; FragPipe's database update runs as its own process (not inside
+    // the headless script) to avoid Fusion mount corruption
     //
-    // Data types of the manifest files: FragPipe adjusts the tools to them (TabWorkflow.adjustToolsBasedOnDataTypes)
-    ch_data_types = ch_files
-        .map { meta, _spectra -> meta.data_type }
-        .unique()
-        .toSortedList()
-    PARSEFRAGPIPEWORKFLOW(
-        ch_workflow_file
-            .map { wf -> [[id: wf.baseName], wf] }
-            .combine(ch_data_types.map { data_types -> [data_types] }),
-        parseFragpipeWorkflowTemplates(projectDir)
-    )
-    ch_tool_configs = PARSEFRAGPIPEWORKFLOW.out.tool_configs_json
-        .map { _meta, json_file -> json_file }
-        .splitText()
-        .collect()
-        .map { lines -> lines.join('') }
-
-    FRAGPIPE_DATABASE(ch_fasta, ch_database, ch_tool_configs)
+    FRAGPIPE_DATABASE(ch_fasta, ch_database)
     ch_prepared_db = FRAGPIPE_DATABASE.out.fasta_path
 
     //

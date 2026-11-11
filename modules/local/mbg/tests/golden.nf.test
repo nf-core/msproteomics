@@ -16,13 +16,12 @@ nextflow_process {
     tag "mbg"
 
     setup {
-        run("PARSEFRAGPIPEWORKFLOW") {
-            script "../../parsefragpipeworkflow/main.nf"
+        run("PLANTOTOOLCONFIGS") {
+            script "../../plantotoolconfigs/main.nf"
             process {
                 """
                 assert System.getenv('GOLDEN_ROOT') : 'set GOLDEN_ROOT to the golden data root'
-                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
-                input[0] = channel.of([ [ id: 'mbg' ], file(System.getenv('GOLDEN_ROOT') + '/PXD030670/glyco-N-preptms_perfile/files/work/fragpipe.workflow', checkIfExists: true), ['DDA'] ])
+                input[0] = channel.of([ [ id: 'mbg' ], file("\${projectDir}/tests/fixtures/fragpipe_plans/glyco-N-preptms_perfile", checkIfExists: true) ])
                 """
             }
         }
@@ -36,7 +35,7 @@ nextflow_process {
                 def run = System.getenv('GOLDEN_ROOT') + '/PXD030670/glyco-N-preptms_perfile/files'
                 def raws = [ file("\${run}/input/CANCER-3.raw", checkIfExists: true), file("\${run}/input/SALIVA-1.raw", checkIfExists: true) ]
                 def rows = [['SALIVA-1.raw', 'saliva', null, 'DDA'], ['CANCER-3.raw', 'cancer', null, 'DDA']]  // FragPipe's manifest order
-                input[0] = PARSEFRAGPIPEWORKFLOW.out.tool_configs_json.flatMap { _m, json ->
+                input[0] = PLANTOTOOLCONFIGS.out.tool_configs_json.flatMap { _m, json ->
                     def argv = new groovy.json.JsonSlurper().parseText(json.text).mbg.args.collect { t -> t == '@NOPASEF@' ? 'true' : t }
                     ['cancer', 'saliva'].collect { g ->
                         def d = file("\${workDir}/\${g}")

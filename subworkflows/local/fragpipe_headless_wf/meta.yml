@@ -10,10 +10,8 @@ keywords:
   - label-free
 components:
   - philosopherdatabase
-  - checkdbconfig
   - fragpipeheadless
   - fragpipe_database
-  - parsefragpipeworkflow
 input:
   - ch_files:
       type: channel

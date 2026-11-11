@@ -1,0 +1,4 @@
+flag	value
+--psm	A/psm.tsv
+--psm	B/psm.tsv
+--specdir	/plan/raw_files

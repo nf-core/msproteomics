@@ -2,7 +2,7 @@ include { textFileCommand } from '../../../subworkflows/local/utils_nfcore_mspro
 
 /*
  * WRITETEXTFILE: Write a text file whose body was built outside the tool modules (Groovy helpers or the
- * workflow parser), so the tool modules receive it as a path and only run their tool.
+ * FragPipe's plan), so the tool modules receive it as a path and only run their tool.
  *
  * Input:
  *   - meta: Metadata map carried to the output

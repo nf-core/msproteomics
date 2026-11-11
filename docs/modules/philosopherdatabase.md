@@ -6,7 +6,7 @@ FragPipe's database update (`CmdDatabaseUpdate`), run only with `--add_philosoph
 
 FragPipe headless searches the workflow's `database.db-path` as given, so by default the pipeline does not run this module.
 With `--add_philosopher_decoy` / `--add_philosopher_contaminants` it runs FragPipe's "Add decoys" argv, `philosopher database --custom <fasta> [--nodecoys] [--contam --contamprefix]` (`CmdDatabaseUpdate.java:44-53`), inside a Philosopher workspace.
-There is no `--prefix`, so Philosopher writes its default `rev_` decoys; `CHECKDBCONFIG` then rejects the database when the workflow decoy tag is not `rev_`, as FragPipe does.
+There is no `--prefix`, so Philosopher writes its default `rev_` decoys; FragPipe's decoy check (FragpipeRun.checkDbConfig, in FRAGPIPEPLAN's dry run) then rejects the database when the workflow decoy tag is not `rev_`, as FragPipe does.
 With `--custom`, Philosopher adds the cRAP contaminants without a `contam_` prefix (that tag only applies to proteome-ID downloads).
 
 ## Inputs

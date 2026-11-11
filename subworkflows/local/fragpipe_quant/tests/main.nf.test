@@ -96,7 +96,7 @@ nextflow_workflow {
                     ionquant: [run: true, args: "--perform-ms1quant 1 --perform-isoquant 0 \${head} --isotype tmt10 --site-reports 1 --msstats 1 --minexps 1 --mbr 0", modmasses: []],
                     ionquant_ms1: [run: true, args: "--perform-ms1quant 1 --perform-isoquant 0 \${head} --isotype tmt10 --site-reports 0 --msstats 0 --minexps 1 --mbr 0", modmasses: []],
                     ionquant_isobaric: [run: true, args: "--perform-ms1quant 0 --perform-isoquant 1 \${head} --isotype TMT-10 --site-reports 0 --msstats 0 --minexps 1 --mbr 0", modmasses: []],
-                    tmtintegrator: [run: true, args: file("\${baseDir}/subworkflows/local/fragpipe_quant/tests/tmt10_tmtintegrator_conf.txt", checkIfExists: true).text  /* parser's tmt-integrator-conf.yml text */, extraction_tool: 0, philosopher_msstats: false],
+                    tmtintegrator: [run: true, args: file("\${baseDir}/subworkflows/local/fragpipe_quant/tests/tmt10_tmtintegrator_conf.txt", checkIfExists: true).text  /* the plan's tmt-integrator-conf.yml text */, extraction_tool: 0, philosopher_msstats: false],
                     freequant: [run: false, args: '']
                 ]
                 input[0] = channel.of([[ id: 'workdir-root', group: '' ], root], [[ id: 'p2', group: 'p2' ], g2])
@@ -253,7 +253,7 @@ nextflow_workflow {
                     ionquant_ms1: [run: true, args: "--perform-ms1quant 1 --perform-isoquant 0 \${head} --isotype tmt10 --site-reports 0 --msstats 0 --minexps 1 --mbr 0", modmasses: []],
                     ionquant_isobaric: [run: true, args: "--perform-ms1quant 0 --perform-isoquant 1 \${head} --isotype TMT-10 --site-reports 0 --msstats 0 --minexps 1 --mbr 0", modmasses: []],
                     tmtintegrator: [run: true, args: file("\${baseDir}/subworkflows/local/fragpipe_quant/tests/tmt10_tmtintegrator_conf.txt", checkIfExists: true).text, extraction_tool: 0, philosopher_msstats: false],
-                    tmtintegrator_unmod: [run: true, args: file("\${baseDir}/subworkflows/local/fragpipe_quant/tests/tmt10_tmtintegrator_conf.txt", checkIfExists: true).text  /* the parser's unmod text has the same layout */, config_type: 'params_file'],
+                    tmtintegrator_unmod: [run: true, args: file("\${baseDir}/subworkflows/local/fragpipe_quant/tests/tmt10_tmtintegrator_conf.txt", checkIfExists: true).text  /* the plan's unmod text has the same layout */, config_type: 'params_file'],
                     freequant: [run: false, args: '']
                 ]
                 input[0] = channel.of([[ id: 'p1', group: 'p1' ], g1])

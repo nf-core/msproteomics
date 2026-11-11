@@ -1,6 +1,6 @@
 // Golden differential test: DIATRACER vs FragPipe 24.0 (step diaTracer, PXD047839/DIA_SpecLib_Quant_diaPASEF_perfile).
 // Input is the first diaPASEF .d of the golden run (data/diapasef/PXD047839/d next to the golden root); the diaTracer settings come
-// from parse_fragpipe_workflow.py (tool_configs.json, as the pipeline passes them). Compares the java argv and the pseudo-DDA
+// from bin/plan_to_tool_configs.py on FragPipe's dry run (tool_configs.json, as the pipeline passes them). Compares the java argv and the pseudo-DDA
 // <name>_diatracer.mzML byte for byte. The manifest records no input or output of diaTracer (io_convention_not_implemented),
 // so the output is compared as a pair.
 // Run: FRAGPIPE_CONTAINER=<licensed image> GOLDEN_ROOT=<golden root> nf-test test modules/local/diatracer/tests/golden.nf.test
@@ -31,10 +31,10 @@ nextflow_process {
                 """
                 assert System.getenv('GOLDEN_ROOT') : 'set GOLDEN_ROOT to the golden data root'
                 def golden = file(params.golden_set, checkIfExists: true)
-                def configs = new File("\${workDir}/parser")
+                def configs = new File("\${workDir}/plan")
                 configs.mkdirs()
-                def proc = ['python3', "\${baseDir}/modules/local/parsefragpipeworkflow/resources/usr/bin/parse_fragpipe_workflow.py",
-                            '--workflow', "\${golden}/files/work/fragpipe.workflow", '--data-types', 'DIA', '--output-json', '--outdir', configs.path].execute()
+                def proc = ['python3', "\${baseDir}/bin/plan_to_tool_configs.py",
+                            '--workdir', "\${baseDir}/tests/fixtures/fragpipe_plans/DIA_SpecLib_Quant_diaPASEF_perfile", '--outdir', configs.path].execute()
                 proc.waitForProcessOutput(System.out, System.err)
                 assert proc.exitValue() == 0
                 def cli = new groovy.json.JsonSlurper().parse(new File(configs, 'tool_configs.json')).diatracer.args

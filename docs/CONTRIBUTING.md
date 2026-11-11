@@ -81,6 +81,11 @@ Some modules have stub tests only, because real inputs are private data or need 
 Their real-data coverage is the golden tests (`modules/local/<module>/tests/golden*.nf.test`, compared with FragPipe 24.0 runs on the same data) and the Tower parity runs of the whole pipeline.
 `pmultiqc` runs for real in the DIA pipeline test (`tests/default.nf.test`, tag `dia_integration`) and, with its FragPipe plugin on recorded FragPipe tables, in `tests/modules/pmultiqc_fragpipe.nf.test` (tag `integration`); CI runs both in the DIA integration job.
 `openmspeakpicker` (`--openms_peakpicking`) and `tdf2mzml` (`--convert_dotd`) are off by default and have no real-data test yet.
+
+A FragPipe-mode stub run needs `--fragpipe_plan`, a recorded FragPipe dry run (`tests/fixtures/fragpipe_plans/stub/`).
+The tool settings come from FragPipe's own dry run (`FRAGPIPEPLAN`), which a stub cannot make.
+Without `--fragpipe_plan`, the `FRAGPIPEPLAN` stub stops with `-stub needs --fragpipe_plan (a recorded FragPipe dry run): the stub runs no FragPipe` (`modules/local/fragpipeplan/tests/main.nf.test`).
+
 Update the snapshots with the following command:
 
 ```bash
@@ -193,7 +198,7 @@ If you update images or graphics, follow the nf-core [style guidelines](https://
 ## Pipeline specific contribution guidelines
 
 - FragPipe tool parameters live in `.workflow` files (`assets/*.workflow`), not in `nextflow.config`.
-- Modules only run tools: argv strings and config files are built by `parse_fragpipe_workflow.py` (`modules/local/parsefragpipeworkflow/`) or the Groovy helpers in `subworkflows/local/utils_nfcore_msproteomics_pipeline/`, each with a unit test.
+- Modules only run tools: argv strings and config files are built by FragPipe's plan (`bin/plan_to_tool_configs.py`) or the Groovy helpers in `subworkflows/local/utils_nfcore_msproteomics_pipeline/`, each with a unit test.
   One approved exception: the FragPipe jar lookup (`fragpipeJarLines`, `subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a.nf`) runs `find`, `awk`, `sort` and `unzip` in the task.
   The licensed FragPipe image is a runtime-only parameter, so the MSFragger, IonQuant and diaTracer jar names (`MSFragger-4.4.1.jar`, or with an edition word before the version) and the batmass-io and MSBooster jars the image's FragPipe build names are only known inside the task.
   The lookup copies FragPipe's own: `TabConfig.getJarPath` (TabConfig.java:176-178, :188-209, the highest `<tool>-<version>.jar` under the tools folder), MSFragger's `ext/` libraries next to its jar (FragpipeRun.java:1348-1356), and the jar names compiled into `ToolingUtils.BATMASS_IO_JAR` (ToolingUtils.java:62) and `CmdMSBooster.JAR_MSBOOSTER_NAME` (CmdMSBooster.java:52).
@@ -240,7 +245,7 @@ The manifest records each step's `parallel_batch` and `concurrent_with`, and fla
 Some steps rewrite their inputs in place (IonQuant, PTM-Shepherd in glyco mode, MBG, `Rewrite pepxml`, `AppendFile`), so a captured run only holds the rewritten version.
 Each input carries a `golden_state` (`available`, `fragpipe_install`, `rewritten_by_step:N`, `moved_by_step:N`, `deleted_by_step:N`), and `golden_inputs_available` is false when any input is gone.
 Golden tests for such steps take their inputs from a run that stops just before the step, for example a run that ends after Philosopher Report.
-`tests/tools/fragpipe_log_to_manifest.py <log> -o manifest.json` builds the manifest alone.
+`bin/fragpipe_log_to_manifest.py <log> -o manifest.json` builds the manifest alone.
 
 ### Run the golden tests
 

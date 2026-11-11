@@ -1,0 +1,2 @@
+/plan/fp_work/control_1/interact-dda_silac_subset.pep.xml
+/plan/fp_work/treatment_1/interact-dda_silac_subset_2.pep.xml

@@ -72,7 +72,7 @@ nextflow_workflow {
                 fasta.text = ">sp|P1|A\\nPEPTIDEK\\n"
                 def annotation = file("\${workDir}/my_annotations.tsv")
                 annotation.text = "mass\\tname\\n79.966\\tPhospho\\n"
-                // tool_configs as the parser writes them for annotation-custom=true, annotation_file=<path>
+                // tool_configs as FragPipe's plan gives them for annotation-custom=true, annotation_file=<path>
                 def configs = [ptmshepherd: [run: true, args: 'annotation_file = @ANNOTATION_FILE@\\nthreads = @THREADS@', annotation_file: annotation.toString()]]
 
                 input[0] = channel.of([[ id: 'workdir-root', group: '' ], root])

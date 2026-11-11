@@ -1,0 +1,220 @@
+{
+  "msfragger": {
+    "run": true,
+    "args": "database_name = /data/run/fp24/new/umpire/db/human_sp_subset_decoys.fasta\t\t\t# Path to the protein database file in FASTA format.\nnum_threads = 24\t\t\t# Number of CPU threads to use.\n\nprecursor_mass_lower = -20\t\t\t# Lower bound of the precursor mass window.\nprecursor_mass_upper = 20\t\t\t# Upper bound of the precursor mass window.\nprecursor_mass_units = 1\t\t\t# Precursor mass tolerance units (0 for Da, 1 for ppm).\ndata_type = 0\t\t\t# Data type (0 for DDA, 1 for DIA, 2 for gas-phase fractionation DIA, 3 for DDA+).\nprecursor_true_tolerance = 20\t\t\t# True precursor mass tolerance (window is +/- this value).\nprecursor_true_units = 1\t\t\t# True precursor mass tolerance units (0 for Da, 1 for ppm).\nfragment_mass_tolerance = 20\t\t\t# Fragment mass tolerance (window is +/- this value).\nfragment_mass_units = 1\t\t\t# Fragment mass tolerance units (0 for Da, 1 for ppm).\ncalibrate_mass = 2\t\t\t# Perform mass calibration (0 for OFF, 1 for ON, 2 for ON and find optimal parameters, 4 for ON and find the optimal fragment mass tolerance).\nuse_all_mods_in_first_search = 0\t\t\t# Use all variable modifications in first search (0 for No, 1 for Yes).\ndecoy_prefix = rev_\t\t\t# Prefix of the decoy protein entries. Used for parameter optimization only.\n\ndeisotope = 1\t\t\t# Perform deisotoping or not (0=no, 1=yes and assume singleton peaks single charged, 2=yes and assume singleton peaks single or double charged).\ndeneutralloss = 1\t\t\t# Perform deneutrallossing or not (0=no, 1=yes).\nisotope_error = 0/1/2\t\t\t# Also search for MS/MS events triggered on specified isotopic peaks.\nmass_offsets = 0.0\t\t\t# Creates multiple precursor tolerance windows with specified mass offsets.\nmass_offsets_detailed = \t\t\t# Optional detailed mass offset list. Overrides mass_offsets if use_detailed_offsets = 1.\nuse_detailed_offsets = 0\t\t\t# Whether to use the regular (0) or detailed (1) mass offset list.\nprecursor_mass_mode = selected\t\t\t# One of isolated/selected/corrected.\n\nremove_precursor_peak = 1\t\t\t#  Remove precursor peaks from tandem mass spectra. 0 = not remove; 1 = remove the peak with precursor charge; 2 = remove the peaks with all charge states (only for DDA mode).\nremove_precursor_range = -1.500000,1.500000\t\t\t# m/z range in removing precursor peaks. Only for DDA mode. Unit: Th.\nintensity_transform = 0\t\t\t# Transform peaks intensities with sqrt root. 0 = not transform; 1 = transform using sqrt root.\nactivation_types = all\t\t\t# Filter to only search scans of provided activation type(s). Allowed: All, HCD, CID, ETD, ECD.\nanalyzer_types = all\t\t\t# Filter to only include scans matching the provided analyzer type(s) in search. Only support the mzML and raw format. Allowed types: all, FTMS, ITMS, ASTMS.\ngroup_variable = 0\t\t\t# Specify the variable used to decide the PSM group in the group FDR estimation. 0 = no group FDR; 1 = num_enzyme_termini; 2 = PE from protein header.\nrequire_precursor = 1\t\t\t# If required, PSMs with no precursor peaks will be discarded. For DIA data type only. 0 = no, 1 = yes.\nreuse_dia_fragment_peaks = 0\t\t\t# Allow the same peak matches to multiple peptides. For DIA data type only. 0 = no, 1 = yes.\n\nwrite_calibrated_mzml = 0\t\t\t# Write calibrated MS2 scan to a mzML file (0 for No, 1 for Yes).\nwrite_uncalibrated_mzml = 1\t\t\t# Write uncalibrated MS2 scan to a mzML file (0 for No, 1 for Yes). Only for .raw and .d formats.\nwrite_mzbin_all = 0\nmass_diff_to_variable_mod = 0\t\t\t# Put mass diff as a variable modification. 0 for no; 1 for yes and remove delta mass; 2 for yes and keep delta mass.\n\nlocalize_delta_mass = 0\t\t\t# Include fragment ions mass-shifted by unknown modifications (recommended for open and mass offset searches) (0 for OFF, 1 for ON).\ndelta_mass_exclude_ranges = (-1.5,3.5)\t\t\t# Exclude mass range for shifted ions searching.\nfragment_ion_series = b,y\t\t\t# Ion series used in search, specify any of a,b,c,x,y,z,Y,b-18,y-18 (comma separated).\nion_series_definitions = \t\t\t# User defined ion series. Example: \"b* N -17.026548;b0 N -18.010565\".\n\nlabile_search_mode = off\t\t\t# type of search (nglycan, labile, or off). Off means non-labile/typical search.\nrestrict_deltamass_to = all\t\t\t# Specify amino acids on which delta masses (mass offsets or search modifications) can occur. Allowed values are single letter codes (e.g. ACD) and '-', must be capitalized. Use 'all' to allow any amino acid.\ndiagnostic_intensity_filter = 0\t\t\t# [nglycan/labile search_mode only]. Minimum relative intensity for SUM of all detected oxonium ions to achieve for spectrum to contain diagnostic fragment evidence. Calculated relative to spectrum base peak. 0 <= value.\nY_type_masses = \t\t\t#  [nglycan/labile search_mode only]. Specify fragments of labile mods that are commonly retained on intact peptides (e.g. Y ions for glycans). Only used if 'Y' is included in fragment_ion_series.\ndiagnostic_fragments = \t\t\t# [nglycan/labile search_mode only]. Specify diagnostic fragments of labile mods that appear in the low m/z region. Only used if diagnostic_intensity_filter > 0.\nremainder_fragment_masses = \t\t\t# [labile search_mode only] List of possible remainder fragment ions to consider. Remainder masses are partial modification masses left on b/y ions after fragmentation.\nlabile_fragment_ion_series = b,y\t\t\t# Labile ion series used in labile search, specify any of a,b,c,x,y,z (comma separated). Replaces intact mods with labile ion(s) for each specified ion type.\n\nsearch_enzyme_name_1 = stricttrypsin\t\t\t# Name of the first enzyme.\nsearch_enzyme_cut_1 = KR\t\t\t# First enzyme's cutting amino acid.\nsearch_enzyme_nocut_1 = \t\t\t# First enzyme's protecting amino acid.\nsearch_enzyme_sense_1 = C\t\t\t# First enzyme's cutting terminal.\nallowed_missed_cleavage_1 = 2\t\t\t# First enzyme's allowed number of missed cleavages per peptide. Maximum value is 5.\n\nsearch_enzyme_name_2 = null\t\t\t# Name of the second enzyme.\nsearch_enzyme_cut_2 = \t\t\t# Second enzyme's cutting amino acid.\nsearch_enzyme_nocut_2 = \t\t\t# Second enzyme's protecting amino acid.\nsearch_enzyme_sense_2 = C\t\t\t# Second enzyme's cutting terminal.\nallowed_missed_cleavage_2 = 2\t\t\t# Second enzyme's allowed number of missed cleavages per peptide. Maximum value is 5.\n\nnum_enzyme_termini = 2\t\t\t# 0 for non-enzymatic, 1 for semi-enzymatic, and 2 for fully-enzymatic.\n\nclip_nTerm_M = 1\t\t\t# Specifies the trimming of a protein N-terminal methionine as a variable modification (0 or 1).\n\n# maximum of 16 mods - amino acid codes, * for any amino acid, [ and ] specifies protein termini, n and c specifies peptide termini\nvariable_mod_01 = 15.9949 M 3\nvariable_mod_02 = 42.0106 [^ 1\n# variable_mod_03 = 79.96633 STY 3\nvariable_mod_04 = -17.0265 nQnC 1\nvariable_mod_05 = -18.0106 nE 1\n# variable_mod_06 = 0.0 site_06 1\n# variable_mod_07 = 0.0 site_07 1\n# variable_mod_08 = 0.0 site_08 1\n# variable_mod_09 = 0.0 site_09 1\n# variable_mod_10 = 0.0 site_10 1\n# variable_mod_11 = 0.0 site_11 1\n# variable_mod_12 = 0.0 site_12 1\n# variable_mod_13 = 0.0 site_13 1\n# variable_mod_14 = 0.0 site_14 1\n# variable_mod_15 = 0.0 site_15 1\n# variable_mod_16 = 0.0 site_16 1\n\nallow_multiple_variable_mods_on_residue = 0\nmax_variable_mods_per_peptide = 3\t\t\t# Maximum total number of variable modifications per peptide.\nmax_variable_mods_combinations = 5000\t\t\t# Maximum number of modified forms allowed for each peptide (up to 65534).\n\noutput_format = pepXML_pin\t\t\t# File format of output files (tsv, pin, pepxml, tsv_pin, tsv_pepxml, pepxml_pin, or tsv_pepxml_pin).\noutput_report_topN = 1\t\t\t# Reports top N PSMs per input spectrum.\noutput_max_expect = 50\t\t\t# Suppresses reporting of PSM if top hit has expectation value greater than this threshold.\nreport_alternative_proteins = 1\t\t\t# Report alternative proteins for peptides that are found in multiple proteins (0 for no, 1 for yes).\n\nprecursor_charge = 1 4\t\t\t# Assumed range of potential precursor charge states. Only relevant when override_charge is set to 1.\noverride_charge = 0\t\t\t# Ignores precursor charge and uses charge state specified in precursor_charge range (0 or 1).\n\ndigest_min_length = 7\t\t\t# Minimum length of peptides to be generated during in-silico digestion.\ndigest_max_length = 50\t\t\t# Maximum length of peptides to be generated during in-silico digestion.\ndigest_mass_range = 500.0 5000.0\t\t\t# Mass range of peptides to be generated during in-silico digestion in Daltons.\nmax_fragment_charge = 2\t\t\t# Maximum charge state for theoretical fragments to match (1-4).\n\ntrack_zero_topN = 0\t\t\t# Track top N unmodified peptide results separately from main results internally for boosting features.\nzero_bin_accept_expect = 0\t\t\t# Ranks a zero-bin hit above all non-zero-bin hit if it has expectation less than this value.\nzero_bin_mult_expect = 1\t\t\t# Multiplies expect value of PSMs in the zero-bin during  results ordering (set to less than 1 for boosting).\n\ncheck_spectral_files = 0\t\t\t# Checking spectral files before searching.\nminimum_peaks = 15\t\t\t# Minimum number of peaks in experimental spectrum for matching.\nuse_topN_peaks = 300\t\t\t# Pre-process experimental spectrum to only use top N peaks.\nmin_fragments_modelling = 2\t\t\t# Minimum number of matched peaks in PSM for inclusion in statistical modeling.\nmin_matched_fragments = 5\t\t\t# Minimum number of matched peaks for PSM to be reported.\nmin_sequence_matches = 2\t\t\t# [nglycan/labile search_mode only] Minimum number of sequence-specific (not Y) ions to record a match.\nminimum_ratio = 0.00\t\t\t# Filters out all peaks in experimental spectrum less intense than this multiple of the base peak intensity.\nclear_mz_range = 0.0 0.0\t\t\t# Removes peaks in this m/z range prior to matching.\n\nadd_Cterm_peptide = 0.0\nadd_Nterm_peptide = 0.0\nadd_Cterm_protein = 0.0\nadd_Nterm_protein = 0.0\n\nadd_G_glycine = 0.0\nadd_A_alanine = 0.0\nadd_S_serine = 0.0\nadd_P_proline = 0.0\nadd_V_valine = 0.0\nadd_T_threonine = 0.0\nadd_C_cysteine = 57.02146\nadd_L_leucine = 0.0\nadd_I_isoleucine = 0.0\nadd_N_asparagine = 0.0\nadd_D_aspartic_acid = 0.0\nadd_Q_glutamine = 0.0\nadd_K_lysine = 0.0\nadd_E_glutamic_acid = 0.0\nadd_M_methionine = 0.0\nadd_H_histidine = 0.0\nadd_F_phenylalanine = 0.0\nadd_R_arginine = 0.0\nadd_Y_tyrosine = 0.0\nadd_W_tryptophan = 0.0\nadd_B_user_amino_acid = 0.0\nadd_J_user_amino_acid = 0.0\nadd_O_user_amino_acid = 0.0\nadd_U_user_amino_acid = 0.0\nadd_X_user_amino_acid = 0.0\nadd_Z_user_amino_acid = 0.0\n\n",
+    "config_type": "params_file",
+    "num_slices": 1,
+    "calibrate_mass": {
+      "DDA": "2",
+      "DIA": "2",
+      "GPF-DIA": "2",
+      "DDA+": "2"
+    },
+    "has_calibrated_mzml": false
+  },
+  "msbooster": {
+    "run": true,
+    "args": "useDetect = false\nrenamePin = 1\nuseRT = true\nuseSpectra = true\nuseIM = true\ndeletePreds = false\nrtModel = DIA-NN\nspectraModel = DIA-NN\nimModel = DIA-NN\nfindBestRtModel = false\nfindBestSpectraModel = false\nfindBestImModel = false\nKoinaURL = \nnumThreads = 24\nrtSearchModelsString = DIA-NN,Deeplc_hela_hf,AlphaPept_rt_generic,Prosit_2019_irt,Prosit_2020_irt_TMT,Prosit_2024_irt_cit\nms2SearchModelsString = DIA-NN,ms2pip_2021_hcd,ms2pip_timsTOF2024,ms2pip_ttof5600,ms2pip_immuno_hcd,ms2pip_CID_TMT,ms2pip_iTRAQphospho,AlphaPept_ms2_generic,Prosit_2019_intensity,Prosit_2023_intensity_timsTOF,Prosit_2020_intensity_CID,Prosit_2020_intensity_TMT,Prosit_2020_intensity_HCD,UniSpec,Prosit_2024_intensity_cit,Prosit_2025_intensity_MultiFrag\nimSearchModelsString = DIA-NN,AlphaPept_ccs_generic,IM2Deep\nFragmentationType = auto",
+    "config_type": "params_file",
+    "spectral_library": ""
+  },
+  "percolator": {
+    "run": true,
+    "args": "--only-psms --no-terminate --post-processing-tdc",
+    "config_type": "cli",
+    "min_prob": "0.7",
+    "keep_tsv_files": false
+  },
+  "peptideprophet": {
+    "run": false,
+    "args": "",
+    "config_type": "cli"
+  },
+  "proteinprophet": {
+    "run": true,
+    "args": "--maxppmdiff 2000000 --minprob 0.5",
+    "config_type": "cli"
+  },
+  "filter": {
+    "run": true,
+    "args": "--picked --prot 0.01",
+    "config_type": "cli",
+    "dont_use_protxml": false,
+    "report_args": "",
+    "report_args_single_group": ""
+  },
+  "ionquant": {
+    "run": false,
+    "args": "",
+    "config_type": "cli"
+  },
+  "tmtintegrator": {
+    "run": false,
+    "args": "",
+    "config_type": "params_file"
+  },
+  "freequant": {
+    "run": false,
+    "args": "",
+    "config_type": "cli"
+  },
+  "labelquant": {
+    "run": false,
+    "args": "",
+    "config_type": "cli"
+  },
+  "diaumpire": {
+    "run": true,
+    "args": "\n####################################################################################################\n#No of threads\nThread = THREADS\n####################################################################################################\n\n## omit Thread\n\n#Precursor-fragments grouping parameters\nRPmax = 25\nRFmax = 500\nCorrThreshold = 0\nDeltaApex = 0.2\nRTOverlap = 0.3\n\n#Fragment intensity adjustments\n# change BoostComplementaryIon if later using database search results to build libraries for Skyline/OpenSWATH\nAdjustFragIntensity = true\nBoostComplementaryIon = false\n\n#Export detected MS1 features (output feature file can be loaded and mapped to RAW data in BatMass)\nExportPrecursorPeak = false\n\nQ1 = true\nQ2 = true\nQ3 = true\n\n#Signal extraction: mass accuracy and resolution\n# resolution parameter matters only for data generated in profile mode\nSE.MS1PPM = 10\nSE.MS2PPM = 20\nSE.Resolution = 60000\n\n#Signal extraction: signal to noise filter\nSE.SN = 1.1\nSE.MS2SN = 1.1\n\n#Signal extraction: minimum signal intensity filter\n# for Thermo data, filtering is usually not necessary. Set SE.EstimateBG to false and SE.MinMSIntensity and SE.MinMSMSIntensity to a low value, e.g. 1\n# for older Q Exactive data, or when too many MS1 features are extracted, set SE.EstimateBG to yes (or apply SE.MinMSIntensity and SE.MinMSMSIntensity values based on BatMass visualization)\nSE.EstimateBG = false\nSE.MinMSIntensity = 1\nSE.MinMSMSIntensity = 1\n\n#Signal extraction: peak curve detection and isotope grouping\n# for older Q Exactive data, or when too many MS1 features are extracted, set SE.NoMissedScan to 1\nSE.NoMissedScan = 1\nSE.MaxCurveRTRange = 2\nSE.RemoveGroupedPeaks = true\nSE.RemoveGroupedPeaksRTOverlap = 0.3\nSE.RemoveGroupedPeaksCorr = 0.3\nSE.MinNoPeakCluster = 2\nSE.MaxNoPeakCluster = 4\n\n#Signal extraction: filtering of MS1 features\n# if interested in modified peptides, increase MassDefectOffset parameter, or set SE.MassDefectFilter to false\nSE.IsoPattern = 0.3\nSE.MassDefectFilter = true\nSE.MassDefectOffset = 0.1\n\n#Signal extraction: other\nSE.StartCharge = 1\nSE.EndCharge = 5\nSE.MS2StartCharge = 2\nSE.MS2EndCharge = 5\nSE.MinFrag = 10\nSE.StartRT = 0\nSE.EndRT = 9999\nSE.MinMZ = 200\nSE.MinPrecursorMass = 600\nSE.MaxPrecursorMass = 5000\n\n\n#Isolation window setting\n#The current version supports the following window type: SWATH (fixed window size), V_SWATH (variable SWATH window), MSX, MSE, pSMART\nWindowType = SWATH\n\n#Fix window size (For SWATH)\n# for Thermo data, this will be determined from raw data automatically\nWindowSize = 10\n\n#Variable SWATH window setting (start m/z, end m/z, separated by Tab)\n# for Thermo data, this will be determined from raw data automatically\n==window setting begin\n\n==window setting end\n\n",
+    "config_type": "params_file",
+    "q_tiers": [
+      "Q1",
+      "Q2",
+      "Q3"
+    ]
+  },
+  "diatracer": {
+    "run": false,
+    "args": "",
+    "config_type": "cli"
+  },
+  "diann": {
+    "run": true,
+    "args": "--qvalue 0.01 --matrix-qvalue 0.01 --matrices",
+    "config_type": "cli",
+    "args_post": "--smart-profiling --peak-center --no-ifs-removal --report-lib-info",
+    "cmd_opts": "",
+    "qvalue": "0.01",
+    "run_specific_protein_qvalue": false,
+    "redo_protein_inference": false,
+    "generate_msstats": true,
+    "library": "",
+    "run_plex": false,
+    "light": "",
+    "medium": "",
+    "heavy": "",
+    "mod_tag": "",
+    "min_site_prob": "0.75",
+    "report_levels": "peptide;modified-peptide"
+  },
+  "speclibgen": {
+    "run": true,
+    "args": "SPECLIB_RT_CAL=noiRT\nSPECLIB_IM_CAL=noIM\nSPECLIB_CONVERT_ARGS='--max_delta_unimod 0.02 --max_delta_ppm 15.0 --fragment_types [\\'\"'\"'b\\'\"'\"',\\'\"'\"'y\\'\"'\"',]'\nSPECLIB_LIBRARY_ARGS='--rt_lowess_fraction 0.0'\nSPECLIB_INTERMEDIATE=delete_intermediate_files",
+    "config_type": "bash_source",
+    "rt_cal_file": "",
+    "im_cal_file": "",
+    "argv_parts": {
+      "rt_cal": "noiRT",
+      "im_cal": "noIM",
+      "convert_args": "--max_delta_unimod 0.02 --max_delta_ppm 15.0 --fragment_types [\\'b\\',\\'y\\',]",
+      "library_args": "--rt_lowess_fraction 0.0",
+      "intermediate": "delete_intermediate_files"
+    }
+  },
+  "ptmprophet": {
+    "run": false,
+    "args": "",
+    "config_type": "cli"
+  },
+  "ptmshepherd": {
+    "run": false,
+    "args": "",
+    "config_type": "params_file"
+  },
+  "crystalc": {
+    "run": false,
+    "args": "",
+    "config_type": "params_file"
+  },
+  "opair": {
+    "run": false,
+    "args": "",
+    "config_type": "argv"
+  },
+  "mbg": {
+    "run": false,
+    "args": "",
+    "config_type": "argv"
+  },
+  "fpop": {
+    "run": false,
+    "args": "",
+    "config_type": "argv"
+  },
+  "fpop_coadaptr": {
+    "run": false,
+    "args": "",
+    "config_type": "cli"
+  },
+  "saintexpress": {
+    "run": false,
+    "args": "",
+    "config_type": "cli"
+  },
+  "skyline": {
+    "run": false,
+    "args": "",
+    "config_type": "cli"
+  },
+  "metaproteomics": {
+    "run": false,
+    "args": "",
+    "config_type": "argv"
+  },
+  "transferlearning": {
+    "run": false,
+    "args": "",
+    "config_type": "cli"
+  },
+  "database": {
+    "run": true,
+    "args": "--prefix rev_",
+    "config_type": "cli",
+    "decoy_tag": "rev_"
+  },
+  "tabrun": {
+    "run": false,
+    "args": "",
+    "config_type": "gui_only"
+  },
+  "exportmatchedfragments": {
+    "run": false,
+    "args": "",
+    "config_type": "cli"
+  },
+  "writesubmzml": {
+    "run": false,
+    "args": "",
+    "config_type": "cli"
+  },
+  "quantitation": {
+    "run": false,
+    "args": "",
+    "config_type": "gui_only"
+  },
+  "pairscans": {
+    "run": false,
+    "args": [],
+    "config_type": "argv"
+  },
+  "appendfile": {
+    "run": false,
+    "args": "",
+    "config_type": "cli"
+  },
+  "tmtintegrator_unmod": {
+    "run": false,
+    "args": "",
+    "config_type": "params_file"
+  },
+  "abacus": {
+    "run": true,
+    "args": "--picked --razor --reprint --tag rev_ --protein",
+    "config_type": "cli"
+  },
+  "iprophet": {
+    "run": false,
+    "args": "",
+    "config_type": "cli"
+  }
+}

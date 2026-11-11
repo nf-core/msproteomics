@@ -1,0 +1,10 @@
+/plan/fp_work/interact-dia_run1_rank1.pep.xml
+/plan/fp_work/interact-dia_run1_rank2.pep.xml
+/plan/fp_work/interact-dia_run1_rank3.pep.xml
+/plan/fp_work/interact-dia_run1_rank4.pep.xml
+/plan/fp_work/interact-dia_run1_rank5.pep.xml
+/plan/fp_work/interact-dia_run2_rank1.pep.xml
+/plan/fp_work/interact-dia_run2_rank2.pep.xml
+/plan/fp_work/interact-dia_run2_rank3.pep.xml
+/plan/fp_work/interact-dia_run2_rank4.pep.xml
+/plan/fp_work/interact-dia_run2_rank5.pep.xml

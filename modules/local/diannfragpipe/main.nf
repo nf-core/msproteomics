@@ -77,7 +77,7 @@ process DIANNFRAGPIPE {
     WD=\$(pwd)
     echo "${tools.fragpipe_version}" > .fragpipe_version
 
-    # The parser emits DIA-NN 1.8.2 Beta 8 arguments (NoteConfigDiann.compareVersion branches)
+    # FragPipe's plan gives DIA-NN 1.8.2 Beta 8 arguments (NoteConfigDiann.compareVersion branches)
     "${tools.diann}" --version > diann_version.log 2>&1 || echo "exit status \$?" >> diann_version.log
     grep -oiP 'DIA-NN \\K[\\w\\s.-]+(?= \\(Data-Independent Acquisition by Neural Networks\\))' diann_version.log | head -1 > .diann_version
     if ! grep -qix '1.8.2 Beta 8' .diann_version; then

@@ -21,7 +21,7 @@ process DIAUMPIRE {
     input:
     // DIA-Umpire generates pseudo-spectra from DIA data
     // dia_file: DIA mass spec file (mzML, mzXML, or raw)
-    // umpire_params: umpire-se.params text with Thread = THREADS (parse_fragpipe_workflow.py generate_diaumpire_config)
+    // umpire_params: umpire-se.params text with Thread = THREADS (FragPipe's plan, bin/plan_to_tool_configs.py)
     tuple val(meta), path(dia_file), val(umpire_params)
 
     output:

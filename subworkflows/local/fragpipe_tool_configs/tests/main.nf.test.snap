@@ -1,0 +1,14 @@
+{
+    "given plan - --fragpipe_plan skips FRAGPIPEPLAN": {
+        "content": [
+            [
+                "fragger.params"
+            ]
+        ],
+        "timestamp": "2026-10-13T13:59:24.111671787",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

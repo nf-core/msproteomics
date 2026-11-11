@@ -1,0 +1,111 @@
+// Golden tests: FRAGPIPEPLAN on the bundled workflows (assets/LFQ-MBR.workflow, assets/TMT6.workflow as FragPipe
+// saved them, tests/fixtures/fragpipe_plans/*.workflow) with the test_dda_lfq / test_tmtq data, for the planner
+// parity fixtures tests/fixtures/fragpipe_plans/{LFQ-MBR_test_dda_lfq,TMT6_test_tmtq}/. The database is FragPipe's
+// database update of the profile's FASTA (PHILOSOPHERDATABASE, --contam --contamprefix), as in those profiles;
+// FragPipe threads = the pipeline's for these profiles (2).
+// Each dry-run log must list the fixture's FragPipe steps; the portable log holds no licence path.
+// Needs a FragPipe image with --write-plan and --msfragger-per-file (Nesvilab/FragPipe#2907; not in a FragPipe release yet,
+// so public CI cannot run these): nf-test test --tag write_plan with FRAGPIPE_CONTAINER set.
+// Run: FRAGPIPE_CONTAINER=<image with --write-plan> nf-test test modules/local/fragpipeplan/tests/golden_bundled.nf.test
+nextflow_process {
+
+    name "Golden FRAGPIPEPLAN on the bundled LFQ-MBR and TMT6 workflows"
+    script "../main.nf"
+    process "FRAGPIPEPLAN"
+    config "./golden.config"
+
+    tag "golden"
+    tag "fragpipe_plan"
+    tag "write_plan"
+
+    test("test_dda_lfq LFQ-MBR - dry-run steps equal the fixture's") {
+
+        setup {
+            run("PHILOSOPHERDATABASE") {
+                script "../../philosopherdatabase/main.nf"
+                process {
+                    """
+                    input[0] = channel.of([[ id: 'database' ], file("\${params.pipelines_testdata_base_path}/databases/human_sp_subset.fasta", checkIfExists: true)])
+                    """
+                }
+            }
+        }
+
+        when {
+            params {
+                fixture      = "${projectDir}/tests/fixtures/fragpipe_plans/LFQ-MBR_test_dda_lfq"
+                plan_threads = 2
+            }
+            process {
+                """
+                def spectra = ['dda_silac_subset.mzML', 'dda_silac_subset_2.mzML'].collect { n -> file("\${params.pipelines_testdata_base_path}/spectra/\${n}", checkIfExists: true) }
+                def rows = [['dda_silac_subset.mzML', 'control', '1', 'DDA', 'control_1'], ['dda_silac_subset_2.mzML', 'treatment', '1', 'DDA', 'treatment_1']]
+                input[0] = PHILOSOPHERDATABASE.out.fasta.map { _meta, fasta ->
+                    [[ id: 'plan' ], spectra, fasta, file("\${projectDir}/tests/fixtures/fragpipe_plans/LFQ-MBR_test_dda_lfq.workflow").text, rows, [],
+                     spectra.collectEntries { f -> [f.name, f.toUriString()] }, fasta.toUriString()]
+                }
+                """
+            }
+        }
+
+        then {
+            def planned_of = { File dir ->
+                def lines = dir.listFiles().find { f -> f.name ==~ /log_.*\.txt/ }.readLines()
+                def at = lines.findIndexOf { l -> l ==~ /\d+ commands to execute:/ }
+                (0..<(lines[at].tokenize(' ')[0] as int)).collect { k -> lines[at + 1 + 2 * k].replaceFirst(/ \[Work dir: .*\]$/, '') }
+            }
+            assertAll(
+                { assert process.success },
+                { assert planned_of(new File(process.out.workdir[0][1].toString())) == planned_of(new File(params.fixture)) },
+                { assert !new File(process.out.portable_log[0][1].toString()).text.contains('license.dat') }
+            )
+        }
+    }
+
+    test("test_tmtq TMT6 (2 plexes) - dry-run steps equal the fixture's") {
+
+        setup {
+            run("PHILOSOPHERDATABASE") {
+                script "../../philosopherdatabase/main.nf"
+                process {
+                    """
+                    input[0] = channel.of([[ id: 'database' ], file("\${params.pipelines_testdata_base_path}/databases/erwinia_carotovora.fasta", checkIfExists: true)])
+                    """
+                }
+            }
+        }
+
+        when {
+            params {
+                fixture      = "${projectDir}/tests/fixtures/fragpipe_plans/TMT6_test_tmtq"
+                plan_threads = 2
+            }
+            process {
+                """
+                def spectra = ['tmt_erwinia_subset.mzML', 'tmt_erwinia_subset_2.mzML'].collect { n -> file("\${params.pipelines_testdata_base_path}/spectra/\${n}", checkIfExists: true) }
+                def rows = [['tmt_erwinia_subset.mzML', 'plex1', null, 'DDA', 'plex1'], ['tmt_erwinia_subset_2.mzML', 'plex2', null, 'DDA', 'plex2']]
+                // the test_tmtq samplesheet's channels (tests/fixtures/samplesheets/test_tmtq.csv)
+                def channels = ['126', '127N', '128C', '129N', '130C', '131N']
+                def annotations = ['plex1', 'plex2'].collectMany { p -> channels.collect { c -> [p, c, "\${p}_\${c}".toString()] } }
+                input[0] = PHILOSOPHERDATABASE.out.fasta.map { _meta, fasta ->
+                    [[ id: 'plan' ], spectra, fasta, file("\${projectDir}/tests/fixtures/fragpipe_plans/TMT6_test_tmtq.workflow").text, rows, annotations,
+                     spectra.collectEntries { f -> [f.name, f.toUriString()] }, fasta.toUriString()]
+                }
+                """
+            }
+        }
+
+        then {
+            def planned_of = { File dir ->
+                def lines = dir.listFiles().find { f -> f.name ==~ /log_.*\.txt/ }.readLines()
+                def at = lines.findIndexOf { l -> l ==~ /\d+ commands to execute:/ }
+                (0..<(lines[at].tokenize(' ')[0] as int)).collect { k -> lines[at + 1 + 2 * k].replaceFirst(/ \[Work dir: .*\]$/, '') }
+            }
+            assertAll(
+                { assert process.success },
+                { assert planned_of(new File(process.out.workdir[0][1].toString())) == planned_of(new File(params.fixture)) },
+                { assert !new File(process.out.portable_log[0][1].toString()).text.contains('license.dat') }
+            )
+        }
+    }
+}

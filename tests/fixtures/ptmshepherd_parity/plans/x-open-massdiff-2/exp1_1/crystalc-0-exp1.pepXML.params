@@ -1,0 +1,14 @@
+# Crystal-C (Version: 2019.08)
+
+thread = 4
+fasta = /plan/db.fasta
+raw_file_location = /plan/raw_files
+raw_file_extension = mzML
+output_location = /plan/fp_work/exp1_1
+
+precursor_charge = 1 6			# precursor charge range for detecting chimeric spectra
+isotope_number = 3			# number of theoretical isotope peaks
+precursor_mass = 20			# precursor mass tolerance (unit: ppm)
+precursor_isolation_window = 0.7			# precursor isolation window
+correct_isotope_error = false			# correct isotope error by updating precursor neutral mass with the monoisotopic mass
+

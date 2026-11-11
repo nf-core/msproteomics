@@ -1,0 +1,158 @@
+System OS: Linux, Architecture: amd64
+Java Info: 17.0.18, OpenJDK 64-Bit Server VM, Ubuntu
+.NET Core Info: 6.0.36
+15:05:00 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineRunner.exe
+
+15:05:00 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineRunner.exe
+
+15:05:00 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineDailyRunner.exe
+Version info:
+FragPipe version 24.0
+DIA-Umpire version 2.3.3
+diaTracer version 2.2.1
+MSFragger version 4.4.1
+Crystal-C version 1.5.10
+MSBooster version 1.4.14
+Percolator version 3.7.1
+PTMProphet version 6.3.2
+Metaproteomics version 1.0.1
+Philosopher version 5.1.3-RC9
+PTM-Shepherd version 3.0.11
+IonQuant version 1.11.20
+TMT-Integrator version 6.1.3
+FragPipe-SpecLib version 0.1.58
+DIA-NN version 1.8.2 beta 8
+Skyline version N/A
+Pandas version 2.3.3
+Numpy version 1.26.4
+
+15:05:00 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineDailyRunner.exe
+
+LCMS files:
+  Experiment/Group: 
+  (if "spectral library generation" is enabled, all files will be analyzed together)
+  - /plan/raw_files/dia_cptac_subset.mzML	DIA
+
+
+15:05:00 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineRunner.exe
+15:05:00 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineRunner.exe
+15:05:00 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineDailyRunner.exe
+15:05:00 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineDailyRunner.exe
+27 commands to execute:
+CheckCentroid
+java -Xmx64G -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/tools/batmass-io-1.36.5.jar org.nesvilab.fragpipe.util.CheckCentroid /plan/raw_files/dia_cptac_subset.mzML 48
+WorkspaceCleanInit [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --clean --nocheck
+WorkspaceCleanInit [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --init --nocheck --temp /tmp/20cac0c7-c1da-484c-84be-7a41618c60c5
+MSFragger [Work dir: /plan/fp_work]
+java -jar -Dfile.encoding=UTF-8 -Xmx64G @ROOT@/fragpipe-24.0/tools/MSFragger-4.4.1/MSFragger-4.4.1.jar /plan/fp_work/fragger_dia.params --license {LICENSE} /plan/raw_files/dia_cptac_subset.mzML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/dia_cptac_subset_rank1.pepXML /plan/fp_work/dia_cptac_subset_rank1.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/dia_cptac_subset_rank2.pepXML /plan/fp_work/dia_cptac_subset_rank2.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/dia_cptac_subset_rank3.pepXML /plan/fp_work/dia_cptac_subset_rank3.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/dia_cptac_subset_rank4.pepXML /plan/fp_work/dia_cptac_subset_rank4.pepXML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/dia_cptac_subset_rank5.pepXML /plan/fp_work/dia_cptac_subset_rank5.pepXML
+MSFragger move pin
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/dia_cptac_subset.pin /plan/fp_work/dia_cptac_subset.pin
+MSBooster [Work dir: /plan/fp_work]
+java -Djava.awt.headless=true -Xmx64G -cp @ROOT@/fragpipe-24.0/tools/MSBooster-1.4.14.jar:@ROOT@/fragpipe-24.0/tools/batmass-io-1.36.5.jar mainsteps.MainClass --paramsList /plan/fp_work/msbooster_params.txt
+Percolator [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/percolator_3_7_1/linux/percolator --no-terminate --post-processing-tdc --subset-max-train 500000 --num-threads 48 --results-peptides dia_cptac_subset_percolator_target_psms.tsv --decoy-results-peptides dia_cptac_subset_percolator_decoy_psms.tsv --protein-decoy-pattern rev_ dia_cptac_subset_edited.pin
+Percolator: Convert to pepxml [Work dir: /plan/fp_work]
+java -cp @ROOT@/fragpipe-24.0/lib/* org.nesvilab.fragpipe.tools.percolator.PercolatorOutputToPepXML dia_cptac_subset.pin dia_cptac_subset dia_cptac_subset_percolator_target_psms.tsv dia_cptac_subset_percolator_decoy_psms.tsv interact-dia_cptac_subset DIA 0.7 /plan/raw_files/dia_cptac_subset.mzML
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/dia_cptac_subset_percolator_target_psms.tsv
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/dia_cptac_subset_percolator_decoy_psms.tsv
+ProteinProphet [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 proteinprophet --maxppmdiff 2000000 --minprob 0.5 --output combined /plan/fp_work/filelist_proteinprophet.txt
+PhilosopherDbAnnotate [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 database --annotate /plan/human_sp_subset_decoys.fasta --prefix rev_
+PhilosopherFilter [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 filter --picked --prot 0.01 --minPepLen 8 --tag rev_ --pepxml /plan/fp_work --protxml /plan/fp_work/combined.prot.xml --razor
+PhilosopherReport [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 report
+WorkspaceClean [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --clean --nocheck
+SpecLibGen [Work dir: /plan/fp_work]
+python3 -u @ROOT@/fragpipe-24.0/tools/speclib/gen_con_spec_lib.py /plan/human_sp_subset_decoys.fasta /plan/fp_work unused /plan/fp_work True unused use_easypqp noiRT:noIM 48 "--max_delta_unimod 0.02 --max_delta_ppm 15.0 --fragment_types [\'b\',\'y\',]" "--rt_lowess_fraction 0.0" delete_intermediate_files /plan/fp_work/filelist_speclibgen.txt
+DIA-Quant run DIA-NN [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/diann/1.8.2_beta_8/linux/diann-1.8.1.8 --lib library.tsv --threads 48 --verbose 1 --out dia-quant-output/report.tsv --qvalue 0.01 --matrix-qvalue 0.01 --matrices --no-prot-inf --smart-profiling --peak-center --no-ifs-removal --report-lib-info --cfg /plan/fp_work/filelist_diann.txt--
+DIA-Quant delete .quant file
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete --no-err /plan/raw_files/dia_cptac_subset.mzML.quant
+DIA-Quant move and rename speclib for skyline
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileMoveWithExtension /plan/fp_work .speclib /plan/fp_work/dia-quant-output/report-tsv.speclib
+DIA-Quant propagate information [Work dir: /plan/fp_work/dia-quant-output]
+java -cp @ROOT@/fragpipe-24.0/lib/*:@ROOT@/fragpipe-24.0/tools/batmass-io-1.36.5.jar org.nesvilab.fragpipe.tools.diann.Propagation /plan/fp_work - - -
+DIA-Quant convert DIA-NN output to MSstats.csv [Work dir: /plan/fp_work/dia-quant-output]
+java -cp @ROOT@/fragpipe-24.0/lib/* org.nesvilab.fragpipe.tools.diann.DiannToMsstats report.tsv ./ /plan/fp_work/psm.tsv 0.01 1 0.01 0.01 /plan/fp_work/fragpipe-files.fp-manifest
+DIA-Quant generate site reports [Work dir: /plan/fp_work/dia-quant-output]
+java -Xmx64G -jar @ROOT@/fragpipe-24.0/tools/FragReporter-1.1.2.jar --pr /plan/fp_work/dia-quant-output/report.tsv --exp-ann /plan/fp_work/fragpipe-files.fp-manifest --out-dir /plan/fp_work/dia-quant-output --mod-tag  --min-site-prob 0.75 --level peptide;modified-peptide
+~~~~~~~~~~~~~~~~~~~~~~
+
+Execution order:
+
+    Cmd: [START], Work dir: [/plan/fp_work]
+    Cmd: [CheckCentroid], Work dir: [/plan/fp_work]
+    Cmd: [WorkspaceCleanInit], Work dir: [/plan/fp_work]
+    Cmd: [MSFragger], Work dir: [/plan/fp_work]
+    Cmd: [MSBooster], Work dir: [/plan/fp_work]
+    Cmd: [Percolator], Work dir: [/plan/fp_work]
+    Cmd: [ProteinProphet], Work dir: [/plan/fp_work]
+    Cmd: [PhilosopherDbAnnotate], Work dir: [/plan/fp_work]
+    Cmd: [PhilosopherFilter], Work dir: [/plan/fp_work]
+    Cmd: [PhilosopherReport], Work dir: [/plan/fp_work]
+    Cmd: [WorkspaceClean], Work dir: [/plan/fp_work]
+    Cmd: [SpecLibGen], Work dir: [/plan/fp_work]
+    Cmd: [DIA-Quant], Work dir: [/plan/fp_work]
+
+~~~~~~~~~~~~~~~~~~~~~~
+
+~~~~~~Sample of /plan/human_sp_subset_decoys.fasta~~~~~~~
+>contam_sp|O00762|UBE2C_HUMAN Ubiquitin-conjugating enzyme E2 C OS=Homo sapiens OX=9606 GN=UBE2C PE=1 SV=1
+>rev_contam_sp|O76011|KRT34_HUMAN Keratin, type I cuticular Ha4 OS=Homo sapiens OX=9606 GN=KRT34 PE=1 SV=2
+>rev_sp|A0A0B4J1V0|HV315_HUMAN Immunoglobulin heavy variable 3-15 OS=Homo sapiens OX=9606 GN=IGHV3-15 PE=1 SV=1
+>rev_sp|O75095|MEGF6_HUMAN Multiple epidermal growth factor-like domains protein 6 OS=Homo sapiens OX=9606 GN=MEGF6 PE=1 SV=4
+>rev_sp|P11142|HSP7C_HUMAN Heat shock cognate 71 kDa protein OS=Homo sapiens OX=9606 GN=HSPA8 PE=1 SV=1
+>rev_sp|P49441|INPP_HUMAN Inositol polyphosphate 1-phosphatase OS=Homo sapiens OX=9606 GN=INPP1 PE=1 SV=1
+>rev_sp|Q13490|BIRC2_HUMAN Baculoviral IAP repeat-containing protein 2 OS=Homo sapiens OX=9606 GN=BIRC2 PE=1 SV=2
+>rev_sp|Q6UWF3|SCIMP_HUMAN SLP adapter and CSK-interacting membrane protein OS=Homo sapiens OX=9606 GN=SCIMP PE=1 SV=1
+>rev_sp|Q8NBL3|T178A_HUMAN Transmembrane protein 178A OS=Homo sapiens OX=9606 GN=TMEM178A PE=1 SV=1
+>rev_sp|Q96IW7|SC22A_HUMAN Vesicle-trafficking protein SEC22a OS=Homo sapiens OX=9606 GN=SEC22A PE=1 SV=1
+>rev_sp|Q9NRG7|D39U1_HUMAN Epimerase family protein SDR39U1 OS=Homo sapiens OX=9606 GN=SDR39U1 PE=1 SV=3
+>rev_sp|Q9Y691|KCMB2_HUMAN Calcium-activated potassium channel subunit beta-2 OS=Homo sapiens OX=9606 GN=KCNMB2 PE=1 SV=1
+>sp|O60268|K0513_HUMAN Uncharacterized protein KIAA0513 OS=Homo sapiens OX=9606 GN=KIAA0513 PE=1 SV=1
+>sp|P0DP23|CALM1_HUMAN Calmodulin-1 OS=Homo sapiens OX=9606 GN=CALM1 PE=1 SV=1
+>sp|P46531|NOTC1_HUMAN Neurogenic locus notch homolog protein 1 OS=Homo sapiens OX=9606 GN=NOTCH1 PE=1 SV=4
+>sp|Q12948|FOXC1_HUMAN Forkhead box protein C1 OS=Homo sapiens OX=9606 GN=FOXC1 PE=1 SV=3
+>sp|Q6NUT2|D19L2_HUMAN Probable C-mannosyltransferase DPY19L2 OS=Homo sapiens OX=9606 GN=DPY19L2 PE=1 SV=2
+>sp|Q8N6N6|NATD1_HUMAN Protein NATD1 OS=Homo sapiens OX=9606 GN=NATD1 PE=1 SV=2
+>sp|Q96FN5|KIF12_HUMAN Kinesin-like protein KIF12 OS=Homo sapiens OX=9606 GN=KIF12 PE=1 SV=3
+>sp|Q9NPC2|KCNK9_HUMAN Potassium channel subfamily K member 9 OS=Homo sapiens OX=9606 GN=KCNK9 PE=1 SV=1
+>sp|Q9Y3Y2|CHTOP_HUMAN Chromatin target of PRMT1 protein OS=Homo sapiens OX=9606 GN=CHTOP PE=1 SV=2
+~~~~~~~~~~~~~~~~~~~~~~
+
+
+It's a dry-run, not running the commands.
+
+
+Please cite:
+(Any searches) MSFragger: ultrafast and comprehensive peptide identification in mass spectrometry–based proteomics. Nat Methods. 14:513 (2017)
+(Any searches) Fast deisotoping algorithm and its implementation in the MSFragger search engine. J Proteome Res. 20:498 (2021)
+(timsTOF ddaPASEF) Fast quantitative analysis of timsTOF PASEF data with MSFragger and IonQuant. Mol Cell Proteomics. 19:1575 (2020)
+(Open search) Identification of modified peptides using localization-aware open search. Nat Commun. 11:4065 (2020)
+(Glyco search) Fast and comprehensive N- and O-glycoproteomics analysis with MSFragger-Glyco. Nat Methods. 17:1125 (2020)
+(Labile search) MSFragger-Labile: A Flexible Method to Improve Labile PTM Analysis in Proteomics. Mol Cell Proteomics. 22:100538 (2023)
+(DDA+ search) MSFragger-DDA+ enhances peptide identification sensitivity with full isolation window search. Nat Commun. 16:3329 (2025)
+(MSBooster) MSBooster: improving peptide identification rates using deep learning-based features. Nat Commun. 14:4539 (2023)
+(PSM validation with Percolator) Semi-supervised learning for peptide identification from shotgun proteomics datasets. Nat Methods. 4:923 (2007)
+(Protein inference with ProteinProphet)A statistical model for identifying proteins by tandem mass spectrometry. Anal Chem. 75:4646 (2003)
+(FDR filtering and reporting) Philosopher: a versatile toolkit for shotgun proteomics data analysis. Nat Methods. 17:869 (2020)
+(Spectral library generation and DIA analysis) Analysis of DIA proteomics data using MSFragger-DIA and FragPipe computational platform. Nat Commun. 14:4154 (2023)
+(DIA quantification with DIA-NN) dia-PASEF data analysis using FragPipe and DIA-NN for deep proteomics of low sample amounts. Nat Commun. 13:3944 (2022)
+(Visualization with FragPipe-PDV) PDV: an integrative proteomics data viewer. Bioinformatics. 35(7):1249 (2019)

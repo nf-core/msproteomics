@@ -13,6 +13,9 @@ nextflow_workflow {
         tag "stub"
 
         when {
+            params {
+                fragpipe_plan = "${baseDir}/tests/fixtures/fragpipe_plans/stub/fragpipe_wf__lfq"
+            }
             workflow {
                 """
                 // Create a test mzML file
@@ -44,7 +47,7 @@ database.decoy-tag = rev_
 '''.trim()
 
                 // Create input channels
-                input[0] = channel.of([[ id: 'test_sample', group: 'test_sample', data_type: 'DDA' ], mzml_file])
+                input[0] = channel.of([[ id: 'test_sample', experiment: 'test_sample', group: 'test_sample', data_type: 'DDA' ], mzml_file])
                 input[1] = channel.of([[ id: 'test_db' ], fasta_file])
                 input[2] = channel.of([[ id: 'fragpipe_config' ], workflow_file])
                 input[3] = Channel.empty()  // ch_decoy_db (not used)
@@ -85,6 +88,9 @@ database.decoy-tag = rev_
         tag "stub"
 
         when {
+            params {
+                fragpipe_plan = "${baseDir}/tests/fixtures/fragpipe_plans/stub/fragpipe_wf__matched_fragments_report_off"
+            }
             workflow {
                 """
                 // Create a test mzML file
@@ -117,7 +123,7 @@ database.decoy-tag = rev_
 '''.trim()
 
                 // Create input channels
-                input[0] = channel.of([[ id: 'test_sample', group: 'test_sample', data_type: 'DDA' ], mzml_file])
+                input[0] = channel.of([[ id: 'test_sample', experiment: 'test_sample', group: 'test_sample', data_type: 'DDA' ], mzml_file])
                 input[1] = channel.of([[ id: 'test_db' ], fasta_file])
                 input[2] = channel.of([[ id: 'fragpipe_config' ], workflow_file])
                 input[3] = Channel.empty()  // ch_decoy_db (not used)
@@ -149,6 +155,7 @@ database.decoy-tag = rev_
 
         when {
             params {
+                fragpipe_plan = "${baseDir}/tests/fixtures/fragpipe_plans/stub/fragpipe_wf__fpop_quant_meta"
                 outdir = "$outputDir"
                 // symlinks show which task each published file comes from
                 publish_dir_mode = 'symlink'
@@ -164,8 +171,8 @@ database.decoy-tag = rev_
 
                 // FragPipe 24.0 FPOP.workflow with FPOP Quant and Metaproteomics switched on
                 input[0] = channel.of(
-                    [[ id: 'fpop_a', group: 'CTRL_1', data_type: 'DDA' ], mzml_a],
-                    [[ id: 'fpop_b', group: 'OX_1', data_type: 'DDA' ], mzml_b]
+                    [[ id: 'fpop_a', experiment: 'CTRL_1', group: 'CTRL_1', data_type: 'DDA' ], mzml_a],
+                    [[ id: 'fpop_b', experiment: 'OX_1', group: 'OX_1', data_type: 'DDA' ], mzml_b]
                 )
                 input[1] = channel.of([[ id: 'test_db' ], fasta_file])
                 input[2] = channel.of([[ id: 'fragpipe_config' ], file("${baseDir}/tests/fixtures/fragpipe_workflows/FPOP-quant-meta.workflow", checkIfExists: true)])
@@ -215,6 +222,9 @@ database.decoy-tag = rev_
         tag "stub"
 
         when {
+            params {
+                fragpipe_plan = "${baseDir}/tests/fixtures/fragpipe_plans/stub/fragpipe_wf__tmt16_inline"
+            }
             workflow {
                 """
                 // Create a test mzML file
@@ -234,6 +244,7 @@ msfragger.precursor_mass_upper = 20
 msfragger.run-msfragger = true
 msbooster.run-msbooster = true
 tmtintegrator.run-tmtintegrator = true
+tmtintegrator.channel_num = TMT-16
 msfragger.table.var-mods = 15.9949,M,true,3
 phi-report.filter = --sequential --prot 0.01 --picked
 phi-report.run-report = true
@@ -243,10 +254,13 @@ database.decoy-tag = rev_
 '''.trim()
 
                 // Create input channels
-                // TMT annotation (TMT-Integrator runs): one plex = the FragPipe group test_sample
+                // TMT annotation (TMT-Integrator runs): one plex = the FragPipe group test_sample, one sample per TMT-16
+                // channel (FragPipe refuses an annotation with fewer samples than the label type's channels)
+                def channels = ['126', '127N', '127C', '128N', '128C', '129N', '129C', '130N', '130C', '131N', '131C', '132N', '132C', '133N', '133C', '134N']
                 def annotation_file = file("\${workDir}/tmt_annotation.tsv")
-                annotation_file.text = "plex\\tchannel\\tsample\\tsample_name\\tcondition\\treplicate\\ntest_sample\\t126\\tBridge\\tBridge\\tref\\t1\\ntest_sample\\t127N\\tS1\\tS1\\tc\\t1\\n"
-                input[0] = channel.of([[ id: 'test_sample', group: 'test_sample', data_type: 'DDA' ], mzml_file])
+                annotation_file.text = "plex\\tchannel\\tsample\\tsample_name\\tcondition\\treplicate\\n" +
+                    channels.withIndex().collect { c, i -> def name = i == 0 ? 'Bridge' : "S\${i}"; "test_sample\\t\${c}\\t\${name}\\t\${name}\\t\${i == 0 ? 'ref' : 'c'}\\t1\\n" }.join('')
+                input[0] = channel.of([[ id: 'test_sample', experiment: 'test_sample', group: 'test_sample', data_type: 'DDA' ], mzml_file])
                 input[1] = channel.of([[ id: 'test_db' ], fasta_file])
                 input[2] = channel.of([[ id: 'fragpipe_config' ], workflow_file])
                 input[3] = Channel.empty()  // ch_decoy_db (not used)
@@ -287,6 +301,9 @@ database.decoy-tag = rev_
         tag "stub"
 
         when {
+            params {
+                fragpipe_plan = "${baseDir}/tests/fixtures/fragpipe_plans/stub/fragpipe_wf__lfq_prebuilt_db"
+            }
             workflow {
                 """
                 // Create a test mzML file
@@ -316,7 +333,7 @@ database.decoy-tag = rev_
 '''.trim()
 
                 // Create input channels
-                input[0] = channel.of([[ id: 'test_sample', group: 'test_sample', data_type: 'DDA' ], mzml_file])
+                input[0] = channel.of([[ id: 'test_sample', experiment: 'test_sample', group: 'test_sample', data_type: 'DDA' ], mzml_file])
                 input[1] = Channel.empty()  // ch_database (not used - using prebuilt)
                 input[2] = channel.of([[ id: 'fragpipe_config' ], workflow_file])
                 input[3] = channel.of([[ id: 'philosopher_db' ], decoy_fasta])  // ch_decoy_db
@@ -357,6 +374,9 @@ database.decoy-tag = rev_
         tag "stub"
 
         when {
+            params {
+                fragpipe_plan = "${baseDir}/tests/fixtures/fragpipe_plans/stub/fragpipe_wf__dia_speclib_quant"
+            }
             workflow {
                 """
                 // FragPipe 24.0's DIA_SpecLib_Quant.workflow: MSFragger (DIA params) -> MSBooster -> Percolator
@@ -406,6 +426,9 @@ database.decoy-tag = rev_
         tag "stub"
 
         when {
+            params {
+                fragpipe_plan = "${baseDir}/tests/fixtures/fragpipe_plans/stub/fragpipe_wf__dia_speclib_quant_coadaptr"
+            }
             workflow {
                 """
                 def workflow_file = file("\${workDir}/DIA_SpecLib_Quant_coadaptr.workflow")
@@ -455,8 +478,8 @@ database.decoy-tag = rev_
                 def workflow_file = file("\${projectDir}/tests/fixtures/fragpipe_workflows/LFQ-MBR.workflow")
 
                 input[0] = channel.of(
-                    [[ id: 'sample1', group: 'sample1', data_type: 'DDA' ], file("\${params.pipelines_testdata_base_path}/spectra/tmt_erwinia_subset.mzML", checkIfExists: true)],
-                    [[ id: 'sample2', group: 'sample2', data_type: 'DDA' ], file("\${params.pipelines_testdata_base_path}/spectra/tmt_erwinia_subset_2.mzML", checkIfExists: true)]
+                    [[ id: 'sample1', experiment: 'sample1', group: 'sample1', data_type: 'DDA' ], file("\${params.pipelines_testdata_base_path}/spectra/tmt_erwinia_subset.mzML", checkIfExists: true)],
+                    [[ id: 'sample2', experiment: 'sample2', group: 'sample2', data_type: 'DDA' ], file("\${params.pipelines_testdata_base_path}/spectra/tmt_erwinia_subset_2.mzML", checkIfExists: true)]
                 )
                 input[1] = channel.of([[ id: 'erwinia_db' ], file("\${params.pipelines_testdata_base_path}/databases/erwinia_carotovora.fasta", checkIfExists: true)])
                 input[2] = channel.of([[ id: 'fragpipe_config' ], workflow_file])
@@ -504,8 +527,8 @@ database.decoy-tag = rev_
                 mzml_src.copyTo(mzml_copy)
 
                 input[0] = channel.of(
-                    [[ id: 'silac_sample1', group: 'silac_sample1', data_type: 'DDA' ], mzml_src],
-                    [[ id: 'silac_sample2', group: 'silac_sample2', data_type: 'DDA' ], mzml_copy]
+                    [[ id: 'silac_sample1', experiment: 'silac_sample1', group: 'silac_sample1', data_type: 'DDA' ], mzml_src],
+                    [[ id: 'silac_sample2', experiment: 'silac_sample2', group: 'silac_sample2', data_type: 'DDA' ], mzml_copy]
                 )
                 input[1] = channel.of([[ id: 'human_db' ], file("\${params.pipelines_testdata_base_path}/databases/human_sp_subset.fasta", checkIfExists: true)])
                 input[2] = channel.of([[ id: 'fragpipe_config' ], workflow_file])
@@ -540,6 +563,9 @@ database.decoy-tag = rev_
         tag "stub"
 
         when {
+            params {
+                fragpipe_plan = "${baseDir}/tests/fixtures/fragpipe_plans/stub/fragpipe_wf__glyco_n_lfq_ptms_mbg"
+            }
             workflow {
                 """
                 def mzml_file = file("\${workDir}/test_sample.mzML")
@@ -596,6 +622,9 @@ database.decoy-tag = rev_
         tag "stub"
 
         when {
+            params {
+                fragpipe_plan = "${baseDir}/tests/fixtures/fragpipe_plans/stub/fragpipe_wf__glyco_n_lfq_ptms_freequant"
+            }
             workflow {
                 """
                 def mzml_file = file("\${workDir}/test_sample.mzML")
@@ -651,6 +680,9 @@ database.decoy-tag = rev_
         tag "stub"
 
         when {
+            params {
+                fragpipe_plan = "${baseDir}/tests/fixtures/fragpipe_plans/stub/fragpipe_wf__glyco_o_pair"
+            }
             workflow {
                 """
                 def fasta_file = file("\${workDir}/test.fasta")
@@ -660,8 +692,8 @@ database.decoy-tag = rev_
                 def mzml_b = file("\${workDir}/glyco_b.mzML")
                 mzml_b.text = '<?xml version="1.0" encoding="UTF-8"?><mzML></mzML>'
                 input[0] = channel.of(
-                    [[ id: 'glyco_a', group: 'A', data_type: 'DDA' ], mzml_a],
-                    [[ id: 'glyco_b', group: 'B', data_type: 'DDA' ], mzml_b]
+                    [[ id: 'glyco_a', experiment: 'A', group: 'A', data_type: 'DDA' ], mzml_a],
+                    [[ id: 'glyco_b', experiment: 'B', group: 'B', data_type: 'DDA' ], mzml_b]
                 )
                 input[1] = channel.of([[ id: 'test_db' ], fasta_file])
                 input[2] = channel.of([[ id: 'fragpipe_config' ], file("${baseDir}/tests/fixtures/fragpipe_workflows/glyco-O-Pair.workflow", checkIfExists: true)])
@@ -691,6 +723,9 @@ database.decoy-tag = rev_
         tag "stub"
 
         when {
+            params {
+                fragpipe_plan = "${baseDir}/tests/fixtures/fragpipe_plans/stub/fragpipe_wf__glyco_n_lfq"
+            }
             workflow {
                 """
                 def fasta_file = file("\${workDir}/test.fasta")
@@ -700,8 +735,8 @@ database.decoy-tag = rev_
                 def mzml_b = file("\${workDir}/glyco_b.mzML")
                 mzml_b.text = '<?xml version="1.0" encoding="UTF-8"?><mzML></mzML>'
                 input[0] = channel.of(
-                    [[ id: 'glyco_a', group: 'A', data_type: 'DDA' ], mzml_a],
-                    [[ id: 'glyco_b', group: 'B', data_type: 'DDA' ], mzml_b]
+                    [[ id: 'glyco_a', experiment: 'A', group: 'A', data_type: 'DDA' ], mzml_a],
+                    [[ id: 'glyco_b', experiment: 'B', group: 'B', data_type: 'DDA' ], mzml_b]
                 )
                 input[1] = channel.of([[ id: 'test_db' ], fasta_file])
                 input[2] = channel.of([[ id: 'fragpipe_config' ], file("${baseDir}/tests/fixtures/fragpipe_workflows/glyco-N-LFQ.workflow", checkIfExists: true)])

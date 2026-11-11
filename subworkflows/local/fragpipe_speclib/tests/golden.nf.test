@@ -26,13 +26,14 @@ nextflow_workflow {
 
     def golden_root = System.getenv('GOLDEN_ROOT')
 
-    // Golden run and the database SpecLibGen read; FragPipe's run directories come from its manifest.json "roots"
+    // Golden run, its FragPipe dry run (tests/fixtures/fragpipe_plans) and the database SpecLibGen read;
+    // FragPipe's run directories come from its manifest.json "roots"
     def runs = [
         dia_cptac_subset: [
-            dir: 'dia_cptac_subset/DIA_SpecLib_Quant_perfile', db: 'human_sp_subset_decoys.fasta'
+            dir: 'dia_cptac_subset/DIA_SpecLib_Quant_perfile', plan: 'DIA_SpecLib_Quant_perfile', db: 'human_sp_subset_decoys.fasta'
         ],
         ccRCC_DIA_tutorial: [
-            dir: 'ccRCC_DIA_tutorial/DIA_SpecLib_Quant_perfile', db: '2023-10-03-decoys-reviewed-contam-UP000005640.fas'
+            dir: 'ccRCC_DIA_tutorial/DIA_SpecLib_Quant_perfile', plan: 'ccRCC_DIA_tutorial', db: '2023-10-03-decoys-reviewed-contam-UP000005640.fas'
         ]
     ]
 
@@ -49,10 +50,10 @@ nextflow_workflow {
                     def run = params.golden_run
                     def g = "${golden_root}/\${run.dir}/files"
                     def work = "\${g}/work"
-                    // tool settings from FragPipe's own copy of the workflow
-                    def out = file("\${workDir}/parsed")
-                    def proc = ['python3', "\${baseDir}/modules/local/parsefragpipeworkflow/resources/usr/bin/parse_fragpipe_workflow.py",
-                                '--workflow', "\${work}/fragpipe.workflow", '--data-types', file("\${work}/fragpipe-files.fp-manifest").readLines().findAll { l -> l.trim() }.collect { l -> l.split('\\t', -1)[3] }.unique().sort().join(','), '--outdir', out.toString(), '--output-json'].execute()
+                    // tool settings from FragPipe's dry run of the workflow
+                    def out = file("\${workDir}/plan")
+                    def proc = ['python3', "\${baseDir}/bin/plan_to_tool_configs.py",
+                                '--workdir', "\${baseDir}/tests/fixtures/fragpipe_plans/\${run.plan}", '--outdir', out.toString()].execute()
                     proc.waitForProcessOutput(System.out, System.err)
                     assert proc.exitValue() == 0
                     def configs = file("\${out}/tool_configs.json").text

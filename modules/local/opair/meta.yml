@@ -45,7 +45,7 @@ input:
         description: Spectra file names in FragPipe's order for filelist_opair.txt
     - argv:
         type: list
-        description: O-Pair argv from PARSEFRAGPIPEWORKFLOW (one token per flag; run-time tokens, @OXONIUM_FILE@ included, filled in the module)
+        description: O-Pair argv from FragPipe's plan (bin/plan_to_tool_configs.py) (one token per flag; run-time tokens, @OXONIUM_FILE@ included, filled in the module)
 
 output:
   psm_dir:

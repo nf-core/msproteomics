@@ -8,7 +8,7 @@ process PTMPROPHET {
     // pepxml_file: ONE validated interact pepXML; ranked lists are split by the caller
     //   (CmdPtmProphet.java:107-124 runs one PTMProphet per pepXML)
     // ptmprophet_cli: PtmProphetPanel.getCmdLineOpts(), "--" style already translated
-    //   (parse_fragpipe_workflow.py generate_ptmprophet_config)
+    //   (FragPipe's plan, bin/plan_to_tool_configs.py)
     // spectra: the LC-MS files the pepXML refers to (searched file + MSFragger mzML), lcms_names: the
     //   names FragPipe writes as base_name; RewritePepxml points base_name at the staged copies
     tuple val(meta), path(pepxml_file, stageAs: 'input/*'), path(spectra), val(lcms_names), val(ptmprophet_cli)

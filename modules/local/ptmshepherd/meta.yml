@@ -34,7 +34,7 @@ input:
         description: LC-MS files of all groups
     - config_text:
         type: string
-        description: shepherd.config property block from PARSEFRAGPIPEWORKFLOW (@THREADS@, @TOOLS_DIR@ and @ANNOTATION_FILE@ tokens)
+        description: shepherd.config property block from FragPipe's plan (bin/plan_to_tool_configs.py) (@THREADS@, @TOOLS_DIR@ and @ANNOTATION_FILE@ tokens)
     - annotation_file:
         type: file
         description: Custom annotation file of ptmshepherd.annotation_file, staged as annotation/<name> and named by the config's annotation_file line; empty list when the value is a keyword (unimod, common)

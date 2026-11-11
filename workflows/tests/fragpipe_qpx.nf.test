@@ -29,6 +29,8 @@ nextflow_workflow {
 
         when {
             params {
+                // recorded FragPipe plan of this samplesheet and workflow (fragpipe_parity uses it with the same input)
+                fragpipe_plan = "${baseDir}/tests/fixtures/fragpipe_plans/stub/fragpipe_parity__lfq_mbr_experiment_bioreplicate"
                 def fixtures = "${baseDir}/tests/fixtures"
                 def ss = new File("${outputDir}/samplesheet.csv")
                 ss.parentFile.mkdirs()
@@ -86,6 +88,8 @@ nextflow_workflow {
 
         when {
             params {
+                // recorded FragPipe plan of this samplesheet and workflow (test_tmtq uses it with the same input)
+                fragpipe_plan = "${baseDir}/tests/fixtures/fragpipe_plans/stub/test_tmtq__tmt6_two_plex"
                 def fixtures = "${baseDir}/tests/fixtures"
                 def ss = new File("${outputDir}/samplesheet.csv")
                 ss.parentFile.mkdirs()

@@ -1,5 +1,5 @@
 // Golden differential test: DIAUMPIRE vs FragPipe 24.0 (step DIA-Umpire, dia_cptac_subset/DIA_DIA-Umpire_SpecLib_Quant_perfile).
-// Input is FragPipe's own DIA mzML; the DIA-Umpire-SE settings template comes from parse_fragpipe_workflow.py (tool_configs.json,
+// Input is FragPipe's own DIA mzML; the DIA-Umpire-SE settings template comes from bin/plan_to_tool_configs.py on FragPipe's dry run (tool_configs.json,
 // as the pipeline passes it). Compares the java argv, the umpire-se.params the module writes (FragPipe's work/umpire-se.params)
 // and the pseudo-spectra <name>_Q1/_Q2/_Q3.mzML byte for byte. The manifest records no input or output of DIA-Umpire
 // (io_convention_not_implemented), so the files are compared as pairs.
@@ -24,10 +24,10 @@ nextflow_process {
                 """
                 assert System.getenv('GOLDEN_ROOT') : 'set GOLDEN_ROOT to the golden data root'
                 def golden = file(params.golden_set, checkIfExists: true)
-                def configs = new File("\${workDir}/parser")
+                def configs = new File("\${workDir}/plan")
                 configs.mkdirs()
-                def proc = ['python3', "\${baseDir}/modules/local/parsefragpipeworkflow/resources/usr/bin/parse_fragpipe_workflow.py",
-                            '--workflow', "\${golden}/files/work/fragpipe.workflow", '--data-types', 'DIA', '--output-json', '--outdir', configs.path].execute()
+                def proc = ['python3', "\${baseDir}/bin/plan_to_tool_configs.py",
+                            '--workdir', "\${baseDir}/tests/fixtures/fragpipe_plans/DIA_DIA-Umpire_SpecLib_Quant_perfile", '--outdir', configs.path].execute()
                 proc.waitForProcessOutput(System.out, System.err)
                 assert proc.exitValue() == 0
                 def umpire_params = new groovy.json.JsonSlurper().parse(new File(configs, 'tool_configs.json')).diaumpire.args

@@ -1,0 +1,218 @@
+{
+  "msfragger": {
+    "run": true,
+    "args": "database_name = /data/run/fp24/glyco/db/human_decoys.fasta\t\t\t# Path to the protein database file in FASTA format.\nnum_threads = 48\t\t\t# Number of CPU threads to use.\n\nprecursor_mass_lower = -20\t\t\t# Lower bound of the precursor mass window.\nprecursor_mass_upper = 20\t\t\t# Upper bound of the precursor mass window.\nprecursor_mass_units = 1\t\t\t# Precursor mass tolerance units (0 for Da, 1 for ppm).\ndata_type = 0\t\t\t# Data type (0 for DDA, 1 for DIA, 2 for gas-phase fractionation DIA, 3 for DDA+).\nprecursor_true_tolerance = 20\t\t\t# True precursor mass tolerance (window is +/- this value).\nprecursor_true_units = 1\t\t\t# True precursor mass tolerance units (0 for Da, 1 for ppm).\nfragment_mass_tolerance = 20\t\t\t# Fragment mass tolerance (window is +/- this value).\nfragment_mass_units = 1\t\t\t# Fragment mass tolerance units (0 for Da, 1 for ppm).\ncalibrate_mass = 2\t\t\t# Perform mass calibration (0 for OFF, 1 for ON, 2 for ON and find optimal parameters, 4 for ON and find the optimal fragment mass tolerance).\nuse_all_mods_in_first_search = 0\t\t\t# Use all variable modifications in first search (0 for No, 1 for Yes).\ndecoy_prefix = rev_\t\t\t# Prefix of the decoy protein entries. Used for parameter optimization only.\n\ndeisotope = 1\t\t\t# Perform deisotoping or not (0=no, 1=yes and assume singleton peaks single charged, 2=yes and assume singleton peaks single or double charged).\ndeneutralloss = 1\t\t\t# Perform deneutrallossing or not (0=no, 1=yes).\nisotope_error = 0/1/2\t\t\t# Also search for MS/MS events triggered on specified isotopic peaks.\nmass_offsets = 0.0/1021.35986/1062.3864/1095.3966/1103.413/1136.4232/1150.4025/1167.4177/1177.4497/1191.429/1224.4392/1265.4657/1298.476/1312.4553/1339.5026/1353.4818/1370.4971/1386.4921/1394.5083/1427.5186/1441.4978/1458.5132/1460.5288/1468.5452/1482.5244/1501.5553/1515.5347/1532.5499/1542.5819/1556.5612/1573.5765/1589.5714/1603.5507/1630.598/1644.5773/1661.5925/1663.6082/1677.5874/1685.6038/1704.6348/1718.614/1735.6293/1751.6243/1759.6405/1776.6559/1792.6508/1806.6301/1823.6454/1825.661/1833.6774/1847.6566/1864.6719/1866.6876/1880.6669/1894.6461/1897.6821/1907.7141/1921.6934/1935.6726/1938.7087/1952.688/1954.7036/1968.6829/1976.6992/1995.7301/2009.7095/2026.7247/2028.7404/203.07938/2042.7196/2050.736/2067.7512/2069.7668/2083.746/2097.7256/2100.7615/2114.7407/2116.7563/2124.7727/2138.752/2141.788/2155.7673/2157.783/2171.7622/2188.7776/2190.7932/2198.8096/2212.7888/2229.8042/2231.8198/2245.799/2259.7783/2262.8145/2272.8464/2286.8257/2300.805/2303.8408/2317.82/2319.836/2333.8152/2334.8354/2341.8313/2358.8467/2360.8623/2374.8416/2388.821/2391.857/2393.8726/2405.8362/2407.8518/2415.8682/2429.8474/2432.8835/2434.8992/2446.8628/2448.8784/2462.8577/2465.8938/2479.873/2481.8887/2489.905/2503.8843/2506.9202/2520.8997/2522.9153/2536.8945/2537.9148/2550.8738/2553.9097/2555.9255/2563.9417/2577.921/2591.9004/2594.9363/2596.952/2608.9155/2610.9312/2624.9104/2625.931/2627.9465/2649.9421/2651.9578/2665.937/2668.9731/2682.9524/2684.968/2698.9473/2699.9678/2706.9636/2723.979/2725.9946/2739.9739/2740.9941/2753.9531/2756.9893/2759.005/2770.9685/2772.9841/2781.0005/2794.9797/2798.0156/2811.9949/2814.0107/2827.99/2829.0103/2831.026/2841.9692/2845.0051/2847.0208/2855.037/2869.0164/2872.0525/2882.9958/2886.0317/2888.0474/2900.011/2902.0266/2903.047/2916.0059/2917.0264/2919.042/2921.0576/2941.0376/2943.0532/2957.0325/2960.0686/2974.0479/2976.0635/2990.0427/2991.0632/2993.0789/365.1322/406.15875/494.1748/568.21155/609.2381/656.2276/697.25415/730.2644/771.29095/812.3175/859.307/900.33356/933.3438/947.32306/974.3703/988.3496\t\t\t# Creates multiple precursor tolerance windows with specified mass offsets.\nmass_offsets_detailed = \t\t\t# Optional detailed mass offset list. Overrides mass_offsets if use_detailed_offsets = 1.\nuse_detailed_offsets = 0\t\t\t# Whether to use the regular (0) or detailed (1) mass offset list.\nprecursor_mass_mode = corrected\t\t\t# One of isolated/selected/corrected.\n\nremove_precursor_peak = 1\t\t\t#  Remove precursor peaks from tandem mass spectra. 0 = not remove; 1 = remove the peak with precursor charge; 2 = remove the peaks with all charge states (only for DDA mode).\nremove_precursor_range = -1.500000,1.500000\t\t\t# m/z range in removing precursor peaks. Only for DDA mode. Unit: Th.\nintensity_transform = 0\t\t\t# Transform peaks intensities with sqrt root. 0 = not transform; 1 = transform using sqrt root.\nactivation_types = HCD\t\t\t# Filter to only search scans of provided activation type(s). Allowed: All, HCD, CID, ETD, ECD.\nanalyzer_types = all\t\t\t# Filter to only include scans matching the provided analyzer type(s) in search. Only support the mzML and raw format. Allowed types: all, FTMS, ITMS, ASTMS.\ngroup_variable = 0\t\t\t# Specify the variable used to decide the PSM group in the group FDR estimation. 0 = no group FDR; 1 = num_enzyme_termini; 2 = PE from protein header.\nrequire_precursor = 1\t\t\t# If required, PSMs with no precursor peaks will be discarded. For DIA data type only. 0 = no, 1 = yes.\nreuse_dia_fragment_peaks = 0\t\t\t# Allow the same peak matches to multiple peptides. For DIA data type only. 0 = no, 1 = yes.\n\nwrite_calibrated_mzml = 1\t\t\t# Write calibrated MS2 scan to a mzML file (0 for No, 1 for Yes).\nwrite_uncalibrated_mzml = 1\t\t\t# Write uncalibrated MS2 scan to a mzML file (0 for No, 1 for Yes). Only for .raw and .d formats.\nwrite_mzbin_all = 0\nmass_diff_to_variable_mod = 0\t\t\t# Put mass diff as a variable modification. 0 for no; 1 for yes and remove delta mass; 2 for yes and keep delta mass.\n\nlocalize_delta_mass = 1\t\t\t# Include fragment ions mass-shifted by unknown modifications (recommended for open and mass offset searches) (0 for OFF, 1 for ON).\ndelta_mass_exclude_ranges = (-1.5,3.5)\t\t\t# Exclude mass range for shifted ions searching.\nfragment_ion_series = b,y\t\t\t# Ion series used in search, specify any of a,b,c,x,y,z,Y,b-18,y-18 (comma separated).\nion_series_definitions = \t\t\t# User defined ion series. Example: \"b* N -17.026548;b0 N -18.010565\".\n\nlabile_search_mode = labile\t\t\t# type of search (nglycan, labile, or off). Off means non-labile/typical search.\nrestrict_deltamass_to = ST-\t\t\t# Specify amino acids on which delta masses (mass offsets or search modifications) can occur. Allowed values are single letter codes (e.g. ACD) and '-', must be capitalized. Use 'all' to allow any amino acid.\ndiagnostic_intensity_filter = 0.1\t\t\t# [nglycan/labile search_mode only]. Minimum relative intensity for SUM of all detected oxonium ions to achieve for spectrum to contain diagnostic fragment evidence. Calculated relative to spectrum base peak. 0 <= value.\nY_type_masses = 0\t\t\t#  [nglycan/labile search_mode only]. Specify fragments of labile mods that are commonly retained on intact peptides (e.g. Y ions for glycans). Only used if 'Y' is included in fragment_ion_series.\ndiagnostic_fragments = 204.086646/186.076086/168.065526/366.139466/144.0656/138.055/512.197375/292.1026925/274.0921325/657.2349/243.026426/405.079246/485.045576/308.09761\t\t\t# [nglycan/labile search_mode only]. Specify diagnostic fragments of labile mods that appear in the low m/z region. Only used if diagnostic_intensity_filter > 0.\nremainder_fragment_masses = \t\t\t# [labile search_mode only] List of possible remainder fragment ions to consider. Remainder masses are partial modification masses left on b/y ions after fragmentation.\nlabile_fragment_ion_series = b,y\t\t\t# Labile ion series used in labile search, specify any of a,b,c,x,y,z (comma separated). Replaces intact mods with labile ion(s) for each specified ion type.\n\nsearch_enzyme_name_1 = stricttrypsin\t\t\t# Name of the first enzyme.\nsearch_enzyme_cut_1 = KR\t\t\t# First enzyme's cutting amino acid.\nsearch_enzyme_nocut_1 = \t\t\t# First enzyme's protecting amino acid.\nsearch_enzyme_sense_1 = C\t\t\t# First enzyme's cutting terminal.\nallowed_missed_cleavage_1 = 2\t\t\t# First enzyme's allowed number of missed cleavages per peptide. Maximum value is 5.\n\nsearch_enzyme_name_2 = null\t\t\t# Name of the second enzyme.\nsearch_enzyme_cut_2 = \t\t\t# Second enzyme's cutting amino acid.\nsearch_enzyme_nocut_2 = \t\t\t# Second enzyme's protecting amino acid.\nsearch_enzyme_sense_2 = C\t\t\t# Second enzyme's cutting terminal.\nallowed_missed_cleavage_2 = 2\t\t\t# Second enzyme's allowed number of missed cleavages per peptide. Maximum value is 5.\n\nnum_enzyme_termini = 2\t\t\t# 0 for non-enzymatic, 1 for semi-enzymatic, and 2 for fully-enzymatic.\n\nclip_nTerm_M = 1\t\t\t# Specifies the trimming of a protein N-terminal methionine as a variable modification (0 or 1).\n\n# maximum of 16 mods - amino acid codes, * for any amino acid, [ and ] specifies protein termini, n and c specifies peptide termini\nvariable_mod_01 = 15.9949 M 3\nvariable_mod_02 = 42.0106 [^ 1\n# variable_mod_03 = 79.96633 STY 3\n# variable_mod_04 = -17.0265 nQnC 1\n# variable_mod_05 = -18.0106 nE 1\n# variable_mod_06 = 4.025107 K 3\n# variable_mod_07 = 6.020129 R 3\n\nallow_multiple_variable_mods_on_residue = 0\nmax_variable_mods_per_peptide = 3\t\t\t# Maximum total number of variable modifications per peptide.\nmax_variable_mods_combinations = 5000\t\t\t# Maximum number of modified forms allowed for each peptide (up to 65534).\n\noutput_format = tsv_pepXML\t\t\t# File format of output files (tsv, pin, pepxml, tsv_pin, tsv_pepxml, pepxml_pin, or tsv_pepxml_pin).\noutput_report_topN = 1\t\t\t# Reports top N PSMs per input spectrum.\noutput_max_expect = 50\t\t\t# Suppresses reporting of PSM if top hit has expectation value greater than this threshold.\nreport_alternative_proteins = 1\t\t\t# Report alternative proteins for peptides that are found in multiple proteins (0 for no, 1 for yes).\n\nprecursor_charge = 1 4\t\t\t# Assumed range of potential precursor charge states. Only relevant when override_charge is set to 1.\noverride_charge = 0\t\t\t# Ignores precursor charge and uses charge state specified in precursor_charge range (0 or 1).\n\ndigest_min_length = 7\t\t\t# Minimum length of peptides to be generated during in-silico digestion.\ndigest_max_length = 50\t\t\t# Maximum length of peptides to be generated during in-silico digestion.\ndigest_mass_range = 400.0 5000.0\t\t\t# Mass range of peptides to be generated during in-silico digestion in Daltons.\nmax_fragment_charge = 2\t\t\t# Maximum charge state for theoretical fragments to match (1-4).\n\ntrack_zero_topN = 0\t\t\t# Track top N unmodified peptide results separately from main results internally for boosting features.\nzero_bin_accept_expect = 0\t\t\t# Ranks a zero-bin hit above all non-zero-bin hit if it has expectation less than this value.\nzero_bin_mult_expect = 1\t\t\t# Multiplies expect value of PSMs in the zero-bin during  results ordering (set to less than 1 for boosting).\n\ncheck_spectral_files = 1\t\t\t# Checking spectral files before searching.\nminimum_peaks = 15\t\t\t# Minimum number of peaks in experimental spectrum for matching.\nuse_topN_peaks = 300\t\t\t# Pre-process experimental spectrum to only use top N peaks.\nmin_fragments_modelling = 2\t\t\t# Minimum number of matched peaks in PSM for inclusion in statistical modeling.\nmin_matched_fragments = 4\t\t\t# Minimum number of matched peaks for PSM to be reported.\nmin_sequence_matches = 2\t\t\t# [nglycan/labile search_mode only] Minimum number of sequence-specific (not Y) ions to record a match.\nminimum_ratio = 0.00\t\t\t# Filters out all peaks in experimental spectrum less intense than this multiple of the base peak intensity.\nclear_mz_range = 0.0 0.0\t\t\t# Removes peaks in this m/z range prior to matching.\n\nadd_Cterm_peptide = 0.0\nadd_Nterm_peptide = 0.0\nadd_Cterm_protein = 0.0\nadd_Nterm_protein = 0.0\n\nadd_G_glycine = 0.0\nadd_A_alanine = 0.0\nadd_S_serine = 0.0\nadd_P_proline = 0.0\nadd_V_valine = 0.0\nadd_T_threonine = 0.0\nadd_C_cysteine = 57.02146\nadd_L_leucine = 0.0\nadd_I_isoleucine = 0.0\nadd_N_asparagine = 0.0\nadd_D_aspartic_acid = 0.0\nadd_Q_glutamine = 0.0\nadd_K_lysine = 0.0\nadd_E_glutamic_acid = 0.0\nadd_M_methionine = 0.0\nadd_H_histidine = 0.0\nadd_F_phenylalanine = 0.0\nadd_R_arginine = 0.0\nadd_Y_tyrosine = 0.0\nadd_W_tryptophan = 0.0\nadd_B_user_amino_acid = 0.0\nadd_J_user_amino_acid = 0.0\nadd_O_user_amino_acid = 0.0\nadd_U_user_amino_acid = 0.0\nadd_X_user_amino_acid = 0.0\nadd_Z_user_amino_acid = 0.0\n\n",
+    "config_type": "params_file",
+    "num_slices": 1,
+    "calibrate_mass": {
+      "DDA": "2",
+      "DIA": "2",
+      "GPF-DIA": "2",
+      "DDA+": "2"
+    },
+    "has_calibrated_mzml": true
+  },
+  "msbooster": {
+    "run": false,
+    "args": "",
+    "config_type": "params_file"
+  },
+  "percolator": {
+    "run": false,
+    "args": "",
+    "config_type": "cli"
+  },
+  "peptideprophet": {
+    "run": true,
+    "args": "--nonparam --expectscore --decoyprobs --masswidth 4000.0",
+    "config_type": "cli",
+    "combine": true
+  },
+  "proteinprophet": {
+    "run": true,
+    "args": "--maxppmdiff 2000000",
+    "config_type": "cli"
+  },
+  "filter": {
+    "run": true,
+    "args": "--sequential --prot 0.01",
+    "config_type": "cli",
+    "dont_use_protxml": false,
+    "report_args": "",
+    "report_args_single_group": ""
+  },
+  "ionquant": {
+    "run": false,
+    "args": "",
+    "config_type": "cli"
+  },
+  "tmtintegrator": {
+    "run": false,
+    "args": "",
+    "config_type": "params_file"
+  },
+  "freequant": {
+    "run": false,
+    "args": "",
+    "config_type": "cli"
+  },
+  "labelquant": {
+    "run": false,
+    "args": "",
+    "config_type": "cli"
+  },
+  "diaumpire": {
+    "run": false,
+    "args": "",
+    "config_type": "params_file",
+    "q_tiers": [
+      "Q1",
+      "Q2",
+      "Q3"
+    ]
+  },
+  "diatracer": {
+    "run": false,
+    "args": "",
+    "config_type": "cli"
+  },
+  "diann": {
+    "run": false,
+    "args": "",
+    "config_type": "cli"
+  },
+  "speclibgen": {
+    "run": false,
+    "args": "",
+    "config_type": "bash_source"
+  },
+  "ptmprophet": {
+    "run": false,
+    "args": "",
+    "config_type": "cli"
+  },
+  "ptmshepherd": {
+    "run": false,
+    "args": "",
+    "config_type": "params_file"
+  },
+  "crystalc": {
+    "run": false,
+    "args": "",
+    "config_type": "params_file"
+  },
+  "opair": {
+    "run": true,
+    "args": [
+      "-b 20.0",
+      "-c 20.0",
+      "-f @TOOLS_DIR@/opair/Glycan_Mods/oxonium_filter.txt",
+      "-m 0.05",
+      "-g HexNAc(1),HexNAc(1)Hex(1),HexNAc(1)NeuAc(1),HexNAc(2)Hex(1),HexNAc(1)Hex(1)NeuAc(1),HexNAc(2)Hex(2),HexNAc(2)Hex(1)NeuAc(1),HexNAc(1)Hex(1)NeuAc(2),HexNAc(2)Hex(2)NeuAc(1),HexNAc(2)Hex(2)Fuc(1)NeuAc(1),HexNAc(2)Hex(2)NeuAc(2),HexNAc(2)Hex(2)Fuc(1)NeuAc(2)",
+      "-x @TOOLS_DIR@/Glycan_Databases/glycan_residues.txt",
+      "-y @TOOLS_DIR@/Glycan_Databases/glycan_mods.txt",
+      "-n 4",
+      "-z ",
+      "-t @THREADS@",
+      "-i 0",
+      "-j 2",
+      "-r @FILELIST@",
+      "-s @PSM@",
+      "-o @OUTDIR@"
+    ],
+    "config_type": "argv",
+    "spectra": "calibrated",
+    "oxonium_file": ""
+  },
+  "mbg": {
+    "run": false,
+    "args": "",
+    "config_type": "argv"
+  },
+  "fpop": {
+    "run": false,
+    "args": "",
+    "config_type": "argv"
+  },
+  "fpop_coadaptr": {
+    "run": false,
+    "args": "",
+    "config_type": "cli"
+  },
+  "saintexpress": {
+    "run": false,
+    "args": "",
+    "config_type": "cli"
+  },
+  "skyline": {
+    "run": false,
+    "args": "",
+    "config_type": "cli"
+  },
+  "metaproteomics": {
+    "run": false,
+    "args": "",
+    "config_type": "argv"
+  },
+  "transferlearning": {
+    "run": false,
+    "args": "",
+    "config_type": "cli"
+  },
+  "database": {
+    "run": true,
+    "args": "--prefix rev_",
+    "config_type": "cli",
+    "decoy_tag": "rev_"
+  },
+  "tabrun": {
+    "run": false,
+    "args": "",
+    "config_type": "gui_only"
+  },
+  "exportmatchedfragments": {
+    "run": false,
+    "args": "",
+    "config_type": "cli"
+  },
+  "writesubmzml": {
+    "run": false,
+    "args": "",
+    "config_type": "cli"
+  },
+  "quantitation": {
+    "run": false,
+    "args": "",
+    "config_type": "gui_only"
+  },
+  "pairscans": {
+    "run": true,
+    "args": [
+      "HCD",
+      "ETD",
+      "false",
+      "false"
+    ],
+    "config_type": "argv"
+  },
+  "appendfile": {
+    "run": false,
+    "args": "",
+    "config_type": "cli"
+  },
+  "tmtintegrator_unmod": {
+    "run": false,
+    "args": "",
+    "config_type": "params_file"
+  },
+  "abacus": {
+    "run": false,
+    "args": "--razor --reprint --tag rev_",
+    "config_type": "cli"
+  },
+  "iprophet": {
+    "run": false,
+    "args": "",
+    "config_type": "cli"
+  }
+}

@@ -1,0 +1,3 @@
+file	sample	sample_name	condition	replicate
+/plan/raw_files/run_1.d	/plan/raw_files/run_1.d	exp	exp	1
+/plan/raw_files/run_2.d	/plan/raw_files/run_2.d	exp	exp	1

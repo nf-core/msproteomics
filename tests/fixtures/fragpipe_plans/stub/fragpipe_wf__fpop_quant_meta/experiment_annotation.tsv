@@ -1,0 +1,3 @@
+file	sample	sample_name	condition	replicate
+/plan/raw_files/fpop_a.mzML	CTRL_1	CTRL_1	CTRL	1
+/plan/raw_files/fpop_b.mzML	OX_1	OX_1	OX	1

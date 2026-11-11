@@ -36,18 +36,17 @@ nextflow_workflow {
                     add_philosopher_decoy        = decoy
                     add_philosopher_contaminants = contam
                     save_reference               = true
+                    fragpipe_plan                = "${baseDir}/tests/fixtures/fragpipe_plans/stub/${(decoy || contam) ? 'fragpipe_database_parity__lfq_mbr_database_update' : 'fragpipe_parity__lfq_mbr_experiment_bioreplicate'}"
                     outdir                       = "$outputDir"
                 }
             }
 
             then {
                 def update = workflow.trace.tasks().findAll { t -> t.name.contains(':PHILOSOPHERDATABASE') }
-                def check  = workflow.trace.tasks().findAll { t -> t.name.contains(':CHECKDBCONFIG') }
                 def log    = new File("${outputDir}/proteome/fragpipe/philosopher_database.log")
                 assertAll(
                     { assert workflow.success },
                     { assert snapshot(workflow.trace.succeeded().collect { task -> task.name }.sort()).match() },
-                    { assert check.size() == 1 : "FragPipe's decoy check runs on every database" },
                     { assert update.size() == (expected ? 1 : 0) },
                     { assert !expected || log.text.trim() == expected }
                 )

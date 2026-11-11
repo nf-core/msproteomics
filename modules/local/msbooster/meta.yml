@@ -33,7 +33,7 @@ input:
         pattern: "*"
   - "params_text":
       type: string
-      description: "Workflow-derived msbooster params (PARSEFRAGPIPEWORKFLOW msbooster.config text)"
+      description: "Workflow-derived msbooster params (FragPipe's plan, msbooster.config text)"
   - "fragger_params":
       type: file
       description: "MSFragger params file MSBooster reads (CmdMSBooster.java:134-149)"

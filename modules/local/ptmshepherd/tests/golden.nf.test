@@ -2,7 +2,7 @@
 // Needs GOLDEN_ROOT (golden data) and FRAGPIPE_CONTAINER (licensed image).
 // Inputs are FragPipe's own, exactly: the group psm.tsv FragPipe handed to PTM-Shepherd in this run
 // (files/preptms, copied by a java wrapper just before the step), the run's .raw files and database, and
-// the PTM-Shepherd settings the pipeline's parser builds from the run's fragpipe.workflow. Expected: the run's ptm-shepherd-output and the
+// the PTM-Shepherd settings of FragPipe's dry run of the run (PLANTOTOOLCONFIGS). Expected: the run's ptm-shepherd-output and the
 // psm.tsv FragPipe handed on to MBG (files/prembg). Checked: argv equals FragPipe's (-Xmx comes from task
 // memory), shepherd.config, every ptm-shepherd-output file and both psm.tsv byte-identical after
 // replacing the run directories. No column is excluded.
@@ -18,13 +18,12 @@ nextflow_process {
     tag "ptmshepherd"
 
     setup {
-        run("PARSEFRAGPIPEWORKFLOW") {
-            script "../../parsefragpipeworkflow/main.nf"
+        run("PLANTOTOOLCONFIGS") {
+            script "../../plantotoolconfigs/main.nf"
             process {
                 """
                 assert System.getenv('GOLDEN_ROOT') : 'set GOLDEN_ROOT to the golden data root'
-                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
-                input[0] = channel.of([ [ id: 'ptms' ], file(System.getenv('GOLDEN_ROOT') + '/PXD030670/glyco-N-preptms_perfile/files/work/fragpipe.workflow', checkIfExists: true), ['DDA'] ])
+                input[0] = channel.of([ [ id: 'ptms' ], file("\${projectDir}/tests/fixtures/fragpipe_plans/glyco-N-preptms_perfile", checkIfExists: true) ])
                 """
             }
         }
@@ -43,9 +42,9 @@ nextflow_process {
                     file("\${run}/preptms/\${g}.psm.tsv", checkIfExists: true).copyTo(file("\${d}/psm.tsv"))
                     d
                 }
-                // the settings block the parser builds (fragpipe_ptm: tool_configs ptmshepherd args + newline);
+                // the settings block of FragPipe's dry run (fragpipe_ptm: tool_configs ptmshepherd args + newline);
                 // the module adds the database and dataset lines itself
-                input[0] = PARSEFRAGPIPEWORKFLOW.out.tool_configs_json.map { _m, json ->
+                input[0] = PLANTOTOOLCONFIGS.out.tool_configs_json.map { _m, json ->
                     def cfg = new groovy.json.JsonSlurper().parseText(json.text).ptmshepherd.args + '\\n'
                     [ [ id: 'ptms' ], groups, [['cancer', 'cancer'], ['saliva', 'saliva']],
                       [ file("\${run}/input/CANCER-3.raw", checkIfExists: true), file("\${run}/input/SALIVA-1.raw", checkIfExists: true) ], cfg, [] ]

@@ -17,6 +17,7 @@ nextflow_pipeline {
 
         when {
             params {
+                fragpipe_plan = "${baseDir}/tests/fixtures/fragpipe_plans/stub/test_tmtq__tmt6_two_plex"
                 def fixtures = "${baseDir}/tests/fixtures"
                 def ss = new File("${outputDir}/samplesheet.csv")
                 ss.parentFile.mkdirs()
@@ -31,10 +32,10 @@ nextflow_pipeline {
         }
 
         then {
-            // .workflow file staged into PARSEFRAGPIPEWORKFLOW: the one the profile selected
+            // .workflow file FRAGPIPESAVEWORKFLOW stages under input/: the one the profile selected
             def staged_workflows = []
-            // task dirs are work/<2 hex>/<hash>; a .workflow staged at a task dir root (FRAGPIPESAVEWORKFLOW stages its own under input/)
-            new File("${launchDir}/work").eachDirMatch(~/[0-9a-f]{2}/) { prefix -> prefix.eachDir { task -> if (new File(task, '.command.sh').text.contains('parse_fragpipe_workflow')) task.eachFileMatch(~/.*\.workflow/) { f -> staged_workflows << f.name } } }
+            // task dirs are work/<2 hex>/<hash>
+            new File("${launchDir}/work").eachDirMatch(~/[0-9a-f]{2}/) { prefix -> prefix.eachDir { task -> def input = new File(task, 'input'); if (input.isDirectory()) input.eachFileMatch(~/.*\.workflow/) { f -> staged_workflows << f.name } } }
             staged_workflows = staged_workflows.unique()
             def succeeded = workflow.trace.succeeded().collect { task -> task.name.replaceAll(/ \(.*\)$/, '') }.unique().sort()
             assertAll(

@@ -1,0 +1,8 @@
+flag	value
+--psm	human_1/psm.tsv
+--psm	human_2/psm.tsv
+--psm	human_3/psm.tsv
+--psm	humanyeast_21/psm.tsv
+--psm	humanyeast_22/psm.tsv
+--psm	humanyeast_23/psm.tsv
+--specdir	/plan/raw_files

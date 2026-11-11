@@ -1,0 +1,3 @@
+file	sample	sample_name	condition	replicate
+/plan/raw_files/CANCER-3.raw	cancer	cancer	cancer	1
+/plan/raw_files/SALIVA-1.raw	saliva	saliva	saliva	1

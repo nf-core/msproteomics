@@ -516,7 +516,7 @@ def resolveDiannSpeclib(entry, pipeline_params) {
  * fragpipe_fasta (decoys and contaminants added; not with --add_philosopher_decoy /
  * --add_philosopher_contaminants, which update the plain FASTA) > the iProteome fasta > error.
  * FragPipe headless searches database.db-path as given: a FASTA without decoys stops in
- * CHECKDBCONFIG like FragPipe.
+ * FragPipe's decoy check (FragpipeRun.checkDbConfig).
  *
  * @param entry iProteome entry map, or null
  * @param pipeline_params Pipeline params map

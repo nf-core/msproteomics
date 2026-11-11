@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
 name: "fragpipe_database"
-description: Checks the protein database decoys like FragPipe headless; adds decoys and contaminants only on request (--add_philosopher_decoy / --add_philosopher_contaminants)
+description: The protein database FragPipe searches, as given or after FragPipe's database update (--add_philosopher_decoy / --add_philosopher_contaminants)
 keywords:
   - proteomics
   - database
@@ -10,7 +10,6 @@ keywords:
   - philosopher
 components:
   - philosopherdatabase
-  - checkdbconfig
 input:
   - ch_fasta:
       type: channel
@@ -24,28 +23,17 @@ input:
         FASTA searched as given, as FragPipe headless searches database.db-path
         (empty when ch_fasta is used).
         Structure: [ val(meta), path(fasta) ]
-  - ch_tool_configs:
-      type: channel
-      description: |
-        Value channel with the PARSEFRAGPIPEWORKFLOW tool_configs.json text;
-        source of the workflow decoy tag (database.decoy_tag).
-        Structure: val(tool_configs_json)
 output:
   - fasta:
       type: channel
       description: |
-        The database that passed FragPipe's decoy check.
+        The run database.
         Structure: [ val(meta), path(prepared_fasta) ]
   - fasta_path:
       type: channel
       description: |
         Value channel of the prepared FASTA path for broadcasting to multiple downstream processes.
         Structure: path(fasta)
-  - versions:
-      type: channel
-      description: |
-        Empty. Every module reports its version on the 'versions' topic.
-        Structure: []
 authors:
   - "@dongzehe"
 maintainers:

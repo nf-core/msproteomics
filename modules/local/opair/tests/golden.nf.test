@@ -2,7 +2,7 @@
 // bundled glyco-O-Pair.workflow. Inputs are FragPipe's own: the Report psm.tsv of a run with O-Pair off
 // (GOLDEN_ROOT PXD017646/glyco-O-Pair-report_perfile work/<group>; O-Pair rewrites psm.tsv in place, so the O-Pair run keeps no copy),
 // MSFragger's <base>_calibrated.mzML and PairScans' <base>.pairs (glyco-O-Pair_perfile_det files/input). The argv comes
-// from the parser on the run's fragpipe.workflow. Expected: the O-Pair run's <group>/psm.tsv
+// from FragPipe's dry run of the run (tests/fixtures/fragpipe_plans, PLANTOTOOLCONFIGS). Expected: the O-Pair run's <group>/psm.tsv
 // (glyco-O-Pair_perfile_det files/work). FragPipe ran (golden log):
 //   dotnet <tools>/opair/CMD.dll "-b 20.0" "-c 20.0" "-f <tools>/opair/Glycan_Mods/oxonium_filter.txt" "-m 0.05"
 //     "-g HexNAc(1),..." "-x ..." "-y ..." "-n 4" "-z " "-t 48" "-i 0" "-j 2" "-r ..." "-s ..." "-o ..."
@@ -29,12 +29,11 @@ nextflow_process {
     tag "golden"
 
     setup {
-        run("PARSEFRAGPIPEWORKFLOW") {
-            script "../../parsefragpipeworkflow/main.nf"
+        run("PLANTOTOOLCONFIGS") {
+            script "../../plantotoolconfigs/main.nf"
             process {
                 """
-                input[1] = [file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/fragger_closed.params", checkIfExists: true), file("\${projectDir}/modules/local/parsefragpipeworkflow/assets/diaumpire_se.params", checkIfExists: true)]
-                input[0] = channel.of([ [ id: 'opair' ], file((System.getenv('GOLDEN_ROOT') + '/PXD017646/glyco-O-Pair_perfile_det/files/work') + '/fragpipe.workflow', checkIfExists: true), ['DDA'] ])
+                input[0] = channel.of([ [ id: 'opair' ], file("\${projectDir}/tests/fixtures/fragpipe_plans/glyco-O-Pair_perfile", checkIfExists: true) ])
                 """
             }
         }
@@ -47,7 +46,7 @@ nextflow_process {
                 """
                 def inp = (System.getenv('GOLDEN_ROOT') + '/PXD017646/glyco-O-Pair_perfile_det/files/input')
                 def base = '2019_09_16_StcEmix_35trig_EThcD25_rep2'
-                input[0] = PARSEFRAGPIPEWORKFLOW.out.tool_configs_json.map { _m, json ->
+                input[0] = PLANTOTOOLCONFIGS.out.tool_configs_json.map { _m, json ->
                     def argv = new groovy.json.JsonSlurper().parseText(json.text).opair.args
                     [ [ id: 'stce', group: 'stce' ],
                       file((System.getenv('GOLDEN_ROOT') + '/PXD017646/glyco-O-Pair-report_perfile/files/work') + '/stce', checkIfExists: true),
