@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `--fragpipe_threads` sets the FragPipe thread count; `--metaproteomics_names_dmp` and `--metaproteomics_nodes_dmp` give the NCBI taxonomy files for FP-Meta.
 - `test_full` profile (`conf/test_full.config`): the six-run PXD024427 FragPipe LFQ tutorial dataset.
 - qpx export to `<outdir>/qpx/` (on by default, `--skip_qpx_export` turns it off): bigbio's `QPX_DIANN` ([bigbio/nf-modules](https://github.com/bigbio/nf-modules) `qpx/diann`, patched) with `QPXEXPORT` (DIA-NN final quantification), `QPXFRAGPIPE` (label-free IonQuant) and `TMTANNDATA` (TMT-Integrator) write `.h5mu`, `.h5ad` and, for DIA-NN and FragPipe LFQ, the QPX Parquet dataset with [qpx](https://github.com/bigbio/qpx) 1.1.5; the DIA-NN export follows DIA-NN's report and matrix q-value filters.
+- `DIA_PROTEOMICS_ANALYSIS` (local patch): a run with the Boolean `meta.library_run: false` (for example a single-cell DIA blank) is not used for DIA-NN preliminary analysis, random preanalysis sampling and empirical library assembly, but is still quantified (individual analysis and final quantification). Runs without the key are library runs, as before. If no run is a library run and no empirical library is given, the subworkflow stops with an error.
 
 ### Changed
 
