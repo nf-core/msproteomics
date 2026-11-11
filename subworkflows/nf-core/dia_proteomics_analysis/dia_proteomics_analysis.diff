@@ -209,7 +209,7 @@ Changes in 'dia_proteomics_analysis/tests/main.nf.test':
  
          when {
              workflow {
-@@ -77,4 +86,162 @@
+@@ -77,4 +86,216 @@
          }
      }
  
@@ -371,13 +371,82 @@ Changes in 'dia_proteomics_analysis/tests/main.nf.test':
 +        }
 +    }
 +
++    test("proteomics - all runs library_run false with external empirical library - stub") {
++
++        tag "stub"
++        options "-stub"
++
++        when {
++            workflow {
++                """
++                input[0] = Channel.of(
++                    [[id:'run_a', library_run:false], file(params.modules_testdata_base_path + 'proteomics/msspectra/HepG2_rep1_small.mzML', checkIfExists: true), 'Trypsin', 'Carbamidomethyl (C)', 'Oxidation (M)', 20, 20, 'ppm', 'ppm'],
++                    [[id:'run_b', library_run:false], file(params.modules_testdata_base_path + 'proteomics/msspectra/OVEMB150205_12.mzML', checkIfExists: true), 'Trypsin', 'Carbamidomethyl (C)', 'Oxidation (M)', 20, 20, 'ppm', 'ppm'],
++                    [[id:'run_c', library_run:false], file(params.modules_testdata_base_path + 'proteomics/msspectra/peakpicker_tutorial_1.mzML', checkIfExists: true), 'Trypsin', 'Carbamidomethyl (C)', 'Oxidation (M)', 20, 20, 'ppm', 'ppm']
++                )
++                input[1] = Channel.of(
++                    [
++                        [id:'ecoli'],
++                        file(params.modules_testdata_base_path + 'proteomics/diann/REF_EColi_K12_UPS1_combined_subset_100.fasta', checkIfExists: true)
++                    ]
++                )
++                input[2] = Channel.of(
++                    [
++                        [id:'RD139_Narrow_UPS1_design'],
++                        file(params.modules_testdata_base_path + 'proteomics/diann/RD139_Narrow_UPS1_design.tsv', checkIfExists: true)
++                    ]
++                )
++                input[3] = [false, 1, 42]
++                input[4] = 20
++                input[5] = true
++                input[6] = true
++                input[7] = false
++                input[8] = 1
++                input[9] = Channel.empty()
++                input[10] = Channel.of(file(params.modules_testdata_base_path + 'proteomics/diann/empirical_library.speclib', checkIfExists: true))
++                input[11] = Channel.of(file(params.modules_testdata_base_path + 'proteomics/diann/assemble_empirical_library.log', checkIfExists: true))
++                """
++            }
++        }
++
++        then {
++            // With an external empirical library there is no preliminary analysis or assembly,
++            // so library_run does not matter and no error is raised: all runs are quantified.
++            def tasks = diannTasks(workflow.trace)
++            assertAll(
++                { assert workflow.success },
++                { assert tasks.count { t -> t.startsWith('DIANN_PRELIMINARYANALYSIS ') } == 0 },
++                { assert tasks.count { t -> t.startsWith('DIANN_ASSEMBLEEMPIRICALLIBRARY ') } == 0 },
++                { assert tasks.count { t -> t.startsWith('DIANN_INDIVIDUALANALYSIS ') } == 3 },
++                { assert tasks.count { t -> t.startsWith('DIANN_FINALQUANTIFICATION ') } == 1 },
++                { assert workflow.out.diann_report.size() == 1 },
++                { assert snapshot(tasks).match() }
++            )
++        }
++    }
++
  }
 
 Changes in 'dia_proteomics_analysis/tests/main.nf.test.snap':
 --- subworkflows/nf-core/dia_proteomics_analysis/tests/main.nf.test.snap
 +++ subworkflows/nf-core/dia_proteomics_analysis/tests/main.nf.test.snap
-@@ -1,4 +1,41 @@
+@@ -1,4 +1,56 @@
  {
++    "proteomics - all runs library_run false with external empirical library - stub": {
++        "content": [
++            [
++                "DIANN_FINALQUANTIFICATION (RD139_Narrow_UPS1_design_ecoli)",
++                "DIANN_INDIVIDUALANALYSIS (run_a_ecoli)",
++                "DIANN_INDIVIDUALANALYSIS (run_b_ecoli)",
++                "DIANN_INDIVIDUALANALYSIS (run_c_ecoli)"
++            ]
++        ],
++        "timestamp": "2026-11-11T03:30:13.068404169",
++        "meta": {
++            "nf-test": "0.9.5",
++            "nextflow": "25.10.4"
++        }
++    },
 +    "proteomics - library_run false skips library steps - stub": {
 +        "content": [
 +            [
