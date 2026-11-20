@@ -1,40 +1,4 @@
 {
-    "fragpipe_headless_wf - stub workflow decoy tag reaches the decoy check": {
-        "content": [
-            [
-                "combined_protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-            ],
-            [
-                "combined_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-            ],
-            [
-                "combined_ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-            ]
-        ],
-        "timestamp": "2026-10-05T14:45:11.652359216",
-        "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.4"
-        }
-    },
-    "fragpipe_headless_wf - stub workflow decoy tag reaches database preparation": {
-        "content": [
-            [
-                "combined_protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-            ],
-            [
-                "combined_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-            ],
-            [
-                "combined_ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-            ]
-        ],
-        "timestamp": "2026-10-04T23:03:47.593888173",
-        "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.4"
-        }
-    },
     "erwinia_headless_result_names": {
         "content": [
             [
@@ -45,6 +9,24 @@
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.2"
+        }
+    },
+    "fragpipe_headless_wf - stub database searched as given, FragPipe headless checks its decoys": {
+        "content": [
+            [
+                "combined_protein.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ],
+            [
+                "combined_peptide.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ],
+            [
+                "combined_ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ]
+        ],
+        "timestamp": "2026-10-13T13:59:19.463042327",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
         }
     },
     "fragpipe_headless_wf - stub with RAW input": {
@@ -71,7 +53,7 @@
                 "combined_ion.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
             ]
         ],
-        "timestamp": "2026-10-16T19:59:29.678291391",
+        "timestamp": "2026-10-17T01:52:47.849349128",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"

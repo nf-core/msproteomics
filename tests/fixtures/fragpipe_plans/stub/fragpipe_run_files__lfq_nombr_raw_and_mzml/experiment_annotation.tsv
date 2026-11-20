@@ -1,0 +1,3 @@
+file	sample	sample_name	condition	replicate
+/plan/raw_files/thermo.raw	/plan/raw_files/thermo.raw	thermo	thermo	1
+/plan/raw_files/ctrl_1.mzML	/plan/raw_files/ctrl_1.mzML	ctrl_1	ctrl	1

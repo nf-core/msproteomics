@@ -1,0 +1,13 @@
+plex	channel	sample	sample_name	condition	replicate
+plex1	126	plex1_126	plex1_126	plex1	126
+plex1	127N	plex1_127N	plex1_127N	127N	1
+plex1	128C	plex1_128C	plex1_128C	128C	1
+plex1	129N	plex1_129N	plex1_129N	129N	1
+plex1	130C	plex1_130C	plex1_130C	130C	1
+plex1	131N	plex1_131N	plex1_131N	131N	1
+plex2	126	plex2_126	plex2_126	plex2	126
+plex2	127N	plex2_127N	plex2_127N	127N	1
+plex2	128C	plex2_128C	plex2_128C	128C	1
+plex2	129N	plex2_129N	plex2_129N	129N	1
+plex2	130C	plex2_130C	plex2_130C	130C	1
+plex2	131N	plex2_131N	plex2_131N	131N	1

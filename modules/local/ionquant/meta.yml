@@ -36,7 +36,7 @@ input:
       description: "Multi-plex TMT annotation lines (plex, channel, sample, sample_name, condition, replicate), one plex per FragPipe group (blank group = empty plex); [] when none"
   - "config_cli":
       type: string
-      description: 'IonQuant options from the workflow parser, in CmdIonquant order (e.g. "--mbr 1 --maxlfq 1 --perform-isoquant 0 --perform-ms1quant 1")'
+      description: 'IonQuant options from FragPipe''s plan, in CmdIonquant order (e.g. "--mbr 1 --maxlfq 1 --perform-isoquant 0 --perform-ms1quant 1")'
   - "modmasses":
       type: list
       description: "Lines of modmasses_ionquant.txt (list, may be empty) written for --modlist, or false for no --modlist (O-Pair runs)"

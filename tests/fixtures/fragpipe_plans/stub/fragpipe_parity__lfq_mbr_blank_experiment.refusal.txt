@@ -1,0 +1,14 @@
+exit status 1
+2026-10-12 23:19:27,823 ERROR - Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineRunner.exe
+2026-10-12 23:19:27,826 ERROR - Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineRunner.exe
+2026-10-12 23:19:27,826 ERROR - Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineDailyRunner.exe
+2026-10-12 23:19:27,826 ERROR - Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineDailyRunner.exe
+2026-10-12 23:19:27,902 ERROR - Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineRunner.exe
+2026-10-12 23:19:27,903 ERROR - Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineRunner.exe
+2026-10-12 23:19:27,903 ERROR - Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineDailyRunner.exe
+2026-10-12 23:19:27,903 ERROR - Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineDailyRunner.exe
+2026-10-12 23:19:27,970 ERROR - Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineRunner.exe
+2026-10-12 23:19:27,971 ERROR - Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineRunner.exe
+2026-10-12 23:19:27,971 ERROR - Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineDailyRunner.exe
+2026-10-12 23:19:27,971 ERROR - Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineDailyRunner.exe
+2026-10-12 23:19:32,239 ERROR - IonQuant with MBR requires designating LCMS runs to experiments. Please assign the experiment groups in the 'Workflow' tab, and make sure that the 'Spec Lib' tab is disabled.

@@ -31,6 +31,7 @@ nextflow_workflow {
 
         when {
             params {
+                fragpipe_plan = "${baseDir}/tests/fixtures/fragpipe_plans/stub/fragpipe_iproteomes__lfq_mbr_hosted_db"
                 def fixtures = "${baseDir}/tests/fixtures"
                 def store = "${fixtures}/iproteomes"
                 def ss = new File("${outputDir}/samplesheet.csv")
@@ -56,8 +57,7 @@ nextflow_workflow {
                 { assert workflow.success },
                 { assert snapshot(workflow.trace.succeeded().collect { task -> task.name }.sort()).match() },
                 { assert !scripts.containsKey('PHILOSOPHERDATABASE') : 'the hosted database already has decoys and contaminants' },
-                { assert scripts['CHECKDBCONFIG'].size() == 1 },
-                { assert scripts['CHECKDBCONFIG'][0].contains('decoy check skipped for test_decoys_contam.fasta') : scripts['CHECKDBCONFIG'] }
+                { assert scripts['MSFRAGGER'] && scripts['MSFRAGGER'].every { sh -> sh =~ /database_name = \S*\/test_decoys_contam\.fasta\b/ } : 'MSFragger searches test_decoys_contam.fasta' }
             )
         }
     }
@@ -68,6 +68,7 @@ nextflow_workflow {
 
         when {
             params {
+                fragpipe_plan = "${baseDir}/tests/fixtures/fragpipe_plans/stub/fragpipe_database_parity__lfq_mbr_database_update"
                 def fixtures = "${baseDir}/tests/fixtures"
                 def store = "${fixtures}/iproteomes"
                 def ss = new File("${outputDir}/samplesheet.csv")
@@ -106,6 +107,7 @@ nextflow_workflow {
 
         when {
             params {
+                fragpipe_plan = "${baseDir}/tests/fixtures/fragpipe_plans/stub/fragpipe_parity__lfq_mbr_experiment_bioreplicate"
                 def fixtures = "${baseDir}/tests/fixtures"
                 def store = "${fixtures}/iproteomes"
                 def ss = new File("${outputDir}/samplesheet.csv")
@@ -131,7 +133,7 @@ nextflow_workflow {
                 { assert workflow.success },
                 { assert snapshot(workflow.trace.succeeded().collect { task -> task.name }.sort()).match() },
                 { assert !scripts.containsKey('PHILOSOPHERDATABASE') },
-                { assert scripts['CHECKDBCONFIG'][0].contains('decoy check skipped for test.fasta ') : scripts['CHECKDBCONFIG'] }
+                { assert scripts['MSFRAGGER'] && scripts['MSFRAGGER'].every { sh -> sh =~ /database_name = \S*\/test\.fasta\b/ } : 'MSFragger searches test.fasta' }
             )
         }
     }
@@ -142,6 +144,7 @@ nextflow_workflow {
 
         when {
             params {
+                fragpipe_plan = "${baseDir}/tests/fixtures/fragpipe_plans/stub/fragpipe_parity__lfq_mbr_experiment_bioreplicate"
                 def fixtures = "${baseDir}/tests/fixtures"
                 def store = "${fixtures}/iproteomes"
                 def ss = new File("${outputDir}/samplesheet.csv")
@@ -167,7 +170,7 @@ nextflow_workflow {
             assertAll(
                 { assert workflow.success },
                 { assert snapshot(workflow.trace.succeeded().collect { task -> task.name }.sort()).match() },
-                { assert scripts['CHECKDBCONFIG'][0].contains('decoy check skipped for test.fasta ') : scripts['CHECKDBCONFIG'] }
+                { assert scripts['MSFRAGGER'] && scripts['MSFRAGGER'].every { sh -> sh =~ /database_name = \S*\/test\.fasta\b/ } : 'MSFragger searches test.fasta' }
             )
         }
     }

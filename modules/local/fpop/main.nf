@@ -22,7 +22,7 @@ process FPOP {
     // modpep_tsv:       IonQuant combined_modified_peptide.tsv (label-free mode), [] in TMT mode
     // tmt_report:       TMT-Integrator tmt-report/ directory (TMT mode), [] otherwise
     // tmt_report_unmod: second TMT-Integrator run, tmt-report-unmod/ (TMT mode), [] otherwise
-    // config_cli:       FragPipe_FPOP_Analysis.py arguments from parse_fragpipe_workflow.py (CmdFpopQuant.java:90-99),
+    // config_cli:       FragPipe_FPOP_Analysis.py arguments from FragPipe's plan (bin/plan_to_tool_configs.py) (CmdFpopQuant.java:90-99),
     //                   naming the inputs as staged here (combined_modified_peptide.tsv, tmt-report/, tmt-report-unmod/)
     tuple val(meta), path(modpep_tsv, stageAs: 'combined_modified_peptide.tsv'), path(tmt_report, stageAs: 'tmt-report'), path(tmt_report_unmod, stageAs: 'tmt-report-unmod'), val(config_cli)
 

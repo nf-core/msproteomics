@@ -33,7 +33,7 @@ input:
         pattern: "MSstatsTMT_annotation.csv"
   - config_text:
       type: string
-      description: "tmt-integrator-conf.yml text from PARSEFRAGPIPEWORKFLOW, with the line `output: @TMT_REPORT_DIR@`"
+      description: "tmt-integrator-conf.yml text from FragPipe's plan (bin/plan_to_tool_configs.py), with the line `output: @TMT_REPORT_DIR@`"
 
 output:
   results_dir:

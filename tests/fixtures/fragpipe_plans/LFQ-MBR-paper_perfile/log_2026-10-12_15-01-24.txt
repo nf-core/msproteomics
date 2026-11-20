@@ -1,0 +1,289 @@
+System OS: Linux, Architecture: amd64
+Java Info: 17.0.18, OpenJDK 64-Bit Server VM, Ubuntu
+.NET Core Info: 6.0.36
+15:01:23 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineRunner.exe
+
+15:01:23 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineRunner.exe
+
+15:01:23 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineDailyRunner.exe
+Version info:
+FragPipe version 24.0
+DIA-Umpire version 2.3.3
+diaTracer version 2.2.1
+MSFragger version 4.4.1
+Crystal-C version 1.5.10
+MSBooster version 1.4.14
+Percolator version 3.7.1
+PTMProphet version 6.3.2
+Metaproteomics version 1.0.1
+Philosopher version 5.1.3-RC9
+PTM-Shepherd version 3.0.11
+IonQuant version 1.11.20
+TMT-Integrator version 6.1.3
+FragPipe-SpecLib version 0.1.58
+DIA-NN version 1.8.2 beta 8
+Skyline version N/A
+Pandas version 2.3.3
+Numpy version 1.26.4
+15:01:23 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineDailyRunner.exe
+
+
+LCMS files:
+  Experiment/Group: human_1
+  (if "spectral library generation" is enabled, all files will be analyzed together)
+  - /plan/raw_files/a11849_human_90min_hrMS2.raw	DDA
+  Experiment/Group: human_2
+  (if "spectral library generation" is enabled, all files will be analyzed together)
+  - /plan/raw_files/a11850_human_90min_hrMS2.raw	DDA
+  Experiment/Group: human_3
+  (if "spectral library generation" is enabled, all files will be analyzed together)
+  - /plan/raw_files/a11851_human_90min_hrMS2.raw	DDA
+  Experiment/Group: humanyeast_21
+  (if "spectral library generation" is enabled, all files will be analyzed together)
+  - /plan/raw_files/a11869_human_yaeast_90min_hrMS2.raw	DDA
+  Experiment/Group: humanyeast_22
+  (if "spectral library generation" is enabled, all files will be analyzed together)
+  - /plan/raw_files/a11870_human_yaeast_90min_hrMS2.raw	DDA
+  Experiment/Group: humanyeast_23
+  (if "spectral library generation" is enabled, all files will be analyzed together)
+  - /plan/raw_files/a11871_human_yaeast_90min_hrMS2.raw	DDA
+
+
+15:01:23 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineRunner.exe
+15:01:23 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineRunner.exe
+15:01:23 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineDailyRunner.exe
+15:01:23 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineDailyRunner.exe
+80 commands to execute:
+CheckCentroid
+java -Xmx64G -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/tools/batmass-io-1.36.5.jar org.nesvilab.fragpipe.util.CheckCentroid /plan/raw_files/a11849_human_90min_hrMS2.raw 48
+WorkspaceCleanInit [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --clean --nocheck
+WorkspaceCleanInit [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --init --nocheck --temp /tmp/23384c24-3cb6-4813-88dd-7f31e3c79f7c
+WorkspaceCleanInit [Work dir: /plan/fp_work/humanyeast_22]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --clean --nocheck
+WorkspaceCleanInit [Work dir: /plan/fp_work/humanyeast_22]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --init --nocheck --temp /tmp/71a083f6-7a4a-4ab4-9ad6-a58a0a2ec135
+WorkspaceCleanInit [Work dir: /plan/fp_work/humanyeast_21]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --clean --nocheck
+WorkspaceCleanInit [Work dir: /plan/fp_work/humanyeast_21]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --init --nocheck --temp /tmp/cb84995d-0783-4833-ab59-07ad850fe01f
+WorkspaceCleanInit [Work dir: /plan/fp_work/humanyeast_23]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --clean --nocheck
+WorkspaceCleanInit [Work dir: /plan/fp_work/humanyeast_23]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --init --nocheck --temp /tmp/42fe2f0e-edce-4a72-91c9-4d6111a3f275
+WorkspaceCleanInit [Work dir: /plan/fp_work/human_2]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --clean --nocheck
+WorkspaceCleanInit [Work dir: /plan/fp_work/human_2]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --init --nocheck --temp /tmp/da09241e-3f0e-4fc4-a366-c48a6dd9d7b8
+WorkspaceCleanInit [Work dir: /plan/fp_work/human_1]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --clean --nocheck
+WorkspaceCleanInit [Work dir: /plan/fp_work/human_1]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --init --nocheck --temp /tmp/52fadd85-2628-473b-94c8-07e95e78923b
+WorkspaceCleanInit [Work dir: /plan/fp_work/human_3]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --clean --nocheck
+WorkspaceCleanInit [Work dir: /plan/fp_work/human_3]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --init --nocheck --temp /tmp/df0a1996-f2f2-4eae-bf9f-ae0cd10de505
+MSFragger [Work dir: /plan/fp_work]
+java -jar -Dfile.encoding=UTF-8 -Xmx64G @ROOT@/fragpipe-24.0/tools/MSFragger-4.4.1/MSFragger-4.4.1.jar /plan/fp_work/fragger.params --license {LICENSE} /plan/raw_files/a11849_human_90min_hrMS2.raw
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/a11849_human_90min_hrMS2.pepXML /plan/fp_work/human_1/a11849_human_90min_hrMS2.pepXML
+MSFragger move pin
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/a11849_human_90min_hrMS2.pin /plan/fp_work/human_1/a11849_human_90min_hrMS2.pin
+MSFragger [Work dir: /plan/fp_work]
+java -jar -Dfile.encoding=UTF-8 -Xmx64G @ROOT@/fragpipe-24.0/tools/MSFragger-4.4.1/MSFragger-4.4.1.jar /plan/fp_work/fragger.params --license {LICENSE} /plan/raw_files/a11850_human_90min_hrMS2.raw
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/a11850_human_90min_hrMS2.pepXML /plan/fp_work/human_2/a11850_human_90min_hrMS2.pepXML
+MSFragger move pin
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/a11850_human_90min_hrMS2.pin /plan/fp_work/human_2/a11850_human_90min_hrMS2.pin
+MSFragger [Work dir: /plan/fp_work]
+java -jar -Dfile.encoding=UTF-8 -Xmx64G @ROOT@/fragpipe-24.0/tools/MSFragger-4.4.1/MSFragger-4.4.1.jar /plan/fp_work/fragger.params --license {LICENSE} /plan/raw_files/a11851_human_90min_hrMS2.raw
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/a11851_human_90min_hrMS2.pepXML /plan/fp_work/human_3/a11851_human_90min_hrMS2.pepXML
+MSFragger move pin
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/a11851_human_90min_hrMS2.pin /plan/fp_work/human_3/a11851_human_90min_hrMS2.pin
+MSFragger [Work dir: /plan/fp_work]
+java -jar -Dfile.encoding=UTF-8 -Xmx64G @ROOT@/fragpipe-24.0/tools/MSFragger-4.4.1/MSFragger-4.4.1.jar /plan/fp_work/fragger.params --license {LICENSE} /plan/raw_files/a11869_human_yaeast_90min_hrMS2.raw
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/a11869_human_yaeast_90min_hrMS2.pepXML /plan/fp_work/humanyeast_21/a11869_human_yaeast_90min_hrMS2.pepXML
+MSFragger move pin
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/a11869_human_yaeast_90min_hrMS2.pin /plan/fp_work/humanyeast_21/a11869_human_yaeast_90min_hrMS2.pin
+MSFragger [Work dir: /plan/fp_work]
+java -jar -Dfile.encoding=UTF-8 -Xmx64G @ROOT@/fragpipe-24.0/tools/MSFragger-4.4.1/MSFragger-4.4.1.jar /plan/fp_work/fragger.params --license {LICENSE} /plan/raw_files/a11870_human_yaeast_90min_hrMS2.raw
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/a11870_human_yaeast_90min_hrMS2.pepXML /plan/fp_work/humanyeast_22/a11870_human_yaeast_90min_hrMS2.pepXML
+MSFragger move pin
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/a11870_human_yaeast_90min_hrMS2.pin /plan/fp_work/humanyeast_22/a11870_human_yaeast_90min_hrMS2.pin
+MSFragger [Work dir: /plan/fp_work]
+java -jar -Dfile.encoding=UTF-8 -Xmx64G @ROOT@/fragpipe-24.0/tools/MSFragger-4.4.1/MSFragger-4.4.1.jar /plan/fp_work/fragger.params --license {LICENSE} /plan/raw_files/a11871_human_yaeast_90min_hrMS2.raw
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/a11871_human_yaeast_90min_hrMS2.pepXML /plan/fp_work/humanyeast_23/a11871_human_yaeast_90min_hrMS2.pepXML
+MSFragger move pin
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/a11871_human_yaeast_90min_hrMS2.pin /plan/fp_work/humanyeast_23/a11871_human_yaeast_90min_hrMS2.pin
+MSBooster [Work dir: /plan/fp_work]
+java -Djava.awt.headless=true -Xmx64G -cp @ROOT@/fragpipe-24.0/tools/MSBooster-1.4.14.jar:@ROOT@/fragpipe-24.0/tools/batmass-io-1.36.5.jar mainsteps.MainClass --paramsList /plan/fp_work/msbooster_params.txt
+Percolator [Work dir: /plan/fp_work/human_2]
+@ROOT@/fragpipe-24.0/tools/percolator_3_7_1/linux/percolator --only-psms --no-terminate --post-processing-tdc --num-threads 48 --results-psms a11850_human_90min_hrMS2_percolator_target_psms.tsv --decoy-results-psms a11850_human_90min_hrMS2_percolator_decoy_psms.tsv --protein-decoy-pattern rev_ a11850_human_90min_hrMS2_edited.pin
+Percolator [Work dir: /plan/fp_work/humanyeast_22]
+@ROOT@/fragpipe-24.0/tools/percolator_3_7_1/linux/percolator --only-psms --no-terminate --post-processing-tdc --num-threads 48 --results-psms a11870_human_yaeast_90min_hrMS2_percolator_target_psms.tsv --decoy-results-psms a11870_human_yaeast_90min_hrMS2_percolator_decoy_psms.tsv --protein-decoy-pattern rev_ a11870_human_yaeast_90min_hrMS2_edited.pin
+Percolator [Work dir: /plan/fp_work/humanyeast_21]
+@ROOT@/fragpipe-24.0/tools/percolator_3_7_1/linux/percolator --only-psms --no-terminate --post-processing-tdc --num-threads 48 --results-psms a11869_human_yaeast_90min_hrMS2_percolator_target_psms.tsv --decoy-results-psms a11869_human_yaeast_90min_hrMS2_percolator_decoy_psms.tsv --protein-decoy-pattern rev_ a11869_human_yaeast_90min_hrMS2_edited.pin
+Percolator [Work dir: /plan/fp_work/human_1]
+@ROOT@/fragpipe-24.0/tools/percolator_3_7_1/linux/percolator --only-psms --no-terminate --post-processing-tdc --num-threads 48 --results-psms a11849_human_90min_hrMS2_percolator_target_psms.tsv --decoy-results-psms a11849_human_90min_hrMS2_percolator_decoy_psms.tsv --protein-decoy-pattern rev_ a11849_human_90min_hrMS2_edited.pin
+Percolator [Work dir: /plan/fp_work/human_3]
+@ROOT@/fragpipe-24.0/tools/percolator_3_7_1/linux/percolator --only-psms --no-terminate --post-processing-tdc --num-threads 48 --results-psms a11851_human_90min_hrMS2_percolator_target_psms.tsv --decoy-results-psms a11851_human_90min_hrMS2_percolator_decoy_psms.tsv --protein-decoy-pattern rev_ a11851_human_90min_hrMS2_edited.pin
+Percolator [Work dir: /plan/fp_work/humanyeast_23]
+@ROOT@/fragpipe-24.0/tools/percolator_3_7_1/linux/percolator --only-psms --no-terminate --post-processing-tdc --num-threads 48 --results-psms a11871_human_yaeast_90min_hrMS2_percolator_target_psms.tsv --decoy-results-psms a11871_human_yaeast_90min_hrMS2_percolator_decoy_psms.tsv --protein-decoy-pattern rev_ a11871_human_yaeast_90min_hrMS2_edited.pin
+Percolator: Convert to pepxml [Work dir: /plan/fp_work/human_2]
+java -cp @ROOT@/fragpipe-24.0/lib/* org.nesvilab.fragpipe.tools.percolator.PercolatorOutputToPepXML a11850_human_90min_hrMS2.pin a11850_human_90min_hrMS2 a11850_human_90min_hrMS2_percolator_target_psms.tsv a11850_human_90min_hrMS2_percolator_decoy_psms.tsv interact-a11850_human_90min_hrMS2 DDA 0.5 /plan/raw_files/a11850_human_90min_hrMS2_uncalibrated.mzML
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/human_2/a11850_human_90min_hrMS2_percolator_target_psms.tsv
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/human_2/a11850_human_90min_hrMS2_percolator_decoy_psms.tsv
+Percolator: Convert to pepxml [Work dir: /plan/fp_work/humanyeast_22]
+java -cp @ROOT@/fragpipe-24.0/lib/* org.nesvilab.fragpipe.tools.percolator.PercolatorOutputToPepXML a11870_human_yaeast_90min_hrMS2.pin a11870_human_yaeast_90min_hrMS2 a11870_human_yaeast_90min_hrMS2_percolator_target_psms.tsv a11870_human_yaeast_90min_hrMS2_percolator_decoy_psms.tsv interact-a11870_human_yaeast_90min_hrMS2 DDA 0.5 /plan/raw_files/a11870_human_yaeast_90min_hrMS2_uncalibrated.mzML
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/humanyeast_22/a11870_human_yaeast_90min_hrMS2_percolator_target_psms.tsv
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/humanyeast_22/a11870_human_yaeast_90min_hrMS2_percolator_decoy_psms.tsv
+Percolator: Convert to pepxml [Work dir: /plan/fp_work/humanyeast_21]
+java -cp @ROOT@/fragpipe-24.0/lib/* org.nesvilab.fragpipe.tools.percolator.PercolatorOutputToPepXML a11869_human_yaeast_90min_hrMS2.pin a11869_human_yaeast_90min_hrMS2 a11869_human_yaeast_90min_hrMS2_percolator_target_psms.tsv a11869_human_yaeast_90min_hrMS2_percolator_decoy_psms.tsv interact-a11869_human_yaeast_90min_hrMS2 DDA 0.5 /plan/raw_files/a11869_human_yaeast_90min_hrMS2_uncalibrated.mzML
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/humanyeast_21/a11869_human_yaeast_90min_hrMS2_percolator_target_psms.tsv
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/humanyeast_21/a11869_human_yaeast_90min_hrMS2_percolator_decoy_psms.tsv
+Percolator: Convert to pepxml [Work dir: /plan/fp_work/human_1]
+java -cp @ROOT@/fragpipe-24.0/lib/* org.nesvilab.fragpipe.tools.percolator.PercolatorOutputToPepXML a11849_human_90min_hrMS2.pin a11849_human_90min_hrMS2 a11849_human_90min_hrMS2_percolator_target_psms.tsv a11849_human_90min_hrMS2_percolator_decoy_psms.tsv interact-a11849_human_90min_hrMS2 DDA 0.5 /plan/raw_files/a11849_human_90min_hrMS2_uncalibrated.mzML
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/human_1/a11849_human_90min_hrMS2_percolator_target_psms.tsv
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/human_1/a11849_human_90min_hrMS2_percolator_decoy_psms.tsv
+Percolator: Convert to pepxml [Work dir: /plan/fp_work/human_3]
+java -cp @ROOT@/fragpipe-24.0/lib/* org.nesvilab.fragpipe.tools.percolator.PercolatorOutputToPepXML a11851_human_90min_hrMS2.pin a11851_human_90min_hrMS2 a11851_human_90min_hrMS2_percolator_target_psms.tsv a11851_human_90min_hrMS2_percolator_decoy_psms.tsv interact-a11851_human_90min_hrMS2 DDA 0.5 /plan/raw_files/a11851_human_90min_hrMS2_uncalibrated.mzML
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/human_3/a11851_human_90min_hrMS2_percolator_target_psms.tsv
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/human_3/a11851_human_90min_hrMS2_percolator_decoy_psms.tsv
+Percolator: Convert to pepxml [Work dir: /plan/fp_work/humanyeast_23]
+java -cp @ROOT@/fragpipe-24.0/lib/* org.nesvilab.fragpipe.tools.percolator.PercolatorOutputToPepXML a11871_human_yaeast_90min_hrMS2.pin a11871_human_yaeast_90min_hrMS2 a11871_human_yaeast_90min_hrMS2_percolator_target_psms.tsv a11871_human_yaeast_90min_hrMS2_percolator_decoy_psms.tsv interact-a11871_human_yaeast_90min_hrMS2 DDA 0.5 /plan/raw_files/a11871_human_yaeast_90min_hrMS2_uncalibrated.mzML
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/humanyeast_23/a11871_human_yaeast_90min_hrMS2_percolator_target_psms.tsv
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/humanyeast_23/a11871_human_yaeast_90min_hrMS2_percolator_decoy_psms.tsv
+ProteinProphet [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 proteinprophet --maxppmdiff 2000000 --output combined /plan/fp_work/filelist_proteinprophet.txt
+PhilosopherDbAnnotate [Work dir: /plan/fp_work/human_1]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 database --annotate /plan/human_yeast_canonical_2026_03_decoys_contam.fasta --prefix rev_
+PhilosopherFilter [Work dir: /plan/fp_work/human_1]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 filter --sequential --prot 0.01 --picked --tag rev_ --pepxml /plan/fp_work/human_1 --protxml /plan/fp_work/combined.prot.xml --razor
+PhilosopherFilter [Work dir: /plan/fp_work/human_2]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 filter --sequential --prot 0.01 --picked --tag rev_ --pepxml /plan/fp_work/human_2 --dbbin /plan/fp_work/human_1 --protxml /plan/fp_work/combined.prot.xml --probin /plan/fp_work/human_1 --razor
+PhilosopherFilter [Work dir: /plan/fp_work/human_3]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 filter --sequential --prot 0.01 --picked --tag rev_ --pepxml /plan/fp_work/human_3 --dbbin /plan/fp_work/human_1 --protxml /plan/fp_work/combined.prot.xml --probin /plan/fp_work/human_1 --razor
+PhilosopherFilter [Work dir: /plan/fp_work/humanyeast_21]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 filter --sequential --prot 0.01 --picked --tag rev_ --pepxml /plan/fp_work/humanyeast_21 --dbbin /plan/fp_work/human_1 --protxml /plan/fp_work/combined.prot.xml --probin /plan/fp_work/human_1 --razor
+PhilosopherFilter [Work dir: /plan/fp_work/humanyeast_22]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 filter --sequential --prot 0.01 --picked --tag rev_ --pepxml /plan/fp_work/humanyeast_22 --dbbin /plan/fp_work/human_1 --protxml /plan/fp_work/combined.prot.xml --probin /plan/fp_work/human_1 --razor
+PhilosopherFilter [Work dir: /plan/fp_work/humanyeast_23]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 filter --sequential --prot 0.01 --picked --tag rev_ --pepxml /plan/fp_work/humanyeast_23 --dbbin /plan/fp_work/human_1 --protxml /plan/fp_work/combined.prot.xml --probin /plan/fp_work/human_1 --razor
+PhilosopherReport [Work dir: /plan/fp_work/humanyeast_22]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 report
+PhilosopherReport [Work dir: /plan/fp_work/humanyeast_21]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 report
+PhilosopherReport [Work dir: /plan/fp_work/humanyeast_23]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 report
+PhilosopherReport [Work dir: /plan/fp_work/human_2]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 report
+PhilosopherReport [Work dir: /plan/fp_work/human_1]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 report
+PhilosopherReport [Work dir: /plan/fp_work/human_3]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 report
+WorkspaceClean [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --clean --nocheck
+WorkspaceClean [Work dir: /plan/fp_work/humanyeast_22]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --clean --nocheck
+WorkspaceClean [Work dir: /plan/fp_work/humanyeast_21]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --clean --nocheck
+WorkspaceClean [Work dir: /plan/fp_work/humanyeast_23]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --clean --nocheck
+WorkspaceClean [Work dir: /plan/fp_work/human_2]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --clean --nocheck
+WorkspaceClean [Work dir: /plan/fp_work/human_1]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --clean --nocheck
+WorkspaceClean [Work dir: /plan/fp_work/human_3]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --clean --nocheck
+IonQuant [Work dir: /plan/fp_work]
+java -Djava.awt.headless=true -Xmx64G -Dlibs.bruker.dir=@ROOT@/fragpipe-24.0/tools/MSFragger-4.4.1/ext/bruker -Dlibs.thermo.dir=@ROOT@/fragpipe-24.0/tools/MSFragger-4.4.1/ext/thermo -cp @ROOT@/fragpipe-24.0/tools/jfreechart-1.5.3.jar:@ROOT@/fragpipe-24.0/tools/IonQuant-1.11.20.jar ionquant.IonQuant --license {LICENSE} --threads 48 --perform-ms1quant 1 --perform-isoquant 0 --isotol 20.0 --isolevel 2 --isotype tmt10 --ionmobility 0 --site-reports 1 --msstats 1 --minexps 1 --mbr 1 --maxlfq 1 --requantify 1 --mztol 10 --imtol 0.05 --rttol 0.4 --mbrmincorr 0 --mbrrttol 1 --mbrimtol 0.05 --mbrtoprun 40 --ionfdr 0.01 --proteinfdr 0.01 --peptidefdr 0.01 --normalization 1 --minisotopes 2 --intensitymode 2 --minscans 3 --writeindex 0 --tp 0 --minfreq 0 --minions 2 --locprob 0.75 --uniqueness 0 --multidir . --filelist /plan/fp_work/filelist_ionquant.txt --modlist /plan/fp_work/modmasses_ionquant.txt
+~~~~~~~~~~~~~~~~~~~~~~
+
+Execution order:
+
+    Cmd: [START], Work dir: [/plan/fp_work]
+    Cmd: [CheckCentroid], Work dir: [/plan/fp_work]
+    Cmd: [WorkspaceCleanInit], Work dir: [/plan/fp_work]
+    Cmd: [WorkspaceCleanInit], Work dir: [/plan/fp_work/humanyeast_22]
+    Cmd: [WorkspaceCleanInit], Work dir: [/plan/fp_work/humanyeast_21]
+    Cmd: [WorkspaceCleanInit], Work dir: [/plan/fp_work/humanyeast_23]
+    Cmd: [WorkspaceCleanInit], Work dir: [/plan/fp_work/human_2]
+    Cmd: [WorkspaceCleanInit], Work dir: [/plan/fp_work/human_1]
+    Cmd: [WorkspaceCleanInit], Work dir: [/plan/fp_work/human_3]
+    Cmd: [MSFragger], Work dir: [/plan/fp_work]
+    Cmd: [MSBooster], Work dir: [/plan/fp_work]
+    Cmd: [Percolator], Work dir: [/plan/fp_work]
+    Cmd: [ProteinProphet], Work dir: [/plan/fp_work]
+    Cmd: [PhilosopherDbAnnotate], Work dir: [/plan/fp_work]
+    Cmd: [PhilosopherFilter], Work dir: [/plan/fp_work]
+    Cmd: [PhilosopherReport], Work dir: [/plan/fp_work]
+    Cmd: [WorkspaceClean], Work dir: [/plan/fp_work]
+    Cmd: [WorkspaceClean], Work dir: [/plan/fp_work/humanyeast_22]
+    Cmd: [WorkspaceClean], Work dir: [/plan/fp_work/humanyeast_21]
+    Cmd: [WorkspaceClean], Work dir: [/plan/fp_work/humanyeast_23]
+    Cmd: [WorkspaceClean], Work dir: [/plan/fp_work/human_2]
+    Cmd: [WorkspaceClean], Work dir: [/plan/fp_work/human_1]
+    Cmd: [WorkspaceClean], Work dir: [/plan/fp_work/human_3]
+    Cmd: [IonQuant], Work dir: [/plan/fp_work]
+
+~~~~~~~~~~~~~~~~~~~~~~
+
+~~~~~~Sample of /plan/human_yeast_canonical_2026_03_decoys_contam.fasta~~~~~~~
+>rev_sp|A0A023PYF4|YE145_YEAST Uncharacterized protein YER145C-A OS=Saccharomyces cerevisiae (strain ATCC 204508 / S288c) OX=559292 GN=YER145C-A PE=3 SV=1
+>rev_sp|O75843|AP1G2_HUMAN AP-1 complex subunit gamma-like 2 OS=Homo sapiens OX=9606 GN=AP1G2 PE=1 SV=1
+>rev_sp|P16455|MGMT_HUMAN Methylated-DNA--protein-cysteine methyltransferase OS=Homo sapiens OX=9606 GN=MGMT PE=1 SV=1
+>rev_sp|P38757|NEM1_YEAST Nuclear envelope morphology protein 1 OS=Saccharomyces cerevisiae (strain ATCC 204508 / S288c) OX=559292 GN=NEM1 PE=1 SV=1
+>rev_sp|P54920|SNAA_HUMAN Alpha-soluble NSF attachment protein OS=Homo sapiens OX=9606 GN=NAPA PE=1 SV=3
+>rev_sp|Q12274|YOR97_YEAST Uncharacterized protein YOR097C OS=Saccharomyces cerevisiae (strain ATCC 204508 / S288c) OX=559292 GN=YOR097C PE=1 SV=1
+>rev_sp|Q5VUJ9|DRC8_HUMAN Dynein regulatory complex protein 8 OS=Homo sapiens OX=9606 GN=DRC8 PE=1 SV=1
+>rev_sp|Q8N1L4|CP4Z2_HUMAN Putative inactive cytochrome P450 family member 4Z2 OS=Homo sapiens OX=9606 GN=CYP4Z2P PE=5 SV=2
+>rev_sp|Q96GE4|CEP95_HUMAN Centrosomal protein of 95 kDa OS=Homo sapiens OX=9606 GN=CEP95 PE=1 SV=1
+>rev_sp|Q9HBW9|AGRL4_HUMAN Adhesion G protein-coupled receptor L4 OS=Homo sapiens OX=9606 GN=ADGRL4 PE=1 SV=3
+>rev_sp|Q9ZZX7|Q0032_YEAST Putative uncharacterized protein Q0032, mitochondrial OS=Saccharomyces cerevisiae (strain ATCC 204508 / S288c) OX=559292 GN=Q0032 PE=5 SV=1
+>sp|O75820|ZN189_HUMAN Zinc finger protein 189 OS=Homo sapiens OX=9606 GN=ZNF189 PE=1 SV=2
+>sp|P16402|H13_HUMAN Histone H1.3 OS=Homo sapiens OX=9606 GN=H1-3 PE=1 SV=2
+>sp|P38747|OTU2_YEAST OTU domain-containing protein 2 OS=Saccharomyces cerevisiae (strain ATCC 204508 / S288c) OX=559292 GN=OTU2 PE=1 SV=1
+>sp|P54855|UDB15_HUMAN UDP-glucuronosyltransferase 2B15 OS=Homo sapiens OX=9606 GN=UGT2B15 PE=1 SV=3
+>sp|Q12262|CENPH_YEAST Inner kinetochore subunit MCM16 OS=Saccharomyces cerevisiae (strain ATCC 204508 / S288c) OX=559292 GN=MCM16 PE=1 SV=1
+>sp|Q5VU69|CP141_HUMAN Cilia- and flagella-associated protein 141 OS=Homo sapiens OX=9606 GN=CFAP141 PE=1 SV=1
+>sp|Q8N1F8|S11IP_HUMAN Serine/threonine-protein kinase 11-interacting protein OS=Homo sapiens OX=9606 GN=STK11IP PE=1 SV=4
+>sp|Q96G91|P2Y11_HUMAN P2Y purinoceptor 11 OS=Homo sapiens OX=9606 GN=P2RY11 PE=1 SV=2
+>sp|Q9HBT6|CAD20_HUMAN Cadherin-20 OS=Homo sapiens OX=9606 GN=CDH20 PE=1 SV=2
+>sp|Q9Y6Z7|COL10_HUMAN Collectin-10 OS=Homo sapiens OX=9606 GN=COLEC10 PE=1 SV=2
+~~~~~~~~~~~~~~~~~~~~~~
+
+
+It's a dry-run, not running the commands.
+
+
+Please cite:
+(Any searches) MSFragger: ultrafast and comprehensive peptide identification in mass spectrometry–based proteomics. Nat Methods. 14:513 (2017)
+(Any searches) Fast deisotoping algorithm and its implementation in the MSFragger search engine. J Proteome Res. 20:498 (2021)
+(timsTOF ddaPASEF) Fast quantitative analysis of timsTOF PASEF data with MSFragger and IonQuant. Mol Cell Proteomics. 19:1575 (2020)
+(Open search) Identification of modified peptides using localization-aware open search. Nat Commun. 11:4065 (2020)
+(Glyco search) Fast and comprehensive N- and O-glycoproteomics analysis with MSFragger-Glyco. Nat Methods. 17:1125 (2020)
+(Labile search) MSFragger-Labile: A Flexible Method to Improve Labile PTM Analysis in Proteomics. Mol Cell Proteomics. 22:100538 (2023)
+(DDA+ search) MSFragger-DDA+ enhances peptide identification sensitivity with full isolation window search. Nat Commun. 16:3329 (2025)
+(MSBooster) MSBooster: improving peptide identification rates using deep learning-based features. Nat Commun. 14:4539 (2023)
+(PSM validation with Percolator) Semi-supervised learning for peptide identification from shotgun proteomics datasets. Nat Methods. 4:923 (2007)
+(Protein inference with ProteinProphet)A statistical model for identifying proteins by tandem mass spectrometry. Anal Chem. 75:4646 (2003)
+(FDR filtering and reporting) Philosopher: a versatile toolkit for shotgun proteomics data analysis. Nat Methods. 17:869 (2020)
+(Label-free/isotopic-labeling quantification) IonQuant Enables Accurate and Sensitive Label-Free Quantification With FDR-Controlled Match-Between-Runs. Mol Cell Proteomics. 20:100077 (2021)
+(Visualization with FragPipe-PDV) PDV: an integrative proteomics data viewer. Bioinformatics. 35(7):1249 (2019)

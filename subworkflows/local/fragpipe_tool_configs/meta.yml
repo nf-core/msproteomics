@@ -1,0 +1,87 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "fragpipe_tool_configs"
+description: FragPipe tool configs for the FragPipe subworkflows, from FragPipe's own configured run (headless --write-plan, or a given plan work dir with --fragpipe_plan)
+keywords:
+  - proteomics
+  - fragpipe
+  - workflow
+  - planning
+components:
+  - fragpipeplan
+  - plantotoolconfigs
+input:
+  - ch_file:
+      type: channel
+      description: |
+        LC-MS files with their FragPipe metadata (data_type, experiment, bioreplicate, group).
+        Structure: [ val(meta), path(spectra) ]
+  - ch_workflow_file:
+      type: channel
+      description: |
+        The FragPipe .workflow file.
+        Structure: [ val(meta), path(workflow_file) ]
+  - ch_decoy_db:
+      type: channel
+      description: |
+        The searched FASTA (with decoys), which FragPipe's plan checks.
+        Structure: [ val(meta), path(fasta) ]
+  - ch_annotation:
+      type: channel
+      description: |
+        Value channel with the TMT annotation (tmt_annotation.tsv: plex, channel, sample, sample_name, condition, replicate), [] when TMT-Integrator does not run.
+        Structure: path(tmt_annotation.tsv)
+  - val_plan:
+      type: string
+      description: |
+        FragPipe plan work dir to take the tool configs from (--fragpipe_plan), or null: FRAGPIPEPLAN
+        then runs FragPipe headless --write-plan. A given work dir must plan the run's LC-MS files.
+output:
+  - tool_configs_json:
+      type: channel
+      description: |
+        Run flag, args and fields per FragPipe tool.
+        Structure: [ val(meta), path(tool_configs.json) ]
+  - msfragger_config:
+      type: channel
+      description: |
+        MSFragger params of the DDA files (fragger.params, or fragger_dda.params with DIA files in the run).
+        Structure: [ val(meta), path(params) ]
+  - msfragger_dia_config:
+      type: channel
+      description: |
+        MSFragger params of the DIA files.
+        Structure: [ val(meta), path(fragger_dia.params) ]
+  - msfragger_gpfdia_config:
+      type: channel
+      description: |
+        MSFragger params of the GPF-DIA files.
+        Structure: [ val(meta), path(fragger_gpfdia.params) ]
+  - msfragger_dda_plus_config:
+      type: channel
+      description: |
+        MSFragger params of the DDA+ files.
+        Structure: [ val(meta), path(fragger_dda_plus.params) ]
+  - msbooster_config:
+      type: channel
+      description: |
+        MSBooster params without the run-time keys.
+        Structure: [ val(meta), path(msbooster.config) ]
+  - fragpipe_log:
+      type: channel
+      description: |
+        Plan mode: FragPipe's run log, licence redacted, with the original input paths, @WORKDIR@ and @TOOLS_DIR@.
+        Structure: [ val(meta), path(log_*.txt) ]
+  - fragpipe_workflow:
+      type: channel
+      description: |
+        Plan mode: FragPipe's saved workflow, made portable the same way.
+        Structure: [ val(meta), path(fragpipe.workflow) ]
+  - fragpipe_manifest:
+      type: channel
+      description: |
+        Plan mode: FragPipe's saved manifest, made portable the same way.
+        Structure: [ val(meta), path(fragpipe-files.fp-manifest) ]
+authors:
+  - "@an-altosian"
+maintainers:
+  - "@an-altosian"

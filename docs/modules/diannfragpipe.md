@@ -58,4 +58,4 @@ The FragPipe image given with `--fragpipe_container`.
 
 - `--no-quant-files` is not passed: the FragPipe 24.0 release does not pass it (its run log has no such flag), although the `24.0` source tag adds it after `--smart-profiling`; it was removed from the source in commit `91bb5c92f`.
 - Inputs of equal size keep the LC-MS table order in `filelist_diann.txt`; FragPipe keeps them in `Set` iteration order, which is not reproducible.
-- A workflow with transfer learning (`transfer-learning.run-transfer-learning=true`) stops before the run (`PARSEFRAGPIPEWORKFLOW`): the pipeline has no TransferLearning step, which needs an external prediction server, so DIA-NN never reads its predicted library `fragpipe-predicted-speclib.<format>` (CmdDiann.java:131-135, :321-322).
+- A workflow with transfer learning (`transfer-learning.run-transfer-learning=true`) stops before the run (`PLANTOTOOLCONFIGS`): the pipeline has no TransferLearning step, which needs an external prediction server, so DIA-NN never reads its predicted library `fragpipe-predicted-speclib.<format>` (CmdDiann.java:131-135, :321-322).

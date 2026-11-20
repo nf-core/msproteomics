@@ -15,7 +15,7 @@ This module parses a config file for `peptideprophet=` flags, initializes a Phil
 | meta        | val(map)    | Sample/experiment metadata                                                        |
 | pepxml      | path        | PepXML file from search engine (`*.pepXML`)                                       |
 | mzml        | path        | mzML spectral file (used for base_name normalization)                             |
-| config_file | path        | Config file with `peptideprophet=flags` line from PARSEFRAGPIPEWORKFLOW           |
+| config_file | path        | Config file with `peptideprophet=flags` line from PLANTOTOOLCONFIGS               |
 | fasta       | path        | Protein sequence database                                                         |
 | decoy_tag   | val(string) | Decoy protein prefix from the workflow `database.decoy-tag` (via `getDecoyTag()`) |
 

@@ -4,6 +4,8 @@
 NFT_JAVA_OPTS ?= -Djava.io.tmpdir=$(or $(TMPDIR),/tmp) -Duser.home=$(HOME)
 NFT = JAVA_TOOL_OPTIONS="$(NFT_JAVA_OPTS)" nf-test test
 LINT_PATHS = main.nf nextflow.config conf modules subworkflows workflows tests
+# nextflow lint's default excludes, plus FragPipe work-dir fixtures (FragPipe's own *.config files)
+LINT_EXCLUDES = $(foreach p,.git .lineage .nf-test .nextflow work fragpipe_plans ptmshepherd_parity,-exclude $(p))
 
 .PHONY: all test test-integration test-parity test-python lint
 
@@ -23,11 +25,11 @@ test-parity:
 	$(NFT) --tag parity
 
 ## Python unit tests of bin/, tests/tools/ and the module scripts (deps: tests/python/requirements.txt)
-PYTHON_TEST_PATHS = tests/python modules/local/parsefragpipeworkflow/tests/python
+PYTHON_TEST_PATHS = tests/python
 test-python:
 	python3 -m pytest $(PYTHON_TEST_PATHS)
 
 ## pre-commit hooks and nextflow lint (0 errors required)
 lint:
 	pre-commit run --all-files
-	nextflow lint -o concise $(LINT_PATHS)
+	nextflow lint -o concise $(LINT_EXCLUDES) $(LINT_PATHS)

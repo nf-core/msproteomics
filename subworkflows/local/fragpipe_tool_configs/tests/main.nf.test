@@ -1,0 +1,99 @@
+nextflow_workflow {
+
+    name "Test Subworkflow FRAGPIPE_TOOL_CONFIGS"
+    script "../main.nf"
+    workflow "FRAGPIPE_TOOL_CONFIGS"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "fragpipe_tool_configs"
+    tag "fragpipe_plan"
+    tag "plan_to_tool_configs"
+
+    test("given plan - --fragpipe_plan skips FRAGPIPEPLAN") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            workflow {
+                """
+                def plan = file("\${projectDir}/tests/fixtures/fragpipe_plans/LFQ-MBR_test_dda_lfq", checkIfExists: true)
+                def a = file("\${workDir}/dda_silac_subset.mzML"); a.text = 'mock'
+                def b = file("\${workDir}/dda_silac_subset_2.mzML"); b.text = 'mock'
+                input[0] = channel.of([[id: 'a', data_type: 'DDA', experiment: 'control', bioreplicate: 1, group: 'control_1'], a],
+                                      [[id: 'b', data_type: 'DDA', experiment: 'treatment', bioreplicate: 1, group: 'treatment_1'], b])
+                input[1] = channel.of([[id: 'fragpipe_config'], file("\${projectDir}/assets/LFQ-MBR.workflow", checkIfExists: true)])
+                input[2] = channel.of([[id: 'db'], file("\${projectDir}/tests/fixtures/test.fasta", checkIfExists: true)])
+                input[3] = channel.value([])
+                input[4] = plan.toString()
+                """
+            }
+        }
+
+        then {
+            def configs = new groovy.json.JsonSlurper().parse(new File(workflow.out.tool_configs_json[0][1].toString()))
+            assertAll(
+                { assert workflow.success },
+                { assert workflow.trace.tasks()*.name.collect { n -> n.replaceAll(/ \(.*/, '') } == ['FRAGPIPE_TOOL_CONFIGS:PLANTOTOOLCONFIGS'] },
+                { assert configs.msfragger.run && configs.ionquant.run },
+                { assert workflow.out.fragpipe_log == [] },
+                { assert snapshot(workflow.out.msfragger_config.collect { m, f -> file(f).name }).match() }
+            )
+        }
+    }
+
+    test("given plan - a plan of other LC-MS files stops") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            workflow {
+                """
+                def plan = file("\${projectDir}/tests/fixtures/fragpipe_plans/LFQ-MBR_test_dda_lfq", checkIfExists: true)
+                def a = file("\${workDir}/dda_silac_subset.mzML"); a.text = 'mock'
+                input[0] = channel.of([[id: 'a', data_type: 'DDA', experiment: 'control', bioreplicate: 2, group: 'control_2'], a])
+                input[1] = channel.of([[id: 'fragpipe_config'], file("\${projectDir}/assets/LFQ-MBR.workflow", checkIfExists: true)])
+                input[2] = channel.of([[id: 'db'], file("\${projectDir}/tests/fixtures/test.fasta", checkIfExists: true)])
+                input[3] = channel.value([])
+                input[4] = plan.toString()
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.failed },
+                { assert workflow.stdout.any { line -> line.contains('plans other LC-MS files than this run') } }
+            )
+        }
+    }
+
+    test("given plan - a plan with other FragPipe groups stops") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            workflow {
+                """
+                // the plan's files, experiments and bioreplicates, but the run puts both files in one group
+                def plan = file("\${projectDir}/tests/fixtures/fragpipe_plans/LFQ-MBR_test_dda_lfq", checkIfExists: true)
+                def a = file("\${workDir}/dda_silac_subset.mzML"); a.text = 'mock'
+                def b = file("\${workDir}/dda_silac_subset_2.mzML"); b.text = 'mock'
+                input[0] = channel.of([[id: 'a', data_type: 'DDA', experiment: 'control', bioreplicate: 1, group: ''], a],
+                                      [[id: 'b', data_type: 'DDA', experiment: 'treatment', bioreplicate: 1, group: ''], b])
+                input[1] = channel.of([[id: 'fragpipe_config'], file("\${projectDir}/assets/LFQ-MBR.workflow", checkIfExists: true)])
+                input[2] = channel.of([[id: 'db'], file("\${projectDir}/tests/fixtures/test.fasta", checkIfExists: true)])
+                input[3] = channel.value([])
+                input[4] = plan.toString()
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.failed },
+                { assert workflow.stdout.any { line -> line.contains('plans other FragPipe groups than this run') } }
+            )
+        }
+    }
+}

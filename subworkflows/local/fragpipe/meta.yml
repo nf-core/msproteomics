@@ -9,7 +9,6 @@ keywords:
   - quantification
   - pipeline
 components:
-  - parsefragpipeworkflow
   - shouldruntool
   - fragpipe_database
   - fragpipe_convert

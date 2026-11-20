@@ -30,7 +30,7 @@ input:
         pattern: "*.{pin,tsv}"
     - "config_cli":
         type: map
-        description: "DbOptimizer values (qvalue, deltaHyperscore, minPeptCntPerProt, minUniqPeptCntPerProt, minUniqPeptCnt, hostName, iterations, cmdLineOpts) from parse_fragpipe_workflow.py"
+        description: "DbOptimizer values (qvalue, deltaHyperscore, minPeptCntPerProt, minUniqPeptCntPerProt, minUniqPeptCnt, hostName, iterations, cmdLineOpts) from FragPipe's plan (bin/plan_to_tool_configs.py)"
   - "fasta":
       type: file
       description: "Database FASTA file (shared resource)"

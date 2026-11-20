@@ -13,7 +13,7 @@ process SPECLIBGEN {
     //   spectra:                   the LC-MS files of filelist_speclibgen.txt (CmdSpecLibGen.java:172-202),
     //                              staged in the task dir (<work dir>/<name> in the file list)
     //   rt_cal_file / im_cal_file: user RT / IM calibration files, [] when the option is a keyword
-    //   argv_parts:                gen_con_spec_lib.py argv values from PARSEFRAGPIPEWORKFLOW (speclibgen.argv_parts)
+    //   argv_parts:                gen_con_spec_lib.py argv values from FragPipe's plan (bin/plan_to_tool_configs.py) (speclibgen.argv_parts)
     tuple val(meta), path(psm, stageAs: 'psm.tsv'), path(peptide, stageAs: 'peptide.tsv'), path(pepxml_files), path(spectra), path(rt_cal_file, stageAs: 'rt_calibration/*'), path(im_cal_file, stageAs: 'im_calibration/*'), val(argv_parts)
     path(fasta)  // protein database (FragPipe's fastaPath, argv[1])
 

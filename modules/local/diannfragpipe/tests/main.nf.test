@@ -5,7 +5,7 @@
 //         [--reanalyse] [--matrix-spec-q q] --matrix-qvalue q --matrices (--relaxed-prot-inf --fasta F | --no-prot-inf)
 //         --smart-profiling <quantification strategy> [--individual-mass-acc --individual-windows]
 //         [--report-lib-info] [plexDIA flags] [extra options] --cfg <wd>/filelist_diann.txt--
-// The default config is PARSEFRAGPIPEWORKFLOW's diann entry for the bundled DIA_SpecLib_Quant workflow.
+// The default config is the diann entry of FragPipe's plan (bin/plan_to_tool_configs.py) for the DIA_SpecLib_Quant workflow.
 
 nextflow_process {
 
@@ -99,7 +99,7 @@ nextflow_process {
                 manifest.text = "/data/dia_run1.mzML\\t\\t\\tDIA"
                 def fasta = file("\${workDir}/db.fasta")
                 fasta.text = ">P1\\nPEPTIDEK\\n"
-                // args/args_post as the parser emits them for these panel values (CmdDiann.java:333-387,
+                // args/args_post as FragPipe's plan gives them for these panel values (CmdDiann.java:333-387,
                 // getPlexDiannFlags :623-671)
                 def config = [
                     run: true, args: '--qvalue 0.02 --reanalyse --matrix-spec-q 0.02 --matrix-qvalue 0.02 --matrices', config_type: 'cli',

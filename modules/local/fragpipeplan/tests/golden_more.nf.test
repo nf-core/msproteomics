@@ -1,0 +1,148 @@
+// Golden tests: FRAGPIPEPLAN on the FragPipe 24.0 goldens (per-file search) whose planner fixtures
+// (tests/fixtures/fragpipe_plans/{ccRCC_DIA_tutorial,glyco-N-preptms_perfile}) the DIA-NN, MBG and PTM-Shepherd goldens read.
+// Each dry-run log must list the golden run's FragPipe steps, in the golden order; the portable log holds no licence path.
+// FragPipe threads = the golden run's (workflow.threads), since MSBooster's numThreads is part of the plan.
+// Needs a FragPipe image with --write-plan and --msfragger-per-file (Nesvilab/FragPipe#2907; not in a FragPipe release yet,
+// so public CI cannot run these): nf-test test --tag write_plan with FRAGPIPE_CONTAINER set.
+// Run: GOLDEN_ROOT=<golden root> FRAGPIPE_CONTAINER=<image with --write-plan> nf-test test modules/local/fragpipeplan/tests/golden_more.nf.test
+nextflow_process {
+
+    name "Golden FRAGPIPEPLAN vs FragPipe 24.0 goldens (ccRCC DIA, glyco-N PTM-Shepherd)"
+    script "../main.nf"
+    process "FRAGPIPEPLAN"
+    config "./golden.config"
+
+    tag "golden"
+    tag "fragpipe_plan"
+    tag "write_plan"
+
+    test("CPTAC ccRCC DIA tutorial SpecLib Quant - plan steps equal the golden run's steps") {
+
+        when {
+            params {
+                def golden_root = System.getenv('GOLDEN_ROOT')
+                if (!golden_root) {
+                    throw new IllegalStateException('GOLDEN_ROOT is not set: export it as the directory holding the golden data sets')
+                }
+                lcms_dir     = null
+                golden_set   = "${golden_root}/ccRCC_DIA_tutorial/DIA_SpecLib_Quant_perfile"
+                plan_threads = 48
+            }
+            process {
+                """
+                def g = { String rel -> file("\${params.golden_set}/files/\${rel}", checkIfExists: true) }
+                // golden fp-manifest: path, experiment, bioreplicate, data type; FragPipe's group is
+                // <experiment>_<bioreplicate>, or the experiment when there is no bioreplicate (LcmsFileGroup)
+                def rows = g.call('work/fragpipe-files.fp-manifest').readLines().findAll { l -> l }.collect { l ->
+                    def c = l.split('\\t', -1)
+                    [file(c[0]).name, c[1], c[2] ?: null, c[3], c[2] ? "\${c[1]}_\${c[2]}".toString() : c[1]]
+                }
+                // TMT annotations the golden run used: <work>/<group>/<group>_annotation.txt, "<channel> <sample>" lines
+                def annotations = rows.collect { r -> r[4] }.unique().collectMany { group ->
+                    def f = file("\${params.golden_set}/files/work/\${group}/\${group}_annotation.txt")
+                    f.exists() ? f.readLines().findAll { l -> l.trim() }.collect { l -> def p = l.trim().split(/\\s+/, 2); [group, p[0], p[1]] } : []
+                }
+                input[0] = channel.of([
+                    [ id: 'plan' ],
+                    // the golden's LC-MS files, or their source dir when the golden set does not keep them (.d)
+                    rows.collect { r -> params.lcms_dir ? file("\${params.lcms_dir}/\${r[0]}", checkIfExists: true) : g.call("input/\${r[0]}") },
+                    // the FASTA the golden workflow searched (database.db-path)
+                    g.call("db/" + file(g.call('work/fragpipe.workflow').readLines().find { l -> l.startsWith('database.db-path=') }.substring('database.db-path='.length())).name),
+                    g.call('work/fragpipe.workflow').text,
+                    rows,
+                    annotations,
+                    // original paths: the golden set's files where the pipeline staged them from
+                    rows.collectEntries { r -> [r[0], (params.lcms_dir ? file("\${params.lcms_dir}/\${r[0]}") : g.call("input/\${r[0]}")).toUriString()] },
+                    g.call("db/" + file(g.call('work/fragpipe.workflow').readLines().find { l -> l.startsWith('database.db-path=') }.substring('database.db-path='.length())).name).toUriString()
+                ])
+                """
+            }
+        }
+
+        then {
+            def golden = new groovy.json.JsonSlurper().parse(new File("${params.golden_set}/manifest.json"))
+            // the commands FragPipe's dry-run log lists (FragpipeRun.java:412): header line, then command line
+            def log_file = new File(process.out.workdir[0][1].toString()).listFiles().find { f -> f.name ==~ /log_.*\.txt/ }
+            def log_lines = log_file.readLines()
+            def at = log_lines.findIndexOf { l -> l ==~ /\d+ commands to execute:/ }
+            def planned = (0..<(log_lines[at].tokenize(' ')[0] as int)).collect { k -> log_lines[at + 1 + 2 * k].replaceFirst(/ \[Work dir: .*\]$/, '') }
+            assertAll(
+                { assert process.success },
+                { assert planned == golden.steps.collect { s -> s.name } },
+                { assert !new File(process.out.portable_log[0][1].toString()).text.contains('license.dat') },
+                // portable plan, workflow and manifest: no task path, every input at its original path
+                { assert ['portable_log', 'portable_workflow', 'portable_manifest'].every { ch -> !new File(process.out[ch][0][1].toString()).text.contains(log_file.parentFile.parentFile.canonicalPath) } },
+                { assert new File(process.out.portable_manifest[0][1].toString()).readLines().findAll { l -> l }.collect { l -> l.split('\\t')[0] } ==
+                    new File("${params.golden_set}/files/work/fragpipe-files.fp-manifest").readLines().findAll { l -> l }.collect { l ->
+                        def name = new File(l.split('\\t')[0]).name
+                        (params.lcms_dir ? new File("${params.lcms_dir}/${name}") : new File("${params.golden_set}/files/input/${name}")).toPath().toAbsolutePath().normalize().toUri().path.replaceAll('/$', '')
+                    } }
+            )
+        }
+    }
+
+    test("PXD030670 glyco-N PTM-Shepherd (preptms) - plan steps equal the golden run's steps") {
+
+        when {
+            params {
+                def golden_root = System.getenv('GOLDEN_ROOT')
+                if (!golden_root) {
+                    throw new IllegalStateException('GOLDEN_ROOT is not set: export it as the directory holding the golden data sets')
+                }
+                lcms_dir     = null
+                golden_set   = "${golden_root}/PXD030670/glyco-N-preptms_perfile"
+                plan_threads = 48
+            }
+            process {
+                """
+                def g = { String rel -> file("\${params.golden_set}/files/\${rel}", checkIfExists: true) }
+                // golden fp-manifest: path, experiment, bioreplicate, data type; FragPipe's group is
+                // <experiment>_<bioreplicate>, or the experiment when there is no bioreplicate (LcmsFileGroup)
+                def rows = g.call('work/fragpipe-files.fp-manifest').readLines().findAll { l -> l }.collect { l ->
+                    def c = l.split('\\t', -1)
+                    [file(c[0]).name, c[1], c[2] ?: null, c[3], c[2] ? "\${c[1]}_\${c[2]}".toString() : c[1]]
+                }
+                // TMT annotations the golden run used: <work>/<group>/<group>_annotation.txt, "<channel> <sample>" lines
+                def annotations = rows.collect { r -> r[4] }.unique().collectMany { group ->
+                    def f = file("\${params.golden_set}/files/work/\${group}/\${group}_annotation.txt")
+                    f.exists() ? f.readLines().findAll { l -> l.trim() }.collect { l -> def p = l.trim().split(/\\s+/, 2); [group, p[0], p[1]] } : []
+                }
+                input[0] = channel.of([
+                    [ id: 'plan' ],
+                    // the golden's LC-MS files, or their source dir when the golden set does not keep them (.d)
+                    rows.collect { r -> params.lcms_dir ? file("\${params.lcms_dir}/\${r[0]}", checkIfExists: true) : g.call("input/\${r[0]}") },
+                    // the FASTA the golden workflow searched (database.db-path)
+                    g.call("db/" + file(g.call('work/fragpipe.workflow').readLines().find { l -> l.startsWith('database.db-path=') }.substring('database.db-path='.length())).name),
+                    g.call('work/fragpipe.workflow').text,
+                    rows,
+                    annotations,
+                    // original paths: the golden set's files where the pipeline staged them from
+                    rows.collectEntries { r -> [r[0], (params.lcms_dir ? file("\${params.lcms_dir}/\${r[0]}") : g.call("input/\${r[0]}")).toUriString()] },
+                    g.call("db/" + file(g.call('work/fragpipe.workflow').readLines().find { l -> l.startsWith('database.db-path=') }.substring('database.db-path='.length())).name).toUriString()
+                ])
+                """
+            }
+        }
+
+        then {
+            def golden = new groovy.json.JsonSlurper().parse(new File("${params.golden_set}/manifest.json"))
+            // the commands FragPipe's dry-run log lists (FragpipeRun.java:412): header line, then command line
+            def log_file = new File(process.out.workdir[0][1].toString()).listFiles().find { f -> f.name ==~ /log_.*\.txt/ }
+            def log_lines = log_file.readLines()
+            def at = log_lines.findIndexOf { l -> l ==~ /\d+ commands to execute:/ }
+            def planned = (0..<(log_lines[at].tokenize(' ')[0] as int)).collect { k -> log_lines[at + 1 + 2 * k].replaceFirst(/ \[Work dir: .*\]$/, '') }
+            assertAll(
+                { assert process.success },
+                { assert planned == golden.steps.collect { s -> s.name } },
+                { assert !new File(process.out.portable_log[0][1].toString()).text.contains('license.dat') },
+                // portable plan, workflow and manifest: no task path, every input at its original path
+                { assert ['portable_log', 'portable_workflow', 'portable_manifest'].every { ch -> !new File(process.out[ch][0][1].toString()).text.contains(log_file.parentFile.parentFile.canonicalPath) } },
+                { assert new File(process.out.portable_manifest[0][1].toString()).readLines().findAll { l -> l }.collect { l -> l.split('\\t')[0] } ==
+                    new File("${params.golden_set}/files/work/fragpipe-files.fp-manifest").readLines().findAll { l -> l }.collect { l ->
+                        def name = new File(l.split('\\t')[0]).name
+                        (params.lcms_dir ? new File("${params.lcms_dir}/${name}") : new File("${params.golden_set}/files/input/${name}")).toPath().toAbsolutePath().normalize().toUri().path.replaceAll('/$', '')
+                    } }
+            )
+        }
+    }
+}

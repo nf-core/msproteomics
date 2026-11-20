@@ -1,7 +1,7 @@
 /*
  * MSBOOSTER: MSBooster rescoring features (CmdMSBooster)
  *
- * msbooster_params.txt holds the workflow-derived keys from PARSEFRAGPIPEWORKFLOW plus the
+ * msbooster_params.txt holds the workflow-derived keys from FragPipe's plan (bin/plan_to_tool_configs.py) plus the
  * runtime keys CmdMSBooster.java:160-212 writes: DiaNN (FragPipe's bundled
  * DIA-NN, Diann.fallbackDiannPath), fragger, unimodObo, mzmlDirectory, pinPepXMLDirectory.
  * useIM and findBestImModel are on only when the run has timsTOF data (.d or _diatracer.mzML;
@@ -14,7 +14,7 @@
  *   - pin_files: MSFragger PIN file(s)
  *   - mzml_files: FragPipe's LC-MS directory content for those PINs (LC-MS files plus the
  *     MSFragger mzML outputs); MSBooster matches <base>.mzML / <base>_uncalibrated.mzML / .mgf itself
- *   - params_text: workflow-derived msbooster params (PARSEFRAGPIPEWORKFLOW msbooster.config text)
+ *   - params_text: workflow-derived msbooster params (FragPipe's plan, msbooster.config text)
  *   - fragger_params: the MSFragger params file MSBooster reads (CmdMSBooster.java:134-149)
  *   - library: the file of msbooster.spectral-library-path (spectraPredFile/RTPredFile/IMPredFile; CmdMSBooster.java:180-184), staged as spectral_library/<name>, [] without one
  *   - has_ion_mobility: true when any LC-MS file of the run is timsTOF data

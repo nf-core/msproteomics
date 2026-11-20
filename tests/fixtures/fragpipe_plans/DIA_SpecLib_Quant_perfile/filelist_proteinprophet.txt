@@ -1,0 +1,5 @@
+/plan/fp_work/interact-dia_cptac_subset_rank1.pep.xml
+/plan/fp_work/interact-dia_cptac_subset_rank2.pep.xml
+/plan/fp_work/interact-dia_cptac_subset_rank3.pep.xml
+/plan/fp_work/interact-dia_cptac_subset_rank4.pep.xml
+/plan/fp_work/interact-dia_cptac_subset_rank5.pep.xml

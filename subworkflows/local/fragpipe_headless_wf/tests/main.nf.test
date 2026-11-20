@@ -49,14 +49,14 @@ nextflow_workflow {
         }
     }
 
-    test("fragpipe_headless_wf - stub workflow decoy tag reaches the decoy check") {
+    test("fragpipe_headless_wf - stub database searched as given, FragPipe headless checks its decoys") {
         tag "stub"
         options "-stub"
 
         when {
             workflow {
                 """
-                // the decoy tag comes from the .workflow
+                // FragPipe headless checks the FASTA decoys itself (FragpipeRun.checkDbConfig): no pipeline pre-check
                 def mzml_file = file("\${workDir}/sample.mzML")
                 mzml_file.text = "mock"
                 def fasta_file = file("\${workDir}/test.fasta")
@@ -82,7 +82,7 @@ nextflow_workflow {
                 { assert workflow.success },
                 // the database is searched as given: no "Add decoys" update
                 { assert !workflow.trace.tasks().any { t -> t.name.contains('PHILOSOPHERDATABASE') } },
-                { assert scripts.any { sh -> sh.contains("decoy tag 'DECOY_'") } },
+                { assert workflow.trace.tasks()*.name.collect { n -> n.replaceAll(/ \(.*/, '') } == ['FRAGPIPE_HEADLESS_WF:FRAGPIPEHEADLESS'] },
                 { assert snapshot(
                     workflow.out.combined_protein,
                     workflow.out.combined_peptide,

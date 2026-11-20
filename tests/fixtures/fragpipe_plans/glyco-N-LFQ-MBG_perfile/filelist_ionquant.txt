@@ -1,0 +1,4 @@
+flag	value
+--psm	cancer/psm.tsv
+--psm	saliva/psm.tsv
+--specdir	/plan/raw_files

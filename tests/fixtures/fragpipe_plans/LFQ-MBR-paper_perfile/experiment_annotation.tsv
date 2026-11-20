@@ -1,0 +1,7 @@
+file	sample	sample_name	condition	replicate
+/plan/raw_files/a11849_human_90min_hrMS2.raw	human_1	human_1	human	1
+/plan/raw_files/a11850_human_90min_hrMS2.raw	human_2	human_2	human	2
+/plan/raw_files/a11851_human_90min_hrMS2.raw	human_3	human_3	human	3
+/plan/raw_files/a11869_human_yaeast_90min_hrMS2.raw	humanyeast_21	humanyeast_21	humanyeast	21
+/plan/raw_files/a11870_human_yaeast_90min_hrMS2.raw	humanyeast_22	humanyeast_22	humanyeast	22
+/plan/raw_files/a11871_human_yaeast_90min_hrMS2.raw	humanyeast_23	humanyeast_23	humanyeast	23

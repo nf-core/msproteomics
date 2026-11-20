@@ -1,0 +1,230 @@
+System OS: Linux, Architecture: amd64
+Java Info: 17.0.18, OpenJDK 64-Bit Server VM, Ubuntu
+.NET Core Info: 6.0.36
+23:19:32 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineRunner.exe
+
+23:19:32 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineRunner.exe
+23:19:32 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineDailyRunner.exe
+
+23:19:32 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineDailyRunner.exe
+Version info:
+FragPipe version 24.0
+DIA-Umpire version 2.3.3
+diaTracer version 2.2.1
+MSFragger version 4.4.1
+Crystal-C version 1.5.10
+MSBooster version 1.4.14
+Percolator version 3.7.1
+PTMProphet version 6.3.2
+Metaproteomics version 1.0.1
+Philosopher version 5.1.3-RC9
+PTM-Shepherd version 3.0.11
+IonQuant version 1.11.20
+TMT-Integrator version 6.1.3
+FragPipe-SpecLib version 0.1.58
+DIA-NN version 1.8.2 Beta 8
+Skyline version N/A
+Pandas version 2.3.3
+Numpy version 1.26.4
+
+
+LCMS files:
+  Experiment/Group: control_1
+  (if "spectral library generation" is enabled, all files will be analyzed together)
+  - /plan/raw_files/ctrl_1.mzML	DDA
+  Experiment/Group: control_2
+  (if "spectral library generation" is enabled, all files will be analyzed together)
+  - /plan/raw_files/ctrl_2.mzML	DDA
+  Experiment/Group: treated_1
+  (if "spectral library generation" is enabled, all files will be analyzed together)
+  - /plan/raw_files/trt_1.mzML	DDA
+  Experiment/Group: treated_2
+  (if "spectral library generation" is enabled, all files will be analyzed together)
+  - /plan/raw_files/trt_2.mzML	DDA
+
+
+23:19:32 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineRunner.exe
+23:19:32 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineRunner.exe
+23:19:32 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineDailyRunner.exe
+23:19:32 ERROR: Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineDailyRunner.exe
+56 commands to execute:
+CheckCentroid
+java -Xmx14G -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/tools/batmass-io-1.36.5.jar org.nesvilab.fragpipe.util.CheckCentroid /plan/raw_files/ctrl_1.mzML 2
+WorkspaceCleanInit [Work dir: /plan/fp_work/control_2]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --clean --nocheck
+WorkspaceCleanInit [Work dir: /plan/fp_work/control_2]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --init --nocheck --temp /tmp/a185116f-9cb4-4b3f-96e4-cb927b3fa01f
+WorkspaceCleanInit [Work dir: /plan/fp_work/control_1]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --clean --nocheck
+WorkspaceCleanInit [Work dir: /plan/fp_work/control_1]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --init --nocheck --temp /tmp/f8aaa0ec-53a6-4506-aad8-1f90320a2277
+WorkspaceCleanInit [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --clean --nocheck
+WorkspaceCleanInit [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --init --nocheck --temp /tmp/062aab3e-5e7d-40c7-b8c3-e00950d83bc2
+WorkspaceCleanInit [Work dir: /plan/fp_work/treated_2]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --clean --nocheck
+WorkspaceCleanInit [Work dir: /plan/fp_work/treated_2]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --init --nocheck --temp /tmp/fa6fc3d2-e021-43ad-9a86-0ff43a40d454
+WorkspaceCleanInit [Work dir: /plan/fp_work/treated_1]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --clean --nocheck
+WorkspaceCleanInit [Work dir: /plan/fp_work/treated_1]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --init --nocheck --temp /tmp/baa4a0d3-1d7a-4a3e-a609-024ce7b2ef74
+MSFragger [Work dir: /plan/fp_work]
+java -jar -Dfile.encoding=UTF-8 -Xmx14G @ROOT@/fragpipe-24.0/tools/MSFragger-4.4.1/MSFragger-4.4.1.jar /plan/fp_work/fragger.params --license {LICENSE} /plan/raw_files/ctrl_1.mzML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/ctrl_1.pepXML /plan/fp_work/control_1/ctrl_1.pepXML
+MSFragger move pin
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/ctrl_1.pin /plan/fp_work/control_1/ctrl_1.pin
+MSFragger [Work dir: /plan/fp_work]
+java -jar -Dfile.encoding=UTF-8 -Xmx14G @ROOT@/fragpipe-24.0/tools/MSFragger-4.4.1/MSFragger-4.4.1.jar /plan/fp_work/fragger.params --license {LICENSE} /plan/raw_files/ctrl_2.mzML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/ctrl_2.pepXML /plan/fp_work/control_2/ctrl_2.pepXML
+MSFragger move pin
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/ctrl_2.pin /plan/fp_work/control_2/ctrl_2.pin
+MSFragger [Work dir: /plan/fp_work]
+java -jar -Dfile.encoding=UTF-8 -Xmx14G @ROOT@/fragpipe-24.0/tools/MSFragger-4.4.1/MSFragger-4.4.1.jar /plan/fp_work/fragger.params --license {LICENSE} /plan/raw_files/trt_1.mzML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/trt_1.pepXML /plan/fp_work/treated_1/trt_1.pepXML
+MSFragger move pin
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/trt_1.pin /plan/fp_work/treated_1/trt_1.pin
+MSFragger [Work dir: /plan/fp_work]
+java -jar -Dfile.encoding=UTF-8 -Xmx14G @ROOT@/fragpipe-24.0/tools/MSFragger-4.4.1/MSFragger-4.4.1.jar /plan/fp_work/fragger.params --license {LICENSE} /plan/raw_files/trt_2.mzML
+MSFragger move pepxml
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/trt_2.pepXML /plan/fp_work/treated_2/trt_2.pepXML
+MSFragger move pin
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar:@ROOT@/fragpipe-24.0/lib/commons-io-2.18.0.jar org.nesvilab.utils.FileMove --no-err /plan/raw_files/trt_2.pin /plan/fp_work/treated_2/trt_2.pin
+MSBooster [Work dir: /plan/fp_work]
+java -Djava.awt.headless=true -Xmx14G -cp @ROOT@/fragpipe-24.0/tools/MSBooster-1.4.14.jar:@ROOT@/fragpipe-24.0/tools/batmass-io-1.36.5.jar mainsteps.MainClass --paramsList /plan/fp_work/msbooster_params.txt
+Percolator [Work dir: /plan/fp_work/control_1]
+@ROOT@/fragpipe-24.0/tools/percolator_3_7_1/linux/percolator --only-psms --no-terminate --post-processing-tdc --num-threads 2 --results-psms ctrl_1_percolator_target_psms.tsv --decoy-results-psms ctrl_1_percolator_decoy_psms.tsv --protein-decoy-pattern rev_ ctrl_1_edited.pin
+Percolator [Work dir: /plan/fp_work/control_2]
+@ROOT@/fragpipe-24.0/tools/percolator_3_7_1/linux/percolator --only-psms --no-terminate --post-processing-tdc --num-threads 2 --results-psms ctrl_2_percolator_target_psms.tsv --decoy-results-psms ctrl_2_percolator_decoy_psms.tsv --protein-decoy-pattern rev_ ctrl_2_edited.pin
+Percolator [Work dir: /plan/fp_work/treated_1]
+@ROOT@/fragpipe-24.0/tools/percolator_3_7_1/linux/percolator --only-psms --no-terminate --post-processing-tdc --num-threads 2 --results-psms trt_1_percolator_target_psms.tsv --decoy-results-psms trt_1_percolator_decoy_psms.tsv --protein-decoy-pattern rev_ trt_1_edited.pin
+Percolator [Work dir: /plan/fp_work/treated_2]
+@ROOT@/fragpipe-24.0/tools/percolator_3_7_1/linux/percolator --only-psms --no-terminate --post-processing-tdc --num-threads 2 --results-psms trt_2_percolator_target_psms.tsv --decoy-results-psms trt_2_percolator_decoy_psms.tsv --protein-decoy-pattern rev_ trt_2_edited.pin
+Percolator: Convert to pepxml [Work dir: /plan/fp_work/control_1]
+java -cp @ROOT@/fragpipe-24.0/lib/* org.nesvilab.fragpipe.tools.percolator.PercolatorOutputToPepXML ctrl_1.pin ctrl_1 ctrl_1_percolator_target_psms.tsv ctrl_1_percolator_decoy_psms.tsv interact-ctrl_1 DDA 0.5 /plan/raw_files/ctrl_1.mzML
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/control_1/ctrl_1_percolator_target_psms.tsv
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/control_1/ctrl_1_percolator_decoy_psms.tsv
+Percolator: Convert to pepxml [Work dir: /plan/fp_work/control_2]
+java -cp @ROOT@/fragpipe-24.0/lib/* org.nesvilab.fragpipe.tools.percolator.PercolatorOutputToPepXML ctrl_2.pin ctrl_2 ctrl_2_percolator_target_psms.tsv ctrl_2_percolator_decoy_psms.tsv interact-ctrl_2 DDA 0.5 /plan/raw_files/ctrl_2.mzML
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/control_2/ctrl_2_percolator_target_psms.tsv
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/control_2/ctrl_2_percolator_decoy_psms.tsv
+Percolator: Convert to pepxml [Work dir: /plan/fp_work/treated_1]
+java -cp @ROOT@/fragpipe-24.0/lib/* org.nesvilab.fragpipe.tools.percolator.PercolatorOutputToPepXML trt_1.pin trt_1 trt_1_percolator_target_psms.tsv trt_1_percolator_decoy_psms.tsv interact-trt_1 DDA 0.5 /plan/raw_files/trt_1.mzML
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/treated_1/trt_1_percolator_target_psms.tsv
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/treated_1/trt_1_percolator_decoy_psms.tsv
+Percolator: Convert to pepxml [Work dir: /plan/fp_work/treated_2]
+java -cp @ROOT@/fragpipe-24.0/lib/* org.nesvilab.fragpipe.tools.percolator.PercolatorOutputToPepXML trt_2.pin trt_2 trt_2_percolator_target_psms.tsv trt_2_percolator_decoy_psms.tsv interact-trt_2 DDA 0.5 /plan/raw_files/trt_2.mzML
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/treated_2/trt_2_percolator_target_psms.tsv
+Percolator delete temp
+java -cp @ROOT@/fragpipe-24.0/lib/fragpipe-24.0.jar org.nesvilab.utils.FileDelete /plan/fp_work/treated_2/trt_2_percolator_decoy_psms.tsv
+ProteinProphet [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 proteinprophet --maxppmdiff 2000000 --output combined /plan/fp_work/filelist_proteinprophet.txt
+PhilosopherDbAnnotate [Work dir: /plan/fp_work/control_1]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 database --annotate /plan/test.fasta --prefix rev_
+PhilosopherFilter [Work dir: /plan/fp_work/control_1]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 filter --sequential --prot 0.01 --picked --tag rev_ --pepxml /plan/fp_work/control_1 --protxml /plan/fp_work/combined.prot.xml --razor
+PhilosopherFilter [Work dir: /plan/fp_work/control_2]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 filter --sequential --prot 0.01 --picked --tag rev_ --pepxml /plan/fp_work/control_2 --dbbin /plan/fp_work/control_1 --protxml /plan/fp_work/combined.prot.xml --probin /plan/fp_work/control_1 --razor
+PhilosopherFilter [Work dir: /plan/fp_work/treated_1]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 filter --sequential --prot 0.01 --picked --tag rev_ --pepxml /plan/fp_work/treated_1 --dbbin /plan/fp_work/control_1 --protxml /plan/fp_work/combined.prot.xml --probin /plan/fp_work/control_1 --razor
+PhilosopherFilter [Work dir: /plan/fp_work/treated_2]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 filter --sequential --prot 0.01 --picked --tag rev_ --pepxml /plan/fp_work/treated_2 --dbbin /plan/fp_work/control_1 --protxml /plan/fp_work/combined.prot.xml --probin /plan/fp_work/control_1 --razor
+PhilosopherReport [Work dir: /plan/fp_work/control_2]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 report
+PhilosopherReport [Work dir: /plan/fp_work/control_1]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 report
+PhilosopherReport [Work dir: /plan/fp_work/treated_2]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 report
+PhilosopherReport [Work dir: /plan/fp_work/treated_1]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 report
+WorkspaceClean [Work dir: /plan/fp_work/control_2]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --clean --nocheck
+WorkspaceClean [Work dir: /plan/fp_work/control_1]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --clean --nocheck
+WorkspaceClean [Work dir: /plan/fp_work]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --clean --nocheck
+WorkspaceClean [Work dir: /plan/fp_work/treated_2]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --clean --nocheck
+WorkspaceClean [Work dir: /plan/fp_work/treated_1]
+@ROOT@/fragpipe-24.0/tools/Philosopher/philosopher-v5.1.3-RC9 workspace --clean --nocheck
+IonQuant [Work dir: /plan/fp_work]
+java -Djava.awt.headless=true -Xmx14G -Dlibs.bruker.dir=@ROOT@/fragpipe-24.0/tools/MSFragger-4.4.1/ext/bruker -Dlibs.thermo.dir=@ROOT@/fragpipe-24.0/tools/MSFragger-4.4.1/ext/thermo -cp @ROOT@/fragpipe-24.0/tools/jfreechart-1.5.3.jar:@ROOT@/fragpipe-24.0/tools/IonQuant-1.11.20.jar ionquant.IonQuant --license {LICENSE} --threads 2 --perform-ms1quant 1 --perform-isoquant 0 --isotol 20.0 --isolevel 2 --isotype tmt10 --ionmobility 0 --site-reports 1 --msstats 1 --minexps 1 --mbr 1 --maxlfq 1 --requantify 1 --mztol 10 --imtol 0.05 --rttol 0.4 --mbrmincorr 0 --mbrrttol 1 --mbrimtol 0.05 --mbrtoprun 10 --ionfdr 0.01 --proteinfdr 1 --peptidefdr 1 --normalization 1 --minisotopes 2 --intensitymode 2 --minscans 3 --writeindex 0 --tp 0 --minfreq 0 --minions 1 --locprob 0.75 --uniqueness 0 --multidir . --filelist /plan/fp_work/filelist_ionquant.txt --modlist /plan/fp_work/modmasses_ionquant.txt
+~~~~~~~~~~~~~~~~~~~~~~
+
+Execution order:
+
+    Cmd: [START], Work dir: [/plan/fp_work]
+    Cmd: [CheckCentroid], Work dir: [/plan/fp_work]
+    Cmd: [WorkspaceCleanInit], Work dir: [/plan/fp_work/control_2]
+    Cmd: [WorkspaceCleanInit], Work dir: [/plan/fp_work/control_1]
+    Cmd: [WorkspaceCleanInit], Work dir: [/plan/fp_work]
+    Cmd: [WorkspaceCleanInit], Work dir: [/plan/fp_work/treated_2]
+    Cmd: [WorkspaceCleanInit], Work dir: [/plan/fp_work/treated_1]
+    Cmd: [MSFragger], Work dir: [/plan/fp_work]
+    Cmd: [MSBooster], Work dir: [/plan/fp_work]
+    Cmd: [Percolator], Work dir: [/plan/fp_work]
+    Cmd: [ProteinProphet], Work dir: [/plan/fp_work]
+    Cmd: [PhilosopherDbAnnotate], Work dir: [/plan/fp_work]
+    Cmd: [PhilosopherFilter], Work dir: [/plan/fp_work]
+    Cmd: [PhilosopherReport], Work dir: [/plan/fp_work]
+    Cmd: [WorkspaceClean], Work dir: [/plan/fp_work/control_2]
+    Cmd: [WorkspaceClean], Work dir: [/plan/fp_work/control_1]
+    Cmd: [WorkspaceClean], Work dir: [/plan/fp_work]
+    Cmd: [WorkspaceClean], Work dir: [/plan/fp_work/treated_2]
+    Cmd: [WorkspaceClean], Work dir: [/plan/fp_work/treated_1]
+    Cmd: [IonQuant], Work dir: [/plan/fp_work]
+
+~~~~~~~~~~~~~~~~~~~~~~
+
+~~~~~~Sample of /plan/test.fasta~~~~~~~
+>rev_sp|P10|T10
+>rev_sp|P1|T1
+>rev_sp|P2|T2
+>rev_sp|P3|T3
+>rev_sp|P4|T4
+>rev_sp|P5|T5
+>rev_sp|P6|T6
+>rev_sp|P7|T7
+>rev_sp|P8|T8
+>rev_sp|P9|T9
+>sp|P10|T10
+>sp|P1|T1
+>sp|P2|T2
+>sp|P3|T3
+>sp|P4|T4
+>sp|P5|T5
+>sp|P6|T6
+>sp|P7|T7
+>sp|P8|T8
+>sp|P9|T9
+~~~~~~~~~~~~~~~~~~~~~~
+
+
+It's a dry-run, not running the commands.
+
+
+Please cite:
+(Any searches) MSFragger: ultrafast and comprehensive peptide identification in mass spectrometry–based proteomics. Nat Methods. 14:513 (2017)
+(Any searches) Fast deisotoping algorithm and its implementation in the MSFragger search engine. J Proteome Res. 20:498 (2021)
+(timsTOF ddaPASEF) Fast quantitative analysis of timsTOF PASEF data with MSFragger and IonQuant. Mol Cell Proteomics. 19:1575 (2020)
+(Open search) Identification of modified peptides using localization-aware open search. Nat Commun. 11:4065 (2020)
+(Glyco search) Fast and comprehensive N- and O-glycoproteomics analysis with MSFragger-Glyco. Nat Methods. 17:1125 (2020)
+(Labile search) MSFragger-Labile: A Flexible Method to Improve Labile PTM Analysis in Proteomics. Mol Cell Proteomics. 22:100538 (2023)
+(DDA+ search) MSFragger-DDA+ enhances peptide identification sensitivity with full isolation window search. Nat Commun. 16:3329 (2025)
+(MSBooster) MSBooster: improving peptide identification rates using deep learning-based features. Nat Commun. 14:4539 (2023)
+(PSM validation with Percolator) Semi-supervised learning for peptide identification from shotgun proteomics datasets. Nat Methods. 4:923 (2007)
+(Protein inference with ProteinProphet)A statistical model for identifying proteins by tandem mass spectrometry. Anal Chem. 75:4646 (2003)
+(FDR filtering and reporting) Philosopher: a versatile toolkit for shotgun proteomics data analysis. Nat Methods. 17:869 (2020)
+(Label-free/isotopic-labeling quantification) IonQuant Enables Accurate and Sensitive Label-Free Quantification With FDR-Controlled Match-Between-Runs. Mol Cell Proteomics. 20:100077 (2021)
+(Visualization with FragPipe-PDV) PDV: an integrative proteomics data viewer. Bioinformatics. 35(7):1249 (2019)

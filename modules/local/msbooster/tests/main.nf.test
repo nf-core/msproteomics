@@ -57,7 +57,7 @@ nextflow_process {
                 library.text = "mock library"
 
                 def fragger_params = file("\${projectDir}/tests/fixtures/fragger_params/TMT-labelcheck-304/fragger.params", checkIfExists: true)
-                // parse_fragpipe_workflow.py writes the token for msbooster.spectral-library-path
+                // FragPipe's plan (bin/plan_to_tool_configs.py) gives the token for msbooster.spectral-library-path
                 def params_text = "useDetect = false\\nrenamePin = 1\\nuseRT = true\\nuseSpectra = true\\nuseIM = true\\ndeletePreds = false\\nrtModel = DIA-NN\\nspectraModel = DIA-NN\\nimModel = DIA-NN\\nfindBestRtModel = false\\nfindBestSpectraModel = false\\nfindBestImModel = false\\nKoinaURL = \\nspectraPredFile = {SPECTRAL_LIBRARY}\\nRTPredFile = {SPECTRAL_LIBRARY}\\nIMPredFile = {SPECTRAL_LIBRARY}\\nFragmentationType = auto\\nnumThreads = 1\\n"
                 input[0] = channel.of([[ id: 'test' ], pin_file, mzml_file])
                 input[1] = params_text

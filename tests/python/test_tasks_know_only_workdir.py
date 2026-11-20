@@ -90,6 +90,7 @@ VAL_PATH_NAMES = {
     "filelist_paths": "pepXML locations relative to the FragPipe work dir",
     "ptmprophet_cli": "PTMProphet options",
     "workdir": "FragPipe's workdir value recorded in the saved fragpipe.workflow; FragpipeUiState only writes it",
+    "database_source": "FRAGPIPEPLAN: the database's original path (s3:// kept), text for the portable copies' source map",
 }
 PATH_LIKE = re.compile(r"path|dir|file|fasta|database|db|folder|home|tmp|temp", re.I)
 
@@ -98,6 +99,7 @@ PATH_LIKE = re.compile(r"path|dir|file|fasta|database|db|folder|home|tmp|temp", 
 LCMS_INPUT = re.compile(r"path\s*\(?\s*(\w*(?:spectra|lcms|mzml|spec_files|dia_file|raw|ms_file)\w*)", re.I)
 NO_RAW_READ = {
     "fragpipeheadless": "headlessStagingLines calls rawLinkCopies",
+    "fragpipeplan": "a dry run reads no spectra: FragPipe only checks that the manifest files exist",
     "fragpipesaveworkflow": "FragpipeUiState only checks that the manifest files exist",
     "freequant": "FreeQuant takes only mzML (CmdFreequant.java:44)",
     "philosopherlabelquant": "LabelQuant takes only mzML (CmdLabelquant.java:51)",

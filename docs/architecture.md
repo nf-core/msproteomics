@@ -29,13 +29,13 @@ Input CSV
   ├── GENERATESDRFFROMSAMPLESHEET ─ bookkeeping
   │
   ▼
-PARSEFRAGPIPEWORKFLOW ────── read the .workflow file (tool run flags and settings)
+FRAGPIPE_DATABASE ────────── optional PHILOSOPHERDATABASE (decoys + contaminants)
+  │
+  ▼
+FRAGPIPE_TOOL_CONFIGS ────── FragPipe's --write-plan run (FRAGPIPEPLAN, decoy check included) -> PLANTOTOOLCONFIGS
   │
   ▼
 CHECKCENTROID ────────────── FragPipe's centroid check of the LC-MS files
-  │
-  ▼
-FRAGPIPE_DATABASE ────────── decoy check (CHECKDBCONFIG); optional PHILOSOPHERDATABASE (decoys + contaminants)
   │
   ▼
 FRAGPIPE_CONVERT ─────────── optional DIA-Umpire / diaTracer (LC-MS files searched as given)
@@ -122,11 +122,12 @@ FRAGPIPE_INFERENCE ───────── ProteinProphet protein-level infe
   └──► FRAGPIPE_EXPORT ───── FPOP, Metaproteomics; SAINTexpress (optional post-run, downstream/)
 ```
 
-The first step parses the `.workflow` configuration file (`PARSEFRAGPIPEWORKFLOW`) to determine which tools are enabled and extract their parameters.
+The first step, **FRAGPIPE_TOOL_CONFIGS**, determines which tools are enabled and their parameters from FragPipe's own configured run: `FRAGPIPEPLAN` runs `fragpipe --headless --write-plan --msfragger-per-file`, and `PLANTOTOOLCONFIGS` (`bin/plan_to_tool_configs.py`) reads its work dir.
+With `--fragpipe_plan <dir>`, that work dir (a plan of the same workflow and manifest) is given and `FRAGPIPEPLAN` does not run.
 Only enabled tools actually execute -- the workflow dynamically adapts to whatever the `.workflow` file specifies.
 
-**FRAGPIPE_DATABASE** checks the database decoys the way FragPipe headless does (`CHECKDBCONFIG`); the FASTA is searched as given.
-With `--add_philosopher_decoy` / `--add_philosopher_contaminants` it first runs FragPipe's database update (`philosopher database --custom <fasta> [--nodecoys] [--contam --contamprefix]`).
+**FRAGPIPE_DATABASE** gives the searched FASTA: as given, or after FragPipe's database update (`PHILOSOPHERDATABASE`); FragPipe's plan checks its decoys (FragpipeRun.checkDbConfig).
+With `--add_philosopher_decoy` / `--add_philosopher_contaminants` it runs FragPipe's database update (`philosopher database --custom <fasta> [--nodecoys] [--contam --contamprefix]`) before the plan, so the plan reads the searched FASTA.
 
 **FRAGPIPE_CONVERT** runs the optional DIA preprocessing (DIA-Umpire, diaTracer); LC-MS files are not converted, because MSFragger reads `.raw`, `.mzML`, `.mzXML`, `.mgf`, `.mzBIN` and Bruker `.d` natively, as in FragPipe.
 
@@ -154,10 +155,7 @@ Headless mode (`--fragpipe_mode headless`) runs the entire FragPipe pipeline as 
 Input CSV
   │
   ▼
-PARSEFRAGPIPEWORKFLOW ──── read the .workflow file (decoy tag and tool run flags)
-  │
-  ▼
-FRAGPIPE_DATABASE ──────── decoy check (CHECKDBCONFIG); optional PHILOSOPHERDATABASE (decoys + contaminants)
+FRAGPIPE_DATABASE ──────── optional PHILOSOPHERDATABASE (decoys + contaminants); FragPipe headless checks the decoys
   │
   ▼
 FRAGPIPEHEADLESS ───────── all-in-one FragPipe execution on all LC-MS files as given

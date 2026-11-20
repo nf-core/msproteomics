@@ -160,36 +160,4 @@ nextflow_process {
         }
     }
 
-    // CmdIonquant.java:288-294: MBR without any named experiment is refused
-    test("ionquant - stub MBR with only the blank group fails like FragPipe") {
-        options "-stub"
-        tag "stub"
-
-        when {
-            process {
-                """
-                def root = file("\${workDir}/workdir-root")
-                root.mkdirs()
-                file("\${root}/psm.tsv").text = "Spectrum\\tPeptide\\nmock\\tPEPTIDE\\n"
-                def mzml_file = file("\${workDir}/test.mzML")
-                mzml_file.text = "mock"
-
-                input[0] = channel.of([ [ id: 'fragpipe' ], [ root ], [ mzml_file ] ])
-                input[1] = []
-                input[2] = "${lfq_args}"
-                input[3] = []
-                input[4] = "workdir-root"
-                input[5] = []
-                input[6] = []                  // glyco_masses: no AppendFile
-                """
-            }
-        }
-
-        then {
-            assertAll (
-                { assert process.failed },
-                { assert (process.stdout + process.stderr).any { line -> line.contains("IonQuant with MBR requires designating LCMS runs to experiments.") } }
-            )
-        }
-    }
 }

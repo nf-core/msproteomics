@@ -1,0 +1,38 @@
+nextflow_process {
+
+    name "Test Process FRAGPIPEPLAN"
+    script "../main.nf"
+    process "FRAGPIPEPLAN"
+
+    tag "modules"
+    tag "modules_local"
+    tag "fragpipe_plan"
+
+    // FragPipe's dry run is the plan, and a stub cannot run FragPipe: -stub runs take a recorded plan (--fragpipe_plan)
+    test("fragpipe_plan - stub stops: -stub needs --fragpipe_plan") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            process {
+                """
+                def raw_file = file("\${workDir}/sample.mzML")
+                raw_file.text = "mock"
+                def fasta_file = file("\${workDir}/test.fasta")
+                fasta_file.text = ">sp|P00001|TEST\\nMKTEST\\n"
+                input[0] = channel.of([
+                    [ id: 'plan' ], raw_file, fasta_file, 'mock', [['sample.mzML', 'exp1', 1, 'DDA', 'exp1_1']], [],
+                    ['sample.mzML': 's3://bucket/sample.mzML'], 's3://bucket/test.fasta'
+                ])
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.failed },
+                { assert (process.stdout + process.stderr).any { line -> line.contains('-stub needs --fragpipe_plan (a recorded FragPipe dry run): the stub runs no FragPipe') } : process.stdout }
+            )
+        }
+    }
+}

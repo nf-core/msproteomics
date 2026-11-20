@@ -7,7 +7,7 @@
  *   - spectra: every LC-MS file of the run (MBG reads them through the manifest)
  *   - manifest_rows: [file name, experiment, bioreplicate, data type] per LC-MS file, in
  *     fragpipe-files.fp-manifest order (TabWorkflow.manifestSave)
- *   - argv: MBG argv from PARSEFRAGPIPEWORKFLOW (@TOKENS@ filled here, @NOPASEF@ by the workflow)
+ *   - argv: MBG argv from FragPipe's plan (bin/plan_to_tool_configs.py) (@TOKENS@ filled here, @NOPASEF@ by the workflow)
  *
  * Output:
  *   - psm_dir: the group directory with MBG's updated psm.tsv

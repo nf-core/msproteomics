@@ -1,0 +1,4 @@
+/plan/fp_work/control_1/interact-ctrl_1.pep.xml
+/plan/fp_work/control_2/interact-ctrl_2.pep.xml
+/plan/fp_work/treated_1/interact-trt_1.pep.xml
+/plan/fp_work/treated_2/interact-trt_2.pep.xml

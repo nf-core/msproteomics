@@ -51,7 +51,7 @@ input:
         pattern: "*.{tsv,txt}"
     - argv_parts:
         type: map
-        description: gen_con_spec_lib.py argv values from PARSEFRAGPIPEWORKFLOW (speclibgen.argv_parts - rt_cal, im_cal, convert_args, library_args, intermediate)
+        description: gen_con_spec_lib.py argv values from FragPipe's plan (bin/plan_to_tool_configs.py) (speclibgen.argv_parts - rt_cal, im_cal, convert_args, library_args, intermediate)
   - fasta:
       type: file
       description: Protein database with decoys (gen_con_spec_lib.py argv[1])

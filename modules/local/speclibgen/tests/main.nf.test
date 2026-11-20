@@ -3,8 +3,8 @@
 //   [0] python3 [1] -u [2] gen_con_spec_lib.py [3] fasta [4] wd (pepXML dir) [5] unused [6] wd (output)
 //   [7] True [8] unused [9] use_easypqp [10] RT:IM [11] threads [12] convert extras [13] library extras
 //   [14] keep/delete_intermediate_files [15] filelist_speclibgen.txt
-// The *.json fixtures are PARSEFRAGPIPEWORKFLOW's speclibgen.argv_parts for the bundled FragPipe 24.0
-// workflows (tests/fixtures/fragpipe_workflows/, data type DIA): convert_pepxml.json from DIA_SpecLib_Quant,
+// The *.json fixtures are speclibgen.argv_parts as FragPipe's plan gives them (bin/plan_to_tool_configs.py) for FragPipe 24.0
+// workflows (data type DIA): convert_pepxml.json from DIA_SpecLib_Quant (tests/fixtures/fragpipe_plans/DIA_SpecLib_Quant_perfile),
 // convert_psm.json from glyco-N-DIA. gen_con_spec_lib.py picks psm.tsv conversion when the convert
 // extras hold --decoy_prefix (gen_con_spec_lib.py:125-126), else pepXML conversion (:553-570).
 
@@ -143,7 +143,7 @@ nextflow_process {
                 fasta.text = ">rev_P1\\nKEDITPEP\\n>P1\\nPEPTIDEK\\n"
                 def rt_file = file("\${workDir}/my_irt.tsv")
                 rt_file.text = "modified_peptide\\tprecursor_charge\\tirt\\nPEPTIDEK\\t2\\t10.0\\n"
-                // the parser leaves rt_cal empty and emits rt_cal_file for "User provided RT calibration file"
+                // the plan leaves rt_cal empty and emits rt_cal_file for "User provided RT calibration file"
                 def config = new groovy.json.JsonSlurper().parse(file("\${baseDir}/modules/local/speclibgen/tests/convert_pepxml.json", checkIfExists: true).toFile()) + [rt_cal: '']
                 input[0] = channel.of([[ id: 'fragpipe' ], psm, peptide, [ pepxml ], [ mzml ], rt_file, [], config])
                 input[1] = fasta

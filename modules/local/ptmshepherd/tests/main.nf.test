@@ -24,7 +24,7 @@ nextflow_process {
                 file("\${control}/psm.tsv").text = "Spectrum\\tPeptide\\nctrl.1.1.2\\tPEPTIDER\\n"
                 def mzml = file("\${workDir}/ctrl.mzML")
                 mzml.text = "mock"
-                // Property block as PARSEFRAGPIPEWORKFLOW writes it (sorted, run-time tokens)
+                // Property block as FragPipe's plan gives it (sorted, run-time tokens)
                 def props = "glyco_residue_list = @TOOLS_DIR@/Glycan_Databases/glycan_residues.txt\\nrun_glyco_mode = true\\nthreads = @THREADS@\\n"
                 def fasta = file("\${workDir}/db.fasta")
                 fasta.text = ">sp|P1|A\\nPEPTIDEK\\n"
@@ -84,7 +84,7 @@ nextflow_process {
                 def fasta = file("\${workDir}/db.fasta")
                 fasta.text = ">sp|P1|A\\nPEPTIDEK\\n"
 
-                // annotation-custom=true, annotation_file=<path>: the parser writes the @ANNOTATION_FILE@ token
+                // annotation-custom=true, annotation_file=<path>: the plan has the @ANNOTATION_FILE@ token
                 input[0] = channel.of([
                     [ id: 'fragpipe' ],
                     [ root ],

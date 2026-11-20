@@ -8,7 +8,7 @@ nextflow_process {
     tag "modules_local"
     tag "tmtintegrator"
 
-    // tmt-integrator-conf.yml the workflow parser writes for the bundled TMT10 workflow
+    // tmt-integrator-conf.yml FragPipe's plan gives for the bundled TMT10 workflow
     def tmt10_yaml = '''tmtintegrator:
   abn_type: 0
   add_Ref: 1
@@ -96,7 +96,7 @@ nextflow_process {
         }
     }
 
-    test("tmtintegrator - stub refuses a config that is not the parser's") {
+    test("tmtintegrator - stub refuses a config that is not FragPipe's planned one") {
         options "-stub"
         tag "stub"
 
@@ -117,7 +117,7 @@ nextflow_process {
         then {
             assertAll(
                 { assert process.failed },
-                { assert (process.stdout + process.stderr).any { line -> line.contains("is not the parser's tmt-integrator-conf.yml") } }
+                { assert (process.stdout + process.stderr).any { line -> line.contains("is not FragPipe's planned tmt-integrator-conf.yml") } }
             )
         }
     }

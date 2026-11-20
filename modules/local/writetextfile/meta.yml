@@ -1,5 +1,5 @@
 name: "writetextfile"
-description: Write a text file whose body was built by Groovy helpers or the workflow parser, so tool modules receive it as a path
+description: Write a text file whose body was built by Groovy helpers or FragPipe's plan, so tool modules receive it as a path
 keywords:
   - text
   - file

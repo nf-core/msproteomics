@@ -55,7 +55,7 @@ workflow FRAGPIPE_CONVERT {
             other:  true
         }
 
-    // umpire-se.params text (UmpirePanel.collect(), parse_fragpipe_workflow.py), the same for every file
+    // umpire-se.params text (UmpirePanel.collect(), FragPipe's plan), the same for every file
     ch_diaumpire_params = ch_tool_configs
         .filter { configs -> shouldRunTool(configs, 'diaumpire') }
         .map { configs -> getToolArgs(configs, 'diaumpire') }

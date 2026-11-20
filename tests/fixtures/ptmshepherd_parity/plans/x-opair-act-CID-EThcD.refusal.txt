@@ -1,0 +1,14 @@
+exit status 1
+2026-10-12 23:25:04,037 ERROR - Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineRunner.exe
+2026-10-12 23:25:04,045 ERROR - Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineRunner.exe
+2026-10-12 23:25:04,046 ERROR - Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineDailyRunner.exe
+2026-10-12 23:25:04,048 ERROR - Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineDailyRunner.exe
+2026-10-12 23:25:04,230 ERROR - Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineRunner.exe
+2026-10-12 23:25:04,230 ERROR - Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineRunner.exe
+2026-10-12 23:25:04,231 ERROR - Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineDailyRunner.exe
+2026-10-12 23:25:04,231 ERROR - Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineDailyRunner.exe
+2026-10-12 23:25:04,389 ERROR - Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineRunner.exe
+2026-10-12 23:25:04,390 ERROR - Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineRunner.exe
+2026-10-12 23:25:04,391 ERROR - Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineDailyRunner.exe
+2026-10-12 23:25:04,393 ERROR - Missing assets: @ROOT@/fragpipe-24.0/lib/../tools/Skyline/SkylineDailyRunner.exe
+2026-10-12 23:25:12,120 ERROR - Single activation type must be hybrid, not HCD/CID, for O-Pair because c/z ions are required.

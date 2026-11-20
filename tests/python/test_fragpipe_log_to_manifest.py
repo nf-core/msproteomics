@@ -1,13 +1,15 @@
-"""Unit tests for tests/tools/fragpipe_log_to_manifest.py (run: make test-python)."""
+"""Unit tests for bin/fragpipe_log_to_manifest.py (run: make test-python)."""
 
 from __future__ import annotations
 
+import re
 import sys
 import tempfile
 import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "bin"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import fragpipe_log_to_manifest as fpm  # noqa: E402
@@ -34,6 +36,16 @@ class TestRedaction(unittest.TestCase):
     def test_license_token_in_command_is_redacted(self):
         self.assertEqual(fpm.redact_line("/x/tool --key=/a/license.dat -v"), "/x/tool --key={LICENSE_PATH} -v")
         self.assertEqual(fpm.redact_line("/x/tool --licensekey=abc -v"), "/x/tool --licensekey={LICENSE} -v")
+
+    def test_quoted_values_with_spaces_are_redacted_whole(self):
+        # FragPipe prints an argument with whitespace in double quotes (FragpipeRun.java:1181-1183)
+        self.assertEqual(fpm.redact_line('/x/tool --license "/secret dir/my key.lic" -v'), "/x/tool --license {LICENSE} -v")
+        self.assertEqual(fpm.redact_line('/x/tool "/secret dir/license.dat" -v'), "/x/tool {LICENSE_PATH} -v")
+        self.assertEqual(fpm.redact_line('/x/tool "-Dk=/secret dir/license.dat" -v'), "/x/tool -Dk={LICENSE_PATH} -v")
+
+    def test_key_flags_are_redacted(self):
+        self.assertEqual(fpm.redact_line("/x/tool --key=ABC -v"), "/x/tool --key={LICENSE} -v")
+        self.assertEqual(fpm.redact_line("/x/tool --key ABC -v"), "/x/tool --key {LICENSE} -v")
 
     def test_license_stdout_line_is_dropped(self):
         self.assertIsNone(fpm.redact_line("Licensed to Some Org until 2027"))
@@ -155,6 +167,73 @@ class TestSplitCommand(unittest.TestCase):
         with self.assertRaises(fpm.LogFormatError):
             fpm.split_command('a "b c')
 
+
+def printed(argv):
+    """FragPipe's console form of an argv (FragpipeRun.java:1181-1183)."""
+    return " ".join(f'"{e}"' if re.match(r".*\s.*", e) else e for e in argv)
+
+
+class TestDecodeCommand(unittest.TestCase):
+    """decode_command: the one argv of FragPipe 24.0's shape that prints as a console line."""
+
+    def test_argvs_with_one_reading_round_trip(self):
+        for argv in (["a", "-b", "c"], ["python3", "s.py", "java -jar", "m.jar"], ["dotnet", "-s /w/p.tsv", "-o /w/s"],
+                     ["java", "Main", '"/w/shepherd.config"'], ["--hostName", '"Human"'], ["x", "", " y"], ['--in="/p"']):
+            self.assertEqual(fpm.decode_command(printed(argv)), argv)
+
+    def test_two_readings_are_told_apart_by_a_known_value(self):
+        # ""Homo sapiens"" is the element "Homo sapiens" (CmdMetaproteomics.java:102) or the two ""Homo and sapiens""
+        line = printed(["--hostName", '"Homo sapiens"'])
+        self.assertEqual(fpm.decode_command(line, frozenset({"Homo sapiens"})), ["--hostName", '"Homo sapiens"'])
+        with self.assertRaisesRegex(fpm.AmbiguousCommand, "argument 2 reads as"):
+            fpm.decode_command(line)
+
+    def test_a_quote_at_an_inner_word_edge_needs_a_known_value(self):
+        for argv in (["x", '--a "b" --c'], ["x", '--foo "a b"']):
+            self.assertEqual(fpm.decode_command(printed(argv), frozenset({argv[1]})), argv)
+            with self.assertRaisesRegex(fpm.AmbiguousCommand, "no argv FragPipe builds"):
+                fpm.decode_command(printed(argv))
+
+    def test_a_line_no_argv_prints_as_stops(self):
+        with self.assertRaisesRegex(fpm.AmbiguousCommand, "no argv FragPipe builds"):
+            fpm.decode_command('a "b')
+
+
+class TestParseDryRun(unittest.TestCase):
+    LOG = ("LCMS files:\n  Experiment/Group: a\n  - /d/a.mzML\tDDA\n\n\n1 commands to execute:\n"
+           "IonQuant [Work dir: /w]\njava -jar /t/IonQuant.jar --license /t/license.dat\n~~~~~~~~~~~~~~~~~~~~~~\n\n"
+           "It's a dry-run, not running the commands.\n")
+
+    def test_lcms_files_and_planned_commands_with_the_licence_redacted(self):
+        parsed = fpm.parse_dry_run(self.LOG)
+        self.assertEqual(parsed["lcms_files"], [{"path": "/d/a.mzML", "experiment": "a", "data_type": "DDA"}])
+        self.assertEqual(parsed["steps"], [{"name": "IonQuant", "cwd_raw": "/w", "command_line": "java -jar /t/IonQuant.jar --license {LICENSE}"}])
+
+    def test_another_threads_log_lines_in_the_lcms_section_are_skipped(self):
+        # FragPipe's headless "Missing assets" error dialog logs from another thread (FragpipeLocations.java:334)
+        log = self.LOG.replace("  - /d/a.mzML\tDDA\n", "  - /d/a.mzML\tDDA\n23:24:38 ERROR: Missing assets: /t/Skyline/SkylineRunner.exe\n")
+        self.assertNotEqual(log, self.LOG)
+        self.assertEqual(fpm.parse_dry_run(log)["lcms_files"], [{"path": "/d/a.mzML", "experiment": "a", "data_type": "DDA"}])
+
+    def split_log(self):
+        # another thread's logback line starts in the middle of the LC-MS path and ends the console line
+        return self.LOG.replace("  - /d/a.mzML\tDDA\n", "  - /d/a.m14:57:32 ERROR: Missing assets: /t/Skyline/SkylineRunner.exe\nzML\tDDA\n")
+
+    def test_a_path_split_by_another_threads_log_line_is_rejoined_against_the_manifest(self):
+        parsed = fpm.parse_dry_run(self.split_log(), frozenset({"/d/a.mzML"}))
+        self.assertEqual(parsed["lcms_files"], [{"path": "/d/a.mzML", "experiment": "a", "data_type": "DDA"}])
+
+    def test_a_split_path_without_a_manifest_stops(self):
+        with self.assertRaisesRegex(fpm.LogFormatError, "no manifest is given to check the rejoined path against: '  - /d/a.m14:57:32"):
+            fpm.parse_dry_run(self.split_log())
+
+    def test_a_rejoined_path_the_manifest_does_not_list_stops(self):
+        with self.assertRaisesRegex(fpm.LogFormatError, "LCMS file '/d/a.mzML' is not in the manifest"):
+            fpm.parse_dry_run(self.split_log(), frozenset({"/d/b.mzML"}))
+
+    def test_a_log_without_the_dry_run_line_stops(self):
+        with self.assertRaisesRegex(fpm.LogFormatError, "not a dry-run log"):
+            fpm.parse_dry_run(self.LOG.replace("It's a dry-run", "It is"))
 
 
 class TestMsfraggerOnUmpirePseudoSpectra(unittest.TestCase):

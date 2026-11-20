@@ -577,13 +577,13 @@ def labelquantAnnotationText(annotation_lines, group) {
  *
  * The blank group's psm.tsv/protein.tsv sit at the top of the work dir (LcmsFileGroup.outputDir(wd) for group ""),
  * so TMT-Integrator names that plex after it; named groups are <work_dir>/<group>/. The psm.tsv arguments are
- * absolute, groups in FragPipe's TreeMap order (blank group first, then by name). The parser's config has
+ * absolute, groups in FragPipe's TreeMap order (blank group first, then by name). The plan's config has
  * the output placeholder line `output: @TMT_REPORT_DIR@`, which becomes <work dir>/<report_dir>.
  * Paths are tokens under {TASK_DIR} (the task directory).
  *
  * @param group_dirs Staged group directories (input_results/<name>)
  * @param root_group_dir The group_dirs name holding the blank group ('' when none)
- * @param config_text tmt-integrator-conf.yml text from the workflow parser
+ * @param config_text tmt-integrator-conf.yml text from FragPipe's plan
  * @param work_dir Work-dir name
  * @param report_dir Output directory name (tmt-report, tmt-report-unmod)
  * @param task Task (ext.fragpipe_tools_dir)
@@ -593,7 +593,7 @@ def tmtIntegratorCommands(group_dirs, root_group_dir, config_text, work_dir, rep
     def placeholder = 'output: @TMT_REPORT_DIR@'
     def text = config_text.toString()
     if (!text.readLines().any { line -> line.trim() == placeholder }) {
-        error("TMTINTEGRATOR: the config is not the parser's tmt-integrator-conf.yml (no '${placeholder}')")
+        error("TMTINTEGRATOR: the config is not FragPipe's planned tmt-integrator-conf.yml (no '${placeholder}')")
     }
     def config = text.readLines().collect { line ->
         line.trim() == placeholder ? line.replace('@TMT_REPORT_DIR@', "{TASK_DIR}/${work_dir}/${report_dir}") : line
@@ -658,11 +658,11 @@ def taskFileCommand(name, text) {
 /**
  * PTM-Shepherd shepherd.config and class path as FragPipe 24.0 builds them (PtmshepherdParams.createConfig,
  * CmdPtmshepherd.java:52-55, 150-165): database, one dataset line per group (in the given order), a blank line,
- * then the parser's property block with @THREADS@ and @TOOLS_DIR@ filled in. Paths are {TASK_DIR} tokens: the
+ * then the plan's property block with @THREADS@ and @TOOLS_DIR@ filled in. Paths are {TASK_DIR} tokens: the
  * group copies sit in groups/<dir>, the LC-MS files in spectra/.
  *
  * @param datasets [dir name, dataset name] per group (dataset01 for the blank group, PtmshepherdParams.java:86)
- * @param config_text Property block from the workflow parser
+ * @param config_text Property block from FragPipe's plan
  * @param fasta_name Staged protein database name
  * @param annotation_file Staged custom annotation file (annotation/<name>), [] when annotation_file is a keyword; fills @ANNOTATION_FILE@
  * @param task Task (cpus, ext.fragpipe_tools_dir)
@@ -716,13 +716,13 @@ def taskDirArg(token) {
 }
 
 /**
- * O-Pair's filelist_opair.txt and argv as CmdOPair builds them (CmdOPair.java:100-190): the parser's argv
+ * O-Pair's filelist_opair.txt and argv as CmdOPair builds them (CmdOPair.java:100-190): the plan's argv
  * (one token per flag, "-b 20.0") with its run-time tokens filled; FragPipe stops when a tools-dir file
  * it names is missing. Paths are {TASK_DIR} tokens; the group copy is <group>/, the spectra spectra/.
  *
  * @param group FragPipe group directory name (meta.id)
  * @param filelist LC-MS file names O-Pair reads (staged in spectra/)
- * @param argv Parser argv with @TOOLS_DIR@, @THREADS@, @FILELIST@, @PSM@, @OUTDIR@, @OXONIUM_FILE@
+ * @param argv Plan argv with @TOOLS_DIR@, @THREADS@, @FILELIST@, @PSM@, @OUTDIR@, @OXONIUM_FILE@
  * @param oxonium_file Staged user oxonium ion definitions file (oxonium/<name>) for @OXONIUM_FILE@, [] when the argv has none
  * @param task Task (cpus, ext.fragpipe_tools_dir)
  * @return Map: filelist (text), spectra names, argv, tool_files to check, dll, fragpipe_version
@@ -760,7 +760,7 @@ def opairCommands(group, filelist, argv, oxonium_file, task) {
  * PairScans writes <basename>.pairs next to it.
  *
  * @param spectra_path Staged LC-MS file, relative to the task dir (spectra/<name>)
- * @param pairscans_args The parser's four PairScans arguments
+ * @param pairscans_args The plan's four PairScans arguments
  * @param task Task (cpus, ext.fragpipe_tools_dir)
  * @return Map: argv, jars (class path entries to check), thermo_dir, bruker_dir, fragpipe_version
  */
@@ -787,7 +787,7 @@ def pairScansCommands(spectra_path, pairscans_args, task) {
  * replaces its keyword (CmdSpecLibGen.java:147-152). FRAGPIPE_PARSE_MZML_CMD is List.toString() of the java
  * command followed by the MSFragger jar path (CmdSpecLibGen.java:204-212).
  *
- * @param argv_parts Parser values: rt_cal, im_cal, convert_args, library_args, intermediate
+ * @param argv_parts Plan values: rt_cal, im_cal, convert_args, library_args, intermediate
  * @param fasta_name Staged protein database name
  * @param spectra Staged LC-MS paths (<name> in the task dir), in LC-MS table order
  * @param rt_cal_file Staged RT calibration path, or '' / [] for the keyword
@@ -801,7 +801,7 @@ def speclibgenCommand(argv_parts, fasta_name, spectra, rt_cal_file, im_cal_file,
     def parts = argv_parts ?: [:]
     ['rt_cal', 'im_cal', 'convert_args', 'library_args', 'intermediate'].each { key ->
         if (!parts.containsKey(key)) {
-            error("SPECLIBGEN: tool_configs.json speclibgen.argv_parts has no ${key} (PARSEFRAGPIPEWORKFLOW)")
+            error("SPECLIBGEN: tool_configs.json speclibgen.argv_parts has no ${key} (FragPipe's plan, plan_to_tool_configs.py)")
         }
     }
     def rt_file = [rt_cal_file].flatten().findAll { f -> f }

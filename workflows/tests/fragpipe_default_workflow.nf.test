@@ -16,6 +16,7 @@ nextflow_workflow {
 
         when {
             params {
+                // the stub's tool configs: FragPipe's recorded dry run of LFQ-MBR on this samplesheet
                 def fixtures = "${baseDir}/tests/fixtures"
                 def ss = new File("${outputDir}/samplesheet.csv")
                 ss.parentFile.mkdirs()

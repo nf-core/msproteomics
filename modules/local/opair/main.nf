@@ -15,7 +15,7 @@ include { textFileCommand } from '../../../subworkflows/local/utils_nfcore_mspro
  *   - oxonium_file: the user's oxonium ion definitions file (opair.oxonium_filtering_file, "-f", CmdOPair.java:178-180)
  *     or [] for FragPipe's default in the tools dir (CmdOPair.java:171-177)
  *   - filelist: spectra file names, in FragPipe's order, for filelist_opair.txt
- *   - argv: O-Pair argv from PARSEFRAGPIPEWORKFLOW (one token per flag, @TOKENS@ filled here (@OXONIUM_FILE@ = the staged oxonium file))
+ *   - argv: O-Pair argv from FragPipe's plan (bin/plan_to_tool_configs.py) (one token per flag, @TOKENS@ filled here (@OXONIUM_FILE@ = the staged oxonium file))
  *
  * Output:
  *   - psm_dir: the group directory: psm.tsv with O-Pair results, filelist_opair.txt, O-Pair output
