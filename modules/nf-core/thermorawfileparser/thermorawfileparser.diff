@@ -1,18 +1,47 @@
 Changes in component 'nf-core/thermorawfileparser'
-'modules/nf-core/thermorawfileparser/environment.yml' is unchanged
+Changes in 'thermorawfileparser/environment.yml':
+--- modules/nf-core/thermorawfileparser/environment.yml
++++ modules/nf-core/thermorawfileparser/environment.yml
+@@ -2,5 +2,4 @@
+   - conda-forge
+   - bioconda
+ dependencies:
+-  - "bioconda::thermorawfileparser=1.4.5"
+-  - "conda-forge::mono=6.12.0.90"
++  - "bioconda::thermorawfileparser=2.0.0.dev"
+
 'modules/nf-core/thermorawfileparser/meta.yml' is unchanged
 Changes in 'thermorawfileparser/main.nf':
 --- modules/nf-core/thermorawfileparser/main.nf
 +++ modules/nf-core/thermorawfileparser/main.nf
-@@ -12,7 +12,7 @@
+@@ -4,15 +4,15 @@
+ 
+     conda "${moduleDir}/environment.yml"
+     container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
+-        'https://depot.galaxyproject.org/singularity/thermorawfileparser:1.4.5--h05cac1d_1' :
+-        'quay.io/biocontainers/thermorawfileparser:1.4.5--h05cac1d_1' }"
++        'https://depot.galaxyproject.org/singularity/thermorawfileparser:2.0.0.dev--h9ee0642_1' :
++        'quay.io/biocontainers/thermorawfileparser:2.0.0.dev--h9ee0642_1' }"
+ 
+     input:
+     tuple val(meta), path(raw)
  
      output:
      tuple val(meta), path("*.{mzML,mzML.gz,mgf,mgf.gz,parquet,parquet.gz}"), emit: spectra
 -    tuple val("${task.process}"), val('thermorawfileparser'), eval("ThermoRawFileParser.sh --version"), emit: versions_thermorawfileparser, topic: versions
-+    tuple val("${task.process}"), val('thermorawfileparser'), eval(workflow.stubRun ? "echo 1.4.5" : "ThermoRawFileParser.sh --version"), emit: versions_thermorawfileparser, topic: versions
++    tuple val("${task.process}"), val('thermorawfileparser'), eval(workflow.stubRun ? "echo 2.0.0.0" : "thermorawfileparser --version"), emit: versions_thermorawfileparser, topic: versions
  
      when:
      task.ext.when == null || task.ext.when
+@@ -28,7 +28,7 @@
+     suffix = args.contains("--gzip")? "${suffix}.gz" : "${suffix}"
+ 
+     """
+-    ThermoRawFileParser.sh \\
++    thermorawfileparser \\
+         -i $raw \\
+         -b ${prefix}.${suffix} \\
+         $args
 
 'modules/nf-core/thermorawfileparser/tests/main.nf.test.snap' is unchanged
 'modules/nf-core/thermorawfileparser/tests/main.nf.test' is unchanged
