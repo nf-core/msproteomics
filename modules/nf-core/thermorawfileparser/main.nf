@@ -12,7 +12,7 @@ process THERMORAWFILEPARSER {
 
     output:
     tuple val(meta), path("*.{mzML,mzML.gz,mgf,mgf.gz,parquet,parquet.gz}"), emit: spectra
-    tuple val("${task.process}"), val('thermorawfileparser'), eval(workflow.stubRun ? "echo 1.4.5" : "ThermoRawFileParser.sh --version"), emit: versions_thermorawfileparser, topic: versions
+    tuple val("${task.process}"), val('thermorawfileparser'), eval(workflow.stubRun ? "echo 1.4.5" : "thermorawfileparser --version"), emit: versions_thermorawfileparser, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -28,7 +28,7 @@ process THERMORAWFILEPARSER {
     suffix = args.contains("--gzip")? "${suffix}.gz" : "${suffix}"
 
     """
-    ThermoRawFileParser.sh \\
+    thermorawfileparser \\
         -i $raw \\
         -b ${prefix}.${suffix} \\
         $args
