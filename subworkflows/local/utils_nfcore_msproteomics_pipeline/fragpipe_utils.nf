@@ -657,7 +657,7 @@ def fragpipeQuantLabels() {
 
 /**
  * Fail unless every spectra file is an LC-MS format FragPipe takes: .mgf, .mzML, .mzXML, .mzBIN,
- * .raw and Bruker .d (CmdMsfragger.java:764-766), none compressed. They are searched as given.
+ * .raw and Bruker .d (CmdMsfragger.java:764-766), none compressed. Each .raw is then converted to mzML (FRAGPIPE_RAW_TO_MZML); the others are searched as given.
  *
  * @param spectra_files List of [meta, spectra] from uniqueSpectraFiles
  * @return spectra_files unchanged

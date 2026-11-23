@@ -38,7 +38,7 @@ CHECKCENTROID ────────────── FragPipe's centroid che
 FRAGPIPE_DATABASE ────────── decoy check (CHECKDBCONFIG); optional PHILOSOPHERDATABASE (decoys + contaminants)
   │
   ▼
-FRAGPIPE_CONVERT ─────────── optional DIA-Umpire / diaTracer (LC-MS files searched as given)
+FRAGPIPE_CONVERT ─────────── optional DIA-Umpire / diaTracer (no conversion; .raw is already mzML)
   │
   ▼
 FRAGPIPE_SEARCH ──────────── MSFragger database search (split database: SORTFASTA, MSFRAGGERCALIBRATE, SPLITFASTA, MERGESPLITSEARCH)
@@ -93,7 +93,7 @@ Input CSV
   ├── GENERATESDRFFROMSAMPLESHEET ─ bookkeeping
   │
   ▼
-FRAGPIPE_CONVERT ─────────── optional DIA-Umpire / diaTracer (LC-MS files searched as given)
+FRAGPIPE_CONVERT ─────────── optional DIA-Umpire / diaTracer (no conversion; .raw is already mzML)
   │                           Optional: DIA-Umpire / DIA-Tracer preprocessing
   │
   │     FRAGPIPE_DATABASE ─── Philosopher: add decoys + contaminants to FASTA
@@ -128,7 +128,9 @@ Only enabled tools actually execute -- the workflow dynamically adapts to whatev
 **FRAGPIPE_DATABASE** checks the database decoys the way FragPipe headless does (`CHECKDBCONFIG`); the FASTA is searched as given.
 With `--add_philosopher_decoy` / `--add_philosopher_contaminants` it first runs FragPipe's database update (`philosopher database --custom <fasta> [--nodecoys] [--contam --contamprefix]`).
 
-**FRAGPIPE_CONVERT** runs the optional DIA preprocessing (DIA-Umpire, diaTracer); LC-MS files are not converted, because MSFragger reads `.raw`, `.mzML`, `.mzXML`, `.mgf`, `.mzBIN` and Bruker `.d` natively, as in FragPipe.
+**FRAGPIPE_RAW_TO_MZML** runs first in both FragPipe modes (and the TMT label check): ThermoRawFileParser converts each Thermo `.raw` to mzML, so FragPipe never gets a `.raw`; a Bruker `.d` and an mzML are searched as given. Reason: Thermo RawFileReader (batmass-io under Mono) misreads a staged symlink ("No open raw file", 0 scans); one conversion gives every route the same mzML.
+
+**FRAGPIPE_CONVERT** runs the optional DIA preprocessing (DIA-Umpire, diaTracer); it converts no LC-MS file.
 
 **FRAGPIPE_SEARCH** runs MSFragger for database searching with native mass calibration.
 MSBooster can optionally rescore PSMs using deep learning predictions, and CrystalC removes chimeric spectrum artifacts.

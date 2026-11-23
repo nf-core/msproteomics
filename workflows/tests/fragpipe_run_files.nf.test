@@ -163,8 +163,8 @@ nextflow_workflow {
         }
     }
 
-    // TabMsfragger.java:2388 keys instruments by the file MSFragger read. MSFragger reads .raw
-    // natively, so the searched name is the .raw itself, not its _uncalibrated.mzML.
+    // TabMsfragger.java:2388 keys instruments by the file MSFragger read. Each .raw is converted to mzML
+    // first (FRAGPIPE_RAW_TO_MZML), so the manifest and the searched name are both its mzML.
     test("EX-02 - sdrf.tsv maps a .raw input to the file MSFragger searched") {
         options "-stub"
         tag "stub"
@@ -189,7 +189,7 @@ nextflow_workflow {
             def logs = new File(sdrf_dir, 'logs').listFiles().collect { d -> d.listFiles()*.name }.flatten()
             assertAll(
                 { assert workflow.success },
-                { assert searched == ['ctrl_1.mzML\tctrl_1.mzML', 'thermo.raw\tthermo.raw'] : searched },
+                { assert searched == ['ctrl_1.mzML\tctrl_1.mzML', 'thermo.mzML\tthermo.mzML'] : searched },
                 { assert logs == ['msfragger.log', 'msfragger.log'] : logs },
                 { assert snapshot(searched).match() }
             )

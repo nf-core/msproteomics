@@ -2,13 +2,14 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     FRAGPIPE_RAW_TO_MZML SUBWORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Opt-in conversion of the Thermo .raw files of a FragPipe search to mzML, before the
-    manifest is written and before FRAGPIPE / FRAGPIPE_HEADLESS_WF.
+    The one conversion of Thermo .raw files to mzML for every FragPipe route: FragPipe never gets a
+    .raw. Thermo RawFileReader under Mono misreads a staged symlink ("No open raw file", 0 scans),
+    and one conversion gives every route the same mzML.
 
-    FragPipe itself reads .raw (FRAGPIPE_CONVERT converts nothing, as FragPipe 24.0). A pipeline
-    that wants FragPipe to read the ThermoRawFileParser mzML instead calls this subworkflow on
-    its LC-MS files and gives `spectra` to FRAGPIPE / FRAGPIPE_HEADLESS_WF, so the manifest names
-    the files FragPipe gets. The msproteomics workflows do not call it.
+    A caller runs it on its LC-MS files before it writes the manifest and gives `spectra` to
+    FRAGPIPE / FRAGPIPE_HEADLESS_WF, so the manifest names the files FragPipe searches (FRAGPIPEHEADLESS
+    checks that each manifest row names a staged file). workflows/fragpipe.nf (both modes and the TMT
+    label check) calls it; tests/python/test_fragpipe_raw_conversion.py fails if a route does not.
 
     - Thermo .raw (file name ends with .raw, any case): THERMORAWFILEPARSER -> mzML, same meta
     - Every other file (Bruker .d, mzML, ...): as is (ThermoRawFileParser reads Thermo files only)

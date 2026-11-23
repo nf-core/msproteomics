@@ -15,6 +15,7 @@ include { checkWorkflowDatabase; resolveDatabase; generateSdrfBookkeeping; resol
 include { GENERATESDRFFROMSAMPLESHEET } from '../modules/local/generatesdrffromsamplesheet/main'
 
 // FragPipe subworkflows
+include { FRAGPIPE_RAW_TO_MZML             } from '../subworkflows/local/fragpipe_raw_to_mzml/main'
 include { FRAGPIPE as FRAGPIPE_PIPELINE } from '../subworkflows/local/fragpipe/main'
 include { FRAGPIPE_HEADLESS_WF             } from '../subworkflows/local/fragpipe_headless_wf/main'
 include { FRAGPIPESDRF } from '../modules/local/fragpipesdrf/main'
@@ -90,23 +91,32 @@ workflow MSPROTEOMICS_FRAGPIPE {
         .collectFile(name: 'tmt_annotation.tsv', newLine: true, sort: false)
         .ifEmpty([])
 
-    ch_unique_files = channel.fromList(spectra_files)
+    // Every Thermo .raw is converted to mzML with ThermoRawFileParser before FragPipe (both modes, the TMT label
+    // check too): FragPipe never gets a .raw. A Bruker .d (and an mzML) is searched as given. Reason: Thermo
+    // RawFileReader under Mono misreads a staged symlink ("No open raw file", 0 scans), and one conversion gives
+    // every route the same mzML. The manifest, the headless manifest rows, the saved workflow, the SDRF and the
+    // MSFragger log order are built from these files, so they name what FragPipe searches.
+    FRAGPIPE_RAW_TO_MZML(channel.fromList(spectra_files))
+    ch_unique_files = FRAGPIPE_RAW_TO_MZML.out.spectra
+    // the same files as one list, in samplesheet order (meta.id is unique, uniqueSpectraFiles)
+    def spectra_order = spectra_files.collect { meta, _spectra_file -> meta.id }
+    ch_fragpipe_files = ch_unique_files
+        .toList()
+        .map { items -> items.sort(false) { item -> spectra_order.indexOf(item[0].id) } }
 
     if (params.fragpipe_mode == 'headless') {
         //
         // ALL-IN-ONE MODE: Run FragPipe headless in a single process
         //
-        // FragPipe headless reads every LC-MS file as given (.raw natively).
+        // FragPipe headless reads the files of FRAGPIPE_RAW_TO_MZML (mzML for each .raw, a .d as given).
         // Generates a manifest from the samplesheet for FragPipe's --manifest flag.
         // For TMT: generates per-experiment annotation content for auto-discovery.
         //
-        def headless_files = spectra_files.collect { meta, spectra_file -> [meta, spectra_file.name] }
-
         // Manifest rows: each spectra file with its experiment, bioreplicate, data type and FragPipe group;
         // FRAGPIPEHEADLESS puts each TMT group's files in one directory with its annotation (headlessLayout)
-        ch_manifest_rows = channel.value(
-            headless_files.collect { meta, fname -> [fname, meta.experiment, meta.bioreplicate, meta.data_type, meta.group] }
-        )
+        ch_manifest_rows = ch_fragpipe_files.map { files ->
+            files.collect { meta, spectra_file -> [spectra_file.name, meta.experiment, meta.bioreplicate, meta.data_type, meta.group] }
+        }
 
         // TMT annotation for headless mode: group, channel, sample_name per channel, the same rows as the
         // pipeline-mode annotation; the blank group "" stays "". [] for LFQ.
@@ -176,7 +186,7 @@ workflow MSPROTEOMICS_FRAGPIPE {
         // (TabWorkflow.manifestSave: absolute path, experiment, bioreplicate, data type; no trailing
         // newline) and FragPipe's saved UI state. Published to <outdir>/fragpipe/ like headless mode.
         // Read by DIA-NN's post-steps and MBG too.
-        WRITE_FRAGPIPE_MANIFEST(channel.of([[id: 'fragpipe'], 'fragpipe-files.fp-manifest', generateFragpipeManifest(fragpipeManifestEntries(spectra_files))]))
+        WRITE_FRAGPIPE_MANIFEST(ch_fragpipe_files.map { files -> [[id: 'fragpipe'], 'fragpipe-files.fp-manifest', generateFragpipeManifest(fragpipeManifestEntries(files))] })
         ch_fragpipe_manifest = WRITE_FRAGPIPE_MANIFEST.out.file.map { _meta, manifest -> manifest }.first()
         // fragpipe.workflow: FragPipe's saved UI state for this run, written by FragPipe's own code.
         // FragPipe loads the manifest and drops the LC-MS files that do not exist (TabWorkflow.manifestLoad),
@@ -185,12 +195,14 @@ workflow MSPROTEOMICS_FRAGPIPE {
         def fragpipe_workdir = file("${params.outdir}/fragpipe").toString()
         def fragpipe_db = file(fragpipe_database, glob: false, checkIfExists: true)
         def ui_state_dir = file("${projectDir}/assets/fragpipe_ui_state", checkIfExists: true)
-        def ch_staged_manifest = channel.of(generateFragpipeManifest(fragpipeManifestEntries(spectra_files, 'spectra')))
+        def ch_staged_manifest = ch_fragpipe_files.map { files -> generateFragpipeManifest(fragpipeManifestEntries(files, 'spectra')) }
             .collectFile(name: 'staged.fp-manifest')
         FRAGPIPESAVEWORKFLOW(
-            ch_staged_manifest.map { manifest ->
-                [[id: 'fragpipe'], fragpipe_workflow_file, manifest, ui_state_dir, fragpipe_db, fragpipe_workdir, spectra_files.collect { _meta, spectra_file -> spectra_file }]
-            }
+            ch_staged_manifest
+                .combine(ch_fragpipe_files.map { files -> [files] })
+                .map { manifest, files ->
+                    [[id: 'fragpipe'], fragpipe_workflow_file, manifest, ui_state_dir, fragpipe_db, fragpipe_workdir, files.collect { _meta, spectra_file -> spectra_file }]
+                }
         )
 
         FRAGPIPE_PIPELINE(
@@ -250,7 +262,9 @@ workflow MSPROTEOMICS_FRAGPIPE {
         // MSFragger console text in the order FragPipe runs MSFragger (FRAGPIPESDRF, FRAGPIPESECONDPASS)
         def ch_msfragger_logs = FRAGPIPE_PIPELINE.out.msfragger_logs
             .toList()
-            .map { items -> msfraggerConsoleLogs(items, spectra_files) }
+            .map { items -> [items] }
+            .combine(ch_fragpipe_files.map { files -> [files] })
+            .map { items, files -> msfraggerConsoleLogs(items, files) }
 
         // Write sub mzML: FragPipe's finalizer writes the second-pass workflow and manifest from
         // fragpipe.workflow, the manifest and the console text (FragpipeRun.java:589-700); the
@@ -274,10 +288,10 @@ workflow MSPROTEOMICS_FRAGPIPE {
             def tmt_label = workflow_props.getProperty('tmtintegrator.run-tmtintegrator') == 'true'
                 ? workflow_props.getProperty('tmtintegrator.channel_num')
                 : ''
-            def sdrf_manifest_names = spectra_files.collectEntries { meta, spectra_file -> [meta.id, spectra_file.name] }
             def ch_sdrf_searched_names = FRAGPIPE_PIPELINE.out.searched_lcms
+                .combine(ch_fragpipe_files.map { files -> [files.collectEntries { meta, spectra_file -> [meta.id, spectra_file.name] }] })
                 // DIA-Umpire / diaTracer pseudo spectra have no manifest name of their own: they map to themselves
-                .map { meta, searched -> "${sdrf_manifest_names[meta.id] ?: searched.name}\t${searched.name}" }
+                .map { meta, searched, manifest_names -> "${manifest_names[meta.id] ?: searched.name}\t${searched.name}" }
                 .collectFile(name: 'searched_files.tsv', newLine: true, sort: true)
             FRAGPIPESDRF(
                 ch_fragpipe_manifest

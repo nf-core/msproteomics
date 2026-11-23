@@ -116,7 +116,7 @@ No tool results feed it: in FragPipe mode (DDA LFQ, TMT and TMT Label Check) Mul
 - `decompress/`
   - `*_decompression.log`: log of the decompression of `.gz`, `.tar`, `.tar.gz` and `.zip` inputs (the decompressed spectra are copies of the inputs and are not published).
 - `mzml/`
-  - `<sample>.mzML`: spectra converted from Thermo `.raw` files by ThermoRawFileParser.
+  - `<sample>.mzML`: spectra converted from Thermo `.raw` files by ThermoRawFileParser (DIA-NN mode, and FragPipe mode, where FragPipe searches this mzML).
   - `out/<sample>.mzML`: re-indexed mzML files (`--reindex_mzml`).
   - `*_mzmlindexing.log`: log of the re-indexing.
 - `tdf2mzml/`

@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
 name: "fragpipe_convert"
-description: Optionally preprocesses DIA data with DIA-Umpire or diaTracer; LC-MS files are searched as given (no conversion), as in FragPipe
+description: Optionally preprocesses DIA data with DIA-Umpire or diaTracer; it converts no LC-MS file (the msproteomics FragPipe workflow converts each Thermo .raw to mzML before, FRAGPIPE_RAW_TO_MZML)
 keywords:
   - proteomics
   - file-conversion

@@ -34,6 +34,7 @@ The samplesheet must contain the following columns:
 
 Compressed spectra and `.dia` files are for `--mode diann` only.
 `--mode fragpipe` takes `.raw`, `.mzML` and Bruker `.d` LC-MS files and stops with an error on anything else (FragPipe 24.0 itself reads no compressed files).
+Each Thermo `.raw` is converted to mzML with ThermoRawFileParser (`FRAGPIPE_RAW_TO_MZML`) before FragPipe runs, in both `--fragpipe_mode` values and the TMT label check: FragPipe never gets a `.raw`, because Thermo RawFileReader (batmass-io under Mono) misreads a staged symlink ("No open raw file", 0 scans). A Bruker `.d` goes to MSFragger as given (it needs the `.d` for ion mobility).
 FragPipe workflows group files like FragPipe's `InputLcmsFile.getGroup()`.
 When the workflow runs SpecLibGen (`speclibgen.run-speclibgen=true`) or DIA-NN (`diann.run-dia-nn=true`), every file is in one group, whatever its `experiment` and `bioreplicate`.
 With `experiment` and `bioreplicate` set, the group is `<experiment>_<bioreplicate>`.
@@ -62,7 +63,7 @@ With `diann.run-dia-nn=true` and at least one `DIA` or `DIA-Quant` file, DIA-NN 
 The pipeline runs the DIA-NN binary FragPipe 24.0 ships (`tools/diann/1.8.2_beta_8/linux/diann-1.8.1.8`, DIA-NN 1.8.2 Beta 8) from `--fragpipe_container` and stops when the binary reports another version.
 DIA-NN reads SpecLibGen's `library.tsv`, or `diann.library` when the workflow sets an external library.
 The command is FragPipe's: `--lib`, `--threads`, `--verbose 1`, `--out dia-quant-output/report.tsv`, `--qvalue`, `--matrix-qvalue`, `--matrices`, protein inference (`--no-prot-inf`, or `--relaxed-prot-inf --fasta` with `diann.redo-protein-inference`), `--smart-profiling`, the quantification strategy, `--report-lib-info` for MSstats, plexDIA flags, `diann.cmd-opts`, and `--cfg filelist_diann.txt` with the inputs largest first.
-A `DIA` `.raw` file is quantified from its mzML (MSFragger's `_uncalibrated.mzML` in FragPipe); `DIA-Quant` files are used as given.
+A `DIA` `.raw` file is quantified from its ThermoRawFileParser mzML; `DIA-Quant` files are used as given.
 After DIA-NN, FragPipe's `Propagation`, `DiannToMsstats` (when `diann.generate-msstats=true`) and `FragReporter` run, and `experiment_annotation.tsv` is written.
 FragPipe keeps the blank group in its work-directory root, and so does this pipeline: its results are published at the top of each tool's output directory (for example `philosopher/psm.tsv`).
 With every group blank, IonQuant runs without `--multidir`, and FragPipe refuses match-between-runs (`ionquant.mbr=1`) in that case; the pipeline stops with FragPipe's message.
@@ -78,7 +79,7 @@ Sample_B2,/data/raw/B2.raw,treated,,,treated,2
 ```
 
 For TMT, one plex is one FragPipe group, so give every file of a plex the same `experiment` (and the same `bioreplicate`, or leave it blank).
-List one row per channel and file; each file is searched once (FragPipe mode reads the LC-MS files as given, `.raw` included).
+List one row per channel and file; each file is searched once (FragPipe mode searches the ThermoRawFileParser mzML of each `.raw`).
 For TMT rows, `sample` is the channel's sample name in the TMT annotation (FragPipe's `<channel> <sample>` annotation file), and `NA` excludes a channel.
 Every channel of the label type set in the workflow file (`tmtintegrator.channel_num`) must be listed for each plex, as FragPipe requires.
 A channel may appear once per plex; repeating it for each fraction file with the same sample and condition is allowed.

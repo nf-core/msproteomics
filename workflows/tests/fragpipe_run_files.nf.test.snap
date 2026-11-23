@@ -107,12 +107,12 @@
         "content": [
             [
                 "ctrl_1.mzML\tctrl_1.mzML",
-                "thermo.raw\tthermo.raw"
+                "thermo.mzML\tthermo.mzML"
             ]
         ],
-        "timestamp": "2026-10-06T15:38:39.642509356",
+        "timestamp": "2026-11-23T21:40:01.603231115",
         "meta": {
-            "nf-test": "0.9.3",
+            "nf-test": "0.9.5",
             "nextflow": "25.10.4"
         }
     },

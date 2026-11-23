@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
 name: "fragpipe_raw_to_mzml"
-description: Opt-in conversion of the Thermo .raw files of a FragPipe search to mzML with ThermoRawFileParser; other LC-MS files (Bruker .d, mzML) pass as is
+description: Converts the Thermo .raw files of a FragPipe search to mzML with ThermoRawFileParser (FragPipe never gets a .raw); other LC-MS files (Bruker .d, mzML) pass as is
 keywords:
   - proteomics
   - file-conversion
