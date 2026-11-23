@@ -3,7 +3,8 @@
     FRAGPIPE_HEADLESS_WF SUBWORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     Runs FragPipe in headless mode (all-in-one process) on the LC-MS files as given
-    (FragPipe reads .raw natively), after FragPipe's database decoy check.
+    (mzML for each Thermo .raw, converted before by FRAGPIPE_RAW_TO_MZML; a Bruker .d as given),
+    after FragPipe's database decoy check.
 
     Modules:
     - PARSEFRAGPIPEWORKFLOW (workflow decoy tag and tool run flags)

@@ -63,6 +63,11 @@ output:
         type: file
         description: Per-group TMT annotation files ("<channel> <sample>"), TMT only
         pattern: "raw_files/**annotation.txt"
+  uncalibrated_mzml:
+    - raw_files/**_uncalibrated.mzML:
+        type: file
+        description: MSFragger's mzML of each .raw / .d input (write_uncalibrated_mzml = 1), next to the input; none for mzML input
+        pattern: "raw_files/**_uncalibrated.mzML"
   versions:
     - versions.yml:
         type: file

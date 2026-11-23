@@ -1,0 +1,84 @@
+// Every FragPipe route converts each Thermo .raw to mzML with FRAGPIPE_RAW_TO_MZML, and FragPipe never gets
+// a .raw (Thermo RawFileReader under Mono misreads a staged symlink: "No open raw file", 0 scans).
+// A Bruker .d and an mzML are searched as given. One samplesheet (thermo.raw, ctrl_1.mzML, bruker.d) through
+// main.nf for each route (LFQ-noMBR: the samplesheet has no experiments); each test asserts the same values:
+//   - the LC-MS files staged into the search tasks (MSFRAGGER, FRAGPIPEHEADLESS) are bruker.d, ctrl_1.mzML, thermo.mzML
+//   - exactly one ThermoRawFileParser task, of FRAGPIPE_RAW_TO_MZML, and mzml/thermo.mzML is published
+// tests/python/test_fragpipe_raw_conversion.py checks statically that no route skips the conversion.
+
+nextflow_pipeline {
+
+    name "Test every FragPipe route converts .raw to mzML"
+    script "../../main.nf"
+
+    tag "workflows"
+    tag "msproteomics_fragpipe"
+    tag "fragpipe_raw_routes"
+
+    def routes = [
+        [name: 'pipeline mode',   params: [fragpipe_mode: 'pipeline', fragpipe_workflow: 'LFQ-noMBR.workflow']],
+        [name: 'headless mode',   params: [fragpipe_mode: 'headless', fragpipe_workflow: 'LFQ-noMBR.workflow']],
+        [name: 'TMT label check', params: [tmt_mode: 'labelcheck', tmt_type: 'TMT10']],
+    ]
+
+    routes.each { route ->
+        test("${route.name} - .raw becomes mzML, .d and mzML as given") {
+            options "-stub"
+            tag "stub"
+
+            when {
+                params {
+                    def fixtures = "${baseDir}/tests/fixtures"
+                    def ss = new File("${outputDir}/samplesheet.csv")
+                    ss.parentFile.mkdirs()
+                    ss.text = "sample,spectra,data_type\n" +
+                        "thermo,${fixtures}/spectra/thermo.raw,DDA\n" +
+                        "ctrl_1,${fixtures}/spectra/ctrl_1.mzML,DDA\n" +
+                        "bruker,${fixtures}/spectra/bruker.d,DDA\n"
+                    mode     = 'fragpipe'
+                    input    = ss.toString()
+                    database = "${fixtures}/test.fasta"
+                    outdir   = "$outputDir"
+                    skip_qpx_export = true
+                    if (route.params.fragpipe_mode) {
+                        fragpipe_mode     = route.params.fragpipe_mode
+                        fragpipe_workflow = "${fixtures}/fragpipe_workflows/${route.params.fragpipe_workflow}"
+                    }
+                    if (route.params.tmt_mode) {
+                        // the label check runs its shipped workflow and takes no --fragpipe_workflow (the test profile sets one)
+                        fragpipe_workflow = null
+                        tmt_mode = route.params.tmt_mode
+                        tmt_type = route.params.tmt_type
+                    }
+                }
+            }
+
+            then {
+                // LC-MS files staged into the search tasks (MSFRAGGER per file; FRAGPIPEHEADLESS in raw_files/);
+                // MSFragger's own *_calibrated / *_uncalibrated.mzML outputs are not inputs
+                def staged = []
+                new File("${outputDir}/../work").eachFileRecurse(groovy.io.FileType.FILES) { f ->
+                    if (f.name == '.command.run' && f.text =~ /(?m)^### name: '[^']*:(MSFRAGGER|FRAGPIPEHEADLESS) \(/) {
+                        [f.parentFile, new File(f.parentFile, 'raw_files')].findAll { dir -> dir.isDirectory() }.each { dir ->
+                            dir.listFiles().each { entry ->
+                                if (entry.name ==~ /(?i).+\.(raw|mzml|d)/ && !(entry.name ==~ /.*_(un)?calibrated\.mzML/)) {
+                                    staged << entry.name
+                                }
+                            }
+                        }
+                    }
+                }
+                staged = staged.unique().sort()
+                def trfp = workflow.trace.tasks().collect { task -> task.name.replaceAll(/ \(.*\)$/, '') }.findAll { name -> name.contains('THERMORAWFILEPARSER') }
+                def mzml = (new File("${outputDir}/mzml").list() ?: []).findAll { name -> name.endsWith('.mzML') }.sort()
+                assertAll(
+                    { assert workflow.success },
+                    { assert staged == ['bruker.d', 'ctrl_1.mzML', 'thermo.mzML'] : staged },
+                    { assert trfp.size() == 1 && trfp[0].endsWith(':FRAGPIPE_RAW_TO_MZML:THERMORAWFILEPARSER') : trfp },
+                    { assert mzml == ['thermo.mzML'] : mzml },
+                    { assert snapshot(staged, mzml).match() }
+                )
+            }
+        }
+    }
+}

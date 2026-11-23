@@ -164,7 +164,8 @@ workflow FRAGPIPE {
     ch_fasta = FRAGPIPE_DATABASE.out.fasta_path
 
     //
-    // STEP 3: Optional DIA preprocessing (per-sample, parallel); LC-MS files are searched as given
+    // STEP 3: Optional DIA preprocessing (per-sample, parallel); the LC-MS files (mzML for each Thermo .raw,
+    // FRAGPIPE_RAW_TO_MZML in the caller) are searched as given
     //
     FRAGPIPE_CONVERT(ch_fragpipe_files, ch_tool_configs)
 

@@ -1,0 +1,53 @@
+{
+    "headless mode - .raw becomes mzML, .d and mzML as given": {
+        "content": [
+            [
+                "bruker.d",
+                "ctrl_1.mzML",
+                "thermo.mzML"
+            ],
+            [
+                "thermo.mzML"
+            ]
+        ],
+        "timestamp": "2026-11-23T21:43:45.171947553",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "TMT label check - .raw becomes mzML, .d and mzML as given": {
+        "content": [
+            [
+                "bruker.d",
+                "ctrl_1.mzML",
+                "thermo.mzML"
+            ],
+            [
+                "thermo.mzML"
+            ]
+        ],
+        "timestamp": "2026-11-23T21:44:31.692817298",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "pipeline mode - .raw becomes mzML, .d and mzML as given": {
+        "content": [
+            [
+                "bruker.d",
+                "ctrl_1.mzML",
+                "thermo.mzML"
+            ],
+            [
+                "thermo.mzML"
+            ]
+        ],
+        "timestamp": "2026-11-23T21:43:03.138788793",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

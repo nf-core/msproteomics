@@ -4,8 +4,10 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     Optional DIA preprocessing of the LC-MS files FragPipe searches.
 
-    LC-MS files are never converted: MSFragger reads .raw, .mzML, .mzXML, .mgf, .mzBIN and
-    Bruker .d natively (CmdMsfragger.java:390-403, 764-766), and so do DIA-Umpire and diaTracer.
+    This subworkflow converts no LC-MS file. The msproteomics FragPipe workflow converts each Thermo
+    .raw to mzML before (FRAGPIPE_RAW_TO_MZML), because Thermo RawFileReader under Mono misreads a
+    staged symlink ("No open raw file", 0 scans); a caller gives it mzML and Bruker .d. MSFragger also
+    reads .raw, .mzML, .mzXML, .mgf, .mzBIN and Bruker .d (CmdMsfragger.java:390-403, 764-766).
 
     Modules:
     - DIAUMPIRE (DIA preprocessing, generates pseudo-spectra)
@@ -44,7 +46,7 @@ workflow FRAGPIPE_CONVERT {
 
     //
     // STEP 1: DIA-Umpire (optional) on every file that is not DDA, DIA-Quant or DDA+
-    // (CmdUmpireSe.java:59-78, :120-123); it reads .raw itself (CmdUmpireSe.java:129-141).
+    // (CmdUmpireSe.java:59-78, :120-123); it reads the mzML (or a .raw) itself (CmdUmpireSe.java:129-141).
     // FragpipeRun.java:1360-1366 refuses .d files, which workflows/fragpipe.nf checks before
     // the run (checkDiaPreprocessing).
     //
