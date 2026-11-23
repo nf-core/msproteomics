@@ -22,6 +22,7 @@
  *   - combined_ion:      Combined ion report
  *   - manifest:          The manifest passed to FragPipe (--manifest)
  *   - annotations:       Per-group TMT annotation files (TMT only)
+ *   - uncalibrated_mzml: MSFragger's <stem>_uncalibrated.mzML of each .raw / .d input (none for mzML input)
  *   - versions:          Software versions
  */
 include { checkHeadlessRows; fragpipeTools; headlessLayout; headlessStagingLines; headlessWorkflowText; writeTextFile } from '../../../subworkflows/local/utils_nfcore_msproteomics_pipeline/fragpipe_utils_a'
@@ -46,6 +47,9 @@ process FRAGPIPEHEADLESS {
     path "results/combined_ion.tsv",     emit: combined_ion,     optional: true
     path "manifest.fp-manifest",         emit: manifest
     path "raw_files/**annotation.txt",   emit: annotations,      optional: true
+    // MSFragger's mzML of each .raw / .d input, next to it (write_uncalibrated_mzml = 1, TabMsfragger.java:237);
+    // FragPipe keeps it there (its temp-file delete walks only the work dir, FragpipeRun.java:547-551)
+    path "raw_files/**_uncalibrated.mzML", emit: uncalibrated_mzml, optional: true
     path "versions.yml",                 emit: versions, topic: versions
 
     when:
@@ -114,6 +118,8 @@ ${headlessStagingLines(raw_files, layout)}
     touch results/sample1/protein.tsv
     # FragPipe saves the manifest and the workflow in its work dir (FragpipeRun.java:371-373, :890-893)
     touch results/fragpipe-files.fp-manifest results/fragpipe.workflow
+    # MSFragger writes <stem>_uncalibrated.mzML next to each .raw / .d input only (not for an mzML input)
+    find raw_files \\( -iname '*.raw' -o -name '*.d' \\) | while read -r lcms; do touch "\${lcms%.*}_uncalibrated.mzML"; done
 
     printf '"%s":\\n    fragpipe: "24.0"\\n' "${task.process}" > versions.yml
     """

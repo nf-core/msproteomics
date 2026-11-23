@@ -1,4 +1,17 @@
 {
+    "fragpipe_headless - stub TMT RAW emits uncalibrated mzML from the group directory": {
+        "content": [
+            [
+                "raw_files/p2_uncalibrated.mzML",
+                "raw_files/plex1/p1_uncalibrated.mzML"
+            ]
+        ],
+        "timestamp": "2026-11-23T18:15:20.039353081",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
     "fragpipe_headless - stub LFQ manifest keeps experiment and bioreplicate": {
         "content": [
             [
