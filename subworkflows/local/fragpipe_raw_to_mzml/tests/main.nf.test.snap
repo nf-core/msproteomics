@@ -1,0 +1,61 @@
+{
+    "fragpipe_raw_to_mzml - stub .raw converted, .d and .mzML as is": {
+        "content": [
+            [
+                [
+                    "run1",
+                    "e1",
+                    "run1.mzML"
+                ],
+                [
+                    "run2",
+                    "e2",
+                    "run2.mzML"
+                ],
+                [
+                    "run3",
+                    "e3",
+                    "run3.d"
+                ],
+                [
+                    "run4",
+                    "e4",
+                    "run4.mzML"
+                ]
+            ],
+            [
+                [
+                    "run1",
+                    "run1.raw"
+                ],
+                [
+                    "run2",
+                    "run2.RAW"
+                ]
+            ],
+            [
+                "FRAGPIPE_RAW_TO_MZML:THERMORAWFILEPARSER"
+            ]
+        ],
+        "timestamp": "2026-11-23T18:37:38.369145584",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "fragpipe_raw_to_mzml - stub no .raw runs no ThermoRawFileParser": {
+        "content": [
+            [
+                [
+                    "run4",
+                    "run4.mzML"
+                ]
+            ]
+        ],
+        "timestamp": "2026-11-23T18:37:44.899925677",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

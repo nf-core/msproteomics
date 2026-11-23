@@ -1,0 +1,81 @@
+nextflow_workflow {
+
+    name "Test Subworkflow FRAGPIPE_RAW_TO_MZML"
+    script "../main.nf"
+    workflow "FRAGPIPE_RAW_TO_MZML"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "fragpipe_raw_to_mzml"
+    tag "thermorawfileparser"
+
+    // A .raw (any case) becomes its mzML with the same meta; a Bruker .d and an mzML pass as is
+    test("fragpipe_raw_to_mzml - stub .raw converted, .d and .mzML as is") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            workflow {
+                """
+                def raw = file("\${workDir}/run1.raw")
+                raw.text = "raw bytes"
+                def raw_upper = file("\${workDir}/run2.RAW")
+                raw_upper.text = "raw bytes"
+                def dotd = file("\${workDir}/run3.d")
+                dotd.mkdirs()
+                file("\${workDir}/run3.d/analysis.tdf").text = "tdf"
+                def mzml = file("\${workDir}/run4.mzML")
+                mzml.text = "mzml"
+
+                input[0] = channel.of(
+                    [ [ id:'run1', experiment: 'e1', group: 'e1', bioreplicate: null, data_type: 'DDA' ], raw ],
+                    [ [ id:'run2', experiment: 'e2', group: 'e2', bioreplicate: null, data_type: 'DDA' ], raw_upper ],
+                    [ [ id:'run3', experiment: 'e3', group: 'e3', bioreplicate: null, data_type: 'DDA' ], dotd ],
+                    [ [ id:'run4', experiment: 'e4', group: 'e4', bioreplicate: null, data_type: 'DDA' ], mzml ]
+                )
+                """
+            }
+        }
+
+        then {
+            def spectra = workflow.out.spectra.collect { meta, f -> [meta.id, meta.experiment, new File(f.toString()).name] }.sort { it[0] }
+            def raw = workflow.out.raw.collect { meta, f -> [meta.id, new File(f.toString()).name] }.sort { it[0] }
+            def task_names = workflow.trace.tasks().collect { it.name.replaceAll(/ \(.*\)$/, '') }
+            assertAll(
+                { assert workflow.success },
+                { assert spectra == [['run1', 'e1', 'run1.mzML'], ['run2', 'e2', 'run2.mzML'], ['run3', 'e3', 'run3.d'], ['run4', 'e4', 'run4.mzML']] : spectra },
+                { assert raw == [['run1', 'run1.raw'], ['run2', 'run2.RAW']] : raw },
+                { assert task_names.count { it == 'FRAGPIPE_RAW_TO_MZML:THERMORAWFILEPARSER' } == 2 : task_names },
+                { assert snapshot(spectra, raw, task_names.unique().sort()).match() }
+            )
+        }
+    }
+
+    // No .raw: no ThermoRawFileParser task, every file as is
+    test("fragpipe_raw_to_mzml - stub no .raw runs no ThermoRawFileParser") {
+        tag "stub"
+        options "-stub"
+
+        when {
+            workflow {
+                """
+                def mzml = file("\${workDir}/run4.mzML")
+                mzml.text = "mzml"
+
+                input[0] = channel.of([ [ id:'run4', experiment: 'e4', group: 'e4', bioreplicate: null, data_type: 'DDA' ], mzml ])
+                """
+            }
+        }
+
+        then {
+            def spectra = workflow.out.spectra.collect { meta, f -> [meta.id, new File(f.toString()).name] }
+            assertAll(
+                { assert workflow.success },
+                { assert spectra == [['run4', 'run4.mzML']] : spectra },
+                { assert workflow.out.raw == [] },
+                { assert workflow.trace.tasks().isEmpty() : workflow.trace.tasks()*.name },
+                { assert snapshot(spectra).match() }
+            )
+        }
+    }
+}

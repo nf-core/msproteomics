@@ -1,0 +1,37 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "fragpipe_raw_to_mzml"
+description: Opt-in conversion of the Thermo .raw files of a FragPipe search to mzML with ThermoRawFileParser; other LC-MS files (Bruker .d, mzML) pass as is
+keywords:
+  - proteomics
+  - file-conversion
+  - mzml
+  - thermorawfileparser
+  - fragpipe
+components:
+  - thermorawfileparser
+input:
+  - ch_files:
+      type: channel
+      description: |
+        LC-MS files of a FragPipe search. A file whose name ends with .raw (any case) is a Thermo .raw file.
+        Structure: [ val(meta), path(spectra) ]
+output:
+  - spectra:
+      type: channel
+      description: |
+        The LC-MS files to give to FRAGPIPE / FRAGPIPE_HEADLESS_WF: the ThermoRawFileParser mzML in place of each .raw (same meta), every other file as is.
+        Structure: [ val(meta), path(spectra) ]
+  - raw:
+      type: channel
+      description: |
+        The Thermo .raw inputs (for example to read their metadata).
+        Structure: [ val(meta), path(raw) ]
+  - versions:
+      type: channel
+      description: |
+        Software versions (topic tuples).
+        Structure: [ val(process), val(tool), val(version) ]
+authors:
+  - "@dongzehe"
+maintainers:
+  - "@dongzehe"

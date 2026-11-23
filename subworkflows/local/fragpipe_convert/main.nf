@@ -6,6 +6,7 @@
 
     LC-MS files are never converted: MSFragger reads .raw, .mzML, .mzXML, .mgf, .mzBIN and
     Bruker .d natively (CmdMsfragger.java:390-403, 764-766), and so do DIA-Umpire and diaTracer.
+    A pipeline that wants FragPipe to read mzML instead of .raw calls FRAGPIPE_RAW_TO_MZML first.
 
     Modules:
     - DIAUMPIRE (DIA preprocessing, generates pseudo-spectra)
