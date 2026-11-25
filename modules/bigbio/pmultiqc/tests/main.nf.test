@@ -136,6 +136,8 @@ nextflow_process {
                 { assert process.success },
                 { assert process.out.ch_pmultiqc_report.size() > 0 },
                 { assert process.out.data.size() > 0 },
+                // an empty folder is not kept on object storage (S3 work dir)
+                { assert file(process.out.data[0]).list().toList() == ['multiqc_data.json'] },
                 { assert process.out.versions.size() > 0 }
             )
         }

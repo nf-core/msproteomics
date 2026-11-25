@@ -39,7 +39,12 @@ Changes in 'pmultiqc/main.nf':
      END_VERSIONS
      """
  
-@@ -45,7 +58,7 @@
+@@ -42,10 +55,12 @@
+     """
+     touch multiqc_report.html
+     mkdir multiqc_report_data
++    # Object storage (S3 work dir) keeps no empty folder: put a file in it, else `*_data` is missing
++    touch multiqc_report_data/multiqc_data.json
  
      cat <<-END_VERSIONS > versions.yml
      "${task.process}":
@@ -54,5 +59,17 @@ Changes in 'pmultiqc/main.nf':
 'modules/bigbio/pmultiqc/tests/multiqc_config.yml' is unchanged
 'modules/bigbio/pmultiqc/tests/nextflow.config.diann' is unchanged
 'modules/bigbio/pmultiqc/tests/nextflow.config.quantms' is unchanged
-'modules/bigbio/pmultiqc/tests/main.nf.test' is unchanged
+Changes in 'pmultiqc/tests/main.nf.test':
+--- modules/bigbio/pmultiqc/tests/main.nf.test
++++ modules/bigbio/pmultiqc/tests/main.nf.test
+@@ -136,6 +136,8 @@
+                 { assert process.success },
+                 { assert process.out.ch_pmultiqc_report.size() > 0 },
+                 { assert process.out.data.size() > 0 },
++                // an empty folder is not kept on object storage (S3 work dir)
++                { assert file(process.out.data[0]).list().toList() == ['multiqc_data.json'] },
+                 { assert process.out.versions.size() > 0 }
+             )
+         }
+
 ************************************************************

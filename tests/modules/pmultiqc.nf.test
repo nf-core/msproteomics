@@ -1,0 +1,36 @@
+// PMULTIQC stub (modules/bigbio/pmultiqc, patched). The `*_data` output must hold a file:
+// object storage (an S3 work dir, AWS Batch, Fusion) keeps no empty folder, and an empty
+// `multiqc_report_data` folder made the stub task fail with "Missing output file(s) `*_data`".
+// On a local work dir an empty folder exists, so the test checks the files in the folder.
+
+nextflow_process {
+
+    name "Test Process PMULTIQC - stub"
+    script "../../modules/bigbio/pmultiqc/main.nf"
+    process "PMULTIQC"
+
+    tag "modules"
+    tag "pmultiqc"
+    tag "stub"
+
+    test("pmultiqc - stub data folder holds a file") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [file("${projectDir}/assets/multiqc_config.yml", checkIfExists: true)]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert file(process.out.data[0]).list().toList() == ['multiqc_data.json'] : file(process.out.data[0]).list().toList() },
+                { assert snapshot(process.out.ch_pmultiqc_report, process.out.data, process.out.versions).match() }
+            )
+        }
+    }
+}
