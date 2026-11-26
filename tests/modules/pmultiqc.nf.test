@@ -1,7 +1,8 @@
 // PMULTIQC stub (modules/bigbio/pmultiqc, patched). The `*_data` output must hold a file:
 // object storage (an S3 work dir, AWS Batch, Fusion) keeps no empty folder, and an empty
-// `multiqc_report_data` folder made the stub task fail with "Missing output file(s) `*_data`".
+// `*_data` folder made the stub task fail with "Missing output file(s) `*_data`".
 // On a local work dir an empty folder exists, so the test checks the files in the folder.
+// The folder is `multiqc_data`, the name of a real run (`multiqc` without `-n`; tests/default.nf.test.snap).
 
 nextflow_process {
 
@@ -29,6 +30,7 @@ nextflow_process {
             assertAll(
                 { assert process.success },
                 { assert file(process.out.data[0]).list().toList() == ['multiqc_data.json'] : file(process.out.data[0]).list().toList() },
+                { assert file(process.out.data[0]).name == 'multiqc_data' : file(process.out.data[0]).name },
                 { assert snapshot(process.out.ch_pmultiqc_report, process.out.data, process.out.versions).match() }
             )
         }

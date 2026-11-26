@@ -87,7 +87,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `--diann_skip_preliminary_analysis` reads `--diann_empirical_assembly_lib` (it read `--diann_speclib`) and stops when the library or `--diann_empirical_assembly_log` is missing.
 - `dia_proteomics_analysis`: a given empirical library now skips preliminary analysis and library assembly; the `join` on the FASTA-keyed channel never matched the experiment-keyed library, so they always ran.
 - DIA experimental design: samples whose `condition` was empty or equal to the sample name were left out.
-- `PMULTIQC` stub (`modules/bigbio/pmultiqc`, local patch): the stub puts `multiqc_data.json` in `multiqc_report_data`. Before, the folder was empty, and object storage (an S3 work dir, for example AWS Batch) keeps no empty folder, so every `-stub` run with `PMULTIQC` failed with "Missing output file(s) `*_data`". New stub test `tests/modules/pmultiqc.nf.test`.
+- TMT label check HTML report (`tmt_qc.py`): the "Expected Efficiency Values" list shows the `--pass-threshold` / `--warn-threshold` values; it had a fixed 97 % / 90 %, so with the pipeline's 95 % / 85 % (`conf/modules.config` `ext.pass_threshold` / `ext.warn_threshold`) a sample at 96 % was PASS in the status but "Acceptable (WARNING)" in the list. The `tmt_qc.py analyze` defaults are 0.95 / 0.85 (were 0.97 / 0.90), as in the pipeline and `tmt_qc_ionquant.py`. New test `tests/python/test_tmt_qc_report.py`.
+- `PMULTIQC` stub (`modules/bigbio/pmultiqc`, local patch): the stub puts `multiqc_data.json` in `multiqc_data`, the folder name of a real run (`multiqc` without `-n`; the stub folder was `multiqc_report_data`). Before, the folder was empty, and object storage (an S3 work dir, for example AWS Batch) keeps no empty folder, so every `-stub` run with `PMULTIQC` failed with "Missing output file(s) `*_data`". New stub test `tests/modules/pmultiqc.nf.test`.
 
 ### Removed
 

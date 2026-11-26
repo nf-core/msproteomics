@@ -54,9 +54,10 @@ process PMULTIQC {
     stub:
     """
     touch multiqc_report.html
-    mkdir multiqc_report_data
+    # multiqc_data: the folder name of the real run (multiqc without -n)
+    mkdir multiqc_data
     # Object storage (S3 work dir) keeps no empty folder: put a file in it, else `*_data` is missing
-    touch multiqc_report_data/multiqc_data.json
+    touch multiqc_data/multiqc_data.json
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
