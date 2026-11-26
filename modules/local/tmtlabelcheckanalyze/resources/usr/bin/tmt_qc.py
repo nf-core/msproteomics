@@ -1926,9 +1926,9 @@ def generate_html_report(
 
             <h3>Expected Efficiency Values</h3>
             <ul>
-                <li><strong>Excellent:</strong> ≥97% (PASS - well-optimized protocol)</li>
-                <li><strong>Acceptable:</strong> 90-97% (WARNING - standard conditions, review recommended)</li>
-                <li><strong>Poor:</strong> &lt;90% (FAIL - re-labeling recommended)</li>
+                <li><strong>Excellent:</strong> ≥{pass_threshold * 100:.0f}% (PASS - well-optimized protocol)</li>
+                <li><strong>Acceptable:</strong> {warn_threshold * 100:.0f}-{pass_threshold * 100:.0f}% (WARNING - standard conditions, review recommended)</li>
+                <li><strong>Poor:</strong> &lt;{warn_threshold * 100:.0f}% (FAIL - re-labeling recommended)</li>
             </ul>
 
             <h3>Site Efficiency vs Fully Labeled PSMs</h3>
@@ -2384,14 +2384,14 @@ TMT Types: TMT0, TMT2, TMT6, TMT10, TMT11, TMT16, TMT18, TMT35, TMTPRO
     analyze_parser.add_argument(
         "--pass-threshold",
         type=float,
-        default=0.97,
-        help="Efficiency threshold for PASS status (default: 0.97)",
+        default=0.95,
+        help="Efficiency threshold for PASS status (default: %(default)s)",
     )
     analyze_parser.add_argument(
         "--warn-threshold",
         type=float,
-        default=0.90,
-        help="Efficiency threshold for WARNING status (default: 0.90)",
+        default=0.85,
+        help="Efficiency threshold for WARNING status (default: %(default)s)",
     )
     analyze_parser.add_argument(
         "--output-dir",
